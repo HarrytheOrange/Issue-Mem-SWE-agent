@@ -192,8 +192,8 @@ class Command(BaseModel):
             if not re.match(ARGUMENT_NAME_PATTERN, arg.name):
                 msg = f"Command '{self.name}': Invalid argument name: '{arg.name}'"
                 raise ValueError(msg)
-        if _extract_keys(self.invoke_format) != {arg.name for arg in self.arguments}:
-            msg = f"Command '{self.name}': Argument names in signature / invoke_format do not match argument names"
+        if (invoke_keys := _extract_keys(self.invoke_format)) != {arg.name for arg in self.arguments}:
+            msg = f"Command '{self.name}': Argument names ({invoke_keys}) in signature / invoke_format {self.invoke_format!r} do not match argument names"
             raise ValueError(msg)
         return self
 
@@ -201,7 +201,7 @@ class Command(BaseModel):
 # Default Bash tool
 BASH_COMMAND = Command(
     name="bash",
-    signature="<command>",
+    signature="echo '<command>'\n<command>\necho \"root@workspace:${{PWD}} #\n[Command finished with exit code ${{?}}]\"",
     docstring="runs the given command directly in bash",
     arguments=[
         Argument(
