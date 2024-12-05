@@ -200,7 +200,7 @@ class Command(BaseModel):
 
 # Default Bash tool
 BASH_COMMAND = Command(
-    name="bash",
+    name="execute_bash",
     signature="echo '<command>'\n<command>\necho \"root@workspace:${{PWD}} #\n[Command finished with exit code ${{?}}]\"",
     docstring="runs the given command directly in bash",
     arguments=[

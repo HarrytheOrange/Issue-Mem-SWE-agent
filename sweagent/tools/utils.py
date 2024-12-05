@@ -38,7 +38,7 @@ def _guard_multiline_input(action: str, match_fct: Callable[[str], re.Match | No
 
 def _should_quote(value: Any, command: Command) -> bool:
     """Returns True if the value should be quoted, False otherwise."""
-    if command.name == "bash":
+    if command.name == "execute_bash":
         return False
     return isinstance(value, str) and command.end_name is None
 

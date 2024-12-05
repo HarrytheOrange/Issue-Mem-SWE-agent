@@ -206,6 +206,8 @@ class ToolHandler:
         )
 
     async def _is_command_available(self, env, command: str, env_vars: dict[str, str]) -> None:
+        if command == "execute_bash":
+            return
         try:
             await env.deployment.runtime.execute(
                 RexCommand(command=f"which {command}", shell=True, check=True, env=env_vars)
