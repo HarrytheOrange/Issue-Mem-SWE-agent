@@ -19,42 +19,38 @@ tools:
     arguments:
       - name: command
         type: string
-        description: "command to run: view, create, str_replace, insert, undo_edit"
+        description: "The commands to run. Allowed options are: `view`, `create`, `str_replace`, `insert`, `undo_edit`."
         required: true
+        enum: ["view", "create", "str_replace", "insert", "undo_edit"]
       - name: path
         type: string
-        description: "path to file"
+        description: "Absolute path to file or directory, e.g. `/testbed/file.py` or `/testbed`."
         required: true
       - name: file_text
         type: string
-        description: "Text to insert when evoking `create` (required for `create`)"
+        description: "Required parameter of `create` command, with the content of the file to be created."
         required: false
         argument_format: "--file_text {{value}}"
-      - name: view_range
-        type: array
-        items:
-          type: integer
-        description: >
-          Optional parameter of `view` command.
-          If none is given, the full file is shown.
-          If provided, the file will be shown in the indicated line number range, e.g. [11, 12] will show lines 11 and 12.
-          Indexing at 1 to start.
-          Setting `[start_line, -1]` shows all lines from `start_line` to the end of the file.
-        required: false
-        argument_format: "--view_range {{value|join(' ')}}"
       - name: old_str
         type: string
-        description: "String to replace when evoking `str_replace`"
+        description: "Required parameter of `str_replace` command containing the string in `path` to replace."
         required: false
         argument_format: "--old_str {{value}}"
       - name: new_str
         type: string
-        description: "Replacement string when evoking `str_replace`"
+        description: "Optional parameter of `str_replace` command containing the new string (if not given, no string will be added). Required parameter of `insert` command containing the string to insert."
         required: false
         argument_format: "--new_str {{value}}"
       - name: insert_line
         type: integer
-        description: "Required for `insert`: Line number to insert text after."
+        description: "Required parameter of `insert` command. The `new_str` will be inserted AFTER the line `insert_line` of `path`."
         required: false
         argument_format: "--insert_line {{value}}"
+      - name: view_range
+        type: array
+        items:
+          type: integer
+        description: "Optional parameter of `view` command when `path` points to a file. If none is given, the full file is shown. If provided, the file will be shown in the indicated line number range, e.g. [11, 12] will show lines 11 and 12. Indexing at 1 to start. Setting `[start_line, -1]` shows all lines from `start_line` to the end of the file."
+        required: false
+        argument_format: "--view_range {{value|join(' ')}}"
 state_command: "_state_anthropic"

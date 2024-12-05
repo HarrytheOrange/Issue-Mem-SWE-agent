@@ -207,7 +207,7 @@ BASH_COMMAND = Command(
         Argument(
             name="command",
             type="string",
-            description="a command to run directly in the current shell",
+            description="The bash command to execute.",
             required=True,
         )
     ],
