@@ -301,9 +301,6 @@ class FunctionCallingParser(AbstractParseFunction, BaseModel):
             else ""
             for arg in command.arguments
         }
-        print(formatted_args)
-        print(command.invoke_format)
-        print(command.invoke_format.format(**formatted_args))
         return command.invoke_format.format(**formatted_args).strip()
 
     def __call__(self, model_response: dict, commands: list[Command], strict=False):
