@@ -31,6 +31,7 @@ class ToolFilterConfig(BaseModel):
         "less",
         "tail -f",
         "python -m venv",
+        "make",
     ]
     """Block any command that starts with one of these"""
     blocklist_standalone: list[str] = [
@@ -47,6 +48,8 @@ class ToolFilterConfig(BaseModel):
         "emacs",
         "nano",
         "su",
+        "pip install .",
+        "pip install -e .",
     ]
     """Block any command that matches one of these exactly"""
     block_unless_regex: dict[str, str] = {
