@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+
+import argparse
+import subprocess
+import sys
+import os
+
+from registry import registry
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Submit changes for review")
+    parser.add_argument("-f", "--force", action="store_true", help="Force submit without review")
+    args = parser.parse_args()
+
+    repo_root = registry.get("ROOT", os.getenv("ROOT"))
+    assert repo_root
+
+    git_process = subprocess.run(
+        "git add -A && git diff --cached > /root/model.patch",
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        cwd=repo_root,
+    )
+
+    with open("/root/model.patch") as f:
+        patch = f.read()
+
+    with open("model.patch", "w") as f:
+        f.write(git_process.stdout.decode("utf-8"))
+
+    if not args.force and not registry.get("SUBMIT_TRIGGERED_BEFORE"):
+        message = registry.get("SUBMIT_REVIEW_MESSAGE", "")
+        message = message.replace("{{diff}}", patch)
+        message = message.replace("{{problem_statement}}", "")
+        registry["SUBMIT_TRIGGERED_BEFORE"] = True
+        print(message)
+        sys.exit(0)
+
+    print("<<SUBMISSION||")
+    print(patch)
+    print("||SUBMISSION>>")
+
+
+if __name__ == "__main__":
+    main()

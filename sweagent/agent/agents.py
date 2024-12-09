@@ -284,6 +284,7 @@ class Agent:
         """
         self._problem_statement = problem_statement
         self._env = env
+        self._env.set_env_variables({"PROBLEM_STATEMENT": self._problem_statement.get_problem_statement()})
 
         # Save/reset some attributes
         self.info = AgentInfo()
