@@ -112,12 +112,43 @@ agent:
     env_variables:
       WINDOW: 100
       OVERLAP: 2
+      SUBMIT_REVIEW_MESSAGE: |-
+        Thank you for your work on this issue.
+
+        As a refresher, this is the issue we're solving:
+
+        <issue_text>
+        {{problem_statement}}
+        </issue_text>
+
+        Here are your changes:
+
+        <diff>
+        {{diff}}
+        </diff>
+
+        Before we submit your changes, here are some final instructions to review:
+
+        1. Does the diff <diff> look correct or could it introduce any problems?
+        2. Does the diff <diff> solve the problem explained in the issue <issue_text>?
+        3. Were you able to reproduce and then fix the bug? If you had trouble with the reproduction, are there any other
+           ways you could double-check that the bug is fixed?
+        4. Is there any existing functionality that could be broken by your changes?
+        5. Did you test or think of any edge cases?
+
+        Please write a DETAILED response to the above questions.
+        You can also run additional checks and tests if you want.
+        If you find anything to be problematic, please fix it.
+
+        Once you're done, run the submit command to submit your changes.
+
+        <IMPORTANT>Please be verbose and think things through step-by-step.</IMPORTANT>
     bundles:
       - path: tools/registry
       - path: tools/defaults
       - path: tools/search
       - path: tools/edit_replace
-      - path: tools/submit
+      - path: tools/review_on_submit
     enable_bash_tool: true
     parse_function:
       type: function_calling
