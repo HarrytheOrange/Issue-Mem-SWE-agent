@@ -97,13 +97,6 @@ agent:
       (Open file: {{open_file}})
       (Current directory: {{working_dir}})
       bash-$
-    demonstration_template: |
-      Here is a demonstration of how to correctly accomplish this task.
-      It is included to show you how to correctly use the interface.
-      You do not need to follow exactly what is done in the demonstration.
-      --- DEMONSTRATION ---
-      {{demonstration}}
-      --- END OF DEMONSTRATION ---
     demonstrations:
       - trajectories/demonstrations/function_calling_simple.traj
     put_demos_in_history: true
