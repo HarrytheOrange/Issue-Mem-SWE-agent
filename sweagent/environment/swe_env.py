@@ -107,6 +107,13 @@ class SWEEnv:
         self._chook.on_copy_repo_started(repo=self.repo)
         self.repo.copy(self.deployment)
 
+    def hard_reset(self):
+        """Resets the environment and deployment, i.e., completely restarts the
+        deployment.
+        """
+        self.close()
+        self.start()
+
     def reset(self):
         """Reset the environment to a clean state.
         Gets called by `start`, but can also be called independently to reset the

@@ -284,7 +284,6 @@ class Agent:
         """
         self._problem_statement = problem_statement
         self._env = env
-        self._env.set_env_variables({"PROBLEM_STATEMENT": self._problem_statement.get_problem_statement()})
 
         # Save/reset some attributes
         self.info = AgentInfo()
@@ -308,12 +307,18 @@ class Agent:
 
         self._chook.on_setup_done()
 
-    def setup_attempt(self) -> None:
-        """Setup the agent for a new attempt. This includes resetting the model stats."""
+    def setup_attempt(self, hard_reset: bool = False) -> None:
+        """Setup the agent for a new attempt."""
+        self._i_attempt += 1
         assert self._env is not None
         if self._i_attempt > 0:
-            self._env.reset()
-        self.model.reset_stats()
+            if hard_reset:
+                self._chook.on_tools_installation_started()
+                self._env.hard_reset()
+                self.tools.install(self._env)
+            else:
+                self._env.reset()
+        self._env.set_env_variables({"PROBLEM_STATEMENT": self._problem_statement.get_problem_statement()})
         self.add_system_message_to_history()
         self.add_demonstrations_to_history()
         self.add_instance_template_to_history(state=self.tools.get_state(self._env))
@@ -852,6 +857,13 @@ class Agent:
         self._chook.on_step_done(step=step_output, info=self.info)
         return step_output
 
+    def _should_attempt_retry(self, step_output: StepOutput) -> bool:
+        if step_output.exit_status in ["exit_cost"]:
+            return False
+        if self.model.name in ["human", "human_thought"] and step_output.exit_status in ["exit_command"]:
+            return False
+        return True
+
     def run(
         self,
         env: SWEEnv,
@@ -875,6 +887,11 @@ class Agent:
         while not step_output.done:
             step_output = self.step()
             self.save_trajectory()
+            if step_output.done and not step_output.submission and self._should_attempt_retry(step_output):
+                assert self._env is not None
+                self.logger.warning("No submission found in the trajectory. Going for a new attempt.")
+                self.setup_attempt(hard_reset=True)
+                step_output.done = False
         self._chook.on_run_done(trajectory=self.trajectory, info=self.info)
 
         self.logger.info("Trajectory saved to %s", self.traj_path)
