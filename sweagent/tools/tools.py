@@ -209,7 +209,7 @@ class ToolHandler:
         )
 
     async def _is_command_available(self, env, command: str, env_vars: dict[str, str]) -> None:
-        if command == "execute_bash":
+        if command == "bash":
             return
         try:
             await env.deployment.runtime.execute(
