@@ -11,7 +11,7 @@ from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, Vertical, VerticalScroll
 from textual.screen import ModalScreen
-from textual.widgets import Footer, Header, Input, Label, ListItem, ListView, Static
+from textual.widgets import Footer, Header, Input, ListItem, ListView, Static
 
 from sweagent.utils.serialization import _yaml_serialization_with_linebreaks
 
@@ -139,6 +139,10 @@ class TrajectoryViewer(Static):
 
 
 class TrajectorySelectorScreen(ModalScreen[int]):
+    BINDINGS = [
+        Binding("escape", "dismiss(None)", "Cancel"),
+    ]
+
     def __init__(self, paths: list[Path], current_index: int, overview_stats: dict):
         super().__init__()
         self.paths = paths
@@ -163,7 +167,10 @@ class TrajectorySelectorScreen(ModalScreen[int]):
 
     def compose(self) -> ComposeResult:
         with Vertical(id="dialog"):
-            yield Label("Select Trajectory", id="title")
+            yield Static(
+                "Press <TAB> to switch between search and list. Use <ARROW KEY>/<ENTER> to select.",
+                id="title",
+            )
             yield Input(placeholder="Type to filter (auto-select if only one item remains)...", id="filter-input")
             yield ListView(
                 *[ListItem(Static(p)) for p in self._get_list_item_texts(self.paths)],
@@ -343,8 +350,9 @@ class TrajectoryInspectorApp(App):
         selector = TrajectorySelectorScreen(self.available_traj_paths, self.trajectory_index, self.overview_stats)
 
         def handler(index: int | None):
-            self.trajectory_index = index
-            self._load_traj()
+            if index is not None:
+                self.trajectory_index = index
+                self._load_traj()
 
         await self.push_screen(selector, handler)  # This returns when the modal is dismissed
 
