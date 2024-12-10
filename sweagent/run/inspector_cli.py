@@ -11,7 +11,7 @@ from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, Vertical, VerticalScroll
 from textual.screen import ModalScreen
-from textual.widgets import Footer, Header, Label, ListItem, ListView, Static
+from textual.widgets import Footer, Header, Input, Label, ListItem, ListView, Static
 
 from sweagent.utils.serialization import _yaml_serialization_with_linebreaks
 
@@ -144,6 +144,7 @@ class TrajectorySelectorScreen(ModalScreen[int]):
         self.paths = paths
         self.current_index = current_index
         self.overview_stats = overview_stats
+        self.all_items = []  # Store all items for filtering
 
     def _get_list_item_texts(self, paths: list[Path]) -> list[str]:
         """Remove the common prefix from a list of paths."""
@@ -163,11 +164,33 @@ class TrajectorySelectorScreen(ModalScreen[int]):
     def compose(self) -> ComposeResult:
         with Vertical(id="dialog"):
             yield Label("Select Trajectory", id="title")
+            yield Input(placeholder="Type to filter (auto-select if only one item remains)...", id="filter-input")
             yield ListView(
                 *[ListItem(Static(p)) for p in self._get_list_item_texts(self.paths)],
                 id="trajectory-list",
                 initial_index=self.current_index,
             )
+        # Store all items for later filtering
+        self.all_items = self._get_list_item_texts(self.paths)
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        """Filter list items based on input"""
+        filter_text = event.value.lower()
+        list_view = self.query_one("#trajectory-list", ListView)
+
+        # Filter items
+        filtered_items = [item for item in self.all_items if filter_text in item.lower()]
+
+        if len(filtered_items) == 1:
+            # Find the index of the filtered item in the original list
+            selected_index = self.all_items.index(filtered_items[0])
+            self.dismiss(selected_index)
+            return
+
+        # Update ListView with filtered items
+        list_view.clear()
+        for item in filtered_items:
+            list_view.append(ListItem(Static(item)))
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         print(f"Selected index: {event.list_view.index}")
@@ -185,6 +208,11 @@ class TrajectorySelectorScreen(ModalScreen[int]):
     #title {
         text-align: center;
         padding: 1;
+    }
+
+    #filter-input {
+        dock: top;
+        margin: 1 0;
     }
 
     ListView {
@@ -290,7 +318,7 @@ class TrajectoryInspectorApp(App):
         if self.input_path.is_file():
             return [self.input_path]
         elif self.input_path.is_dir():
-            return list(self.input_path.rglob("*.traj"))
+            return sorted(self.input_path.rglob("*.traj"))
         raise ValueError
 
     def compose(self) -> ComposeResult:
