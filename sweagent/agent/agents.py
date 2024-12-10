@@ -286,15 +286,10 @@ class Agent:
         self._env = env
 
         # Save/reset some attributes
-        self.info = AgentInfo()
-        self.info["swe_agent_hash"] = get_agent_commit_hash()
-        self.info["swe_agent_version"] = __version__
-        self.info["swe_rex_version"] = get_rex_version()
-        self.info["swe_rex_hash"] = get_rex_commit_hash()
         self.traj_path = output_dir / (self._problem_statement.id + ".traj")
         self.logger.info("Trajectory will be saved to %s", self.traj_path)
 
-        self._i_attempt = 0
+        self._i_attempt = -1
         self._history_by_attempt = defaultdict(list)
         self._trajectory_by_attempt = defaultdict(list)
         self._info_by_attempt = defaultdict(dict)  # type: ignore
@@ -310,6 +305,11 @@ class Agent:
     def setup_attempt(self, hard_reset: bool = False) -> None:
         """Setup the agent for a new attempt."""
         self._i_attempt += 1
+        self.info = AgentInfo()
+        self.info["swe_agent_hash"] = get_agent_commit_hash()
+        self.info["swe_agent_version"] = __version__
+        self.info["swe_rex_version"] = get_rex_version()
+        self.info["swe_rex_hash"] = get_rex_commit_hash()
         assert self._env is not None
         if self._i_attempt > 0:
             if hard_reset:
@@ -490,7 +490,8 @@ class Agent:
             return attempt_data
 
         data = {
-            **get_attempt_data(0),
+            **get_attempt_data(-1),
+            "attempts": [get_attempt_data(i) for i in range(self._i_attempt)],
         }
 
         assert self.traj_path is not None
@@ -860,7 +861,7 @@ class Agent:
     def _should_attempt_retry(self, step_output: StepOutput) -> bool:
         if step_output.exit_status in ["exit_cost"]:
             return False
-        if self.model.name in ["human", "human_thought"] and step_output.exit_status in ["exit_command"]:
+        if self.model.config.name in ["human", "human_thought"] and step_output.exit_status in ["exit_command"]:
             return False
         return True
 
