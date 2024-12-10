@@ -84,6 +84,10 @@ agent:
       5. Create additional tests to verify the fix in a style similar to the existing reproduction script. In particular, make sure to test edge cases.
          If you find any issues, go back to the file you edited and perform further edits.
 
+      6. Many packages have tests. Please also take a look at any relevant tests related to the problem you are fixing or the
+         code you are editing. Do not try to run them yet, just look at them to understand how the code is tested and what
+         functionality is tested.
+
       (Open file: {{open_file}})
       (Current directory: {{working_dir}})
       bash-$
@@ -109,6 +113,7 @@ agent:
     put_demos_in_history: true
   tools:
     submit_command: "submit -f"
+    execution_timeout: 120
     env_variables:
       WINDOW: 100
       OVERLAP: 2
@@ -135,6 +140,9 @@ agent:
            ways you could double-check that the bug is fixed?
         4. Is there any existing functionality that could be broken by your changes?
         5. Did you test or think of any edge cases?
+        6. Many packages come with tests. Have you tried to run them? You might have to install pytest (`pip install pytest`) to run them.
+           first. VERY IMPORTANT THOUGH: First locate all relevant tests and only run these (`pytest -k ...`). DO NOT RUN ALL TESTS!
+           Running all tests will take a long time and probably not work.
 
         Please write a DETAILED response to the above questions.
         You can also run additional checks and tests if you want.
@@ -142,7 +150,10 @@ agent:
 
         Once you're done, run the submit command to submit your changes.
 
-        <IMPORTANT>Please be verbose and think things through step-by-step.</IMPORTANT>
+        <IMPORTANT>
+        1. Please be verbose and think things through step-by-step.
+        2. Do not run pytest without specifying the tests you want to run. It will take too long.
+        </IMPORTANT>
     bundles:
       - path: tools/registry
       - path: tools/defaults
