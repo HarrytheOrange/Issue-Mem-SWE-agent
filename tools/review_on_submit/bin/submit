@@ -33,7 +33,7 @@ def main() -> None:
     if not args.force and not registry.get("SUBMIT_TRIGGERED_BEFORE"):
         message = registry.get("SUBMIT_REVIEW_MESSAGE", "")
         message = message.replace("{{diff}}", patch)
-        message = message.replace("{{problem_statement}}", "")
+        message = message.replace("{{problem_statement}}", registry.get("PROBLEM_STATEMENT", ""))
         registry["SUBMIT_TRIGGERED_BEFORE"] = True
         print(message)
         sys.exit(0)
