@@ -490,8 +490,8 @@ class Agent:
             return attempt_data
 
         data = {
-            **get_attempt_data(-1),
-            "attempts": [get_attempt_data(i) for i in range(self._i_attempt)],
+            **get_attempt_data(self._i_attempt),
+            "attempts": [get_attempt_data(i) for i in range(self._i_attempt + 1)],
         }
 
         assert self.traj_path is not None
