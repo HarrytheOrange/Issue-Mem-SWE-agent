@@ -426,16 +426,16 @@ class InstantEmptySubmitTestModel(AbstractModel):
 class LiteLLMModel(AbstractModel):
     def __init__(self, args: GenericAPIModelConfig, tools: ToolConfig):
         """Model served by the `litellm` library."""
-        self.args = args
+        self.config: GenericAPIModelConfig = args
         self.stats = InstanceStats()
         self.tools = tools
         if tools.use_function_calling:
-            if not litellm.utils.supports_function_calling(model=self.args.name):
-                msg = f"Model {self.args.name} does not support function calling"
+            if not litellm.utils.supports_function_calling(model=self.config.name):
+                msg = f"Model {self.config.name} does not support function calling"
                 raise ValueError(msg)
-        self.model_max_input_tokens = litellm.model_cost.get(self.args.name, {}).get("max_input_tokens")
-        self.model_max_output_tokens = litellm.model_cost.get(self.args.name, {}).get("max_output_tokens")
-        self.lm_provider = litellm.model_cost[self.args.name]["litellm_provider"]
+        self.model_max_input_tokens = litellm.model_cost.get(self.config.name, {}).get("max_input_tokens")
+        self.model_max_output_tokens = litellm.model_cost.get(self.config.name, {}).get("max_output_tokens")
+        self.lm_provider = litellm.model_cost[self.config.name]["litellm_provider"]
         self.logger = get_logger("swea-lm", emoji="🤖")
 
     def _update_stats(self, *, input_tokens: int, output_tokens: int, cost: float) -> None:
@@ -461,49 +461,49 @@ class LiteLLMModel(AbstractModel):
         )
 
         # Check whether total cost or instance cost limits have been exceeded
-        if 0 < self.args.total_cost_limit <= GLOBAL_STATS.total_cost:
-            self.logger.warning(f"Cost {GLOBAL_STATS.total_cost:.2f} exceeds limit {self.args.total_cost_limit:.2f}")
+        if 0 < self.config.total_cost_limit <= GLOBAL_STATS.total_cost:
+            self.logger.warning(f"Cost {GLOBAL_STATS.total_cost:.2f} exceeds limit {self.config.total_cost_limit:.2f}")
             msg = "Total cost limit exceeded"
             raise TotalCostLimitExceededError(msg)
 
-        if 0 < self.args.per_instance_cost_limit <= self.stats.instance_cost:
+        if 0 < self.config.per_instance_cost_limit <= self.stats.instance_cost:
             self.logger.warning(
-                f"Cost {self.stats.instance_cost:.2f} exceeds limit {self.args.per_instance_cost_limit:.2f}"
+                f"Cost {self.stats.instance_cost:.2f} exceeds limit {self.config.per_instance_cost_limit:.2f}"
             )
             msg = "Instance cost limit exceeded"
             raise InstanceCostLimitExceededError(msg)
 
     def _get_api_key(self) -> str | None:
-        api_keys = self.args.get_api_keys()
+        api_keys = self.config.get_api_keys()
         if not api_keys:
             return None
         return random.choice(api_keys)
 
     def _query(self, messages: list[dict[str, str]]) -> dict:
-        input_tokens: int = litellm.utils.token_counter(messages=messages, model=self.args.name)
+        input_tokens: int = litellm.utils.token_counter(messages=messages, model=self.config.name)
         if self.model_max_input_tokens is None:
-            self.logger.warning(f"No max input tokens found for model {self.args.name!r}")
+            self.logger.warning(f"No max input tokens found for model {self.config.name!r}")
         elif input_tokens > self.model_max_input_tokens:
             msg = f"Input tokens {input_tokens} exceed max tokens {self.model_max_input_tokens}"
             raise ContextWindowExceededError(msg)
         extra_args = {}
-        if self.args.api_base:
+        if self.config.api_base:
             # Not assigned a default value in litellm, so only pass this if it's set
-            extra_args["api_base"] = self.args.api_base
+            extra_args["api_base"] = self.config.api_base
         if self.tools.use_function_calling:
             extra_args["tools"] = self.tools.tools
         # We need to always set max_tokens for anthropic models
-        completion_kwargs = self.args.completion_kwargs
+        completion_kwargs = self.config.completion_kwargs
         if self.lm_provider == "anthropic":
             completion_kwargs["max_tokens"] = self.model_max_output_tokens
         response: litellm.types.utils.ModelResponse = litellm.completion(  # type: ignore
-            model=self.args.name,
+            model=self.config.name,
             messages=messages,
-            temperature=self.args.temperature,
-            top_p=self.args.top_p,
-            api_version=self.args.api_version,
+            temperature=self.config.temperature,
+            top_p=self.config.top_p,
+            api_version=self.config.api_version,
             api_key=self._get_api_key(),
-            fallbacks=self.args.fallbacks,
+            fallbacks=self.config.fallbacks,
             **completion_kwargs,
             **extra_args,
         )
@@ -511,7 +511,7 @@ class LiteLLMModel(AbstractModel):
         output = choices[0].message.content or ""
         output_dict = {"message": output}
         cost = litellm.cost_calculator.completion_cost(response)
-        output_tokens = litellm.utils.token_counter(text=output, model=self.args.name)
+        output_tokens = litellm.utils.token_counter(text=output, model=self.config.name)
         self._update_stats(input_tokens=input_tokens, output_tokens=output_tokens, cost=cost)
         if self.tools.use_function_calling:
             if response.choices[0].message.tool_calls:  # type: ignore
@@ -523,13 +523,13 @@ class LiteLLMModel(AbstractModel):
 
     def query(self, history: History) -> dict:
         elapsed_time = time.time() - GLOBAL_STATS.last_query_timestamp
-        if elapsed_time < self.args.delay:
-            time.sleep(self.args.delay - elapsed_time)
+        if elapsed_time < self.config.delay:
+            time.sleep(self.config.delay - elapsed_time)
         with GLOBAL_STATS_LOCK:
             GLOBAL_STATS.last_query_timestamp = time.time()
         for attempt in Retrying(
-            stop=stop_after_attempt(self.args.retry.retries),
-            wait=wait_random_exponential(min=self.args.retry.min_wait, max=self.args.retry.max_wait),
+            stop=stop_after_attempt(self.config.retry.retries),
+            wait=wait_random_exponential(min=self.config.retry.min_wait, max=self.config.retry.max_wait),
             reraise=True,
             retry=retry_if_not_exception_type(
                 (
@@ -565,7 +565,7 @@ class LiteLLMModel(AbstractModel):
     ) -> list[dict[str, str]]:
         def get_role(history_item: HistoryItem) -> str:
             if history_item["role"] == "system":
-                return "user" if self.args.convert_system_to_user else "system"
+                return "user" if self.config.convert_system_to_user else "system"
             return history_item["role"]
 
         messages = []
