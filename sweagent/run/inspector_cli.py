@@ -237,12 +237,50 @@ class TrajectorySelectorScreen(ModalScreen[int]):
     """
 
 
+class LogViewerScreen(ModalScreen):
+    BINDINGS = [
+        Binding("q,escape", "dismiss", "Back"),
+        Binding("j,down", "scroll_down", "Scroll down"),
+        Binding("k,up", "scroll_up", "Scroll up"),
+    ]
+
+    def __init__(self, log_path: Path):
+        super().__init__()
+        self.log_path = log_path
+
+    def compose(self) -> ComposeResult:
+        with VerticalScroll():
+            if self.log_path.exists():
+                yield Static(self.log_path.read_text())
+            else:
+                yield Static(f"No log file found at {self.log_path}")
+
+    def action_scroll_down(self) -> None:
+        vs = self.query_one(VerticalScroll)
+        vs.scroll_to(y=vs.scroll_target_y + 15)
+
+    def action_scroll_up(self) -> None:
+        vs = self.query_one(VerticalScroll)
+        vs.scroll_to(y=vs.scroll_target_y - 15)
+
+    CSS = """
+    ScrollableContainer {
+        width: 100%;
+        height: 100%;
+        background: $surface;
+        padding: 1;
+        border: thick $primary;
+    }
+    """
+
+
 class TrajectoryInspectorApp(App):
     BINDINGS = [
         Binding("q", "quit", "Quit"),
         Binding("L", "next_traj", "Traj++"),
         Binding("H", "previous_traj", "Traj--"),
         Binding("t", "show_traj_selector", "Select Traj"),
+        Binding("o", "show_log", "View Log"),
     ]
 
     CSS = """
@@ -355,6 +393,12 @@ class TrajectoryInspectorApp(App):
                 self._load_traj()
 
         await self.push_screen(selector, handler)  # This returns when the modal is dismissed
+
+    async def action_show_log(self) -> None:
+        current_traj = self.available_traj_paths[self.trajectory_index]
+        log_path = current_traj.with_suffix(".debug.log")
+        log_viewer = LogViewerScreen(log_path)
+        await self.push_screen(log_viewer)
 
 
 def main(args: list[str] | None = None):
