@@ -684,6 +684,10 @@ class Agent:
             self._chook.on_actions_generated(step=step)
             return self.handle_action(step)
         except Exception as e:
+            if step.action == step.thought == "":
+                # Probably the parsing failed/no action included. Let's still fill in thought
+                # so that trajectory viewers have something to show us for this step.
+                step.thought = step.output
             # Attach the step object to the exception
             e.step = step  # type: ignore
             raise
