@@ -11,6 +11,8 @@ def main():
         sys.exit(1)
 
     path = Path(sys.argv[1])
+    if not path.parent.is_dir():
+        path.parent.mkdir(parents=True, exist_ok=True)
 
     if path.exists():
         print(f"Warning: File '{path}' already exists.")
