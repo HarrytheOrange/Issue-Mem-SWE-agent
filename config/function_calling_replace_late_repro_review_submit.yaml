@@ -83,10 +83,16 @@ agent:
 
       5. Create additional tests to verify the fix in a style similar to the existing reproduction script. In particular, make sure to test edge cases.
          If you find any issues, go back to the file you edited and perform further edits.
+         Put these tests in the same file as the bug reproduction script.
 
       6. Many packages have tests. Please also take a look at any relevant tests related to the problem you are fixing or the
          code you are editing. Do not try to run them yet, just look at them to understand how the code is tested and what
-         functionality is tested.
+         functionality is tested. Do NOT modify the existing tests!
+
+      <IMPORTANT>
+      * Never modify existing tests! Only add new tests to a reproduce.py script or similar (NOT to the existing test directory).
+      * Make sure to remove these tests before submitting your changes.
+      </IMPORTANT>
 
       (Open file: {{open_file}})
       (Current directory: {{working_dir}})
@@ -146,6 +152,8 @@ agent:
         <IMPORTANT>
         1. Please be verbose and think things through step-by-step.
         2. Do not run pytest without specifying the tests you want to run. It will take too long.
+        3. Never modify existing tests! Only add new tests to a reproduce.py script or similar (NOT to the existing test directory).
+           Make sure to remove these tests before submitting your changes.
         </IMPORTANT>
     bundles:
       - path: tools/registry
