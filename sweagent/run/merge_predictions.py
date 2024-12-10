@@ -20,7 +20,7 @@ def merge_predictions(directories: list[Path], output: Path | None = None) -> No
     """
     preds = []
     for directory in directories:
-        new = list(directory.glob("*.pred"))
+        new = list(directory.rglob("*.pred"))
         preds.extend(new)
         logger.debug("Found %d predictions in %s", len(new), directory)
     logger.info("Found %d predictions", len(preds))
