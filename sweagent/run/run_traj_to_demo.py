@@ -36,6 +36,8 @@ def convert_traj_to_action_demo(traj_path: Path, output_file: Path, include_user
     with open(traj_path) as file:
         traj = json.load(file)
     replay_config = traj["replay_config"]
+    if isinstance(traj["replay_config"], str):
+        replay_config = json.loads(traj["replay_config"])
     history = traj["history"]
 
     copy_fields = {"content", "role", "tool_calls", "agent", "message_type", "tool_call_ids"}
