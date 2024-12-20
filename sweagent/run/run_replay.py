@@ -92,7 +92,9 @@ class RunReplay:
 
     def _get_config_from_agent(self, traj_data):
         try:
-            config = RunSingleConfig.model_validate(self._traj_data["replay_config"])
+            if isinstance(traj_data["replay_config"], str):
+                traj_data["replay_config"] = json.loads(traj_data["replay_config"])
+            config = RunSingleConfig.model_validate(traj_data["replay_config"])
         except KeyError:
             msg = "Replay config not found in trajectory. Are you running on an old trajectory?"
             raise ValueError(msg)
