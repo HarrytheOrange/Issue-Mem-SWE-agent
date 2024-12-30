@@ -27,13 +27,14 @@ from sweagent.agent.models import (
     get_model,
 )
 from sweagent.agent.problem_statement import ProblemStatement, ProblemStatementConfig
+from sweagent.agent.reviewer import ReviewLoopConfig, get_review_loop_from_config
 from sweagent.environment.swe_env import SWEEnv
 from sweagent.exceptions import ContextWindowExceededError, CostLimitExceededError, FormatError
 from sweagent.tools.parsing import (
     ThoughtActionParser,
 )
 from sweagent.tools.tools import ToolConfig, ToolHandler
-from sweagent.types import AgentInfo, AgentRunResult, History, StepOutput, Trajectory, TrajectoryStep
+from sweagent.types import AgentInfo, AgentRunResult, History, ReviewSubmission, StepOutput, Trajectory, TrajectoryStep
 from sweagent.utils.config import _convert_paths_to_abspath, _strip_abspath_from_dict
 from sweagent.utils.jinja_warnings import _warn_probably_wrong_jinja_syntax
 from sweagent.utils.log import get_logger
@@ -115,6 +116,7 @@ class AgentConfig(BaseModel):
     """Maximum number of times to requery the model after an error, such as a
     formatting error, a blocked action, or a bash syntax error.
     """
+    review_loop: ReviewLoopConfig | None = None
 
     # pydantic config
     model_config = ConfigDict(extra="forbid")
@@ -146,6 +148,7 @@ class Agent:
         name: str = "main",
         _catch_errors: bool = True,
         _always_require_zero_exit_code: bool = False,
+        review_loop_config: ReviewLoopConfig | None = None,
     ):
         """The agent handles the behaviour of the model and how it interacts with the environment.
 
@@ -160,7 +163,7 @@ class Agent:
         self.history_processors = history_processors
         self.max_requeries = max_requeries
         self.logger = get_logger("swea-agent", emoji="🤠")
-
+        self.review_loop_config = review_loop_config
         # Set in run method
         self._env: SWEEnv | None = None
         self._problem_statement: ProblemStatement | ProblemStatementConfig | None = None
@@ -195,6 +198,7 @@ class Agent:
             history_processors=config.history_processors,
             model=model,
             max_requeries=config.max_requeries,
+            review_loop_config=config.review_loop,
         )
 
     def add_hook(self, hook: AbstractAgentHook) -> None:
@@ -862,13 +866,6 @@ class Agent:
         self._chook.on_step_done(step=step_output, info=self.info)
         return step_output
 
-    def _should_attempt_retry(self, step_output: StepOutput) -> bool:
-        if step_output.exit_status in ["exit_cost"]:
-            return False
-        if self.model.config.name in ["human", "human_thought"] and step_output.exit_status in ["exit_command"]:
-            return False
-        return True
-
     def run(
         self,
         env: SWEEnv,
@@ -888,15 +885,19 @@ class Agent:
 
         # Run action/observation loop
         self._chook.on_run_start()
+        review_loop = get_review_loop_from_config(self.review_loop_config, problem_statement, self.model)
         step_output = StepOutput()
         while not step_output.done:
             step_output = self.step()
             self.save_trajectory()
-            if step_output.done and not step_output.submission and self._should_attempt_retry(step_output):
-                assert self._env is not None
-                self.logger.warning("No submission found in the trajectory. Going for a new attempt.")
-                self.setup_attempt(hard_reset=True)
-                step_output.done = False
+            if step_output.done:
+                if review_loop is not None:
+                    review_loop.on_submit(ReviewSubmission(trajectory=self.trajectory, info=self.info))
+                    self.info["review"] = review_loop.reviews[-1].to_dict()
+                    if review_loop.retry():
+                        assert self._env is not None
+                        self.setup_attempt(hard_reset=True)
+                        step_output.done = False
         self._chook.on_run_done(trajectory=self.trajectory, info=self.info)
 
         self.logger.info("Trajectory saved to %s", self.traj_path)

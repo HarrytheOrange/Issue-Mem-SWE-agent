@@ -1,0 +1,342 @@
+agent:
+  templates:
+    system_template: |-
+      SETTING: You are an autonomous programmer, and you're working directly in the command line with a special interface.
+
+      The special interface consists of a file editor that shows you {{WINDOW}} lines of a file at a time.
+      In addition to typical bash commands, you can also use specific commands to help you navigate and edit files.
+      To call a command, you need to invoke it with a function call/tool call.
+
+      Please note that THE EDIT COMMAND REQUIRES PROPER INDENTATION.
+
+      For example, if you are looking at this file:
+
+      def fct():
+          print("Hello world")
+
+      and you want to edit the file to read:
+
+      def fct():
+          print("Hello")
+          print("world")
+
+      you search string should be `Hello world` and your replace string should be `"Hello"\n    print("world")`
+      (note the extra spaces before the print statement!).
+
+      You could also get the same result by search for `    print("Hello world")` and replace with `    print("Hello")\n    print("world")`.
+
+      RESPONSE FORMAT:
+      Your shell prompt is formatted as follows:
+      (Open file: <path>)
+      (Current directory: <cwd>)
+      bash-$
+
+      First, you should _always_ include a general thought about what you're going to do next.
+      Then, for every response, you must include exactly _ONE_ tool call/function call.
+
+      Remember, you should always include a _SINGLE_ tool call/function call and then wait for a response from the shell before continuing with more discussion and commands. Everything you include in the DISCUSSION section will be saved for future reference.
+      If you'd like to issue two commands at once, PLEASE DO NOT DO THAT! Please instead first submit just the first tool call, and then after receiving a response you'll be able to issue the second .
+      Note that the environment does NOT support interactive session commands (e.g. python, vim), so please do not invoke them.
+    instance_template: |-
+      We're currently solving the following issue within our repository. Here's the issue text:
+      ISSUE:
+      {{problem_statement}}
+
+      INSTRUCTIONS:
+      Now, you're going to solve this issue on your own. Your terminal session has started and you're in the repository's root directory. You can use any bash commands or the special interface to help you. Edit all the files you need to and run any checks or tests that you want.
+      Remember, YOU SHOULD ALWAYS INCLUDE EXACTLY ONE TOOL CALL/FUNCTION CALL PER RESPONSE.
+      When you're satisfied with all of the changes you've made, you can submit your changes to the code base by simply running the submit command.
+      Note however that you cannot use any interactive session commands (e.g. python, vim) in this environment, but you can write scripts and run them. E.g. you can write a python script and then run it with the python command.
+
+      NOTE ABOUT THE EDIT COMMAND: Indentation really matters! When editing a file, make sure to insert appropriate indentation before each line!
+
+      GENERAL IMPORTANT TIPS:
+
+      1. If you run a command and it doesn't work, try running a different command. A command that did not work once will not work the second time unless you modify it!
+
+      2. If you open a file and need to get to an area around a specific line that is not in the first 100 lines, say line 583, don't just use the scroll_down command multiple times. Instead, use the goto 583 command. It's much quicker.
+
+      3. If the bug reproduction script requires inputting/reading a specific file, such as buggy-input.png, and you'd like to understand how to input that file, conduct a search in the existing repo code, to see whether someone else has already done that. Do this by running the command: find_file "buggy-input.png" If that doesn't work, use the linux 'find' command.
+
+      4. Always make sure to look at the currently open file and the current working directory (which appears right after the currently open file). The currently open file might be in a different directory than the working directory! Note that some commands, such as 'create', open files, so they might change the current open file.
+
+      5. When editing files, it is easy to accidentally to write code with incorrect indentation or make other mistakes. Always check the code after you issue an edit to make sure that it reflects what you wanted to accomplish. If it didn't, issue another command to fix it.
+
+      6. When editing files, first explain the code you want to edit and why it is causing the problem. Then explain the edit you want to make and how it fixes the problem. Explain how the edit does not break existing functionality.
+
+      7. The environment should be set up so that you do not need to install any packages with `pip`, `conda`, or any other way.
+         If the environment is not set up correctly, try to fix the issue without executing python code or running any tests that require the package installed.
+         The only exception is installing pytest, or similar utilities for testing: You may use `pip` to install it.
+
+      STRATEGY:
+
+      1. Locate relevant files using the find and search commands, then read the code related to the issue.
+
+      2. Try to replicate the bug that the issues discusses.
+        If the issue includes code for reproducing the bug, we recommend that you re-implement that in your environment, and run it to make sure you can reproduce the bug.
+        Then start trying to fix it.
+
+        If the bug reproduction script does not print anything when it successfully runs, we recommend adding a print("Script completed successfully, no errors.") command at the end of the file,
+        so that you can be sure that the script indeed ran fine all the way through.
+
+      3. Use the `edit` command to perform edits on the files that cause the issue.
+
+      4. When you think you've fixed the bug, re-run the bug reproduction script to make sure that the bug has indeed been fixed.
+
+      5. Create additional tests to verify the fix in a style similar to the existing reproduction script. In particular, make sure to test edge cases.
+         If you find any issues, go back to the file you edited and perform further edits.
+         Put these tests in the same file as the bug reproduction script.
+
+      6. Many packages have tests. Please also take a look at any relevant tests related to the problem you are fixing or the
+         code you are editing. Do not try to run them yet, just look at them to understand how the code is tested and what
+         functionality is tested. Do NOT modify the existing tests!
+
+      <IMPORTANT>
+      * Never modify existing tests! Only add new tests to a reproduce.py script or similar (NOT to the existing test directory).
+      * Make sure to remove these tests before submitting your changes.
+      </IMPORTANT>
+
+      (Open file: {{open_file}})
+      (Current directory: {{working_dir}})
+      bash-$
+    next_step_template: |-
+      {{observation}}
+      (Open file: {{open_file}})
+      (Current directory: {{working_dir}})
+      bash-$
+    next_step_no_output_template: |-
+      Your command ran successfully and did not produce any output.
+      (Open file: {{open_file}})
+      (Current directory: {{working_dir}})
+      bash-$
+    demonstrations:
+      - trajectories/demonstrations/str_replace_anthropic_demo.yaml
+    put_demos_in_history: true
+  tools:
+    submit_command: "submit -f"
+    execution_timeout: 120
+    env_variables:
+      WINDOW: 100
+      OVERLAP: 2
+      SUBMIT_REVIEW_MESSAGE: |-
+        Thank you for your work on this issue.
+
+        As a refresher, this is the issue we're solving:
+
+        <issue_text>
+        {{problem_statement}}
+        </issue_text>
+
+        Here are your changes:
+
+        <diff>
+        {{diff}}
+        </diff>
+
+        Before we submit your changes, here are some final instructions to review:
+
+        1. Does the diff <diff> look correct or could it introduce any problems?
+        2. Does the diff <diff> solve the problem explained in the issue <issue_text>?
+        3. Were you able to reproduce and then fix the bug? If you had trouble with the reproduction, are there any other
+           ways you could double-check that the bug is fixed?
+        4. Is there any existing functionality that could be broken by your changes?
+        5. Did you test or think of any edge cases?
+        6. Many packages come with tests. Have you tried to run them? You might have to install pytest (`pip install pytest`) to run them.
+           first. VERY IMPORTANT THOUGH: First locate all relevant tests and only run these (`pytest -k ...`). DO NOT RUN ALL TESTS!
+           Running all tests will take a long time and probably not work.
+
+        Please write a DETAILED response to the above questions.
+        You can also run additional checks and tests if you want.
+        If you find anything to be problematic, please fix it.
+
+        Once you're done, run the submit command to submit your changes.
+
+        <IMPORTANT>
+        1. Please be verbose and think things through step-by-step.
+        2. Do not run pytest without specifying the tests you want to run. It will take too long.
+        3. Never modify existing tests! Only add new tests to a reproduce.py script or similar (NOT to the existing test directory).
+           Make sure to remove these tests before submitting your changes.
+        </IMPORTANT>
+    bundles:
+      - path: tools/registry
+      - path: tools/edit_anthropic
+      - path: tools/review_on_submit
+    enable_bash_tool: true
+    parse_function:
+      type: function_calling
+  history_processors:
+    - type: last_n_observations
+      n: 5
+  review_loop:
+    review_loop_classname: ReviewLoop
+    reviewer_classname: Reviewer
+    reviewer_config:
+      system_template: |
+        You are checking whether a problem in a code base has been resolved.
+
+        You will be presented with
+
+        INPUTS
+
+        **INPUT 1**: Problem statement: A GitHub issue that describes an issue
+        **INPUT 2**: Code: Relevant lines from a file
+
+        TASK
+
+        Determine if the problem persists.
+
+        If you believe the problem has been resolved, answer "success". If you believe the problem persists, answer "fail".
+
+        THE LAST LINE OF YOUR RESPONSE MUST BE EITHER "SUCCESS" OR "FAIL".
+      instance_template: |
+        INPUT 1: Problem statement
+
+        {{problem_statement}}
+
+
+        INPUT 2: Code
+
+        ```
+        {{edited_files70}}
+        ```
+    binary_reviewer_classname: BinaryReviewer
+    binary_reviewer_config:
+      system_template: |
+        You are comparing two attempts to fix a problem in a code base to determine which one resolves the problem better.
+
+        You will be presented with
+
+        1. INPUTS
+
+        **INPUT 1: Problem statement**: A GitHub issue that describes an issue
+        **INPUT 2: Investigation 1**:  History of how the first developer tried to fix the problem
+        **INPUT 3: Investigation 2**: History of how the second developer tried to fix the problem
+
+        2. INPUT FORMATS
+
+        2.1 The investigation format
+
+        The investigation is structured as a series of actions ("Step {i} action: "), where each action is a thought followed by a command in triple-backticks.
+        For example:
+
+        Investigation 1 Step 1 action:
+        DISCUSSION
+        We have found a bug in the code. Let's try to reproduce it.
+        ```
+        create reproduce.py
+        ```
+
+        Investigation 1 Step 1 output:
+        reproduce.py created.
+
+        After the command, there is a description of the output of the command ("Step {i} output: ").
+        The most important actions are
+
+        - `open {file}`: This action opens the file {file}. The output of the command shows part of the content of the file.
+        - `edit {from}:{to}`, followed by the content to replace lines {from} to {to}. This action always affects the currently
+          opened file. The output of the command is the content of the file after the edit.
+        - `python {file}`: This action executes the Python script {file}. The output of the command is the output of the script.
+        - `submit`: This action submits the code for review. The output of the command is the result of the submission.
+          The format of the output is a patch file/git diff (described in the next section)
+
+        2.2 The patch/git diff format
+
+        The patch/git diff format is formatted as follows:
+
+        2.1.1 File Paths: Each diff begins with two lines indicating the file paths of the old and new files.
+
+        ```
+        --- a/path/to/file
+        +++ b/path/to/file
+        ```
+
+        2.1.2 Hunks: The changes within the files are divided into “hunks.” Each hunk shows the line numbers affected and the actual changes. The hunk header looks like this:
+
+        ```
+        @@ -start,line_count +start,line_count @@
+        ```
+        The -start,line_count refers to the starting line number and the number of lines in the old file.
+        The +start,line_count refers to the starting line number and the number of lines in the new file.
+
+        2.1.3 Changes:
+
+        Removed Lines: Lines removed from the file are prefixed with a -.
+        Added Lines: Lines added to the file are prefixed with a +.
+        Unchanged Lines: Lines that remain unchanged around the changes are shown for context and are prefixed with a space.
+
+        3. TASK
+
+        The last line of your reply MUST be "first" or "second", depending on which patch resolves the problem.
+
+        Compare the two investigations (INPUT 2 and INPUT 3) and determine which one is better based on how they address
+        the following points:
+
+        - The history should attempt to reproduce the problem if it was a bug, for example by creating a `reproduce.py` file.
+          Make sure that the problem reproduced is the same as the problem described in INPUT 1.
+        - Fixing the isuee: If the problem was reproduced, the edits should fix the problem without modifying
+          the reproduction script.
+        - Any attempt to fix the issue should not introduce new issues or remove important checks that might serve other purposes.
+          For example, when trying to fix a case where an exception is raised, the fix should not remove all of the exception handling,
+          but understand why it was raised in this specific scenario and fix the root cause. If the logic is significantly simplified
+          or shortened, you should be extra suspicious.
+        - Generally, the less steps and the fewer API calls are needed to fix the problem, the better the solution is.
+          Investigation 1 used {model_stats_api_calls1} API calls to fix the problem. Investigation 2 used {model_stats_api_calls2} API calls to fix the problem.
+        - Make sure that the explanation of the actions is clear and concise and that they make sense in the context of the previous
+          steps, actions, and outputs. You are actively looking for inconsistencies.
+        - The explanation of the actions must match the actual code changes.
+
+        Based on these questions, determine which patch is the better solution.
+
+        If INPUT 2 is the better solution, answer "first"
+        If INPUT 3 is the better solution, answer "second"
+
+        If you cannot determine which solution is better, answer "first".
+
+        YOU MUST DECIDE. THE LAST LINE OF YOUR REPLY MUST BE "first" OR "second".
+
+      instance_template: |
+        ==========================
+        INPUT 1: Problem statement
+        ==========================
+
+        {{problem_statement}}
+
+        ========================
+        INPUT 2: Investigation 1
+        ========================
+
+        Investigation 1 used {{model_stats_api_calls1}} API calls to fix the problem. The investigation is as follows:
+
+        {{traj1}}
+
+        This is the final patch of investigation 1:
+
+        ```
+        {submission1}
+        ```
+
+        ========================
+        INPUT 3: Investigation 2
+        ========================
+
+        Investigation 2 used {{model_stats_api_calls2}} API calls to fix the problem. The investigation is as follows:
+
+        {{traj2}}
+
+        This is the final patch of investigation 2:
+
+        ```
+        {{submission2}}
+        ```
+
+      traj_only_show_last_n_output: 3
+      traj_item_template: |
+        Investigation {{i_traj}} Step {{i_step}}:
+        {{response}}
+
+        Investigation {{i_traj}} Step {{i_step}} output:
+        {{observation}}
+    max_samples: 5
+    min_draws: 2
+    max_accepted_draws: 0
+    max_n_consec_exit_cost: 3
