@@ -18,6 +18,7 @@ from rich.panel import Panel
 from sweagent import CONFIG_DIR
 from sweagent.types import AgentInfo, AgentRunResult
 from sweagent.utils.log import get_logger
+from sweagent.utils.serialization import merge_nested_dicts
 
 
 def _shorten_strings(data, *, max_length=30):
@@ -331,7 +332,7 @@ class BasicCLI:
                 Panel.fit(
                     "[red][bold]Merged configuration\n[/bold]"
                     "This is the merged configuration that was used to instantiate the config object[/red]\n\n"
-                    + yaml.dump(_shorten_strings(config_merged | cl_options_dict))
+                    + yaml.dump(_shorten_strings(merge_nested_dicts(config_merged, cl_options_dict)))
                 )
             )
             rich_print(

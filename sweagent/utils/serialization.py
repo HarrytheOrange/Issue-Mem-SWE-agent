@@ -31,3 +31,12 @@ def _yaml_serialization_with_linebreaks(data: Any) -> str:
     buffer = io.StringIO()
     yaml.dump(data, buffer)
     return buffer.getvalue()
+
+
+def merge_nested_dicts(d1: dict, d2: dict) -> dict:
+    for key, value in d2.items():
+        if isinstance(value, dict):
+            d1[key] = merge_nested_dicts(d1.get(key, {}), value)
+        else:
+            d1[key] = value
+    return d1
