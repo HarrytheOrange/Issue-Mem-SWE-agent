@@ -27,7 +27,7 @@ from sweagent.agent.models import (
     get_model,
 )
 from sweagent.agent.problem_statement import ProblemStatement, ProblemStatementConfig
-from sweagent.agent.reviewer import ReviewLoopConfig, get_review_loop_from_config
+from sweagent.agent.reviewer import AbstractReviewLoop, ReviewLoopConfig, get_review_loop_from_config
 from sweagent.environment.swe_env import SWEEnv
 from sweagent.exceptions import ContextWindowExceededError, CostLimitExceededError, FormatError
 from sweagent.tools.parsing import (
@@ -171,6 +171,7 @@ class Agent:
 
         #: Number of attempts to solve the issue when using a review loop
         self._i_attempt: int = 0
+        self._rloop: AbstractReviewLoop | None = None
 
         #: The following three attributes collect the information about how the agent
         #: solved the problem.
@@ -264,6 +265,14 @@ class Agent:
 
         return messages
 
+    @property
+    def attempt_model_stats(self) -> InstanceStats:
+        """Model stats of the current attempt"""
+        total_stats = self.model.stats
+        for attempt_idx in range(self._i_attempt):
+            total_stats -= InstanceStats.model_validate(self._info_by_attempt[attempt_idx]["model_stats"])  # type: ignore
+        return total_stats
+
     # Methods
     # -------
 
@@ -282,9 +291,6 @@ class Agent:
         formatting the system message and adding demonstrations to the history.
 
         This method is called by `self.run`.
-
-        Args:
-            instance_args: Arguments for the instance
         """
         self._problem_statement = problem_statement
         self._env = env
@@ -298,8 +304,10 @@ class Agent:
         self._trajectory_by_attempt = defaultdict(list)
         self._info_by_attempt = defaultdict(dict)  # type: ignore
         self._forwarded_vars = {}
-        # if self._rloop is not None:
-        #     self._forwarded_vars = self._rloop.get_forwarded_vars()
+        if self.review_loop_config is not None:
+            self._rloop = get_review_loop_from_config(self.review_loop_config, problem_statement, self.model)
+        if self._rloop is not None:
+            self._forwarded_vars = self._rloop.get_forwarded_vars()
         self._chook.on_tools_installation_started()
         self.tools.install(self._env)
         self.setup_attempt()
@@ -322,6 +330,7 @@ class Agent:
                 self.tools.install(self._env)
             else:
                 self._env.reset()
+        assert self._problem_statement is not None
         self._env.set_env_variables({"PROBLEM_STATEMENT": self._problem_statement.get_problem_statement()})
         self.add_system_message_to_history()
         self.add_demonstrations_to_history()
@@ -420,7 +429,12 @@ class Agent:
         message = "\n".join(messages)
 
         self.logger.info(f"🤖 MODEL INPUT\n{message}")
-        history_item = {"role": "user", "content": message, "agent": self.name, "message_type": "observation"}
+        history_item: dict[str, Any] = {
+            "role": "user",
+            "content": message,
+            "agent": self.name,
+            "message_type": "observation",
+        }
         if tool_call_ids:
             assert len(tool_call_ids) == 1, "This should be ensured by the FunctionCalling parse method"
             history_item["role"] = "tool"
@@ -493,10 +507,18 @@ class Agent:
             attempt_data["environment"] = self._env.name
             return attempt_data
 
-        data = {
-            **get_attempt_data(self._i_attempt),
-            "attempts": [get_attempt_data(i) for i in range(self._i_attempt + 1)],
-        }
+        if self._rloop is not None:
+            best_attempt_idx = self._rloop.get_best()
+            data = {
+                "attempts": [get_attempt_data(i) for i in range(self._i_attempt + 1)],
+                **get_attempt_data(best_attempt_idx),
+            }
+            data["info"]["model_stats"] = self.attempt_model_stats.model_dump()
+            data["extra_info"] = {"comparisons": [(a, b, comp.model_dump()) for a, b, comp in self._rloop.comparisons]}
+        else:
+            data = {
+                **get_attempt_data(0),
+            }
 
         assert self.traj_path is not None
         self.traj_path.write_text(json.dumps(data, indent=2))
@@ -885,16 +907,16 @@ class Agent:
 
         # Run action/observation loop
         self._chook.on_run_start()
-        review_loop = get_review_loop_from_config(self.review_loop_config, problem_statement, self.model)
         step_output = StepOutput()
         while not step_output.done:
             step_output = self.step()
             self.save_trajectory()
             if step_output.done:
-                if review_loop is not None:
-                    review_loop.on_submit(ReviewSubmission(trajectory=self.trajectory, info=self.info))
-                    self.info["review"] = review_loop.reviews[-1].to_dict()
-                    if review_loop.retry():
+                if self._rloop is not None:
+                    self._rloop.on_submit(ReviewSubmission(trajectory=self.trajectory, info=self.info))
+                    self.info["review"] = self._rloop.reviews[-1].model_dump()
+                    self.save_trajectory()
+                    if self._rloop.retry():
                         assert self._env is not None
                         self.setup_attempt(hard_reset=True)
                         step_output.done = False

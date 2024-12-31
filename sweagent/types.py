@@ -7,11 +7,9 @@ because of circular dependencies.
 from __future__ import annotations
 
 import copy
-from dataclasses import dataclass
 from typing import Any, Literal
 
 from pydantic import BaseModel
-from simple_parsing.helpers.serialization.serializable import FrozenSerializable
 from typing_extensions import TypedDict
 
 
@@ -92,8 +90,7 @@ class AgentInfo(TypedDict, total=False):
     swe_rex_hash: str
 
 
-@dataclass
-class ReviewSubmission:
+class ReviewSubmission(BaseModel):
     """Information that's passed to the reviewer"""
 
     #: Total trajectory (including several retries)
@@ -120,15 +117,13 @@ class ReviewSubmission:
         return out
 
 
-@dataclass(frozen=True)
-class ReviewerResult(FrozenSerializable):
+class ReviewerResult(BaseModel):
     accept: bool
     output: str
     messages: list[dict[str, str]]
 
 
-@dataclass(frozen=True)
-class BinaryReviewerResult(FrozenSerializable):
+class BinaryReviewerResult(BaseModel):
     choice: Literal[0, 1]
     output: str
     messages: list[dict[str, str]]

@@ -189,6 +189,11 @@ class InstanceStats(PydanticBaseModel):
             **{field: getattr(self, field) + getattr(other, field) for field in self.model_fields.keys()},
         )
 
+    def __sub__(self, other: InstanceStats) -> InstanceStats:
+        return InstanceStats(
+            **{field: getattr(self, field) - getattr(other, field) for field in self.model_fields.keys()},
+        )
+
 
 class AbstractModel(ABC):
     def __init__(self, config: PydanticBaseModel, tools: ToolConfig):

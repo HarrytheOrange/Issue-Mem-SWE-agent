@@ -89,7 +89,7 @@ class AbstractReviewLoop(ABC):
     @property
     @abstractmethod
     def model_stats(self) -> InstanceStats:
-        """Returns the API stats of the model (if any)"""
+        """Returns the API stats of the model"""
 
     @property
     @abstractmethod
@@ -251,7 +251,7 @@ class Reviewer(AbstractReviewer):
             accept = self.interpret(answer)
         accept_emoji = "✅" if accept else "❌"
         logger.info(f"{self.LOG_PREFIX}{accept_emoji}\n{answer}")
-        return ReviewerResult(accept, answer, messages=messages)
+        return ReviewerResult(accept=accept, output=answer, messages=messages)
 
 
 # todo: Couldn't I just replace the whole thing with Jinja templates?
@@ -331,7 +331,7 @@ class BinaryReviewer(AbstractBinaryReviewer):
             "problem_statement": instance.get_problem_statement(),
             **instance.get_extra_fields(),
         }
-        user_message = self._config.instance_template.format(
+        user_message = Template(self._config.instance_template).render(
             **ps_format_dict,
             **sub1.to_format_dict(suffix="1"),
             **sub2.to_format_dict(suffix="2"),
@@ -368,7 +368,7 @@ class BinaryReviewer(AbstractBinaryReviewer):
         # Use words because else confusion with 0-based vs 1-based indices
         choice_emoji = "first" if idx == 0 else "second"
         logger.info(f"{self.LOG_PREFIX}{choice_emoji}\n{answer}")
-        return BinaryReviewerResult(idx, output=answer, messages=messages)  # type: ignore
+        return BinaryReviewerResult(choice=idx, output=answer, messages=messages)  # type: ignore
 
 
 class GraveToCradle(AbstractGraveToCradle):
@@ -391,7 +391,7 @@ class GraveToCradle(AbstractGraveToCradle):
             info = submissions[idx].info
             if not info.get("submission"):
                 continue
-            submission = info["submission"]
+            submission = info["submission"]  # type: ignore
             review = reviews[idx].output
             msg_lines.append(f"Submission {i+1}:\n\n{submission}\n\nReview {i+1}:\n\n{review}")
         msg = "\n\n".join(msg_lines)
