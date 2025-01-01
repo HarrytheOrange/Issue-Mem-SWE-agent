@@ -206,6 +206,11 @@ class AbstractModel(ABC):
     @abstractmethod
     def query(self, history: History, action_prompt: str = "> ") -> dict: ...
 
+    @property
+    def instance_cost_limit(self) -> float:
+        """Cost limit for the model. Returns 0 if there is no limit."""
+        return 0
+
 
 def _handle_raise_commands(action: str) -> None:
     if action == "raise_runtime":
@@ -442,6 +447,11 @@ class LiteLLMModel(AbstractModel):
         self.model_max_output_tokens = litellm.model_cost.get(self.config.name, {}).get("max_output_tokens")
         self.lm_provider = litellm.model_cost[self.config.name]["litellm_provider"]
         self.logger = get_logger("swea-lm", emoji="🤖")
+
+    @property
+    def instance_cost_limit(self) -> float:
+        """Cost limit for the model. Returns 0 if there is no limit."""
+        return self.config.per_instance_cost_limit
 
     def _update_stats(self, *, input_tokens: int, output_tokens: int, cost: float) -> None:
         with GLOBAL_STATS_LOCK:

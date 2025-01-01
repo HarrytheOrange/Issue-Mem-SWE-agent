@@ -340,3 +340,5 @@ agent:
     min_draws: 2
     max_accepted_draws: 0
     max_n_consec_exit_cost: 3
+    attempt_cost_limit: 2
+    min_budget_for_new_attempt: 1

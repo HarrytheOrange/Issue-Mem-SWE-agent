@@ -38,3 +38,7 @@ class InstanceCostLimitExceededError(CostLimitExceededError):
 
 class TotalCostLimitExceededError(CostLimitExceededError):
     """Raised when we exceed the total cost limit"""
+
+
+class AttemptCostLimitExceededError(CostLimitExceededError):
+    """Raised when we exceed the cost limit for an attempt"""

@@ -13,6 +13,7 @@ from pydantic import BaseModel
 
 from sweagent.agent.models import AbstractModel, InstanceStats
 from sweagent.agent.problem_statement import ProblemStatement
+from sweagent.exceptions import AttemptCostLimitExceededError
 from sweagent.types import BinaryReviewerResult, History, ReviewerResult, ReviewSubmission, Trajectory, TrajectoryStep
 from sweagent.utils.log import get_logger
 
@@ -74,22 +75,21 @@ class AbstractReviewLoop(ABC):
     the issue and how it selects the best solution.
     """
 
-    @abstractmethod
     def retry(self) -> bool:
         """Returns True if the agent should retry solving the issue"""
+        return False
 
-    @abstractmethod
     def on_submit(self, submission: ReviewSubmission) -> None:
         """Called when the agent submits a solution"""
+
+    def on_model_query(self, attempt_stats: InstanceStats):
+        """Called before the model is queried. Can be used to implement
+        stop conditions based on attempt cost etc.
+        """
 
     @abstractmethod
     def get_best(self) -> int:
         """Returns the best solution"""
-
-    @property
-    @abstractmethod
-    def model_stats(self) -> InstanceStats:
-        """Returns the API stats of the model"""
 
     @property
     @abstractmethod
@@ -173,6 +173,10 @@ class ReviewLoopConfig(BaseModel):
     #: If set > 0 and there are more than this number of consecutive attempts
     #: with an 'exit cost' exit stats, the review loop will quit.
     max_n_consec_exit_cost: int = 0
+    #: Cost limit for attempt (<=0: no limit)
+    attempt_cost_limit: float = 0.0
+    #: Minimal $ that need to be left in order for us to start a new attempt
+    min_budget_for_new_attempt: float = 0.0
 
     def validate(self):
         """Checks config. Raises `ValueError` in case of misconfiguration"""
@@ -432,6 +436,9 @@ class ReviewLoop(AbstractReviewLoop):
         #: Number of consecutive exit cost submissions
         self._n_consec_exit_cost: int = 0
 
+    # Properties
+    # ----------
+
     @property
     def reviews(self) -> list[ReviewerResult]:
         return self._reviews
@@ -448,14 +455,17 @@ class ReviewLoop(AbstractReviewLoop):
     def _n_accepted(self) -> int:
         return sum([r.accept for r in self._reviews])
 
-    @property
-    def model_stats(self) -> InstanceStats:
-        return self._model.stats
+    # -------
 
     def on_submit(self, submission: ReviewSubmission) -> None:
         self._submissions.append(submission)
         self._review()
         self._compare()
+
+    def on_model_query(self, attempt_stats: InstanceStats):
+        if 0 < self._loop_config.attempt_cost_limit <= attempt_stats.instance_cost:
+            logger.info(f"{self.LOG_PREFIX}Exiting retry loop: Cost limit exceeded")
+            raise AttemptCostLimitExceededError()
 
     def _review(self) -> bool:
         review = self._reviewer.review(self._instance, self._submissions[-1])
@@ -517,6 +527,15 @@ class ReviewLoop(AbstractReviewLoop):
             logger.info(
                 f"{self.LOG_PREFIX}Exiting retry loop ({stat_str}): {max_n_exit_cost} exit cost attempts reached"
             )
+            return False
+
+        # Todo: Check if there's enough budget left for a new reasonable attempt
+        remaining_budget = self._model.instance_cost_limit - self._model.stats.instance_cost
+        if (
+            self._loop_config.min_budget_for_new_attempt > 0
+            and remaining_budget < self._loop_config.min_budget_for_new_attempt
+        ):
+            logger.info(f"{self.LOG_PREFIX}Exiting retry loop ({stat_str}): Not enough budget left for a new attempt")
             return False
 
         return True
