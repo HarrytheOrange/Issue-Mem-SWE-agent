@@ -237,23 +237,28 @@ class TrajectorySelectorScreen(ModalScreen[int]):
     """
 
 
-class LogViewerScreen(ModalScreen):
+class FileViewerScreen(ModalScreen):
     BINDINGS = [
         Binding("q,escape", "dismiss", "Back"),
         Binding("j,down", "scroll_down", "Scroll down"),
         Binding("k,up", "scroll_up", "Scroll up"),
     ]
 
-    def __init__(self, log_path: Path):
+    def __init__(self, path: Path):
         super().__init__()
-        self.log_path = log_path
+        self.path = path
 
     def compose(self) -> ComposeResult:
         with VerticalScroll():
-            if self.log_path.exists():
-                yield Static(self.log_path.read_text())
+            if self.path.exists():
+                if self.path.suffix == ".traj":
+                    content_str = _yaml_serialization_with_linebreaks(json.loads(self.path.read_text()))
+                    syntax = Syntax(content_str, "yaml", theme="monokai", word_wrap=True)
+                    yield Static(syntax)
+                else:
+                    yield Static(self.path.read_text())
             else:
-                yield Static(f"No log file found at {self.log_path}")
+                yield Static(f"No file found at {self.path}")
 
     def action_scroll_down(self) -> None:
         vs = self.query_one(VerticalScroll)
@@ -281,6 +286,7 @@ class TrajectoryInspectorApp(App):
         Binding("H", "previous_traj", "Traj--"),
         Binding("t", "show_traj_selector", "Select Traj"),
         Binding("o", "show_log", "View Log"),
+        Binding("r", "show_full", "Show full"),
     ]
 
     CSS = """
@@ -397,8 +403,14 @@ class TrajectoryInspectorApp(App):
     async def action_show_log(self) -> None:
         current_traj = self.available_traj_paths[self.trajectory_index]
         log_path = current_traj.with_suffix(".debug.log")
-        log_viewer = LogViewerScreen(log_path)
+        log_viewer = FileViewerScreen(log_path)
         await self.push_screen(log_viewer)
+
+    async def action_show_full(self) -> None:
+        """Show full yaml of trajectory file"""
+        current_traj = self.available_traj_paths[self.trajectory_index]
+        viewer = FileViewerScreen(current_traj)
+        await self.push_screen(viewer)
 
 
 def main(args: list[str] | None = None):
