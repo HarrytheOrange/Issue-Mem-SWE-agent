@@ -12,8 +12,9 @@ class SetStatusAgentHook(AbstractAgentHook):
         self._cost = 0.0
         self._i_attempt = 0
 
-    def on_setup_done(self):
+    def on_setup_attempt(self):
         self._i_attempt += 1
+        self._i_step = 0
 
     def _update(self, message: str):
         self._callable(self._id, message)

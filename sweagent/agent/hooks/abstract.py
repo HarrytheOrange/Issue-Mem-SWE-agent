@@ -29,6 +29,8 @@ class AbstractAgentHook:
 
     def on_run_done(self, *, trajectory: Trajectory, info: AgentInfo): ...
 
+    def on_setup_attempt(self): ...
+
     def on_model_query(self, *, messages: list[dict[str, str]], agent: str):
         """Actually query the model with the complete history."""
 
@@ -93,6 +95,10 @@ class CombinedAgentHook(AbstractAgentHook):
     def on_run_done(self, *, trajectory: Trajectory, info: AgentInfo):
         for hook in self.hooks:
             hook.on_run_done(trajectory=trajectory, info=info)
+
+    def on_setup_attempt(self):
+        for hook in self.hooks:
+            hook.on_setup_attempt()
 
     def on_model_query(self, *, messages: list[dict[str, str]], agent: str):
         for hook in self.hooks:

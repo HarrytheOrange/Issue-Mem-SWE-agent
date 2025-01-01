@@ -316,6 +316,7 @@ class Agent:
 
     def setup_attempt(self, hard_reset: bool = False) -> None:
         """Setup the agent for a new attempt."""
+        self._chook.on_setup_attempt()
         self._i_attempt += 1
         self.info = AgentInfo()
         self.info["swe_agent_hash"] = get_agent_commit_hash()
