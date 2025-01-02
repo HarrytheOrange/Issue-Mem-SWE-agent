@@ -3,6 +3,7 @@ import collections
 import copy
 import json
 import os
+import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -242,6 +243,7 @@ class FileViewerScreen(ModalScreen):
         Binding("q,escape", "dismiss", "Back"),
         Binding("j,down", "scroll_down", "Scroll down"),
         Binding("k,up", "scroll_up", "Scroll up"),
+        Binding("e", "open_editor", "Open in $EDITOR"),
     ]
 
     def __init__(self, path: Path):
@@ -250,13 +252,24 @@ class FileViewerScreen(ModalScreen):
 
     def compose(self) -> ComposeResult:
         with VerticalScroll():
+            text = self.path.read_text()
+            truncated = False
+            if len(text) > 10_000:
+                # More than ~1000 lines
+                self.app.notify(
+                    "File is too large to display. Showing first 10k chars. Use e to open in editor.",
+                    severity="warning",
+                )
+                text = text[:10_000]
+                truncated = True
             if self.path.exists():
-                if self.path.suffix == ".traj":
-                    content_str = _yaml_serialization_with_linebreaks(json.loads(self.path.read_text()))
+                if self.path.suffix == ".traj" and not truncated:
+                    # Syntax highlighting breaks if we truncate
+                    content_str = _yaml_serialization_with_linebreaks(json.loads(text))
                     syntax = Syntax(content_str, "yaml", theme="monokai", word_wrap=True)
                     yield Static(syntax)
                 else:
-                    yield Static(self.path.read_text())
+                    yield Static(text)
             else:
                 yield Static(f"No file found at {self.path}")
 
@@ -267,6 +280,16 @@ class FileViewerScreen(ModalScreen):
     def action_scroll_up(self) -> None:
         vs = self.query_one(VerticalScroll)
         vs.scroll_to(y=vs.scroll_target_y - 15)
+
+    def action_open_editor(self) -> None:
+        editor = os.environ.get("EDITOR")
+        if not editor:
+            self.app.notify("No editor found in $EDITOR environment variable, cannot perform action", severity="error")
+            return
+        try:
+            subprocess.run([editor, str(self.path)], check=True)
+        except subprocess.CalledProcessError:
+            pass
 
     CSS = """
     ScrollableContainer {
