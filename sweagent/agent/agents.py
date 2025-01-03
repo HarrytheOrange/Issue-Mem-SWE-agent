@@ -50,6 +50,19 @@ class TemplateConfig(BaseModel):
     instance_template: str = ""
     next_step_template: str = "Observation: {{observation}}"
 
+    next_step_truncated_observation_template: str = (
+        "Observation: {{observation}}<response clipped>"
+        "<NOTE>Observations should not exceeded {{max_observation_length}} characters. "
+        "{{elided_chars}} characters were elided. Please try a different command that produces less output "
+        "or use head/tail/grep/redirect the output to a file. Do not use interactive pagers.</NOTE>"
+    )
+    """Message template for when the agent's observation was truncated.
+    Available variables: `observation`, `max_observation_length`, `elided_chars`
+    """
+
+    max_observation_length: int = 100_000
+    """Truncate observation to this length if it exceeds it."""
+
     next_step_no_output_template: str = None  # type: ignore
     """Template for the next step when the last output was empty. Defaults to next_step_template."""
 
@@ -406,7 +419,7 @@ class Agent:
         )
 
     def _add_templated_messages_to_history(
-        self, templates: list[str], tool_call_ids: list[str] | None = None, **kwargs: str
+        self, templates: list[str], tool_call_ids: list[str] | None = None, **kwargs: str | int | None
     ) -> None:
         """Populate selected template(s) with information (e.g., issue, arguments, state)
         and add to history.
@@ -456,15 +469,22 @@ class Agent:
             },
         )
 
-        if step.observation is None or step.observation.strip() == "":
+        elided_chars = 0
+        if step.observation.strip() == "":
             # Show no output template if observation content was empty
             templates = [self.templates.next_step_no_output_template]
+        elif len(step.observation) > self.templates.max_observation_length:
+            templates = [self.templates.next_step_truncated_observation_template]
+            elided_chars = len(step.observation) - self.templates.max_observation_length
+            step.observation = step.observation[: self.templates.max_observation_length]
         else:
             # Show standard output template if there is observation content
             templates = [self.templates.next_step_template]
         self._add_templated_messages_to_history(
             templates,
             observation=step.observation,
+            elided_chars=elided_chars,
+            max_observation_length=self.templates.max_observation_length,
             tool_call_ids=step.tool_call_ids,
             **step.state,
         )
