@@ -14,10 +14,16 @@ from textual.containers import Container, Vertical, VerticalScroll
 from textual.screen import ModalScreen
 from textual.widgets import Footer, Header, Input, ListItem, ListView, Static
 
+from sweagent.utils.files import load_file
 from sweagent.utils.serialization import _yaml_serialization_with_linebreaks
 
 
 def _move_items_top(d: dict, keys: list[str]) -> dict:
+    """Reorder items in a dictionary.
+
+    The first keys will be those specified in `keys`, the rest will
+    be in the same order as in the original dictionary.
+    """
     new_d = {}
     for key in keys:
         if key in d:
@@ -39,18 +45,22 @@ class TrajectoryViewer(Static):
         Binding("k,up", "scroll_up", "Scroll up"),
     ]
 
-    def __init__(self, path: Path, title: str, overview_stats: dict):
+    def __init__(self, path: Path, title: str, overview_stats: dict, *, gold_patch: str | None = None):
+        """View a single trajectory."""
         super().__init__()
         self.current_index = -1
         self.trajectory = json.loads(path.read_text())
         self.show_full = False
         self.title = title
         self.overview_stats = overview_stats
+        self.gold_patch = gold_patch
 
-    def load_trajectory(self, path: Path, title: str, overview_stats: dict):
+    def load_trajectory(self, path: Path, title: str, overview_stats: dict, *, gold_patch: str | None = None):
+        """Load a new trajectory and update the viewer."""
         print("Loading", path)
         self.trajectory = json.loads(path.read_text())
         self.title = title
+        self.gold_patch = gold_patch
         self.update_content()
 
     def compose(self) -> ComposeResult:
@@ -64,7 +74,7 @@ class TrajectoryViewer(Static):
     def n_steps(self) -> int:
         return len(self.trajectory["trajectory"])
 
-    def _show_full(self, item: dict) -> None:
+    def _show_step_yaml(self, item: dict) -> None:
         """Show full yaml of trajectory item"""
         content_str = _yaml_serialization_with_linebreaks(
             _move_items_top(item, ["thought", "action", "observation", "response", "execution_time"])
@@ -74,7 +84,7 @@ class TrajectoryViewer(Static):
         content.update(syntax)  # type: ignore
         self.app.sub_title = f"{self.title} - Step {self.current_index + 1}/{self.n_steps} - Full View"
 
-    def _show_overview(self, item: dict) -> None:
+    def _show_step_simple(self, item: dict) -> None:
         # Simplified view - show action and observation as plain text
         thought = item.get("thought", "")
         action = item.get("action", "")
@@ -89,7 +99,8 @@ class TrajectoryViewer(Static):
     def _show_info(self):
         info = copy.deepcopy(self.trajectory["info"])
         info["result"] = self.overview_stats["result"]
-        info = _move_items_top(info, ["result", "exit_status", "model_stats", "submission"])
+        info["gold_patch"] = self.gold_patch
+        info = _move_items_top(info, ["result", "exit_status", "model_stats", "submission", "gold_patch"])
         syntax = Syntax(_yaml_serialization_with_linebreaks(info), "yaml", theme="monokai", word_wrap=True)
         content = self.query_one("#content")
         content.update(syntax)  # type: ignore
@@ -104,9 +115,9 @@ class TrajectoryViewer(Static):
         item = self.trajectory["trajectory"][self.current_index]
 
         if self.show_full:
-            return self._show_full(item)
+            return self._show_step_yaml(item)
 
-        return self._show_overview(item)
+        return self._show_step_simple(item)
 
     def action_next_item(self) -> None:
         if self.current_index < self.n_steps:
@@ -330,7 +341,7 @@ class TrajectoryInspectorApp(App):
     }
     """
 
-    def __init__(self, input_path: str | Path):
+    def __init__(self, input_path: str | Path, data_path: Path | None = None):
         super().__init__()
         self.input_path = Path(input_path)
         if not self.input_path.exists():
@@ -343,6 +354,12 @@ class TrajectoryInspectorApp(App):
         self.trajectory_index = 0
         self.overview_stats = collections.defaultdict(dict)
         self._build_overview_stats()
+        self._data = load_file(data_path)
+
+    def get_gold_patch(self, instance_id: str) -> str | None:
+        if self._data is None:
+            return None
+        return self._data.get(instance_id, {}).get("patch", None)
 
     def _build_overview_stats(self):
         results_path = self.input_path / "results.json"
@@ -386,6 +403,7 @@ class TrajectoryInspectorApp(App):
             self.available_traj_paths[self.trajectory_index],
             self._get_viewer_title(self.trajectory_index),
             self.overview_stats[instance_id],
+            gold_patch=self.get_gold_patch(instance_id),
         )
 
     def _get_available_trajs(self) -> list[Path]:
@@ -444,6 +462,7 @@ def main(args: list[str] | None = None):
         default=os.getcwd(),
         nargs="?",
     )
+    parser.add_argument("-d", "--data_path", type=Path, help="Path to the data file to load gold patches from")
     parsed_args = parser.parse_args(args)
 
     app = TrajectoryInspectorApp(parsed_args.trajectory_path)

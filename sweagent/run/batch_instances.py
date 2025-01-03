@@ -1,11 +1,9 @@
-import json
 import random
 import re
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Literal
 
-import yaml
 from pydantic import BaseModel, Field
 from swerex.deployment.config import (
     DeploymentConfig,
@@ -18,6 +16,7 @@ from typing_extensions import Self
 from sweagent.agent.problem_statement import ProblemStatementConfig, TextProblemStatement
 from sweagent.environment.repo import GithubRepoConfig, LocalRepoConfig, PreExistingRepoConfig
 from sweagent.environment.swe_env import EnvironmentConfig
+from sweagent.utils.files import load_file
 from sweagent.utils.log import get_logger
 
 logger = get_logger("swea-config", emoji="🔧")
@@ -28,24 +27,6 @@ class AbstractInstanceSource(ABC):
 
     @abstractmethod
     def get_instance_configs(self) -> list[EnvironmentConfig]: ...
-
-
-def _load_file(path: Path) -> Any:
-    """Load files based on their extension."""
-    if not path.exists():
-        raise FileNotFoundError(path)
-    if path.is_dir():
-        from datasets import load_from_disk
-
-        return load_from_disk(path)
-    if path.suffix == ".json":
-        return json.loads(path.read_text())
-    if path.suffix == ".jsonl":
-        return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
-    if path.suffix == ".yaml":
-        return yaml.safe_load(path.read_text())
-    msg = f"Unsupported file extension: {path.suffix}"
-    raise NotImplementedError(msg)
 
 
 class BatchInstance(BaseModel):
@@ -199,7 +180,7 @@ class InstancesFromFile(BaseModel, AbstractInstanceSource):
     """Discriminator for (de)serialization/CLI. Do not change."""
 
     def get_instance_configs(self) -> list[BatchInstance]:
-        instance_dicts = _load_file(self.path)
+        instance_dicts = load_file(self.path)
         simple_instances = [SimpleBatchInstance.model_validate(instance_dict) for instance_dict in instance_dicts]
         instances = [instance.to_full_batch_instance(self.deployment) for instance in simple_instances]
         return _filter_batch_items(instances, filter_=self.filter, slice_=self.slice, shuffle=self.shuffle)
@@ -320,7 +301,7 @@ class ExpertInstancesFromFile(BaseModel, AbstractInstanceSource):
     """Discriminator for (de)serialization/CLI. Do not change."""
 
     def get_instance_configs(self) -> list[BatchInstance]:
-        instance_dicts = _load_file(self.path)
+        instance_dicts = load_file(self.path)
         instances = [BatchInstance.model_validate(instance_dict) for instance_dict in instance_dicts]
         return _filter_batch_items(instances, filter_=self.filter, slice_=self.slice, shuffle=self.shuffle)
 
