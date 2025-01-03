@@ -185,9 +185,14 @@ agent:
 
         Determine if the problem persists.
 
+        <IMPORTANT>You need to make a decision solely based on the inputs.
+        You cannot execute commands in this environment or use any tools.
+        You cannot ask for help or clarification.
+
         If you believe the problem has been resolved, answer "success". If you believe the problem persists, answer "fail".
 
         THE LAST LINE OF YOUR RESPONSE MUST BE EITHER "SUCCESS" OR "FAIL".
+        </IMPORTANT>
       instance_template: |
         INPUT 1: Problem statement
 
@@ -214,8 +219,6 @@ agent:
 
         2. INPUT FORMATS
 
-        2.1 The investigation format
-
         The investigation is structured as a series of actions ("Step {i} action: "), where each action is a thought followed by a command in triple-backticks.
         For example:
 
@@ -230,39 +233,6 @@ agent:
         reproduce.py created.
 
         After the command, there is a description of the output of the command ("Step {i} output: ").
-        The most important actions are
-
-        - `open {file}`: This action opens the file {file}. The output of the command shows part of the content of the file.
-        - `edit {from}:{to}`, followed by the content to replace lines {from} to {to}. This action always affects the currently
-          opened file. The output of the command is the content of the file after the edit.
-        - `python {file}`: This action executes the Python script {file}. The output of the command is the output of the script.
-        - `submit`: This action submits the code for review. The output of the command is the result of the submission.
-          The format of the output is a patch file/git diff (described in the next section)
-
-        2.2 The patch/git diff format
-
-        The patch/git diff format is formatted as follows:
-
-        2.1.1 File Paths: Each diff begins with two lines indicating the file paths of the old and new files.
-
-        ```
-        --- a/path/to/file
-        +++ b/path/to/file
-        ```
-
-        2.1.2 Hunks: The changes within the files are divided into “hunks.” Each hunk shows the line numbers affected and the actual changes. The hunk header looks like this:
-
-        ```
-        @@ -start,line_count +start,line_count @@
-        ```
-        The -start,line_count refers to the starting line number and the number of lines in the old file.
-        The +start,line_count refers to the starting line number and the number of lines in the new file.
-
-        2.1.3 Changes:
-
-        Removed Lines: Lines removed from the file are prefixed with a -.
-        Added Lines: Lines added to the file are prefixed with a +.
-        Unchanged Lines: Lines that remain unchanged around the changes are shown for context and are prefixed with a space.
 
         3. TASK
 
@@ -279,13 +249,19 @@ agent:
           For example, when trying to fix a case where an exception is raised, the fix should not remove all of the exception handling,
           but understand why it was raised in this specific scenario and fix the root cause. If the logic is significantly simplified
           or shortened, you should be extra suspicious.
-        - Generally, the less steps and the fewer API calls are needed to fix the problem, the better the solution is.
-          Investigation 1 used {model_stats_api_calls1} API calls to fix the problem. Investigation 2 used {model_stats_api_calls2} API calls to fix the problem.
         - Make sure that the explanation of the actions is clear and concise and that they make sense in the context of the previous
-          steps, actions, and outputs. You are actively looking for inconsistencies.
-        - The explanation of the actions must match the actual code changes.
+          steps, actions, and outputs. You are actively looking for inconsistencies (just because a comment claims something,
+          does not mean it is true).
 
         Based on these questions, determine which patch is the better solution.
+
+        <IMPORTANT>You need to make a decision solely based on the inputs.
+        You cannot execute additional commands in this environment or use any tools.
+        You cannot ask for help or clarification.
+
+        Please walk through history and the patches, and take note of differences and how they could impact the problem.
+
+        Then make a decision:
 
         If INPUT 2 is the better solution, answer "first"
         If INPUT 3 is the better solution, answer "second"
@@ -293,6 +269,7 @@ agent:
         If you cannot determine which solution is better, answer "first".
 
         YOU MUST DECIDE. THE LAST LINE OF YOUR REPLY MUST BE "first" OR "second".
+        </IMPORTANT>
 
       instance_template: |
         ==========================
