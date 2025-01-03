@@ -49,6 +49,7 @@ def get_cli():
             "b",
             "i",
             "I",
+            "extract-pred",
         ],
         nargs="?",
     )
@@ -107,6 +108,10 @@ def main(args: list[str] | None = None):
         from sweagent.run.inspector_cli import main as inspect_main
 
         inspect_main(remaining_args)
+    elif command == "extract-pred":
+        from sweagent.run.extract_pred import run_from_cli as extract_pred_main
+
+        extract_pred_main(remaining_args)
     else:
         msg = f"Unknown command: {command}"
         raise ValueError(msg)
