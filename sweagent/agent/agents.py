@@ -693,7 +693,8 @@ class Agent:
         step = StepOutput()
         try:
             # Forward model and get actions
-            self._rloop.on_model_query(attempt_stats=self.attempt_model_stats)
+            if self._rloop is not None:
+                self._rloop.on_model_query(attempt_stats=self.attempt_model_stats)
             self._chook.on_model_query(messages=history, agent=self.name)
             output = self.model.query(history)  # type: ignore
             step.output = output["message"]
