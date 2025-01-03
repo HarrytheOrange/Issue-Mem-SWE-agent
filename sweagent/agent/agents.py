@@ -514,7 +514,8 @@ class Agent:
                 "attempts": [get_attempt_data(i) for i in range(self._i_attempt + 1)],
                 **get_attempt_data(best_attempt_idx),
             }
-            data["info"]["model_stats"] = self.attempt_model_stats.model_dump()
+            # Total model stats
+            data["info"]["model_stats"] = self.model.stats.model_dump()
             data["extra_info"] = {"comparisons": [(a, b, comp.model_dump()) for a, b, comp in self._rloop.comparisons]}
         else:
             data = {
@@ -883,8 +884,7 @@ class Agent:
         self.info["submission"] = step_output.submission
         self.info["exit_status"] = step_output.exit_status  # type: ignore
         self.info.update(self._get_edited_files_with_context(patch=step_output.submission or ""))  # type: ignore
-        model_stats: InstanceStats = self.model.stats
-        self.info["model_stats"] = model_stats.model_dump()
+        self.info["model_stats"] = self.attempt_model_stats.model_dump()
 
         self.add_step_to_trajectory(step_output)
 
