@@ -17,10 +17,14 @@ def get_submitted(path: Path) -> set[str]:
 def compare(new_path, old_path, *, show_same=False):
     evaluated_ids = get_submitted(new_path)
     old_evaluated_ids = get_submitted(old_path)
+    print(f"Total evaluated: new {len(evaluated_ids)}, old {len(old_evaluated_ids)}")
+    resolved_ids = get_resolved(new_path)
+    old_resolved_ids = get_resolved(old_path)
+    print(f"Total resolved: new {len(resolved_ids)}, old {len(old_resolved_ids)}")
 
     for id in evaluated_ids:
-        resolved_now = id in get_resolved(new_path)
-        resolved_before = id in get_resolved(old_path)
+        resolved_now = id in resolved_ids
+        resolved_before = id in old_resolved_ids
         if id not in old_evaluated_ids:
             emoji = "❓"
         elif resolved_now and not resolved_before:
@@ -44,6 +48,11 @@ def run_from_cli(_args: list[str] | None = None):
     parser.add_argument("old_path", type=Path)
     parser.add_argument("--show-same", action="store_true")
     args = parser.parse_args(_args)
+    if args.new_path.is_dir():
+        args.new_path = args.new_path / "results.json"
+    if args.old_path.is_dir():
+        args.old_path = args.old_path / "results.json"
+    print("-" * 80)
     print("Emoji legend:")
     print("❓: Not evaluated in old version")
     print("😀: Newly resolved in new version")
