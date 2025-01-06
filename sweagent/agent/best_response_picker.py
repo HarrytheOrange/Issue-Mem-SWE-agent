@@ -178,7 +178,9 @@ class BinaryTrajectoryComparison(AbstractBestActionPicker):
         actions: list[str] = [h[1] for h in parsed_completions]
         assert len(thoughts) == len(actions)
         best_idx = 0
+        comparison_log = []
         for i in range(1, len(actions)):
+            # todo: Can't I just use the messages itself rather than turning them into a string?
             messages = self.format_messages(
                 problem_statement=problem_statement,
                 trajectory=trajectory,
@@ -190,10 +192,19 @@ class BinaryTrajectoryComparison(AbstractBestActionPicker):
             response = self._model.query(messages)["message"]  # type: ignore
             logger.info(f"RESPONSE: {response}")
             idx = self.interpret(response)
+            comparison_log.append(
+                {
+                    "comparison_between": (best_idx, i),
+                    "messages": messages,
+                    "response": response,
+                    "idx": idx,
+                }
+            )
             best_idx = i if idx == 1 else best_idx
 
         return GetActionOutput(
             completion=completions[best_idx],
+            extra_info={"comparison_log": comparison_log},
         )
 
     def interpret(self, response: str) -> Literal[0, 1]:
