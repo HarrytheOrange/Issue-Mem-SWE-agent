@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from textwrap import dedent
 from typing import Any, Literal
 
 from jinja2 import Template
@@ -86,8 +87,47 @@ class AskColleagues(AbstractBestActionPicker):
 class BinaryTrajectoryComparison(AbstractBestActionPicker):
     type: Literal["binary_trajectory_comparison"] = "binary_trajectory_comparison"
 
-    system_template: str
-    instance_template: str
+    system_template: str = """<context>You are an expert software engineer overseeing junior developers. They suggest actions to take to solve a problem. You must choose the best action to take. </context>"""
+    instance_template: str = dedent("""
+    We're solving the following problem
+
+    <problem_statement>
+    {{problem_statement}}
+    </problem_statement>
+
+    So far, we've performed the following actions:
+
+    <trajectory>
+    {{traj}}
+    </trajectory>
+
+    Two junior developers suggested the following actions:
+
+    <thought1>
+    {{thought1}}
+    </thought1>
+
+    <action1>
+    {{action1}}
+    </action1>
+
+    <thought2>
+    {{thought2}}
+    </thought2>
+
+    <action2>
+    {{action2}}
+    </action2>
+
+    Please compare the two actions in detail.
+
+    Which action should we take?
+
+    If you think the first action is better, respond with "first".
+    If you think the second action is better, respond with "second".
+
+    The last line of your response MUST be "first" or "second".
+    """)
 
     def _format_trajectory(self, trajectory: Trajectory) -> str:
         steps = []
@@ -116,6 +156,8 @@ class BinaryTrajectoryComparison(AbstractBestActionPicker):
             traj=self._format_trajectory(trajectory),
             action1=action1,
             action2=action2,
+            thought1=thought1,
+            thought2=thought2,
         )
         logger.debug(f"MODEL INPUT (user)\n{user_message}")
         return [
@@ -136,7 +178,7 @@ class BinaryTrajectoryComparison(AbstractBestActionPicker):
         actions: list[str] = [h[1] for h in parsed_completions]
         assert len(thoughts) == len(actions)
         best_idx = 0
-        for i in range(len(actions)):
+        for i in range(1, len(actions)):
             messages = self.format_messages(
                 problem_statement=problem_statement,
                 trajectory=trajectory,
@@ -146,6 +188,7 @@ class BinaryTrajectoryComparison(AbstractBestActionPicker):
                 action2=actions[i],
             )
             response = self._model.query(messages)["message"]  # type: ignore
+            logger.info(f"RESPONSE: {response}")
             idx = self.interpret(response)
             best_idx = i if idx == 1 else best_idx
 
