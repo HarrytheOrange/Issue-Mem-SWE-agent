@@ -494,7 +494,7 @@ class LiteLLMModel(AbstractModel):
             return None
         return random.choice(api_keys)
 
-    def _query(self, messages: list[dict[str, str]]) -> dict:
+    def _query(self, messages: list[dict[str, str]], n: int | None = None) -> dict | list[dict]:
         input_tokens: int = litellm.utils.token_counter(messages=messages, model=self.config.name)
         if self.model_max_input_tokens is None:
             self.logger.warning(f"No max input tokens found for model {self.config.name!r}")
@@ -521,22 +521,30 @@ class LiteLLMModel(AbstractModel):
             fallbacks=self.config.fallbacks,
             **completion_kwargs,
             **extra_args,
+            n=n,
         )
-        choices: litellm.types.utils.Choices = response.choices  # type: ignore
-        output = choices[0].message.content or ""
-        output_dict = {"message": output}
         cost = litellm.cost_calculator.completion_cost(response)
-        output_tokens = litellm.utils.token_counter(text=output, model=self.config.name)
+        choices: litellm.types.utils.Choices = response.choices  # type: ignore
+        n_choices = n if n is not None else 1
+        outputs = []
+        output_tokens = 0
+        for i in range(n_choices):
+            output = choices[i].message.content or ""
+            output_tokens += litellm.utils.token_counter(text=output, model=self.config.name)
+            output_dict = {"message": output}
+            if self.tools.use_function_calling:
+                if response.choices[i].message.tool_calls:  # type: ignore
+                    tool_calls = [call.to_dict() for call in response.choices[i].message.tool_calls]  # type: ignore
+                else:
+                    tool_calls = []
+                output_dict["tool_calls"] = tool_calls
+            outputs.append(output_dict)
         self._update_stats(input_tokens=input_tokens, output_tokens=output_tokens, cost=cost)
-        if self.tools.use_function_calling:
-            if response.choices[0].message.tool_calls:  # type: ignore
-                tool_calls = [call.to_dict() for call in response.choices[0].message.tool_calls]  # type: ignore
-            else:
-                tool_calls = []
-            output_dict["tool_calls"] = tool_calls
-        return output_dict
+        if n is None:
+            return outputs[0]
+        return outputs
 
-    def query(self, history: History) -> dict:
+    def query(self, history: History, n: int | None = None) -> dict:
         elapsed_time = time.time() - GLOBAL_STATS.last_query_timestamp
         if elapsed_time < self.config.delay:
             time.sleep(self.config.delay - elapsed_time)
@@ -571,7 +579,7 @@ class LiteLLMModel(AbstractModel):
                         f"{exception_info}"
                     )
                 messages = self._history_to_messages(history)
-                result = self._query(messages)
+                result = self._query(messages, n=n)
         return result
 
     def _history_to_messages(

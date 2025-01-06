@@ -16,6 +16,7 @@ from tenacity import RetryError
 from typing_extensions import Self
 
 from sweagent import __version__, get_agent_commit_hash, get_rex_commit_hash, get_rex_version
+from sweagent.agent.best_response_picker import BestResponsePicker
 from sweagent.agent.history_processors import DefaultHistoryProcessor, HistoryProcessor
 from sweagent.agent.hooks.abstract import AbstractAgentHook, CombinedAgentHook
 from sweagent.agent.models import (
@@ -130,6 +131,8 @@ class AgentConfig(BaseModel):
     formatting error, a blocked action, or a bash syntax error.
     """
     review_loop: ReviewLoopConfig | None = None
+    best_response_picker: BestResponsePicker | None = None
+    n_samples: int = 1
 
     # pydantic config
     model_config = ConfigDict(extra="forbid")
@@ -162,6 +165,8 @@ class Agent:
         _catch_errors: bool = True,
         _always_require_zero_exit_code: bool = False,
         review_loop_config: ReviewLoopConfig | None = None,
+        best_response_picker: BestResponsePicker | None = None,
+        n_samples: int = 1,
     ):
         """The agent handles the behaviour of the model and how it interacts with the environment.
 
@@ -203,6 +208,9 @@ class Agent:
         It can be used to replay the agent's trajectory in an environment.
         """
 
+        self._best_response_picker = best_response_picker
+        self._n_samples = n_samples
+
     @classmethod
     def from_config(cls, config: AgentConfig) -> Self:
         model = get_model(config.model, config.tools)
@@ -213,6 +221,8 @@ class Agent:
             model=model,
             max_requeries=config.max_requeries,
             review_loop_config=config.review_loop,
+            best_response_picker=config.best_response_picker,
+            n_samples=config.n_samples,
         )
 
     def add_hook(self, hook: AbstractAgentHook) -> None:
@@ -717,8 +727,20 @@ class Agent:
             if self._rloop is not None:
                 self._rloop.on_model_query(attempt_stats=self.attempt_model_stats)
             self._chook.on_model_query(messages=history, agent=self.name)
-            output = self.model.query(history)  # type: ignore
+            output = self.model.query(history, n=self._n_samples if self._n_samples > 1 else None)  # type: ignore
+            # todo: Add all options to the extra info
+            if self._best_response_picker is not None:
+                assert self._problem_statement is not None
+                parsed_actions = [self.tools.parse_actions(o) for o in output]
+                best_idx = self._best_response_picker.pick_best(
+                    problem_statement=self._problem_statement,
+                    trajectory=self.trajectory,
+                    thoughts=[o[0] for o in parsed_actions],
+                    actions=[o[1] for o in parsed_actions],
+                )
+                output = output[best_idx]
             step.output = output["message"]
+            # todo: Can't I override the parser in __init__?
             if isinstance(self.model, HumanThoughtModel):
                 # TODO: This might be a bit hacky
                 # consider changing sweagent/tools/tools.py:ToolConfig to enforce this.
