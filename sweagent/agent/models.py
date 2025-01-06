@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 import random
 import shlex
@@ -529,6 +530,7 @@ class LiteLLMModel(AbstractModel):
             **extra_args,
             n=n,
         )
+        self.logger.info(f"Response: {response}")
         cost = litellm.cost_calculator.completion_cost(response)
         choices: litellm.types.utils.Choices = response.choices  # type: ignore
         n_choices = n if n is not None else 1
@@ -615,7 +617,29 @@ class LiteLLMModel(AbstractModel):
                 )
             else:
                 messages.append({"role": role, "content": history_item["content"]})
-        return messages
+        return self._add_cache_control(messages)
+
+    def _add_cache_control(self, messages: list[dict[str, str]]) -> list[dict[str, Any]]:
+        """Adds cache control headers to the messages"""
+        n_cached = 0
+        new_messages = []
+        messages = copy.deepcopy(messages)
+        for message in reversed(messages):
+            if (message["role"] == "assistant" and n_cached < 3) or (message["role"] == "system"):
+                print("Caching message", message["content"][:50])
+                message["content"] = [  # type: ignore
+                    {
+                        "type": "text",
+                        "text": message["content"],
+                        "cache_control": {"type": "ephemeral"},
+                    }
+                ]
+                new_messages.append(message)
+                n_cached += 1
+            else:
+                new_messages.append(message)
+        self.logger.info(f"Total cache breakpoints: {n_cached}")
+        return list(reversed(new_messages))
 
 
 def get_model(args: ModelConfig, tools: ToolConfig) -> AbstractModel:
