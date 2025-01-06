@@ -83,6 +83,18 @@ class ActionParser(AbstractParseFunction, BaseModel):
         raise FormatError(msg)
 
 
+class ActionOnlyParser(AbstractParseFunction, BaseModel):
+    """Expects the model response to be a single command."""
+
+    error_message: str = "No message found in model response."
+
+    type: Literal["action_only"] = "action_only"
+    """Type for (de)serialization. Do not change."""
+
+    def __call__(self, model_response: dict, commands: list[Command], strict=False):
+        return "", model_response["message"]
+
+
 class ThoughtActionParser(AbstractParseFunction, BaseModel):
     """
     Expects the model response to be a discussion followed by a command wrapped in backticks.
@@ -408,6 +420,7 @@ class JsonParser(AbstractParseFunction, BaseModel):
 ParseFunction = (
     ActionParser
     | ThoughtActionParser
+    | ActionOnlyParser
     | XMLThoughtActionParser
     | FunctionCallingParser
     | EditFormat

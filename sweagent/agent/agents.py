@@ -32,6 +32,7 @@ from sweagent.agent.reviewer import AbstractReviewLoop, ReviewLoopConfig, get_re
 from sweagent.environment.swe_env import SWEEnv
 from sweagent.exceptions import ContextWindowExceededError, CostLimitExceededError, FormatError
 from sweagent.tools.parsing import (
+    ActionOnlyParser,
     ThoughtActionParser,
 )
 from sweagent.tools.tools import ToolConfig, ToolHandler
@@ -137,6 +138,13 @@ class AgentConfig(BaseModel):
     # pydantic config
     model_config = ConfigDict(extra="forbid")
 
+    @model_validator(mode="after")
+    def validate_n_samples(self) -> Self:
+        if self.n_samples is not None and self.n_samples > 1 and self.best_response_picker is None:
+            msg = "n_samples must be 1 when best_response_picker is not set"
+            raise ValueError(msg)
+        return self
+
 
 class _BlockedActionError(Exception):
     """Raised when the agent's action is blocked"""
@@ -178,6 +186,10 @@ class Agent:
         self.model = model
         self.templates = templates
         self.tools = tools
+        if isinstance(self.model, HumanThoughtModel):
+            self.tools.config.parse_function = ThoughtActionParser()
+        elif isinstance(self.model, HumanModel):
+            self.tools.config.parse_function = ActionOnlyParser()
         self.history_processors = history_processors
         self.max_requeries = max_requeries
         self.logger = get_logger("swea-agent", emoji="🤠")
@@ -209,6 +221,10 @@ class Agent:
         """
 
         self._best_response_picker = best_response_picker
+
+        if self._best_response_picker is not None:
+            self._best_response_picker.setup(self.model, self.tools)
+
         self._n_samples = n_samples
 
     @classmethod
@@ -731,24 +747,18 @@ class Agent:
             # todo: Add all options to the extra info
             if self._best_response_picker is not None:
                 assert self._problem_statement is not None
-                parsed_actions = [self.tools.parse_actions(o) for o in output]
-                best_idx = self._best_response_picker.pick_best(
+                best = self._best_response_picker.get_action(
                     problem_statement=self._problem_statement,
                     trajectory=self.trajectory,
-                    thoughts=[o[0] for o in parsed_actions],
-                    actions=[o[1] for o in parsed_actions],
+                    history=history,
+                    completions=output,
                 )
-                output = output[best_idx]
+                output = best.completion
+                # todo: Handle history and trajectory
+                step.extra_info.update(best.extra_info)
             step.output = output["message"]
             # todo: Can't I override the parser in __init__?
-            if isinstance(self.model, HumanThoughtModel):
-                # TODO: This might be a bit hacky
-                # consider changing sweagent/tools/tools.py:ToolConfig to enforce this.
-                step.thought, step.action = ThoughtActionParser()(output, self.tools.config.commands)
-            elif isinstance(self.model, HumanModel):
-                step.thought, step.action = "", output["message"]
-            else:
-                step.thought, step.action = self.tools.parse_actions(output)
+            step.thought, step.action = self.tools.parse_actions(output)
             if output.get("tool_calls") is not None:
                 step.tool_call_ids = [call["id"] for call in output["tool_calls"]]
                 step.tool_calls = output["tool_calls"]
@@ -899,6 +909,7 @@ class Agent:
                 "execution_time": step.execution_time,
                 "state": step.state,
                 "messages": self.messages,
+                "extra_info": step.extra_info,
             },
         )
         self.trajectory.append(trajectory_step)

@@ -26,6 +26,7 @@ class StepOutput(BaseModel):
     tool_calls: list[dict[str, Any]] | None = None
     tool_call_ids: list[str] | None = None
     """State of the environment at the end of the step"""
+    extra_info: dict[str, Any] = {}
 
     def to_template_format_dict(self) -> dict[str, str | int | float | bool | None]:
         """Used for formatting (error) prompt templates"""
@@ -46,6 +47,7 @@ class TrajectoryStep(TypedDict):
     thought: str
     execution_time: float
     messages: list[dict[str, Any]]
+    extra_info: dict[str, Any]
 
 
 # required fields go here

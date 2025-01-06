@@ -287,18 +287,24 @@ class HumanModel(AbstractModel):
             # Input has escaped things like \n, so we need to unescape it
             action = action.encode("utf8").decode("unicode_escape")
         _handle_raise_commands(action)
-        return action  # type: ignore
+        return {"message": action}
 
-    def query(self, history: History, action_prompt: str = "> ") -> dict:
+    def query(self, history: History, action_prompt: str = "> ", n: int | None = None) -> dict | list[dict]:
         """Wrapper to separate action prompt from formatting"""
-        try:
-            return {"message": self._query(history, action_prompt)}
-        except KeyboardInterrupt:
-            print("^C (exit with ^D)")
-            return self.query(history, action_prompt)
-        except EOFError:
-            print("\nGoodbye!")
-            return {"message": "exit"}
+        out = []
+        n_samples = n or 1
+        for _ in range(n_samples):
+            try:
+                out.append(self._query(history, action_prompt))
+            except KeyboardInterrupt:
+                print("^C (exit with ^D)")
+                out.append(self.query(history, action_prompt))
+            except EOFError:
+                print("\nGoodbye!")
+                out.append({"message": "exit"})
+        if n is None:
+            return out[0]
+        return out
 
 
 class HumanThoughtModel(HumanModel):
