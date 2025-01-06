@@ -173,7 +173,17 @@ class BinaryTrajectoryComparison(AbstractBestActionPicker):
         history: list[dict[str, Any]],
         completions: list[dict[str, Any]],
     ) -> GetActionOutput:
-        parsed_completions = [self._tools.parse_actions(a) for a in completions]
+        parsed_completions = []
+        for completion in completions:
+            try:
+                thought, action = self._tools.parse_actions(completion)
+            except FormatError:
+                logger.warning("Could not parse completion %s, skipping.", completion)
+                continue
+            parsed_completions.append((thought, action))
+        if len(parsed_completions) == 0:
+            msg = "No completions could be parsed."
+            raise FormatError(msg)
         thoughts: list[str] = [h[0] for h in parsed_completions]
         actions: list[str] = [h[1] for h in parsed_completions]
         assert len(thoughts) == len(actions)
