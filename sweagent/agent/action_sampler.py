@@ -156,8 +156,6 @@ class BinaryTrajectoryComparison(AbstractActionSampler):
         action1: str,
         thought2: str,
         action2: str,
-        counts1: int,
-        counts2: int,
         use_cache_control: bool = False,
     ) -> list[dict]:
         system_message = self.system_template
@@ -176,8 +174,6 @@ class BinaryTrajectoryComparison(AbstractActionSampler):
             action1=action1,
             thought2=thought2,
             action2=action2,
-            counts1=counts1,
-            counts2=counts2,
         )
         self._logger.debug(f"MODEL INPUT (comparison)\n{comparison_message}")
         cache_control_kwargs = {"cache_control": {"type": "ephemeral"}} if use_cache_control else {}
@@ -198,38 +194,35 @@ class BinaryTrajectoryComparison(AbstractActionSampler):
             },
         ]
 
-    def filter_duplicates(self, completions: list[tuple[str, str]]) -> list[tuple[str, str, int]]:
+    def filter_duplicates(self, completions: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Filter out duplicate actions, keeping the longest thought"""
         thoughts: list[str] = []
         actions: list[str] = []
-        counts: list[int] = []
+        filtered_completions: list[dict[str, Any]] = []
         for pc in completions:
-            if pc[1] not in actions:
-                thoughts.append(pc[0])
-                actions.append(pc[1])
-                counts.append(1)
+            thought, action = self._tools.parse_actions(pc)
+            if action not in actions:
+                thoughts.append(thought)
+                actions.append(action)
+                filtered_completions.append(pc)
             else:
-                self._logger.debug(f"Found duplicate action of {pc[1]}")
-                found = actions.index(pc[1])
-                counts[found] += 1
-                if len(thoughts[found]) < len(pc[0]):
-                    # New thought is longer, update
-                    thoughts[found] = pc[0]
-        return list(zip(thoughts, actions, counts))
+                self._logger.debug(f"Found duplicate action of {action}")
 
-    def parse_completions(self, completions: list[dict[str, Any]]) -> list[tuple[str, str]]:
-        parsed_completions = []
+        return filtered_completions
+
+    def parse_completions(self, completions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        filtered_completions = []
         for completion in completions:
             try:
-                thought, action = self._tools.parse_actions(completion)
+                self._tools.parse_actions(completion)
             except FormatError:
                 self._logger.warning("Could not parse completion %s, skipping.", completion)
                 continue
-            parsed_completions.append((thought, action))
-        if len(parsed_completions) == 0:
+            filtered_completions.append(completion)
+        if len(filtered_completions) == 0:
             msg = "No completions could be parsed."
             raise FormatError(msg)
-        return parsed_completions
+        return filtered_completions
 
     def get_action(
         self,
@@ -239,23 +232,23 @@ class BinaryTrajectoryComparison(AbstractActionSampler):
         history: list[dict[str, Any]],
     ) -> ActionSamplerOutput:
         completions = self._model.query(history, n=self.n_samples)  # type: ignore
-        parsed_completions = self.parse_completions(completions)
-        parsed_completions = self.filter_duplicates(parsed_completions)
-        if len(parsed_completions) == 1:
+        completions = self.parse_completions(completions)
+        completions = self.filter_duplicates(completions)
+        if len(completions) == 1:
             self._logger.warning("Only identical actions were proposed.")
         best_idx = 0
         comparison_log = []
-        for i in range(1, len(parsed_completions)):
+        for i in range(1, len(completions)):
+            thought1, action1 = self._tools.parse_actions(completions[best_idx])
+            thought2, action2 = self._tools.parse_actions(completions[i])
             messages = self.format_messages(
                 problem_statement=problem_statement,
                 trajectory=trajectory,
-                thought1=parsed_completions[best_idx][0],
-                action1=parsed_completions[best_idx][1],
-                thought2=parsed_completions[i][0],
-                action2=parsed_completions[i][1],
-                counts1=parsed_completions[best_idx][2],
-                counts2=parsed_completions[i][2],
-                use_cache_control=len(parsed_completions) >= 3,
+                thought1=thought1,
+                action1=action1,
+                thought2=thought2,
+                action2=action2,
+                use_cache_control=len(completions) >= 3,
             )
             response = self._model.query(messages, temperature=self.comparison_temperature)["message"]  # type: ignore
             self._logger.info(f"RESPONSE: {response}")
