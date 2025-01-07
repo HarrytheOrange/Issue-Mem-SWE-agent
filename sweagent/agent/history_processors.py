@@ -157,7 +157,62 @@ class ClosedWindowHistoryProcessor(BaseModel):
         return list(reversed(new_history))
 
 
+class CacheControlHistoryProcessor(BaseModel):
+    type: Literal["cache_control"] = "cache_control"
+    """Do not change. Used for (de)serialization."""
+
+    last_n_messages: int = 2
+    """Add cache control to the last n user messages (and clear it for anything else).
+    In most cases this should be set to 2 (caching for multi-turn conversations).
+    When resampling and running concurrent instances, you want to set it to 1.
+    If set to <= 0, any set cache control will be removed from all messages.
+    """
+
+    # pydantic config
+    model_config = ConfigDict(extra="forbid")
+
+    def _get_content_text(self, entry: HistoryItem) -> str:
+        if isinstance(entry["content"], list):
+            assert len(entry["content"]) == 1, "Expected single message in content"
+            return entry["content"][0]["text"]
+        return entry["content"]
+
+    def _clear_cache_control(self, entry: HistoryItem) -> None:
+        if isinstance(entry["content"], list):
+            assert len(entry["content"]) == 1, "Expected single message in content"
+            if "cache_control" in entry["content"][0]:
+                del entry["content"][0]["cache_control"]
+
+    def _set_cache_control(self, entry: HistoryItem) -> None:
+        if not isinstance(entry["content"], list):
+            entry["content"] = [  # type: ignore
+                {
+                    "type": "text",
+                    "text": self._get_content_text(entry),
+                    "cache_control": {"type": "ephemeral"},
+                }
+            ]
+        else:
+            entry["content"][0]["cache_control"] = {"type": "ephemeral"}
+
+    def __call__(self, history: History) -> History:
+        new_history = []
+        n_tagged = 0
+        for entry in reversed(history):
+            # Clear cache control from previous messages
+            self._clear_cache_control(entry)
+            if n_tagged < self.last_n_messages and entry["role"] == "user":
+                self._set_cache_control(entry)
+                n_tagged += 1
+            new_history.append(entry)
+        return list(reversed(new_history))
+
+
 HistoryProcessor = Annotated[
-    DefaultHistoryProcessor | LastNObservations | ClosedWindowHistoryProcessor | TagToolCallObservations,
+    DefaultHistoryProcessor
+    | LastNObservations
+    | ClosedWindowHistoryProcessor
+    | TagToolCallObservations
+    | CacheControlHistoryProcessor,
     Field(discriminator="type"),
 ]

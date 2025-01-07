@@ -53,7 +53,7 @@ class TrajectoryStep(TypedDict):
 # required fields go here
 class _HistoryItem(TypedDict):
     role: str
-    content: str
+    content: str | list[dict[str, Any]]
     message_type: Literal["thought", "action", "observation"]
 
 

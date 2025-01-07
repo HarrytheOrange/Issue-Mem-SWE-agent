@@ -87,7 +87,7 @@ class AskColleagues(AbstractBestActionPicker):
 class BinaryTrajectoryComparison(AbstractBestActionPicker):
     type: Literal["binary_trajectory_comparison"] = "binary_trajectory_comparison"
 
-    system_template: str = """<context>You are an expert software engineer overseeing junior developers. They suggest actions to take to solve a problem. You must choose the best action to take. </context>"""
+    system_template: str = """<setting>You are an expert software engineer overseeing junior developers. They suggest actions to take to solve a problem. You must choose the best action to take. </setting>"""
     instance_template: str = dedent("""
     We're solving the following problem
 
@@ -100,7 +100,9 @@ class BinaryTrajectoryComparison(AbstractBestActionPicker):
     <trajectory>
     {{traj}}
     </trajectory>
+    """)
 
+    comparison_template: str = dedent("""
     Two junior developers suggested the following actions:
 
     <thought1>
@@ -144,6 +146,7 @@ class BinaryTrajectoryComparison(AbstractBestActionPicker):
         action1: str,
         thought2: str,
         action2: str,
+        use_cache_control: bool = False,
     ) -> list[dict]:
         system_message = self.system_template
         logger.debug(f"MODEL INPUT (system)\n{system_message}")
@@ -154,15 +157,30 @@ class BinaryTrajectoryComparison(AbstractBestActionPicker):
         user_message = Template(self.instance_template).render(
             **ps_format_dict,
             traj=self._format_trajectory(trajectory),
-            action1=action1,
-            action2=action2,
+        )
+        comparison_message = Template(self.comparison_template).render(
             thought1=thought1,
+            action1=action1,
             thought2=thought2,
+            action2=action2,
         )
         logger.debug(f"MODEL INPUT (user)\n{user_message}")
+        cache_control_kwargs = {"cache_control": {"type": "ephemeral"}} if use_cache_control else {}
         return [
             {"role": "system", "content": system_message},
-            {"role": "user", "content": user_message},
+            {
+                "role": "user",
+                "content": [{"type": "text", "text": user_message, **cache_control_kwargs}],
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": comparison_message,
+                    }
+                ],
+            },
         ]
 
     def get_action(
@@ -190,7 +208,6 @@ class BinaryTrajectoryComparison(AbstractBestActionPicker):
         best_idx = 0
         comparison_log = []
         for i in range(1, len(actions)):
-            # todo: Can't I just use the messages itself rather than turning them into a string?
             messages = self.format_messages(
                 problem_statement=problem_statement,
                 trajectory=trajectory,
@@ -198,6 +215,7 @@ class BinaryTrajectoryComparison(AbstractBestActionPicker):
                 action1=actions[best_idx],
                 thought2=thoughts[i],
                 action2=actions[i],
+                use_cache_control=len(actions) >= 3,
             )
             response = self._model.query(messages)["message"]  # type: ignore
             logger.info(f"RESPONSE: {response}")
