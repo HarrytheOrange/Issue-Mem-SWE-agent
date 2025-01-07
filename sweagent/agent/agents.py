@@ -132,7 +132,7 @@ class AgentConfig(BaseModel):
     formatting error, a blocked action, or a bash syntax error.
     """
     review_loop: ReviewLoopConfig | None = None
-    best_response_picker: ActionSampler | None = None
+    action_sampler: ActionSampler | None = None
 
     # pydantic config
     model_config = ConfigDict(extra="forbid")
@@ -165,8 +165,7 @@ class Agent:
         _catch_errors: bool = True,
         _always_require_zero_exit_code: bool = False,
         review_loop_config: ReviewLoopConfig | None = None,
-        best_response_picker: ActionSampler | None = None,
-        n_samples: int = 1,
+        action_sampler: ActionSampler | None = None,
     ):
         """The agent handles the behaviour of the model and how it interacts with the environment.
 
@@ -212,12 +211,10 @@ class Agent:
         It can be used to replay the agent's trajectory in an environment.
         """
 
-        self._best_response_picker = best_response_picker
+        self._action_sampler = action_sampler
 
-        if self._best_response_picker is not None:
-            self._best_response_picker.setup(self.model, self.tools)
-
-        self._n_samples = n_samples
+        if self._action_sampler is not None:
+            self._action_sampler.setup(self.model, self.tools)
 
     @classmethod
     def from_config(cls, config: AgentConfig) -> Self:
@@ -229,8 +226,7 @@ class Agent:
             model=model,
             max_requeries=config.max_requeries,
             review_loop_config=config.review_loop,
-            best_response_picker=config.best_response_picker,
-            n_samples=config.n_samples,
+            action_sampler=config.action_sampler,
         )
 
     def add_hook(self, hook: AbstractAgentHook) -> None:
@@ -735,19 +731,19 @@ class Agent:
             if self._rloop is not None:
                 self._rloop.on_model_query(attempt_stats=self.attempt_model_stats)
             self._chook.on_model_query(messages=history, agent=self.name)
-            output = self.model.query(history, n=self._n_samples if self._n_samples > 1 else None)  # type: ignore
             # todo: Add all options to the extra info
-            if self._best_response_picker is not None:
+            if self._action_sampler is not None:
                 assert self._problem_statement is not None
-                best = self._best_response_picker.get_action(
+                best = self._action_sampler.get_action(
                     problem_statement=self._problem_statement,
                     trajectory=self.trajectory,
                     history=history,
-                    completions=output,
                 )
                 output = best.completion
                 # todo: Handle history and trajectory
                 step.extra_info.update(best.extra_info)
+            else:
+                output = self.model.query(history)  # type: ignore
             step.output = output["message"]
             # todo: Can't I override the parser in __init__?
             step.thought, step.action = self.tools.parse_actions(output)

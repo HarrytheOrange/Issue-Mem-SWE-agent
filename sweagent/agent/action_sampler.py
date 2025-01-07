@@ -33,7 +33,6 @@ class AbstractActionSampler(BaseModel):
         problem_statement: ProblemStatement,
         trajectory: Trajectory,
         history: list[dict[str, Any]],
-        completions: list[dict[str, Any]],
     ) -> ActionSamplerOutput:
         """Returns action with tool calls"""
         pass
@@ -41,6 +40,8 @@ class AbstractActionSampler(BaseModel):
 
 class AskColleagues(AbstractActionSampler):
     type: Literal["ask_colleagues"] = "ask_colleagues"
+
+    n_samples: int = 2
 
     def get_colleague_discussion(self, completions: list[dict[str, Any]]) -> str:
         """Concat all completions into a single string"""
@@ -69,9 +70,9 @@ class AskColleagues(AbstractActionSampler):
         problem_statement: ProblemStatement,
         trajectory: Trajectory,
         history: list[dict[str, Any]],
-        completions: list[dict[str, Any]],
     ) -> ActionSamplerOutput:
         """Returns action with tool calls"""
+        completions = self._model.query(history, n=self.n_samples)  # type: ignore
         discussion = self.get_colleague_discussion(completions)
         logger.info(f"COLLEAGUE DISCUSSION:\n{discussion}")
         new_messages = [
@@ -86,6 +87,11 @@ class AskColleagues(AbstractActionSampler):
 
 class BinaryTrajectoryComparison(AbstractActionSampler):
     type: Literal["binary_trajectory_comparison"] = "binary_trajectory_comparison"
+
+    n_samples: int = 2
+
+    comparison_temperature: float | None = None
+    """Override the model's temperature. If None, take the temperature configured for the model."""
 
     system_template: str = """<setting>You are an expert software engineer overseeing junior developers. They suggest actions to take to solve a problem. You must choose the best action to take. </setting>"""
     instance_template: str = dedent("""
@@ -220,8 +226,8 @@ class BinaryTrajectoryComparison(AbstractActionSampler):
         problem_statement: ProblemStatement,
         trajectory: Trajectory,
         history: list[dict[str, Any]],
-        completions: list[dict[str, Any]],
     ) -> ActionSamplerOutput:
+        completions = self._model.query(history, n=self.n_samples)  # type: ignore
         parsed_completions = self.parse_completions(completions)
         parsed_completions = self.filter_duplicates(parsed_completions)
         if len(parsed_completions) == 1:
@@ -238,7 +244,7 @@ class BinaryTrajectoryComparison(AbstractActionSampler):
                 action2=parsed_completions[i][1],
                 use_cache_control=len(parsed_completions) >= 3,
             )
-            response = self._model.query(messages)["message"]  # type: ignore
+            response = self._model.query(messages, temperature=self.comparison_temperature)["message"]  # type: ignore
             logger.info(f"RESPONSE: {response}")
             idx = self.interpret(response)
             comparison_log.append(

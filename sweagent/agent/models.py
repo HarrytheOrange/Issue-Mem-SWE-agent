@@ -507,7 +507,9 @@ class LiteLLMModel(AbstractModel):
         if elapsed_time < self.config.delay:
             time.sleep(self.config.delay - elapsed_time)
 
-    def _single_query(self, messages: list[dict[str, str]], n: int | None = None) -> list[dict]:
+    def _single_query(
+        self, messages: list[dict[str, str]], n: int | None = None, temperature: float | None = None
+    ) -> list[dict]:
         self._sleep()
         input_tokens: int = litellm.utils.token_counter(messages=messages, model=self.config.name)
         if self.model_max_input_tokens is None:
@@ -528,7 +530,7 @@ class LiteLLMModel(AbstractModel):
         response: litellm.types.utils.ModelResponse = litellm.completion(  # type: ignore
             model=self.config.name,
             messages=messages,
-            temperature=self.config.temperature,
+            temperature=self.config.temperature if temperature is None else temperature,
             top_p=self.config.top_p,
             api_version=self.config.api_version,
             api_key=self._get_api_key(),
@@ -557,16 +559,18 @@ class LiteLLMModel(AbstractModel):
         self._update_stats(input_tokens=input_tokens, output_tokens=output_tokens, cost=cost)
         return outputs
 
-    def _query(self, messages: list[dict[str, str]], n: int | None = None) -> list[dict]:
+    def _query(
+        self, messages: list[dict[str, str]], n: int | None = None, temperature: float | None = None
+    ) -> list[dict]:
         if n is None:
-            return self._single_query(messages)
+            return self._single_query(messages, temperature=temperature)
         outputs = []
         # not needed for openai, but oh well.
         for _ in range(n):
             outputs.extend(self._single_query(messages))
         return outputs
 
-    def query(self, history: History, n: int = 1) -> list[dict] | dict:
+    def query(self, history: History, n: int = 1, temperature: float | None = None) -> list[dict] | dict:
         messages = self._history_to_messages(history)
         for attempt in Retrying(
             stop=stop_after_attempt(self.config.retry.retries),
@@ -596,7 +600,7 @@ class LiteLLMModel(AbstractModel):
                         f"(slept for {attempt.retry_state.idle_for:.2f}s)"
                         f"{exception_info}"
                     )
-                result = self._query(messages, n=n)
+                result = self._query(messages, n=n, temperature=temperature)
         if n is None or n == 1:
             return result[0]
         return result
