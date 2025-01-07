@@ -12,8 +12,6 @@ from sweagent.tools.tools import ToolHandler
 from sweagent.types import Trajectory
 from sweagent.utils.log import get_logger
 
-logger = get_logger(__name__)
-
 
 class ActionSamplerOutput(BaseModel):
     completion: dict[str, Any]
@@ -43,6 +41,9 @@ class AskColleagues(AbstractActionSampler):
 
     n_samples: int = 2
 
+    def model_post_init(self, __context: Any) -> None:
+        self._logger = get_logger("action_sampler", emoji="👥")
+
     def get_colleague_discussion(self, completions: list[dict[str, Any]]) -> str:
         """Concat all completions into a single string"""
         out = "Your colleagues had the following ideas: \n\n"
@@ -51,7 +52,7 @@ class AskColleagues(AbstractActionSampler):
             try:
                 thought, action = self._tools.parse_actions(completion)
             except FormatError:
-                logger.warning("Could not parse completion %s, skipping.", completion)
+                self._logger.warning("Could not parse completion %s, skipping.", completion)
                 continue
             n_parsed_ok += 1
             out += f"Thought (colleague {i}): {thought}\nProposed Action (colleague {i}): {action}\n\n"
@@ -74,7 +75,7 @@ class AskColleagues(AbstractActionSampler):
         """Returns action with tool calls"""
         completions = self._model.query(history, n=self.n_samples)  # type: ignore
         discussion = self.get_colleague_discussion(completions)
-        logger.info(f"COLLEAGUE DISCUSSION:\n{discussion}")
+        self._logger.info(f"COLLEAGUE DISCUSSION:\n{discussion}")
         new_messages = [
             {"role": "user", "content": discussion},
         ]
@@ -137,6 +138,9 @@ class BinaryTrajectoryComparison(AbstractActionSampler):
     The last line of your response MUST be "first" or "second".
     """)
 
+    def model_post_init(self, __context: Any) -> None:
+        self._logger = get_logger("action_sampler", emoji="👥")
+
     def _format_trajectory(self, trajectory: Trajectory) -> str:
         steps = []
         for i, step in enumerate(trajectory):
@@ -155,7 +159,7 @@ class BinaryTrajectoryComparison(AbstractActionSampler):
         use_cache_control: bool = False,
     ) -> list[dict]:
         system_message = self.system_template
-        logger.debug(f"MODEL INPUT (system)\n{system_message}")
+        self._logger.debug(f"MODEL INPUT (system)\n{system_message}")
         ps_format_dict = {
             "problem_statement": problem_statement.get_problem_statement(),
             **problem_statement.get_extra_fields(),
@@ -164,14 +168,14 @@ class BinaryTrajectoryComparison(AbstractActionSampler):
             **ps_format_dict,
             traj=self._format_trajectory(trajectory),
         )
-        logger.debug(f"MODEL INPUT (instance)\n{user_message}")
+        self._logger.debug(f"MODEL INPUT (instance)\n{user_message}")
         comparison_message = Template(self.comparison_template).render(
             thought1=thought1,
             action1=action1,
             thought2=thought2,
             action2=action2,
         )
-        logger.debug(f"MODEL INPUT (comparison)\n{comparison_message}")
+        self._logger.debug(f"MODEL INPUT (comparison)\n{comparison_message}")
         cache_control_kwargs = {"cache_control": {"type": "ephemeral"}} if use_cache_control else {}
         return [
             {"role": "system", "content": system_message},
@@ -199,7 +203,7 @@ class BinaryTrajectoryComparison(AbstractActionSampler):
                 thoughts.append(pc[0])
                 actions.append(pc[1])
             else:
-                logger.debug(f"Found duplicate action of {pc[1]}")
+                self._logger.debug(f"Found duplicate action of {pc[1]}")
                 found = actions.index(pc[1])
                 if len(thoughts[found]) < len(pc[0]):
                     # New thought is longer, update
@@ -212,7 +216,7 @@ class BinaryTrajectoryComparison(AbstractActionSampler):
             try:
                 thought, action = self._tools.parse_actions(completion)
             except FormatError:
-                logger.warning("Could not parse completion %s, skipping.", completion)
+                self._logger.warning("Could not parse completion %s, skipping.", completion)
                 continue
             parsed_completions.append((thought, action))
         if len(parsed_completions) == 0:
@@ -231,7 +235,7 @@ class BinaryTrajectoryComparison(AbstractActionSampler):
         parsed_completions = self.parse_completions(completions)
         parsed_completions = self.filter_duplicates(parsed_completions)
         if len(parsed_completions) == 1:
-            logger.warning("Only identical actions were proposed.")
+            self._logger.warning("Only identical actions were proposed.")
         best_idx = 0
         comparison_log = []
         for i in range(1, len(parsed_completions)):
@@ -245,7 +249,7 @@ class BinaryTrajectoryComparison(AbstractActionSampler):
                 use_cache_control=len(parsed_completions) >= 3,
             )
             response = self._model.query(messages, temperature=self.comparison_temperature)["message"]  # type: ignore
-            logger.info(f"RESPONSE: {response}")
+            self._logger.info(f"RESPONSE: {response}")
             idx = self.interpret(response)
             comparison_log.append(
                 {
@@ -269,7 +273,7 @@ class BinaryTrajectoryComparison(AbstractActionSampler):
             return 0
         elif "second" in last_line.lower():
             return 1
-        logger.warning("Could not interpret response: %s, will choose first submission.", response)
+        self._logger.warning("Could not interpret response: %s, will choose first submission.", response)
         return 0
 
 
