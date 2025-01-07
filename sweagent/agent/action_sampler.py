@@ -156,6 +156,8 @@ class BinaryTrajectoryComparison(AbstractActionSampler):
         action1: str,
         thought2: str,
         action2: str,
+        counts1: int,
+        counts2: int,
         use_cache_control: bool = False,
     ) -> list[dict]:
         system_message = self.system_template
@@ -174,6 +176,8 @@ class BinaryTrajectoryComparison(AbstractActionSampler):
             action1=action1,
             thought2=thought2,
             action2=action2,
+            counts1=counts1,
+            counts2=counts2,
         )
         self._logger.debug(f"MODEL INPUT (comparison)\n{comparison_message}")
         cache_control_kwargs = {"cache_control": {"type": "ephemeral"}} if use_cache_control else {}
@@ -194,21 +198,24 @@ class BinaryTrajectoryComparison(AbstractActionSampler):
             },
         ]
 
-    def filter_duplicates(self, completions: list[tuple[str, str]]) -> list[tuple[str, str]]:
+    def filter_duplicates(self, completions: list[tuple[str, str]]) -> list[tuple[str, str, int]]:
         """Filter out duplicate actions, keeping the longest thought"""
         thoughts: list[str] = []
         actions: list[str] = []
+        counts: list[int] = []
         for pc in completions:
             if pc[1] not in actions:
                 thoughts.append(pc[0])
                 actions.append(pc[1])
+                counts.append(1)
             else:
                 self._logger.debug(f"Found duplicate action of {pc[1]}")
                 found = actions.index(pc[1])
+                counts[found] += 1
                 if len(thoughts[found]) < len(pc[0]):
                     # New thought is longer, update
                     thoughts[found] = pc[0]
-        return list(zip(thoughts, actions))
+        return list(zip(thoughts, actions, counts))
 
     def parse_completions(self, completions: list[dict[str, Any]]) -> list[tuple[str, str]]:
         parsed_completions = []
@@ -246,6 +253,8 @@ class BinaryTrajectoryComparison(AbstractActionSampler):
                 action1=parsed_completions[best_idx][1],
                 thought2=parsed_completions[i][0],
                 action2=parsed_completions[i][1],
+                counts1=parsed_completions[best_idx][2],
+                counts2=parsed_completions[i][2],
                 use_cache_control=len(parsed_completions) >= 3,
             )
             response = self._model.query(messages, temperature=self.comparison_temperature)["message"]  # type: ignore
