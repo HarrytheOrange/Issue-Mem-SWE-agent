@@ -158,13 +158,14 @@ class BinaryTrajectoryComparison(AbstractBestActionPicker):
             **ps_format_dict,
             traj=self._format_trajectory(trajectory),
         )
+        logger.debug(f"MODEL INPUT (instance)\n{user_message}")
         comparison_message = Template(self.comparison_template).render(
             thought1=thought1,
             action1=action1,
             thought2=thought2,
             action2=action2,
         )
-        logger.debug(f"MODEL INPUT (user)\n{user_message}")
+        logger.debug(f"MODEL INPUT (comparison)\n{comparison_message}")
         cache_control_kwargs = {"cache_control": {"type": "ephemeral"}} if use_cache_control else {}
         return [
             {"role": "system", "content": system_message},
@@ -183,14 +184,23 @@ class BinaryTrajectoryComparison(AbstractBestActionPicker):
             },
         ]
 
-    def get_action(
-        self,
-        *,
-        problem_statement: ProblemStatement,
-        trajectory: Trajectory,
-        history: list[dict[str, Any]],
-        completions: list[dict[str, Any]],
-    ) -> GetActionOutput:
+    def filter_duplicates(self, completions: list[tuple[str, str]]) -> list[tuple[str, str]]:
+        """Filter out duplicate actions, keeping the longest thought"""
+        thoughts: list[str] = []
+        actions: list[str] = []
+        for pc in completions:
+            if pc[1] not in actions:
+                thoughts.append(pc[0])
+                actions.append(pc[1])
+            else:
+                logger.debug(f"Found duplicate action of {pc[1]}")
+                found = actions.index(pc[1])
+                if len(thoughts[found]) < len(pc[0]):
+                    # New thought is longer, update
+                    thoughts[found] = pc[0]
+        return list(zip(thoughts, actions))
+
+    def parse_completions(self, completions: list[dict[str, Any]]) -> list[tuple[str, str]]:
         parsed_completions = []
         for completion in completions:
             try:
@@ -202,20 +212,31 @@ class BinaryTrajectoryComparison(AbstractBestActionPicker):
         if len(parsed_completions) == 0:
             msg = "No completions could be parsed."
             raise FormatError(msg)
-        thoughts: list[str] = [h[0] for h in parsed_completions]
-        actions: list[str] = [h[1] for h in parsed_completions]
-        assert len(thoughts) == len(actions)
+        return parsed_completions
+
+    def get_action(
+        self,
+        *,
+        problem_statement: ProblemStatement,
+        trajectory: Trajectory,
+        history: list[dict[str, Any]],
+        completions: list[dict[str, Any]],
+    ) -> GetActionOutput:
+        parsed_completions = self.parse_completions(completions)
+        parsed_completions = self.filter_duplicates(parsed_completions)
+        if len(parsed_completions) == 1:
+            logger.warning("Only identical actions were proposed.")
         best_idx = 0
         comparison_log = []
-        for i in range(1, len(actions)):
+        for i in range(1, len(parsed_completions)):
             messages = self.format_messages(
                 problem_statement=problem_statement,
                 trajectory=trajectory,
-                thought1=thoughts[best_idx],
-                action1=actions[best_idx],
-                thought2=thoughts[i],
-                action2=actions[i],
-                use_cache_control=len(actions) >= 3,
+                thought1=parsed_completions[best_idx][0],
+                action1=parsed_completions[best_idx][1],
+                thought2=parsed_completions[i][0],
+                action2=parsed_completions[i][1],
+                use_cache_control=len(parsed_completions) >= 3,
             )
             response = self._model.query(messages)["message"]  # type: ignore
             logger.info(f"RESPONSE: {response}")
