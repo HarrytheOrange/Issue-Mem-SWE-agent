@@ -15,14 +15,14 @@ from sweagent.utils.log import get_logger
 logger = get_logger(__name__)
 
 
-class GetActionOutput(BaseModel):
+class ActionSamplerOutput(BaseModel):
     completion: dict[str, Any]
     messages: list[dict[str, Any]] = []
     trajectory_items: list[dict[str, Any]] = []
     extra_info: dict[str, Any] = {}
 
 
-class AbstractBestActionPicker(BaseModel):
+class AbstractActionSampler(BaseModel):
     def setup(self, model: AbstractModel, tools: ToolHandler):
         self._model = model
         self._tools = tools
@@ -34,12 +34,12 @@ class AbstractBestActionPicker(BaseModel):
         trajectory: Trajectory,
         history: list[dict[str, Any]],
         completions: list[dict[str, Any]],
-    ) -> GetActionOutput:
+    ) -> ActionSamplerOutput:
         """Returns action with tool calls"""
         pass
 
 
-class AskColleagues(AbstractBestActionPicker):
+class AskColleagues(AbstractActionSampler):
     type: Literal["ask_colleagues"] = "ask_colleagues"
 
     def get_colleague_discussion(self, completions: list[dict[str, Any]]) -> str:
@@ -70,7 +70,7 @@ class AskColleagues(AbstractBestActionPicker):
         trajectory: Trajectory,
         history: list[dict[str, Any]],
         completions: list[dict[str, Any]],
-    ) -> GetActionOutput:
+    ) -> ActionSamplerOutput:
         """Returns action with tool calls"""
         discussion = self.get_colleague_discussion(completions)
         logger.info(f"COLLEAGUE DISCUSSION:\n{discussion}")
@@ -78,13 +78,13 @@ class AskColleagues(AbstractBestActionPicker):
             {"role": "user", "content": discussion},
         ]
         final_completion = self._model.query(history + new_messages)  # type: ignore
-        return GetActionOutput(
+        return ActionSamplerOutput(
             completion=final_completion,
             extra_info={"colleagues": discussion},
         )
 
 
-class BinaryTrajectoryComparison(AbstractBestActionPicker):
+class BinaryTrajectoryComparison(AbstractActionSampler):
     type: Literal["binary_trajectory_comparison"] = "binary_trajectory_comparison"
 
     system_template: str = """<setting>You are an expert software engineer overseeing junior developers. They suggest actions to take to solve a problem. You must choose the best action to take. </setting>"""
@@ -221,7 +221,7 @@ class BinaryTrajectoryComparison(AbstractBestActionPicker):
         trajectory: Trajectory,
         history: list[dict[str, Any]],
         completions: list[dict[str, Any]],
-    ) -> GetActionOutput:
+    ) -> ActionSamplerOutput:
         parsed_completions = self.parse_completions(completions)
         parsed_completions = self.filter_duplicates(parsed_completions)
         if len(parsed_completions) == 1:
@@ -251,7 +251,7 @@ class BinaryTrajectoryComparison(AbstractBestActionPicker):
             )
             best_idx = i if idx == 1 else best_idx
 
-        return GetActionOutput(
+        return ActionSamplerOutput(
             completion=completions[best_idx],
             extra_info={"comparison_log": comparison_log},
         )
@@ -267,4 +267,4 @@ class BinaryTrajectoryComparison(AbstractBestActionPicker):
         return 0
 
 
-BestResponsePicker = BinaryTrajectoryComparison | AskColleagues
+ActionSampler = BinaryTrajectoryComparison | AskColleagues

@@ -16,7 +16,7 @@ from tenacity import RetryError
 from typing_extensions import Self
 
 from sweagent import __version__, get_agent_commit_hash, get_rex_commit_hash, get_rex_version
-from sweagent.agent.best_response_picker import BestResponsePicker
+from sweagent.agent.action_sampler import ActionSampler
 from sweagent.agent.history_processors import DefaultHistoryProcessor, HistoryProcessor
 from sweagent.agent.hooks.abstract import AbstractAgentHook, CombinedAgentHook
 from sweagent.agent.models import (
@@ -132,18 +132,10 @@ class AgentConfig(BaseModel):
     formatting error, a blocked action, or a bash syntax error.
     """
     review_loop: ReviewLoopConfig | None = None
-    best_response_picker: BestResponsePicker | None = None
-    n_samples: int = 1
+    best_response_picker: ActionSampler | None = None
 
     # pydantic config
     model_config = ConfigDict(extra="forbid")
-
-    @model_validator(mode="after")
-    def validate_n_samples(self) -> Self:
-        if self.n_samples is not None and self.n_samples > 1 and self.best_response_picker is None:
-            msg = "n_samples must be 1 when best_response_picker is not set"
-            raise ValueError(msg)
-        return self
 
 
 class _BlockedActionError(Exception):
@@ -173,7 +165,7 @@ class Agent:
         _catch_errors: bool = True,
         _always_require_zero_exit_code: bool = False,
         review_loop_config: ReviewLoopConfig | None = None,
-        best_response_picker: BestResponsePicker | None = None,
+        best_response_picker: ActionSampler | None = None,
         n_samples: int = 1,
     ):
         """The agent handles the behaviour of the model and how it interacts with the environment.
