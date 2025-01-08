@@ -51,6 +51,7 @@ def get_cli():
             "I",
             "extract-pred",
             "compare-runs",
+            "cr",
         ],
         nargs="?",
     )
@@ -113,7 +114,7 @@ def main(args: list[str] | None = None):
         from sweagent.run.extract_pred import run_from_cli as extract_pred_main
 
         extract_pred_main(remaining_args)
-    elif command == "compare-runs":
+    elif command in ["compare-runs", "cr"]:
         from sweagent.run.compare_runs import run_from_cli as compare_runs_main
 
         compare_runs_main(remaining_args)
