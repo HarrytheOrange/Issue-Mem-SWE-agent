@@ -89,7 +89,8 @@ class AskColleagues(AbstractActionSampler):
 class BinaryTrajectoryComparison(AbstractActionSampler):
     type: Literal["binary_trajectory_comparison"] = "binary_trajectory_comparison"
 
-    n_samples: int = 2
+    min_n_samples: int = 4
+    max_n_samples: int = 10
 
     comparison_temperature: float | None = None
     """Override the model's temperature. If None, take the temperature configured for the model."""
@@ -195,7 +196,7 @@ class BinaryTrajectoryComparison(AbstractActionSampler):
         ]
 
     def filter_duplicates(self, completions: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Filter out duplicate actions, keeping the longest thought"""
+        """Filter out duplicate actions"""
         thoughts: list[str] = []
         actions: list[str] = []
         filtered_completions: list[dict[str, Any]] = []
@@ -205,12 +206,13 @@ class BinaryTrajectoryComparison(AbstractActionSampler):
                 thoughts.append(thought)
                 actions.append(action)
                 filtered_completions.append(pc)
-            else:
-                self._logger.debug(f"Found duplicate action of {action}")
+
+        if len(filtered_completions) < len(completions):
+            self._logger.debug("Filtering duplicates: %d -> %d", len(completions), len(filtered_completions))
 
         return filtered_completions
 
-    def parse_completions(self, completions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def filter_parseable_completions(self, completions: list[dict[str, Any]]) -> list[dict[str, Any]]:
         filtered_completions = []
         for completion in completions:
             try:
@@ -224,6 +226,30 @@ class BinaryTrajectoryComparison(AbstractActionSampler):
             raise FormatError(msg)
         return filtered_completions
 
+    def contains_edits(self, completions: list[dict[str, Any]]) -> bool:
+        keywords = ["edit", "str_replace_editor insert", "str_replace_editor str_replace"]
+        for completion in completions:
+            _, action = self._tools.parse_actions(completion)
+            if any(keyword in action for keyword in keywords):
+                return True
+        return False
+
+    def get_completions(self, history: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        completions = self._model.query(history, n=self.min_n_samples)  # type: ignore
+        completions = self.filter_parseable_completions(completions)
+        completions = self.filter_duplicates(completions)
+        if not completions:
+            msg = "No completions could be parsed."
+            raise FormatError(msg)
+        if self.contains_edits(completions) and self.min_n_samples < self.max_n_samples:
+            self._logger.debug("Edits were proposed, will sample more")
+            new_completions = self._model.query(history, n=self.max_n_samples - self.min_n_samples)  # type: ignore
+            completions = self.filter_duplicates(self.filter_parseable_completions(completions + new_completions))
+        if len(completions) == 1:
+            _, action = self._tools.parse_actions(completions[0])
+            self._logger.warning("Only identical actions were proposed (action=%s)", action)
+        return completions
+
     def get_action(
         self,
         *,
@@ -231,11 +257,7 @@ class BinaryTrajectoryComparison(AbstractActionSampler):
         trajectory: Trajectory,
         history: list[dict[str, Any]],
     ) -> ActionSamplerOutput:
-        completions = self._model.query(history, n=self.n_samples)  # type: ignore
-        completions = self.parse_completions(completions)
-        completions = self.filter_duplicates(completions)
-        if len(completions) == 1:
-            self._logger.warning("Only identical actions were proposed.")
+        completions = self.get_completions(history)
         best_idx = 0
         comparison_log = []
         for i in range(1, len(completions)):
