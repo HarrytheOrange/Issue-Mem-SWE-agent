@@ -326,6 +326,7 @@ class Agent:
             # This ensures that the file handler is added to the model's logger
             self.model.logger.name = f"swea-lm-{iid}"
         except AttributeError:
+            self.logger.warning("Model does not have a logger, cannot set name")
             pass
 
         # Save/reset some attributes

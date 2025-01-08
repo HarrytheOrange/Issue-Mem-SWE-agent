@@ -230,7 +230,7 @@ class BinaryTrajectoryComparison(AbstractActionSampler):
         keywords = ["edit", "str_replace_editor insert", "str_replace_editor str_replace"]
         for completion in completions:
             _, action = self._tools.parse_actions(completion)
-            if any(keyword in action for keyword in keywords):
+            if any(action.startswith(keyword) for keyword in keywords):
                 return True
         return False
 
