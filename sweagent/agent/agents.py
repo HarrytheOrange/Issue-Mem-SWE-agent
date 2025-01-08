@@ -324,11 +324,6 @@ class Agent:
         iid = self._problem_statement.id
         self.logger.info("Setting up agent for instance %s", iid)
 
-        # Ensure that in run-batch file handlers are attached to the model's logger
-        self.logger.info("Current model logger name: %s", self.model.logger.name)
-        self.model.logger = get_logger(f"swea-lm-{iid}", emoji="🤖")
-        self.logger.info("New model logger name: %s", self.model.logger.name)
-
         # Save/reset some attributes
         self.traj_path = output_dir / (self._problem_statement.id + ".traj")
         self.logger.info("Trajectory will be saved to %s", self.traj_path)
