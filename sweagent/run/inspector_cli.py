@@ -168,7 +168,7 @@ class TrajectorySelectorScreen(ModalScreen[int]):
         labels = []
         for p in paths:
             ostat = self.overview_stats[p.stem]
-            ostat_str = f"{ostat['exit_status']} {ostat['result']} ${ostat['cost']:.2f} {ostat['n_steps']} steps"
+            ostat_str = f"{ostat['exit_status']} {ostat['result']} ${ostat['cost']:.2f} {ostat['api_calls']} calls"
             shortened_path = str(p)[len(prefix) :].lstrip("/\\")
             if Path(shortened_path).stem == Path(shortened_path).parent.name:
                 # We have the instance ID twice (in the folder and the traj)
@@ -387,7 +387,7 @@ class TrajectoryInspectorApp(App):
         for instance_id, info in all_infos:
             self.overview_stats[instance_id]["info"] = info
             self.overview_stats[instance_id]["exit_status"] = info.get("exit_status", "?")
-            self.overview_stats[instance_id]["n_steps"] = info.get("model_stats", {}).get("api_calls", 0)
+            self.overview_stats[instance_id]["api_calls"] = info.get("model_stats", {}).get("api_calls", 0)
             self.overview_stats[instance_id]["cost"] = info.get("model_stats", {}).get("instance_cost", 0)
 
     def _get_viewer_title(self, index: int) -> str:
