@@ -20,10 +20,11 @@ class ActionSamplerOutput(BaseModel):
     extra_info: dict[str, Any] = {}
 
 
-class AbstractActionSampler(BaseModel):
-    def setup(self, model: AbstractModel, tools: ToolHandler):
+class AbstractActionSampler:
+    def __init__(self, model: AbstractModel, tools: ToolHandler):
         self._model = model
         self._tools = tools
+        self._logger = get_logger("action_sampler", emoji="👥")
 
     @abstractmethod
     def get_action(
@@ -36,13 +37,19 @@ class AbstractActionSampler(BaseModel):
         pass
 
 
-class AskColleagues(AbstractActionSampler):
+class AskColleaguesConfig(BaseModel):
     type: Literal["ask_colleagues"] = "ask_colleagues"
 
     n_samples: int = 2
 
-    def model_post_init(self, __context: Any) -> None:
-        self._logger = get_logger("action_sampler", emoji="👥")
+    def get(self, model: AbstractModel, tools: ToolHandler) -> "AskColleagues":
+        return AskColleagues(self, model, tools)
+
+
+class AskColleagues(AbstractActionSampler):
+    def __init__(self, config: AskColleaguesConfig, model: AbstractModel, tools: ToolHandler):
+        super().__init__(model, tools)
+        self.config = config
 
     def get_colleague_discussion(self, completions: list[dict[str, Any]]) -> str:
         """Concat all completions into a single string"""
@@ -73,7 +80,7 @@ class AskColleagues(AbstractActionSampler):
         history: list[dict[str, Any]],
     ) -> ActionSamplerOutput:
         """Returns action with tool calls"""
-        completions = self._model.query(history, n=self.n_samples)  # type: ignore
+        completions = self._model.query(history, n=self.config.n_samples)  # type: ignore
         discussion = self.get_colleague_discussion(completions)
         self._logger.info(f"COLLEAGUE DISCUSSION:\n{discussion}")
         new_messages = [
@@ -86,7 +93,7 @@ class AskColleagues(AbstractActionSampler):
         )
 
 
-class BinaryTrajectoryComparison(AbstractActionSampler):
+class BinaryTrajectoryComparisonConfig(BaseModel):
     type: Literal["binary_trajectory_comparison"] = "binary_trajectory_comparison"
 
     min_n_samples: int = 4
@@ -139,8 +146,14 @@ class BinaryTrajectoryComparison(AbstractActionSampler):
     The last line of your response MUST be "first" or "second".
     """)
 
-    def model_post_init(self, __context: Any) -> None:
-        self._logger = get_logger("action_sampler", emoji="👥")
+    def get(self, model: AbstractModel, tools: ToolHandler) -> "BinaryTrajectoryComparison":
+        return BinaryTrajectoryComparison(self, model, tools)
+
+
+class BinaryTrajectoryComparison(AbstractActionSampler):
+    def __init__(self, config: BinaryTrajectoryComparisonConfig, model: AbstractModel, tools: ToolHandler):
+        super().__init__(model, tools)
+        self.config = config
 
     def _format_trajectory(self, trajectory: Trajectory) -> str:
         steps = []
@@ -159,18 +172,18 @@ class BinaryTrajectoryComparison(AbstractActionSampler):
         action2: str,
         use_cache_control: bool = False,
     ) -> list[dict]:
-        system_message = self.system_template
+        system_message = self.config.system_template
         self._logger.debug(f"MODEL INPUT (system)\n{system_message}")
         ps_format_dict = {
             "problem_statement": problem_statement.get_problem_statement(),
             **problem_statement.get_extra_fields(),
         }
-        user_message = Template(self.instance_template).render(
+        user_message = Template(self.config.instance_template).render(
             **ps_format_dict,
             traj=self._format_trajectory(trajectory),
         )
         self._logger.debug(f"MODEL INPUT (instance)\n{user_message}")
-        comparison_message = Template(self.comparison_template).render(
+        comparison_message = Template(self.config.comparison_template).render(
             thought1=thought1,
             action1=action1,
             thought2=thought2,
@@ -235,15 +248,15 @@ class BinaryTrajectoryComparison(AbstractActionSampler):
         return False
 
     def get_completions(self, history: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        completions = self._model.query(history, n=self.min_n_samples)  # type: ignore
+        completions = self._model.query(history, n=self.config.min_n_samples)  # type: ignore
         completions = self.filter_parseable_completions(completions)
         completions = self.filter_duplicates(completions)
         if not completions:
             msg = "No completions could be parsed."
             raise FormatError(msg)
-        if self.contains_edits(completions) and self.min_n_samples < self.max_n_samples:
+        if self.contains_edits(completions) and self.config.min_n_samples < self.config.max_n_samples:
             self._logger.debug("Edits were proposed, will sample more")
-            new_completions = self._model.query(history, n=self.max_n_samples - self.min_n_samples)  # type: ignore
+            new_completions = self._model.query(history, n=self.config.max_n_samples - self.config.min_n_samples)  # type: ignore
             completions = self.filter_duplicates(self.filter_parseable_completions(completions + new_completions))
         if len(completions) == 1:
             _, action = self._tools.parse_actions(completions[0])
@@ -272,7 +285,7 @@ class BinaryTrajectoryComparison(AbstractActionSampler):
                 action2=action2,
                 use_cache_control=len(completions) >= 3,
             )
-            response = self._model.query(messages, temperature=self.comparison_temperature)["message"]  # type: ignore
+            response = self._model.query(messages, temperature=self.config.comparison_temperature)["message"]  # type: ignore
             self._logger.info(f"RESPONSE: {response}")
             idx = self.interpret(response)
             comparison_log.append(
@@ -301,4 +314,4 @@ class BinaryTrajectoryComparison(AbstractActionSampler):
         return 0
 
 
-ActionSampler = BinaryTrajectoryComparison | AskColleagues
+ActionSamplerConfig = BinaryTrajectoryComparisonConfig | AskColleaguesConfig

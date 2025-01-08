@@ -16,7 +16,7 @@ from tenacity import RetryError
 from typing_extensions import Self
 
 from sweagent import __version__, get_agent_commit_hash, get_rex_commit_hash, get_rex_version
-from sweagent.agent.action_sampler import ActionSampler
+from sweagent.agent.action_sampler import AbstractActionSampler, ActionSamplerConfig
 from sweagent.agent.history_processors import DefaultHistoryProcessor, HistoryProcessor
 from sweagent.agent.hooks.abstract import AbstractAgentHook, CombinedAgentHook
 from sweagent.agent.models import (
@@ -132,7 +132,7 @@ class AgentConfig(BaseModel):
     formatting error, a blocked action, or a bash syntax error.
     """
     review_loop: ReviewLoopConfig | None = None
-    action_sampler: ActionSampler | None = None
+    action_sampler: ActionSamplerConfig | None = None
 
     # pydantic config
     model_config = ConfigDict(extra="forbid")
@@ -165,7 +165,7 @@ class Agent:
         _catch_errors: bool = True,
         _always_require_zero_exit_code: bool = False,
         review_loop_config: ReviewLoopConfig | None = None,
-        action_sampler: ActionSampler | None = None,
+        action_sampler_config: ActionSamplerConfig | None = None,
     ):
         """The agent handles the behaviour of the model and how it interacts with the environment.
 
@@ -211,10 +211,9 @@ class Agent:
         It can be used to replay the agent's trajectory in an environment.
         """
 
-        self._action_sampler = action_sampler
-
-        if self._action_sampler is not None:
-            self._action_sampler.setup(self.model, self.tools)
+        self._action_sampler: AbstractActionSampler | None = None
+        if action_sampler_config is not None:
+            self._action_sampler = action_sampler_config.get(self.model, self.tools)
 
     @classmethod
     def from_config(cls, config: AgentConfig) -> Self:
@@ -226,7 +225,7 @@ class Agent:
             model=model,
             max_requeries=config.max_requeries,
             review_loop_config=config.review_loop,
-            action_sampler=config.action_sampler,
+            action_sampler_config=config.action_sampler,
         )
 
     def add_hook(self, hook: AbstractAgentHook) -> None:
