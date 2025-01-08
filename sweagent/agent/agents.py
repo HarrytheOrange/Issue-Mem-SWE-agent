@@ -322,12 +322,12 @@ class Agent:
         self._problem_statement = problem_statement
         self._env = env
         iid = self._problem_statement.id
-        try:
-            # This ensures that the file handler is added to the model's logger
-            self.model.logger.name = f"swea-lm-{iid}"
-        except AttributeError:
-            self.logger.warning("Model does not have a logger, cannot set name")
-            pass
+        self.logger.info("Setting up agent for instance %s", iid)
+
+        # Ensure that in run-batch file handlers are attached to the model's logger
+        self.logger.info("Current model logger name: %s", self.model.logger.name)
+        self.model.logger = get_logger(f"swea-lm-{iid}", emoji="🤖")
+        self.logger.info("New model logger name: %s", self.model.logger.name)
 
         # Save/reset some attributes
         self.traj_path = output_dir / (self._problem_statement.id + ".traj")
