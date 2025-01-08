@@ -295,7 +295,7 @@ class Agent:
     @property
     def attempt_model_stats(self) -> InstanceStats:
         """Model stats of the current attempt"""
-        total_stats = self.model.stats
+        total_stats = copy.deepcopy(self.model.stats)
         for attempt_idx in range(self._i_attempt):
             total_stats -= InstanceStats.model_validate(self._info_by_attempt[attempt_idx]["model_stats"])  # type: ignore
         return total_stats
@@ -321,6 +321,12 @@ class Agent:
         """
         self._problem_statement = problem_statement
         self._env = env
+        iid = self._problem_statement.id
+        try:
+            # This ensures that the file handler is added to the model's logger
+            self.model.logger.name = f"swea-lm-{iid}"
+        except AttributeError:
+            pass
 
         # Save/reset some attributes
         self.traj_path = output_dir / (self._problem_statement.id + ".traj")
