@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 import random
 import shlex
@@ -609,6 +610,8 @@ class LiteLLMModel(AbstractModel):
         self,
         history: History,
     ) -> list[dict[str, str]]:
+        history = copy.deepcopy(history)
+
         def get_role(history_item: HistoryItem) -> str:
             if history_item["role"] == "system":
                 return "user" if self.config.convert_system_to_user else "system"
@@ -618,20 +621,21 @@ class LiteLLMModel(AbstractModel):
         for history_item in history:
             role = get_role(history_item)
             if role == "tool":
-                messages.append(
-                    {
-                        "role": role,
-                        "content": history_item["content"],
-                        # Only one tool call per observations
-                        "tool_call_id": history_item["tool_call_ids"][0],  # type: ignore
-                    }
-                )
+                message = {
+                    "role": role,
+                    "content": history_item["content"],
+                    # Only one tool call per observations
+                    "tool_call_id": history_item["tool_call_ids"][0],  # type: ignore
+                }
             elif "tool_calls" in history_item:
-                messages.append(
-                    {"role": role, "content": history_item["content"], "tool_calls": history_item["tool_calls"]}
-                )
+                message = {"role": role, "content": history_item["content"], "tool_calls": history_item["tool_calls"]}
             else:
-                messages.append({"role": role, "content": history_item["content"]})
+                message = {"role": role, "content": history_item["content"]}
+            if "cache_control" in history_item:
+                message["cache_control"] = history_item["cache_control"]
+            messages.append(message)
+        n_cache_control = str(messages).count("cache_control")
+        self.logger.debug(f"n_cache_control: {n_cache_control}")
         return messages
 
 

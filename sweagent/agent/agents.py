@@ -280,7 +280,7 @@ class Agent:
         self._info_by_attempt[self._i_attempt] = value
 
     @property
-    def messages(self) -> list[dict[str, str]]:
+    def messages(self) -> list[dict[str, Any]]:
         """Return the history of the agent since the last reset, processed through all history processors."""
         filtered_history = [entry for entry in self.history if entry["agent"] == self.name]  # type: ignore
 

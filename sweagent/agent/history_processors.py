@@ -7,6 +7,7 @@ from typing import Annotated, Literal, Protocol
 from pydantic import BaseModel, ConfigDict, Field
 
 from sweagent.types import History, HistoryItem
+from sweagent.utils.log import get_logger
 
 
 class AbstractHistoryProcessor(Protocol):
@@ -168,6 +169,9 @@ class CacheControlHistoryProcessor(BaseModel):
     If set to <= 0, any set cache control will be removed from all messages.
     """
 
+    tagged_roles: list[str] = ["user", "tool"]
+    """Only add cache control to messages with these roles."""
+
     # pydantic config
     model_config = ConfigDict(extra="forbid")
 
@@ -180,8 +184,8 @@ class CacheControlHistoryProcessor(BaseModel):
     def _clear_cache_control(self, entry: HistoryItem) -> None:
         if isinstance(entry["content"], list):
             assert len(entry["content"]) == 1, "Expected single message in content"
-            if "cache_control" in entry["content"][0]:
-                del entry["content"][0]["cache_control"]
+            entry["content"][0].pop("cache_control", None)
+        entry.pop("cache_control", None)
 
     def _set_cache_control(self, entry: HistoryItem) -> None:
         if not isinstance(entry["content"], list):
@@ -194,17 +198,25 @@ class CacheControlHistoryProcessor(BaseModel):
             ]
         else:
             entry["content"][0]["cache_control"] = {"type": "ephemeral"}
+        if entry["role"] == "tool":
+            # Workaruond for weird bug
+            entry["content"][0].pop("cache_control", None)
+            entry["cache_control"] = {"type": "ephemeral"}
 
     def __call__(self, history: History) -> History:
         new_history = []
         n_tagged = 0
+        logger = get_logger("hp")
         for entry in reversed(history):
             # Clear cache control from previous messages
             self._clear_cache_control(entry)
-            if n_tagged < self.last_n_messages and entry["role"] == "user":
+            if n_tagged < self.last_n_messages and entry["role"] in self.tagged_roles:
                 self._set_cache_control(entry)
+                logger.debug("Tagged message %s", entry)
                 n_tagged += 1
             new_history.append(entry)
+        if n_tagged != self.last_n_messages:
+            logger.warning(f"Expected {self.last_n_messages} messages tagged with cache_control, got {n_tagged}")
         return list(reversed(new_history))
 
 
