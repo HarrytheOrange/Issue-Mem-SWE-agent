@@ -61,6 +61,7 @@ class TrajectoryViewer(Static):
         self.trajectory = json.loads(path.read_text())
         self.title = title
         self.gold_patch = gold_patch
+        self.overview_stats = overview_stats
         self.update_content()
 
     def compose(self) -> ComposeResult:
