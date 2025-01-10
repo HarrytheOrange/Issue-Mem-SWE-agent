@@ -212,7 +212,6 @@ class CacheControlHistoryProcessor(BaseModel):
             self._clear_cache_control(entry)
             if n_tagged < self.last_n_messages and entry["role"] in self.tagged_roles:
                 self._set_cache_control(entry)
-                logger.debug("Tagged message %s", entry)
                 n_tagged += 1
             new_history.append(entry)
         if n_tagged != self.last_n_messages:
