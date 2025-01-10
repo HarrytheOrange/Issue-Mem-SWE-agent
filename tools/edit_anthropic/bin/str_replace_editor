@@ -195,6 +195,10 @@ class EditTool:
             )
             sys.exit(16)
 
+        if new_str == old_str:
+            print(f"No replacement was performed, old_str `{old_str}` is the same as new_str `{new_str}`.")
+            sys.exit(161)
+
         # Replace old_str with new_str
         new_file_content = file_content.replace(old_str, new_str)
 
