@@ -7,17 +7,21 @@ However, we made it python 3.6 compatible and stateless (all state is saved in a
 
 import argparse
 import json
-import os
+import re
 import subprocess
 import sys
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import List, Optional, Tuple
 
 from registry import registry as REGISTRY
 
 TRUNCATED_MESSAGE: str = "<response clipped><NOTE>To save on context only part of this file has been shown to you. You should retry this tool after you have searched inside the file with `grep -n` in order to find the line numbers of what you are looking for.</NOTE>"
 MAX_RESPONSE_LEN: int = 16000
+
+MAX_WINDOW_EXPANSION_VIEW = int(REGISTRY.get("MAX_WINDOW_EXPANSION_VIEW", 30))
+MAX_WINDOW_EXPANSION_EDIT_CONFIRM = int(REGISTRY.get("MAX_WINDOW_EXPANSION_EDIT_CONFIRM", 10))
+USE_FILEMAP = bool(REGISTRY.get("USE_FILEMAP", True))
 
 
 def maybe_truncate(content: str, truncate_after: Optional[int] = MAX_RESPONSE_LEN):
@@ -32,6 +36,118 @@ def maybe_truncate(content: str, truncate_after: Optional[int] = MAX_RESPONSE_LE
 Command = str
 SNIPPET_LINES: int = 4
 
+
+class WindowExpander:
+    def __init__(self, suffix: str = ""):
+        """Try to expand viewports to include whole functions, classes, etc. rather than
+        using fixed line windows.
+
+        Args:
+            suffix: Filename suffix
+        """
+        self.suffix = suffix
+        if self.suffix:
+            assert self.suffix.startswith(".")
+
+    def _find_breakpoints(self, lines: List[str], current_line: int, direction=1, max_added_lines: int = 30) -> int:
+        """Returns 1-based line number of breakpoint. This line is meant to still be included in the viewport.
+
+        Args:
+            lines: List of lines of the file
+            current_line: 1-based line number of the current viewport
+            direction: 1 for down, -1 for up
+            max_added_lines: Maximum number of lines to extend
+
+        Returns:
+            1-based line number of breakpoint. This line is meant to still be included in the viewport.
+        """
+        assert 1 <= current_line <= len(lines)
+        assert 0 <= max_added_lines
+
+        # 1. Find line range that we want to search for breakpoints in
+
+        if direction == 1:
+            # down
+            if current_line == len(lines):
+                # already last line, can't extend down
+                return current_line
+            iter_lines = range(current_line, 1 + min(current_line + max_added_lines, len(lines)))
+        elif direction == -1:
+            # up
+            if current_line == 1:
+                # already first line, can't extend up
+                return current_line
+            iter_lines = range(current_line, -1 + max(current_line - max_added_lines, 1), -1)
+        else:
+            msg = f"Invalid direction {direction}"
+            raise ValueError(msg)
+
+        # 2. Find the best breakpoint in the line range
+
+        # Every condition gives a score, the best score is the best breakpoint
+        best_score = 0
+        best_breakpoint = current_line
+        for i_line in iter_lines:
+            next_line = None
+            line = lines[i_line - 1]
+            if i_line + direction in iter_lines:
+                next_line = lines[i_line + direction - 1]
+            score = 0
+            if line == "" and i_line != current_line:
+                # Need to exclude current line, because we're gonna choose the
+                # 'previous' line as actual breakpoint, which might actually shrink
+                # the viewport otherwise.
+                score = 1
+                if next_line == "":
+                    # Double new blank line:
+                    score = 2
+                if score > best_score:
+                    best_score = score
+                    # The breakpoint is the previous line
+                    best_breakpoint = i_line - direction
+            if self.suffix == ".py" and any(re.match(r"^\s*" + keyword + r"\s+", line) for keyword in ["def", "class"]):
+                score = 3
+                if score > best_score:
+                    best_score = score
+                    best_breakpoint = i_line
+            if i_line == 1 or i_line == len(lines):
+                score = 3
+                if score > best_score:
+                    best_score = score
+                    best_breakpoint = i_line
+            # print(f"Score {score} for line {i_line} ({line})")
+
+        # print(f"Best score {best_score} for line {best_breakpoint} ({lines[best_breakpoint-1]})")
+
+        return best_breakpoint
+
+    def expand_window(self, lines: List[str], start: int, stop: int, max_added_lines: int) -> Tuple[int, int]:
+        """
+
+        Args:
+            lines: All lines of the file
+            start: 1-based line number of the start of the viewport
+            stop: 1-based line number of the end of the viewport
+            max_added_lines: Maximum number of lines to extend (separately for each side)
+
+        Returns:
+            Tuple of 1-based line numbers of the start and end of the viewport.
+            Both inclusive.
+        """
+        # print("Input:", start, stop)
+        assert 1 <= start <= stop <= len(lines)
+        if max_added_lines <= 0:
+            # Already at max range, no expansion
+            return start, stop
+        new_start = self._find_breakpoints(lines, start, direction=-1, max_added_lines=max_added_lines)
+        new_stop = self._find_breakpoints(lines, stop, direction=1, max_added_lines=max_added_lines)
+        # print(f"Expanded window is {new_start} to {new_stop}")
+        assert new_start <= new_stop
+        assert new_start <= start, (new_start, start)
+        assert start - new_start <= max_added_lines
+        assert new_stop >= stop, (new_stop, stop)
+        assert new_stop - stop <= max_added_lines
+        return new_start, new_stop
 
 
 class EditTool:
@@ -169,10 +285,16 @@ class EditTool:
                 sys.exit(14)
 
             if final_line == -1:
-                file_content = "\n".join(file_lines[init_line - 1 :])
-            else:
-                file_content = "\n".join(file_lines[init_line - 1 : final_line])
+                final_line = n_lines_file
 
+            # Expand the viewport to include the whole function or class
+            init_line, final_line = WindowExpander(suffix=path.suffix).expand_window(
+                file_lines, init_line, final_line, max_added_lines=MAX_WINDOW_EXPANSION_VIEW
+            )
+
+            file_content = "\n".join(file_lines[init_line - 1 : final_line])
+
+        # init_line is 1-based
         print(self._make_output(file_content, str(path), init_line=init_line))
 
     def str_replace(self, path: Path, old_str: str, new_str: Optional[str]):
@@ -212,11 +334,14 @@ class EditTool:
         replacement_line = file_content.split(old_str)[0].count("\n")
         start_line = max(0, replacement_line - SNIPPET_LINES)
         end_line = replacement_line + SNIPPET_LINES + new_str.count("\n")
-        snippet = "\n".join(new_file_content.split("\n")[start_line : end_line + 1])
+        start_line, end_line = WindowExpander(suffix=path.suffix).expand_window(
+            new_file_content.split("\n"), start_line, end_line, max_added_lines=MAX_WINDOW_EXPANSION_EDIT_CONFIRM
+        )
+        snippet = "\n".join(new_file_content.split("\n")[start_line - 1 : end_line])
 
         # Prepare the success message
         success_msg = f"The file {path} has been edited. "
-        success_msg += self._make_output(snippet, f"a snippet of {path}", start_line + 1)
+        success_msg += self._make_output(snippet, f"a snippet of {path}", start_line)
         success_msg += "Review the changes and make sure they are as expected. Edit the file again if necessary."
 
         print(success_msg)
@@ -247,6 +372,8 @@ class EditTool:
 
         self.write_file(path, new_file_text)
         self._file_history[path].append(file_text)
+
+        # todo: Also expand these windows
 
         success_msg = f"The file {path} has been edited. "
         success_msg += self._make_output(
