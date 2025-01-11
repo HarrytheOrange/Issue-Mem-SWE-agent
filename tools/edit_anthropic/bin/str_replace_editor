@@ -451,14 +451,15 @@ class EditTool:
     def read_file(self, path: Path):
         """Read the content of a file from a given path; raise a ToolError if an error occurs."""
         encodings = [
-            None,
-            "utf-8",
-            "latin-1",
+            (None, None),
+            ("utf-8", None),
+            ("latin-1", None),
+            ("utf-8", "replace"),
         ]
         exception = None
-        for self._encoding in encodings:
+        for self._encoding, errors in encodings:
             try:
-                text = path.read_text(encoding=self._encoding)
+                text = path.read_text(encoding=self._encoding, errors=errors)
             except UnicodeDecodeError as e:
                 exception = e
             else:
