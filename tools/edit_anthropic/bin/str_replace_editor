@@ -38,7 +38,7 @@ SNIPPET_LINES: int = 4
 
 
 class Filemap:
-    def show_filemap(self, file_contents: str):
+    def show_filemap(self, file_contents: str, encoding: str = "utf8"):
         import warnings
         from tree_sitter_languages import get_language, get_parser
 
@@ -47,7 +47,7 @@ class Filemap:
         parser = get_parser("python")
         language = get_language("python")
 
-        tree = parser.parse(bytes(file_contents, "utf8"))
+        tree = parser.parse(bytes(file_contents.encode(encoding, errors="replace")))
 
         # See https://tree-sitter.github.io/tree-sitter/using-parsers#pattern-matching-with-queries.
         query = language.query("""
@@ -333,7 +333,7 @@ class EditTool:
         else:
             if path.suffix == ".py" and len(file_content) > MAX_RESPONSE_LEN and USE_FILEMAP:
                 try:
-                    filemap = Filemap().show_filemap(file_content)
+                    filemap = Filemap().show_filemap(file_content, encoding=self._encoding or "utf-8")
                 except Exception:
                     # If we fail to show the filemap, just show the truncated file content
                     pass
