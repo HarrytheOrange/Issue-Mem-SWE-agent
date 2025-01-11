@@ -19,9 +19,9 @@ from registry import registry as REGISTRY
 TRUNCATED_MESSAGE: str = "<response clipped><NOTE>To save on context only part of this file has been shown to you. You should retry this tool after you have searched inside the file with `grep -n` in order to find the line numbers of what you are looking for.</NOTE>"
 MAX_RESPONSE_LEN: int = 16000
 
-MAX_WINDOW_EXPANSION_VIEW = int(REGISTRY.get("MAX_WINDOW_EXPANSION_VIEW", 30))
-MAX_WINDOW_EXPANSION_EDIT_CONFIRM = int(REGISTRY.get("MAX_WINDOW_EXPANSION_EDIT_CONFIRM", 10))
-USE_FILEMAP = bool(REGISTRY.get("USE_FILEMAP", True))
+MAX_WINDOW_EXPANSION_VIEW = int(REGISTRY.get("MAX_WINDOW_EXPANSION_VIEW", 0))
+MAX_WINDOW_EXPANSION_EDIT_CONFIRM = int(REGISTRY.get("MAX_WINDOW_EXPANSION_EDIT_CONFIRM", 0))
+USE_FILEMAP = REGISTRY.get("USE_FILEMAP", "false").lower() == "true"
 
 
 def maybe_truncate(content: str, truncate_after: Optional[int] = MAX_RESPONSE_LEN):
@@ -35,6 +35,44 @@ def maybe_truncate(content: str, truncate_after: Optional[int] = MAX_RESPONSE_LE
 
 Command = str
 SNIPPET_LINES: int = 4
+
+
+class Filemap:
+    def show_filemap(self, file_contents: str):
+        import warnings
+        from tree_sitter_languages import get_language, get_parser
+
+        warnings.simplefilter("ignore", category=FutureWarning)
+
+        parser = get_parser("python")
+        language = get_language("python")
+
+        tree = parser.parse(bytes(file_contents, "utf8"))
+
+        # See https://tree-sitter.github.io/tree-sitter/using-parsers#pattern-matching-with-queries.
+        query = language.query("""
+        (function_definition
+        body: (_) @body)
+        """)
+
+        # TODO: consider special casing docstrings such that they are not elided. This
+        # could be accomplished by checking whether `body.text.decode('utf8')` starts
+        # with `"""` or `'''`.
+        elide_line_ranges = [
+            (node.start_point[0], node.end_point[0])
+            for node, _ in query.captures(tree.root_node)
+            # Only elide if it's sufficiently long
+            if node.end_point[0] - node.start_point[0] >= 5
+        ]
+        # Note that tree-sitter line numbers are 0-indexed, but we display 1-indexed.
+        elide_lines = {line for start, end in elide_line_ranges for line in range(start, end + 1)}
+        elide_messages = [(start, f"... eliding lines {start+1}-{end+1} ...") for start, end in elide_line_ranges]
+        out = []
+        for i, line in sorted(
+            elide_messages + [(i, line) for i, line in enumerate(file_contents.splitlines()) if i not in elide_lines]
+        ):
+            out.append(f"{i+1:6d} {line}")
+        return "\n".join(out)
 
 
 class WindowExpander:
@@ -260,7 +298,6 @@ class EditTool:
             return
 
         file_content = self.read_file(path)
-        init_line = 1
         if view_range:
             if len(view_range) != 2 or not all(isinstance(i, int) for i in view_range):
                 print("Invalid `view_range`. It should be a list of two integers.")
@@ -293,6 +330,22 @@ class EditTool:
             )
 
             file_content = "\n".join(file_lines[init_line - 1 : final_line])
+        else:
+            if path.suffix == ".py" and len(file_content) > MAX_RESPONSE_LEN and USE_FILEMAP:
+                try:
+                    filemap = Filemap().show_filemap(file_content)
+                except Exception:
+                    # If we fail to show the filemap, just show the truncated file content
+                    pass
+                else:
+                    print(
+                        "<NOTE>This file is too large to display entirely. Showing abbreviated version. "
+                        "Use the `view_range` parameter to show selected lines</NOTE>"
+                    )
+                    print(maybe_truncate(filemap))
+                    return
+            # Else just show
+            init_line = 1
 
         # init_line is 1-based
         print(self._make_output(file_content, str(path), init_line=init_line))
