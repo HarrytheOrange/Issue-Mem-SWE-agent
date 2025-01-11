@@ -7,7 +7,6 @@ from typing import Annotated, Literal, Protocol
 from pydantic import BaseModel, ConfigDict, Field
 
 from sweagent.types import History, HistoryItem
-from sweagent.utils.log import get_logger
 
 
 class AbstractHistoryProcessor(Protocol):
@@ -206,7 +205,6 @@ class CacheControlHistoryProcessor(BaseModel):
     def __call__(self, history: History) -> History:
         new_history = []
         n_tagged = 0
-        logger = get_logger("hp")
         for entry in reversed(history):
             # Clear cache control from previous messages
             self._clear_cache_control(entry)
@@ -214,8 +212,6 @@ class CacheControlHistoryProcessor(BaseModel):
                 self._set_cache_control(entry)
                 n_tagged += 1
             new_history.append(entry)
-        if n_tagged != self.last_n_messages:
-            logger.warning(f"Expected {self.last_n_messages} messages tagged with cache_control, got {n_tagged}")
         return list(reversed(new_history))
 
 
