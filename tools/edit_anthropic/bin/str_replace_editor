@@ -13,6 +13,7 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 from typing import List, Optional, Tuple
+import io
 
 from registry import registry as REGISTRY
 
@@ -342,7 +343,12 @@ class EditTool:
                         "<NOTE>This file is too large to display entirely. Showing abbreviated version. "
                         "Use the `view_range` parameter to show selected lines</NOTE>"
                     )
-                    print(maybe_truncate(filemap))
+                    filemap = maybe_truncate(filemap.expandtabs())
+                    # There are some super strange "ascii can't decode x" errors,
+                    # that can be solved with setting the default encoding for stdout
+                    # (note that python3.6 doesn't have the reconfigure method)
+                    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+                    print(filemap)
                     return
             # Else just show
             init_line = 1
