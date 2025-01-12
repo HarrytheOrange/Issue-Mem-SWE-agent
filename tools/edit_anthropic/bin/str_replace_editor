@@ -132,10 +132,7 @@ class WindowExpander:
             if i_line + direction in iter_lines:
                 next_line = lines[i_line + direction - 1]
             score = 0
-            if line == "" and i_line != current_line:
-                # Need to exclude current line, because we're gonna choose the
-                # 'previous' line as actual breakpoint, which might actually shrink
-                # the viewport otherwise.
+            if line == "":
                 score = 1
                 if next_line == "":
                     # Double new blank line:
@@ -160,6 +157,9 @@ class WindowExpander:
             # print(f"Score {score} for line {i_line} ({line})")
 
         # print(f"Best score {best_score} for line {best_breakpoint} ({lines[best_breakpoint-1]})")
+        if direction == 1 and best_breakpoint < current_line or direction == -1 and best_breakpoint > current_line:
+            # We don't want to shrink the view port, so we return the current line
+            return current_line
 
         return best_breakpoint
 
