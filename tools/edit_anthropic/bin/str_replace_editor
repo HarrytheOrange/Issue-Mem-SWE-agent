@@ -344,7 +344,7 @@ class EditTool:
                 else:
                     print(
                         "<NOTE>This file is too large to display entirely. Showing abbreviated version. "
-                        "Use the `view_range` parameter to show selected lines</NOTE>"
+                        "Please use `str_replace_editor view` with the `view_range` parameter to show selected lines next.</NOTE>"
                     )
                     filemap = maybe_truncate(filemap.expandtabs())
                     # There are some super strange "ascii can't decode x" errors,
@@ -352,6 +352,9 @@ class EditTool:
                     # (note that python3.6 doesn't have the reconfigure method)
                     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
                     print(filemap)
+                    print(
+                        "<IMPORTANT><NOTE>The above file has been abbreviated. Please use `str_replace editor view` with `view_range` to look at relevant files in detail.</NOTE></IMPORTANT>"
+                    )
                     return
             # Else just show
             init_line = 1
