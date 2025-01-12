@@ -137,18 +137,16 @@ class WindowExpander:
                 if next_line == "":
                     # Double new blank line:
                     score = 2
-                if score > best_score:
-                    best_score = score
-                    # The breakpoint is the previous line
-                    best_breakpoint = i_line - direction
             if self.suffix == ".py" and any(
                 re.match(r"^\s*" + keyword + r"\s+", line) for keyword in ["def", "class", "@"]
             ):
                 # We include decorators here, because they are always on top of the function/class definition
                 score = 3
-                if score > best_score:
-                    best_score = score
-                    best_breakpoint = i_line - direction
+            if score > best_score:
+                best_score = score
+                best_breakpoint = i_line
+                if direction == 1 and i_line != current_line:
+                    best_breakpoint -= 1
             if i_line == 1 or i_line == len(lines):
                 score = 3
                 if score > best_score:
