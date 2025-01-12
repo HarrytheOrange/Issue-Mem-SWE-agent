@@ -373,9 +373,7 @@ class EditTool:
             if file_text is None:
                 print("Parameter `file_text` is required for command: create")
                 sys.exit(1)
-            self.write_file(_path, file_text)
-            self._file_history[_path].append(file_text)
-            print(f"File created successfully at: {_path}")
+            self.create_file(_path, file_text)
             return None
         elif command == "str_replace":
             if old_str is None:
@@ -420,6 +418,14 @@ class EditTool:
             if command != "view":
                 print(f"The path {path} is a directory and only the `view` command can be used on directories")
                 sys.exit(9)
+
+    def create_file(self, path: Path, file_text: str):
+        if not path.parent.exists():
+            print(f"The parent directory {path.parent} does not exist. Please create it first.")
+            sys.exit(21)
+        self.write_file(path, file_text)
+        self._file_history[path].append(file_text)
+        print(f"File created successfully at: {path}")
 
     def view(self, path: Path, view_range: Optional[List[int]] = None):
         """Implement the view command"""
