@@ -138,7 +138,7 @@ class WindowExpander:
                     # Double new blank line:
                     score = 2
             if self.suffix == ".py" and any(
-                re.match(r"^\s*" + keyword + r"\s+", line) for keyword in ["def", "class", "@"]
+                re.match(regex, line) for regex in [r"^\s*def\s+", r"^\s*class\s+", r"^\s*@"]
             ):
                 # We include decorators here, because they are always on top of the function/class definition
                 score = 3
