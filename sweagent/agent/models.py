@@ -257,7 +257,12 @@ class HumanModel(AbstractModel):
             return
         readline.write_history_file(self._readline_histfile)
 
-    def _query(self, history: History, action_prompt: str = "> ") -> dict:
+    def _query(
+        self,
+        history: History,
+        action_prompt: str = "> ",
+        **kwargs,
+    ) -> dict:
         """Logic for handling user input to pass to SWEEnv"""
         action = input(action_prompt)
         self._save_readline_history()
@@ -309,7 +314,7 @@ class HumanModel(AbstractModel):
 
 
 class HumanThoughtModel(HumanModel):
-    def query(self, history: History) -> dict:
+    def query(self, history: History, **kwargs) -> dict:
         """Logic for handling user input (both thought + action) to pass to SWEEnv"""
         thought_all = ""
         thought = input("Thought (end w/ END_THOUGHT): ")

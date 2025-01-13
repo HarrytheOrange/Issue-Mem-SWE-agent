@@ -252,7 +252,7 @@ class Reviewer(AbstractReviewer):
             accept = False
         else:
             messages = self.format_messages(instance, submission)
-            answer = self._model.query(messages)["message"]
+            answer = self._model.query(messages, temperature=0.0)["message"]
             accept = self.interpret(answer)
         accept_emoji = "✅" if accept else "❌"
         logger.info(f"{self.LOG_PREFIX}{accept_emoji}\n{answer}")
@@ -368,7 +368,7 @@ class BinaryReviewer(AbstractBinaryReviewer):
         rev2: ReviewerResult | None,
     ) -> BinaryReviewerResult:
         messages: History = self.format_messages(instance, sub1, sub2)  # type: ignore
-        answer = self._model.query(messages)["message"]
+        answer = self._model.query(messages, temperature=0.0)["message"]
         idx = self.interpret(answer)
         # Use words because else confusion with 0-based vs 1-based indices
         choice_emoji = "first" if idx == 0 else "second"
