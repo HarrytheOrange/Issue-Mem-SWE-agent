@@ -327,6 +327,7 @@ class Agent:
         self.traj_path = output_dir / (self._problem_statement.id + ".traj")
         self.logger.info("Trajectory will be saved to %s", self.traj_path)
 
+        # Gets inremented to 0 in setup_attempt which we call from here
         self._i_attempt = -1
         self._history_by_attempt = defaultdict(list)
         self._trajectory_by_attempt = defaultdict(list)
@@ -346,6 +347,8 @@ class Agent:
         """Setup the agent for a new attempt."""
         self._chook.on_setup_attempt()
         self._i_attempt += 1
+        if self._rloop is not None:
+            self._rloop.on_attempt_started(self._i_attempt, self)
         self.info = AgentInfo()
         self.info["swe_agent_hash"] = get_agent_commit_hash()
         self.info["swe_agent_version"] = __version__

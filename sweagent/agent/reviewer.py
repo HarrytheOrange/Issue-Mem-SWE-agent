@@ -11,7 +11,7 @@ from typing import Any, Literal
 from jinja2 import Template
 from pydantic import BaseModel
 
-from sweagent.agent.models import AbstractModel, HumanModel, HumanThoughtModel, InstanceStats
+from sweagent.agent.models import AbstractModel, HumanModel, HumanThoughtModel, InstanceStats, LiteLLMModel
 from sweagent.agent.problem_statement import ProblemStatement
 from sweagent.exceptions import AttemptCostLimitExceededError
 from sweagent.types import BinaryReviewerResult, History, ReviewerResult, ReviewSubmission, Trajectory, TrajectoryStep
@@ -87,6 +87,10 @@ class AbstractReviewLoop(ABC):
         """Called before the model is queried. Can be used to implement
         stop conditions based on attempt cost etc.
         """
+
+    def on_attempt_started(self, i_attempt: int, agent):
+        """Called when a new attempt is started"""
+        pass
 
     @abstractmethod
     def get_best(self) -> int:
@@ -178,6 +182,8 @@ class ReviewLoopConfig(BaseModel):
     attempt_cost_limit: float = 0.0
     #: Minimal $ that need to be left in order for us to start a new attempt
     min_budget_for_new_attempt: float = 0.0
+    #: Override model temperature for first len(list) attempts
+    temperature_override: list[float] = [0.0]
 
     def validate(self):
         """Checks config. Raises `ValueError` in case of misconfiguration"""
@@ -436,6 +442,8 @@ class ReviewLoop(AbstractReviewLoop):
         self._best_idx: int = 0
         #: Number of consecutive exit cost submissions
         self._n_consec_exit_cost: int = 0
+        #: Original temperature
+        self._terminal_temperature: float | None = None
 
     # Properties
     # ----------
@@ -457,6 +465,21 @@ class ReviewLoop(AbstractReviewLoop):
         return sum([r.accept for r in self._reviews])
 
     # -------
+
+    def on_attempt_started(self, i_attempt: int, agent: str) -> None:
+        if not isinstance(self._model, LiteLLMModel):
+            return
+        # Attempts are 1-indexed
+        logger.debug(f"{self.LOG_PREFIX}Setting temperature for attempt {i_attempt}")
+        if i_attempt == 0:
+            self._terminal_temperature = self._model.config.temperature
+            logger.debug(f"{self.LOG_PREFIX}Set terminal temperature to {self._terminal_temperature}")
+        if i_attempt < len(self._loop_config.temperature_override):
+            self._model.config.temperature = self._loop_config.temperature_override[i_attempt]
+        else:
+            assert self._terminal_temperature is not None
+            self._model.config.temperature = self._terminal_temperature
+        logger.debug(f"{self.LOG_PREFIX}Set temperature to {self._model.config.temperature}")
 
     def on_submit(self, submission: ReviewSubmission) -> None:
         self._submissions.append(submission)
