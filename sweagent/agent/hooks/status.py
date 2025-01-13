@@ -11,10 +11,13 @@ class SetStatusAgentHook(AbstractAgentHook):
         self._i_step = 0
         self._cost = 0.0
         self._i_attempt = 0
+        self._total_cost = 0.0
 
     def on_setup_attempt(self):
         self._i_attempt += 1
         self._i_step = 0
+        # Costs will be reset for the next attempt
+        self._total_cost += self._cost
 
     def _update(self, message: str):
         self._callable(self._id, message)
@@ -22,7 +25,7 @@ class SetStatusAgentHook(AbstractAgentHook):
     def on_step_start(self):
         self._i_step += 1
         attempt_str = f"Attempt {self._i_attempt} " if self._i_attempt > 1 else ""
-        self._update(f"{attempt_str}Step {self._i_step:>3} (${self._cost:.2f})")
+        self._update(f"{attempt_str}Step {self._i_step:>3} (${self._total_cost:.2f})")
 
     def on_step_done(self, *, step: StepOutput, info: AgentInfo):
         self._cost = info["model_stats"]["instance_cost"]  # type: ignore
