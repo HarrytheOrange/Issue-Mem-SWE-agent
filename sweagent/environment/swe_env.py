@@ -131,7 +131,7 @@ class SWEEnv:
                 "git status",
                 "git restore .",
                 f"git reset --hard {self.repo.base_commit}",
-                "git clean -fdxq",
+                "git clean -fdq",
             ]
             self.communicate(
                 input=" && ".join(startup_commands),
