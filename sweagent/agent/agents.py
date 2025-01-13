@@ -551,6 +551,7 @@ class Agent:
                 "attempts": [get_attempt_data(i) for i in range(self._i_attempt + 1)],
                 **get_attempt_data(best_attempt_idx),
             }
+            data["info"]["best_attempt_idx"] = best_attempt_idx
             # Total model stats
             data["info"]["model_stats"] = self.model.stats.model_dump()
             data["extra_info"] = {"comparisons": [(a, b, comp.model_dump()) for a, b, comp in self._rloop.comparisons]}
