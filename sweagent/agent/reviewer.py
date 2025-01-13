@@ -526,7 +526,7 @@ class ReviewLoop(AbstractReviewLoop):
             rev1=rev1,
             rev2=rev2,
         )
-        self._comparisons.append((self._n_samples - 2, self._n_samples - 1, cresult))
+        self._comparisons.append((self._best_idx, self._n_samples - 1, cresult))
         assert cresult.choice in [0, 1]
         # this was a comparison between the current best and the last one
         self._best_idx = [self._best_idx, self._n_samples - 1][cresult.choice]
