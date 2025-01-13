@@ -11,7 +11,7 @@ from typing import Any, Literal
 from jinja2 import Template
 from pydantic import BaseModel
 
-from sweagent.agent.models import AbstractModel, InstanceStats
+from sweagent.agent.models import AbstractModel, HumanModel, HumanThoughtModel, InstanceStats
 from sweagent.agent.problem_statement import ProblemStatement
 from sweagent.exceptions import AttemptCostLimitExceededError
 from sweagent.types import BinaryReviewerResult, History, ReviewerResult, ReviewSubmission, Trajectory, TrajectoryStep
@@ -541,6 +541,8 @@ class ReviewLoop(AbstractReviewLoop):
         if (
             self._loop_config.min_budget_for_new_attempt > 0
             and remaining_budget < self._loop_config.min_budget_for_new_attempt
+            and not isinstance(self._model, HumanModel)
+            and not isinstance(self._model, HumanThoughtModel)
         ):
             logger.info(f"{self.LOG_PREFIX}Exiting retry loop ({stat_str}): Not enough budget left for a new attempt")
             return False
