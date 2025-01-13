@@ -249,8 +249,9 @@ class Agent:
 
     @property
     def history(self) -> History:
-        """History that is passed on to the model.
-        Use `_append_history` to modify.
+        """History that is passed on to the model for the current attempt.
+
+        Note: Use `_append_history` to modify.
         """
         return self._history_by_attempt[self._i_attempt]
 
@@ -260,7 +261,7 @@ class Agent:
 
     @property
     def trajectory(self) -> Trajectory:
-        """Trajectory of the agent for the current instance. In contrast to `history`,
+        """Trajectory of the agent for the current instance & attempt. In contrast to `history`,
         this is mostly for the informational value of how the agent interacted with
         the environment and is also what is being used when replaying the trajectory
         """
@@ -272,7 +273,7 @@ class Agent:
 
     @property
     def info(self) -> AgentInfo:
-        """Information about the agent's run"""
+        """Information about the agent's run for current attempt"""
         return self._info_by_attempt[self._i_attempt]
 
     @info.setter
@@ -281,7 +282,9 @@ class Agent:
 
     @property
     def messages(self) -> list[dict[str, Any]]:
-        """Return the history of the agent since the last reset, processed through all history processors."""
+        """Return the history of the agent for this attempt since the last reset,
+        processed through all history processors.
+        """
         filtered_history = [entry for entry in self.history if entry["agent"] == self.name]  # type: ignore
 
         # Chain the history processors
@@ -521,12 +524,8 @@ class Agent:
 
         self._add_templated_messages_to_history(templates, **state)
 
-    def save_trajectory(
-        self,
-    ) -> None:
-        """Save the trajectory to disk.
-        This includes the history, the environment state, and the model stats.
-        """
+    def get_trajectory_data(self) -> dict[str, Any]:
+        """Get all data that we save in .traj files."""
 
         def get_attempt_data(attempt_idx: int) -> dict[str, Any]:
             """Get data saved for every attempt"""
@@ -560,6 +559,15 @@ class Agent:
                 **get_attempt_data(0),
             }
 
+        return data
+
+    def save_trajectory(
+        self,
+    ) -> None:
+        """Save the trajectory to disk.
+        This includes the history, the environment state, and the model stats.
+        """
+        data = self.get_trajectory_data()
         assert self.traj_path is not None
         self.traj_path.write_text(json.dumps(data, indent=2))
 
@@ -972,4 +980,7 @@ class Agent:
 
         self.logger.info("Trajectory saved to %s", self.traj_path)
 
-        return AgentRunResult(info=self.info, trajectory=self.trajectory)
+        # Here we want to return the "global" information (e.g., submission should
+        # be the best submission instead of the last one, etc.), so we get it from the traj file
+        data = self.get_trajectory_data()
+        return AgentRunResult(info=data["info"], trajectory=data["trajectory"])
