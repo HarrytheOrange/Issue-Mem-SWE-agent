@@ -266,7 +266,7 @@ class TrajectoryFormatter:
         *,
         traj_filter: list[str] | None = None,
         traj_output_filter: list[str] | None = None,
-        traj_item_template: str = "Model: {response}\n\nObservation: {observation}",
+        traj_item_template: str = "Model: {{response}}\n\nObservation: {{observation}}",
         filter_failed_edits: bool = False,
         only_show_last_n_output: int = 0,
     ):
