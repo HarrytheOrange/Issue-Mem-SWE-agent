@@ -25,8 +25,10 @@ def compare(new_path, old_path, *, show_same=False):
     for id in evaluated_ids:
         resolved_now = id in resolved_ids
         resolved_before = id in old_resolved_ids
-        if id not in old_evaluated_ids:
-            emoji = "❓"
+        if id not in old_evaluated_ids and resolved_now:
+            emoji = "😀❓"
+        elif id not in old_evaluated_ids and not resolved_now:
+            emoji = "👾❓"
         elif resolved_now and not resolved_before:
             emoji = "😀"
         elif resolved_now and resolved_before:
@@ -54,7 +56,7 @@ def run_from_cli(_args: list[str] | None = None):
         args.old_path = args.old_path / "results.json"
     print("-" * 80)
     print("Emoji legend:")
-    print("❓: Not evaluated in old version")
+    print("❓: Not evaluated in old version, so guessing it's either 😀 or 👾")
     print("😀: Newly resolved in new version")
     print("✅: Resolved in both")
     print("❌: Resolved in old, not in new")
