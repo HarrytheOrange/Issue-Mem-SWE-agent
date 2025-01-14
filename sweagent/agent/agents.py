@@ -215,6 +215,10 @@ class Agent:
         if action_sampler_config is not None:
             self._action_sampler = action_sampler_config.get(self.model, self.tools)
 
+        #: Count how many timeout errors have occurred consecutively. Kills agent
+        #: after 5 of them.
+        self._n_consecutive_timeouts = 0
+
     @classmethod
     def from_config(cls, config: AgentConfig) -> Self:
         model = get_model(config.model, config.tools)
@@ -699,7 +703,12 @@ class Agent:
             )
         except CommandTimeoutError:
             try:
+                if self._n_consecutive_timeouts >= 5:
+                    msg = "Exiting agent due to too many consecutive timeouts"
+                    self.logger.critical(msg)
+                    raise
                 self._env.interrupt_session()
+                self._n_consecutive_timeouts += 1
             except Exception as f:
                 self.logger.exception("Failed to interrupt session after command timeout: %s", f, exc_info=True)
                 raise
@@ -708,7 +717,8 @@ class Agent:
                 timeout=self.tools.config.execution_timeout,
                 command=run_action,
             )
-
+        else:
+            self._n_consecutive_timeouts = 0
         step.execution_time = time.perf_counter() - execution_t0
         self._chook.on_action_executed(step=step)
         step.state = self.tools.get_state(env=self._env)
