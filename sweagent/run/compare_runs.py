@@ -15,11 +15,11 @@ def get_submitted(path: Path) -> set[str]:
 
 
 def compare(new_path, old_path, *, show_same=False):
-    evaluated_ids = get_submitted(new_path)
-    old_evaluated_ids = get_submitted(old_path)
+    evaluated_ids = sorted(get_submitted(new_path))
+    old_evaluated_ids = sorted(get_submitted(old_path))
     print(f"Total evaluated: new {len(evaluated_ids)}, old {len(old_evaluated_ids)}")
-    resolved_ids = get_resolved(new_path)
-    old_resolved_ids = get_resolved(old_path)
+    resolved_ids = sorted(get_resolved(new_path))
+    old_resolved_ids = sorted(get_resolved(old_path))
     print(f"Total resolved: new {len(resolved_ids)}, old {len(old_resolved_ids)}")
 
     for id in evaluated_ids:
