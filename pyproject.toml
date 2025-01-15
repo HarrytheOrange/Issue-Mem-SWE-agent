@@ -56,7 +56,7 @@ dependencies = [
     "litellm",
     "GitPython",
     "ghapi",
-    "swe-rex"
+    "swe-rex>=1.0.3"
 ]
 
 [project.scripts]

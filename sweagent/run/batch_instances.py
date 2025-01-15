@@ -149,6 +149,7 @@ class SimpleBatchInstance(BaseModel):
                 env=EnvironmentConfig(deployment=deployment, repo=repo), problem_statement=problem_statement
             )
         deployment.image = self.image_name  # type: ignore
+        deployment.python_standalone_dir = "/root"  # type: ignore
         return BatchInstance(
             env=EnvironmentConfig(deployment=deployment, repo=repo), problem_statement=problem_statement
         )
