@@ -18,8 +18,6 @@ from sweagent.exceptions import AttemptCostLimitExceededError
 from sweagent.types import BinaryReviewerResult, History, ReviewerResult, ReviewSubmission, Trajectory, TrajectoryStep
 from sweagent.utils.log import get_logger
 
-logger = get_logger("reviewer")
-
 # --- INTERFACES ---
 
 
@@ -209,8 +207,6 @@ class ReviewLoopConfig(BaseModel):
 
 
 class Reviewer(AbstractReviewer):
-    LOG_PREFIX = "🧑‍⚖️ Reviewer: "
-
     def __init__(self, config: ReviewerConfig, model):
         self._config = config
         self._model = model
@@ -220,10 +216,11 @@ class Reviewer(AbstractReviewer):
             traj_output_filter=config.traj_output_filter,
             filter_failed_edits=config.filter_failed_edits,
         )
+        self.logger = get_logger("reviewer", emoji="🧑‍⚖️")
 
     def format_messages(self, instance: ProblemStatement, submission: ReviewSubmission):
         system_message = self._config.system_template
-        logger.debug(f"{self.LOG_PREFIX}MODEL INPUT (system)\n{system_message}")
+        self.logger.debug(f"MODEL INPUT (system)\n{system_message}")
         ps_format_dict = {
             "problem_statement": instance.get_problem_statement(),
             **instance.get_extra_fields(),
@@ -233,7 +230,7 @@ class Reviewer(AbstractReviewer):
             **submission.to_format_dict(),
             traj=self._traj_formatter.format_trajectory(submission.trajectory),
         )
-        logger.debug(f"{self.LOG_PREFIX}MODEL INPUT (user)\n{user_message}")
+        self.logger.debug(f"MODEL INPUT (user)\n{user_message}")
         return [
             {"role": "system", "content": system_message},
             {"role": "user", "content": user_message},
@@ -245,7 +242,7 @@ class Reviewer(AbstractReviewer):
             return True
         elif "fail" in last_line.lower():
             return False
-        logger.warning("Could not interpret response: %s, will reject submission.", response)
+        self.logger.warning("Could not interpret response: %s, will reject submission.", response)
         return False
 
     def review(self, instance: ProblemStatement, submission: ReviewSubmission) -> ReviewerResult:
@@ -262,7 +259,7 @@ class Reviewer(AbstractReviewer):
             answer = self._model.query(messages, temperature=0.0)["message"]
             accept = self.interpret(answer)
         accept_emoji = "✅" if accept else "❌"
-        logger.info(f"{self.LOG_PREFIX}{accept_emoji}\n{answer}")
+        self.logger.info(f"{accept_emoji}\n{answer}")
         return ReviewerResult(accept=accept, output=answer, messages=messages)
 
 
@@ -323,8 +320,6 @@ class TrajectoryFormatter:
 
 
 class BinaryReviewer(AbstractBinaryReviewer):
-    LOG_PREFIX = "⚖️ Binary Reviewer: "
-
     def __init__(self, config: BinaryReviewerConfig, model: AbstractModel):
         self._config = config
         self._model = model
@@ -335,10 +330,11 @@ class BinaryReviewer(AbstractBinaryReviewer):
             filter_failed_edits=config.traj_filter_failed_edits,
             only_show_last_n_output=config.traj_only_show_last_n_output,
         )
+        self.logger = get_logger("binary_reviewer", emoji="⚖️")
 
     def format_messages(self, instance: ProblemStatement, sub1: ReviewSubmission, sub2: ReviewSubmission):
         system_message = self._config.system_template
-        logger.debug(f"{self.LOG_PREFIX}MODEL INPUT (system)\n{system_message}")
+        self.logger.debug(f"MODEL INPUT (system)\n{system_message}")
         ps_format_dict = {
             "problem_statement": instance.get_problem_statement(),
             **instance.get_extra_fields(),
@@ -350,7 +346,7 @@ class BinaryReviewer(AbstractBinaryReviewer):
             traj1=self._traj_formatter.format_trajectory(sub1.trajectory, i_traj=1),
             traj2=self._traj_formatter.format_trajectory(sub2.trajectory, i_traj=2),
         )
-        logger.debug(f"{self.LOG_PREFIX}MODEL INPUT (user)\n{user_message}")
+        self.logger.debug(f"MODEL INPUT (user)\n{user_message}")
         return [
             {"role": "system", "content": system_message},
             {"role": "user", "content": user_message},
@@ -363,17 +359,19 @@ class BinaryReviewer(AbstractBinaryReviewer):
         if number:
             confidence = float(number.group(0))
         else:
-            logger.warning(f"No confidence found in {last_line}")
+            self.logger.warning(f"No confidence found in {last_line}")
             confidence = 0.0
         if confidence > 100.0:
-            logger.warning(f"Confidence {confidence} is greater than 100.0")
+            self.logger.warning(f"Confidence {confidence} is greater than 100.0")
             confidence = 100.0
         confidence /= 100.0
         if "first" in last_line.lower():
             return (0, confidence)
         elif "second" in last_line.lower():
             return (1, confidence)
-        logger.warning("Could not interpret response: %s, will choose first submission with confidence 0.0.", response)
+        self.logger.warning(
+            "Could not interpret response: %s, will choose first submission with confidence 0.0.", response
+        )
         return (0, 0.0)
 
     def compare_submissions(
@@ -389,7 +387,7 @@ class BinaryReviewer(AbstractBinaryReviewer):
         idx, confidence = self.interpret(answer)
         # Use words because else confusion with 0-based vs 1-based indices
         choice_emoji = "first" if idx == 0 else "second"
-        logger.info(f"{self.LOG_PREFIX}{choice_emoji}\n{answer}")
+        self.logger.info(f"{choice_emoji}\n{answer}")
         return BinaryReviewerResult(choice=idx, output=answer, messages=messages, confidence=confidence)  # type: ignore
 
 
@@ -421,8 +419,6 @@ class GraveToCradle(AbstractGraveToCradle):
 
 
 class ReviewLoop(AbstractReviewLoop):
-    LOG_PREFIX = "🔄 Review Loop: "
-
     def __init__(
         self,
         loop_config: ReviewLoopConfig,
@@ -455,6 +451,7 @@ class ReviewLoop(AbstractReviewLoop):
         self._n_consec_exit_cost: int = 0
         #: Original temperature
         self._terminal_temperature: float | None = None
+        self.logger = get_logger("review_loop", emoji="🔄")
 
     # Properties
     # ----------
@@ -481,16 +478,16 @@ class ReviewLoop(AbstractReviewLoop):
         if not isinstance(self._model, LiteLLMModel):
             return
         # Attempts are 1-indexed
-        logger.debug(f"{self.LOG_PREFIX}Setting temperature for attempt {i_attempt}")
+        self.logger.debug(f"Setting temperature for attempt {i_attempt}")
         if i_attempt == 0:
             self._terminal_temperature = self._model.config.temperature
-            logger.debug(f"{self.LOG_PREFIX}Set terminal temperature to {self._terminal_temperature}")
+            self.logger.debug(f"Set terminal temperature to {self._terminal_temperature}")
         if i_attempt < len(self._loop_config.temperature_override):
             self._model.config.temperature = self._loop_config.temperature_override[i_attempt]
         else:
             assert self._terminal_temperature is not None
             self._model.config.temperature = self._terminal_temperature
-        logger.debug(f"{self.LOG_PREFIX}Set temperature to {self._model.config.temperature}")
+        self.logger.debug(f"Set temperature to {self._model.config.temperature}")
 
     def on_submit(self, submission: ReviewSubmission) -> None:
         self._submissions.append(submission)
@@ -499,7 +496,7 @@ class ReviewLoop(AbstractReviewLoop):
 
     def on_model_query(self, attempt_stats: InstanceStats):
         if 0 < self._loop_config.attempt_cost_limit <= attempt_stats.instance_cost:
-            logger.info(f"{self.LOG_PREFIX}Exiting retry loop: Cost limit exceeded")
+            self.logger.info("Exiting retry loop: Cost limit exceeded")
             raise AttemptCostLimitExceededError()
 
     def _review(self) -> bool:
@@ -547,27 +544,23 @@ class ReviewLoop(AbstractReviewLoop):
         # n_samples is 1-based
         if self._n_samples >= self._loop_config.max_samples:
             # We've exceeded our budget. Returning best solution no matter what.
-            logger.info(f"{self.LOG_PREFIX}Exiting retry loop ({stat_str}): `max_samples` reached")
+            self.logger.info(f"Exiting retry loop ({stat_str}): `max_samples` reached")
             return False
 
         if self._n_accepted and self._n_samples >= self._loop_config.min_draws:
             # We have an accepted submission and have reached the minimum number of draws
-            logger.info(
-                f"{self.LOG_PREFIX}Existing retry loop ({stat_str}): `min_draws` reached and last submission was accepted"
-            )
+            self.logger.info(f"Existing retry loop ({stat_str}): `min_draws` reached and last submission was accepted")
             return False
 
         if self._n_accepted >= self._loop_config.max_accepted_draws > 0:
             # We have reached more than the required number of accepted submissions.
             # Exiting even if we haven't reached the minimum number of draws.
-            logger.info(f"{self.LOG_PREFIX}Exiting retry loop ({stat_str}): `max_accepted_draws` reached")
+            self.logger.info(f"Exiting retry loop ({stat_str}): `max_accepted_draws` reached")
             return False
 
         max_n_exit_cost = self._loop_config.max_n_consec_exit_cost
         if self._n_consec_exit_cost >= max_n_exit_cost > 0:
-            logger.info(
-                f"{self.LOG_PREFIX}Exiting retry loop ({stat_str}): {max_n_exit_cost} exit cost attempts reached"
-            )
+            self.logger.info(f"Exiting retry loop ({stat_str}): {max_n_exit_cost} exit cost attempts reached")
             return False
 
         # Todo: Check if there's enough budget left for a new reasonable attempt
@@ -578,7 +571,7 @@ class ReviewLoop(AbstractReviewLoop):
             and not isinstance(self._model, HumanModel)
             and not isinstance(self._model, HumanThoughtModel)
         ):
-            logger.info(f"{self.LOG_PREFIX}Exiting retry loop ({stat_str}): Not enough budget left for a new attempt")
+            self.logger.info(f"Exiting retry loop ({stat_str}): Not enough budget left for a new attempt")
             return False
 
         return True
@@ -598,7 +591,6 @@ def get_review_loop_from_config(
     config: ReviewLoopConfig | None, instance: ProblemStatement, model: AbstractModel
 ) -> AbstractReviewLoop | None:
     if config is None:
-        logger.debug("Running without review loop")
         return None
     if not isinstance(config, ReviewLoopConfig):
         msg = (
