@@ -5,6 +5,7 @@ solving the issue and to select the best solution.
 from __future__ import annotations
 
 import copy
+import re
 from abc import ABC, abstractmethod
 from typing import Any, Literal
 
@@ -355,15 +356,25 @@ class BinaryReviewer(AbstractBinaryReviewer):
             {"role": "user", "content": user_message},
         ]
 
-    def interpret(self, response: str) -> Literal[0, 1]:
+    def interpret(self, response: str) -> tuple[Literal[0, 1], float]:
         """Interpret response from LM. Note: 1-based indexing"""
         last_line = response.strip().split("\n")[-1].strip()
+        number = re.search(r"\d+\.?\d+", last_line)
+        if number:
+            confidence = float(number.group(0))
+        else:
+            logger.warning(f"No confidence found in {last_line}")
+            confidence = 0.0
+        if confidence > 100.0:
+            logger.warning(f"Confidence {confidence} is greater than 100.0")
+            confidence = 100.0
+        confidence /= 100.0
         if "first" in last_line.lower():
-            return 0
+            return (0, confidence)
         elif "second" in last_line.lower():
-            return 1
-        logger.warning("Could not interpret response: %s, will choose first submission.", response)
-        return 0
+            return (1, confidence)
+        logger.warning("Could not interpret response: %s, will choose first submission with confidence 0.0.", response)
+        return (0, 0.0)
 
     def compare_submissions(
         self,
@@ -375,11 +386,11 @@ class BinaryReviewer(AbstractBinaryReviewer):
     ) -> BinaryReviewerResult:
         messages: History = self.format_messages(instance, sub1, sub2)  # type: ignore
         answer = self._model.query(messages, temperature=0.0)["message"]
-        idx = self.interpret(answer)
+        idx, confidence = self.interpret(answer)
         # Use words because else confusion with 0-based vs 1-based indices
         choice_emoji = "first" if idx == 0 else "second"
         logger.info(f"{self.LOG_PREFIX}{choice_emoji}\n{answer}")
-        return BinaryReviewerResult(choice=idx, output=answer, messages=messages)  # type: ignore
+        return BinaryReviewerResult(choice=idx, output=answer, messages=messages, confidence=confidence)  # type: ignore
 
 
 class GraveToCradle(AbstractGraveToCradle):

@@ -130,6 +130,7 @@ class BinaryReviewerResult(BaseModel):
     choice: Literal[0, 1]
     output: str
     messages: list[dict[str, str]]
+    confidence: float = 1.0
 
 
 class AgentRunResult(BaseModel):
