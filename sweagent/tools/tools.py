@@ -248,8 +248,7 @@ class ToolHandler:
     # -------------
 
     def _get_state(self, state_command: str, env: SWEEnv) -> dict[str, str]:
-        """Execute state command in the environment and parse the output as a json object."""
-        env.communicate(state_command, check="warn")
+        """Retrieve the state from the environment"""
         try:
             state_str = env.read_file(Path("/root/state.json"))
         except FileNotFoundError:
@@ -272,21 +271,9 @@ class ToolHandler:
         if self.mock_state is not None:
             return self.mock_state
 
-        def _warn_if_overwrite_state(new_dict: dict[str, str]) -> None:
-            """Issue a warning message if we're overwriting state vars."""
-            for key, value in new_dict.items():
-                if key in combined_state and combined_state[key] != value:
-                    msg = (
-                        f"State command {key} returned different values in "
-                        f"different bundles: {combined_state[key]} and {value}."
-                    )
-                    self.logger.warning(msg)
-
-        combined_state = {}
         for state_command in self.config.state_commands:
-            state = self._get_state(state_command, env)
-            _warn_if_overwrite_state(state)
-            combined_state.update(state)
+            env.communicate(state_command, check="warn")
+        combined_state = self._get_state(state_command, env)
         self.logger.debug(f"Retrieved state from environment: {combined_state}")
         return combined_state
 
