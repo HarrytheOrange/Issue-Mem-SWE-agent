@@ -248,7 +248,7 @@ class Reviewer(AbstractReviewer):
             return False
         elif self._config.output_type == "float":
             # use regex
-            number = re.search(r"\d+\.?\d+", last_line)
+            number = re.search(r"\d+\.?\d*", last_line)
             if number:
                 return float(number.group(0))
             else:
@@ -366,7 +366,7 @@ class BinaryReviewer(AbstractBinaryReviewer):
     def interpret(self, response: str) -> tuple[Literal[0, 1], float]:
         """Interpret response from LM. Note: 1-based indexing"""
         last_line = response.strip().split("\n")[-1].strip()
-        number = re.search(r"\d+\.?\d+", last_line)
+        number = re.search(r"\d+\.?\d*", last_line)
         if number:
             confidence = float(number.group(0))
         else:
