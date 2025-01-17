@@ -8,11 +8,18 @@ from registry import registry  # type: ignore
 
 
 def main():
+    state_path = Path("/root/state.json")
+
+    if state_path.exists():
+        state = json.loads(state_path.read_text())
+    else:
+        state = {}
+
     current_file = registry.get("CURRENT_FILE")
     open_file = "n/a" if not current_file else str(Path(current_file).resolve())
-    state = {"open_file": open_file, "working_dir": os.getcwd()}
-
-    print(json.dumps(state))
+    state["open_file"] = open_file
+    state["working_dir"] = os.getcwd()
+    state_path.write_text(json.dumps(state))
 
 if __name__ == "__main__":
     main()

@@ -249,23 +249,16 @@ class ToolHandler:
 
     def _get_state(self, state_command: str, env: SWEEnv) -> dict[str, str]:
         """Execute state command in the environment and parse the output as a json object."""
-        # Enough to warn, because we're gonna load the output anyway, so that probably catches all real errors
-        output = env.communicate(state_command, check="warn").strip()
-        if not output:
-            self.logger.warning(f"State command {state_command!r} returned empty output")
-            return {}
-        if not output.startswith("{") or not output.endswith("}"):
-            msg = f"State command {state_command!r} returned invalid output: {output!r}. Trying to recover...."
-            self.logger.warning(msg)
-            try:
-                output = output[output.index("{") : output.rindex("}") + 1]
-            except ValueError:
-                msg = f"Could not find matching braces in {output!r}. Giving up."
-                raise ValueError(msg) from None
+        env.communicate(state_command, check="warn")
         try:
-            state = json.loads(output)
+            state_str = env.read_file(Path("/root/state.json"))
+        except FileNotFoundError:
+            self.logger.warning("State file not found, returning empty state")
+            return {}
+        try:
+            state = json.loads(state_str)
         except json.JSONDecodeError as e:
-            msg = f"State {output!r} is not valid json. This is an internal error, please report it."
+            msg = f"State {state_str!r} is not valid json. This is an internal error, please report it."
             raise ValueError(msg) from e
         if not isinstance(state, dict):
             msg = f"State commands must return a dictionary. Got {state!r} instead."

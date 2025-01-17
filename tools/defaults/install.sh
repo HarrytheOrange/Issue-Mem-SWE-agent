@@ -13,3 +13,5 @@ _write_env "CURRENT_FILE" "${CURRENT_FILE:-}"
 
 # install jq
 # apt-get update && apt-get install -y jq
+
+echo "{}" > /root/state.json
