@@ -264,7 +264,7 @@ class FunctionCallingParser(AbstractParseFunction, BaseModel):
     You must invoke the function directly using the function call format.
     You cannot invoke commands with ```, you have to use the function call format.
     If you think you have already resolved the issue, please submit your changes by running the `submit` command.
-    If you think you cannot solve the problem, please run `exit_forfeit` (if available).
+    If you think you cannot solve the problem, please run `exit_forfeit` (if available) or `submit`.
     Else, please continue with a new tool call!
     {%- elif error_code == "multiple" -%}
     Your last output included multiple tool calls!
