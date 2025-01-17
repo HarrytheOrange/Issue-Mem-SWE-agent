@@ -4,6 +4,7 @@ import copy
 import json
 import random
 import shlex
+import threading
 import time
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -40,6 +41,10 @@ except ImportError:
     readline = None
 
 litellm.suppress_debug_info = True
+
+
+_THREADS_THAT_USED_API_KEYS = []
+"""Keeps track of thread orders so that we can choose the same API key for the same thread."""
 
 
 class RetryConfig(PydanticBaseModel):
@@ -104,13 +109,41 @@ class GenericAPIModelConfig(PydanticBaseModel):
     for more information.
     """
 
+    choose_api_key_by_thread: bool = False
+    """Whether to choose the API key based on the thread name. This ensures that with
+    run-batch, we use the same API key within a single-thread so that prompt caching still works.
+    """
+
     # pydantic
     model_config = ConfigDict(extra="forbid")
 
     def get_api_keys(self) -> list[str]:
+        """Returns a list of API keys that were explicitly set in this config.
+        Does not return API keys that were set via environment variables/.env
+        """
         if self.api_key is None:
             return []
         return self.api_key.get_secret_value().split(":::")
+
+    def choose_api_key(self) -> str | None:
+        """Chooses an API key based on the API keys explicitly set in this config.
+        If no API keys are set, returns None (which means that the API key will be
+        taken from the environment variables/.env file).
+        """
+        api_keys = self.get_api_keys()
+        if not api_keys:
+            return None
+        if not self.choose_api_key_by_thread:
+            return random.choice(api_keys)
+        thread_name = threading.current_thread().name
+        if thread_name not in _THREADS_THAT_USED_API_KEYS:
+            _THREADS_THAT_USED_API_KEYS.append(thread_name)
+        thread_idx = _THREADS_THAT_USED_API_KEYS.index(thread_name)
+        key_idx = thread_idx % len(api_keys)
+        get_logger("config", emoji="🔧").debug(
+            f"Choosing API key {key_idx} for thread {thread_name} (idx {thread_idx})"
+        )
+        return api_keys[key_idx]
 
     @property
     def id(self) -> str:
@@ -500,12 +533,6 @@ class LiteLLMModel(AbstractModel):
             msg = "Instance cost limit exceeded"
             raise InstanceCostLimitExceededError(msg)
 
-    def _get_api_key(self) -> str | None:
-        api_keys = self.config.get_api_keys()
-        if not api_keys:
-            return None
-        return random.choice(api_keys)
-
     def _sleep(self) -> None:
         with GLOBAL_STATS_LOCK:
             GLOBAL_STATS.last_query_timestamp = time.time()
@@ -539,7 +566,7 @@ class LiteLLMModel(AbstractModel):
             temperature=self.config.temperature if temperature is None else temperature,
             top_p=self.config.top_p,
             api_version=self.config.api_version,
-            api_key=self._get_api_key(),
+            api_key=self.config.choose_api_key(),
             fallbacks=self.config.fallbacks,
             **completion_kwargs,
             **extra_args,
