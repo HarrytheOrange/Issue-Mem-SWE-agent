@@ -812,9 +812,9 @@ class Agent:
                 )
             )
 
-        def handle_error_with_retry(exception: Exception, template: str) -> list[dict[str, str]]:
+        def handle_error_with_retry(exception: Exception, template: str, n_requeries: int) -> list[dict[str, str]]:
             """Requeries the model if the error is a format/blocklist/bash syntax error."""
-            self.logger.warning("Requerying model (%s)", type(exception).__name__)
+            self.logger.warning("Requerying model after %s (%dth requery)", type(exception).__name__, n_requeries)
             step: StepOutput = getattr(exception, "step", StepOutput())
             self.add_step_to_trajectory(step)
             exception_message = getattr(exception, "message", "")
@@ -844,26 +844,29 @@ class Agent:
 
             except FormatError as e:
                 n_format_fails += 1
-                history = handle_error_with_retry(exception=e, template=self.tools.config.format_error_template)
+                history = handle_error_with_retry(
+                    exception=e, template=self.tools.config.format_error_template, n_requeries=n_format_fails
+                )
             except _BlockedActionError as e:
                 n_format_fails += 1
                 history = handle_error_with_retry(
-                    exception=e, template=self.tools.config.filter.blocklist_error_template
+                    exception=e, template=self.tools.config.filter.blocklist_error_template, n_requeries=n_format_fails
                 )
             except BashIncorrectSyntaxError as e:
                 n_format_fails += 1
                 history = handle_error_with_retry(
                     exception=e,
                     template=self.templates.shell_check_error_template,
+                    n_requeries=n_format_fails,
                 )
             except _RetryWithOutput as e:
-                n_format_fails = 0
                 history = handle_error_with_retry(
                     exception=e,
                     template=self.templates.next_step_template,
+                    n_requeries=n_format_fails,
                 )
             except _RetryWithoutOutput:
-                n_format_fails = 0
+                pass
                 # Requery with the same template as the last step
 
             # Errors that cause exit
