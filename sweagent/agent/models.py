@@ -560,18 +560,21 @@ class LiteLLMModel(AbstractModel):
         completion_kwargs = self.config.completion_kwargs
         if self.lm_provider == "anthropic":
             completion_kwargs["max_tokens"] = self.model_max_output_tokens
-        response: litellm.types.utils.ModelResponse = litellm.completion(  # type: ignore
-            model=self.config.name,
-            messages=messages,
-            temperature=self.config.temperature if temperature is None else temperature,
-            top_p=self.config.top_p,
-            api_version=self.config.api_version,
-            api_key=self.config.choose_api_key(),
-            fallbacks=self.config.fallbacks,
-            **completion_kwargs,
-            **extra_args,
-            n=n,
-        )
+        try:
+            response: litellm.types.utils.ModelResponse = litellm.completion(  # type: ignore
+                model=self.config.name,
+                messages=messages,
+                temperature=self.config.temperature if temperature is None else temperature,
+                top_p=self.config.top_p,
+                api_version=self.config.api_version,
+                api_key=self.config.choose_api_key(),
+                fallbacks=self.config.fallbacks,
+                **completion_kwargs,
+                **extra_args,
+                n=n,
+            )
+        except litellm.exceptions.ContextWindowExceededError as e:
+            raise ContextWindowExceededError from e
         self.logger.info(f"Response: {response}")
         cost = litellm.cost_calculator.completion_cost(response)
         choices: litellm.types.utils.Choices = response.choices  # type: ignore
