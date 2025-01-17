@@ -621,6 +621,9 @@ class LiteLLMModel(AbstractModel):
                     litellm.exceptions.PermissionDeniedError,
                     litellm.exceptions.ContextWindowExceededError,
                     litellm.exceptions.APIError,
+                    litellm.exceptions.ContentPolicyViolationError,
+                    TypeError,
+                    litellm.exceptions.AuthenticationError,
                 )
             ),
         ):
