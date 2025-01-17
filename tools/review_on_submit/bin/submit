@@ -41,8 +41,6 @@ def main() -> None:
     print(patch)
     print("<<SWE_AGENT_SUBMISSION>>")
 
-    patch_path.unlink()
-
 
 if __name__ == "__main__":
     main()
