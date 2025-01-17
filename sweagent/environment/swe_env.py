@@ -176,7 +176,6 @@ class SWEEnv:
         input: str,
         timeout: int | float = 25,
         *,
-        set_last_action: bool = False,
         check: Literal["warn", "ignore", "raise"] = "ignore",
         error_msg: str = "Command failed",
     ) -> str:
@@ -186,7 +185,6 @@ class SWEEnv:
         Args:
             input: input to send to container
             timeout_duration: duration to wait for output
-            set_last_action: whether to set the LAST_ACTION environment variable
             check: `ignore`: do not extract exit code (more stable), `warn`: extract exit code and log error if
                 exit code is non-zero, `raise`: raise error if exit code is non-zero
             error_msg: error message to raise if the command fails
@@ -208,15 +206,6 @@ class SWEEnv:
             if check == "raise":
                 self.close()
                 raise RuntimeError(msg)
-        # todo: What do we do with this?
-        if set_last_action:
-            # Cannot merge this with last command, because of multiline command
-            # handling.
-            last_action_string = shlex.quote(input.strip())
-            input = f"export LAST_ACTION={last_action_string}"
-            r = asyncio.run(
-                self.deployment.runtime.run_in_session(BashAction(command=input, timeout=1, check="ignore"))
-            )
         return output
 
     def read_file(self, path: str | PurePath) -> str:
