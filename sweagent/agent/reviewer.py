@@ -124,6 +124,7 @@ class AbstractReviewLoop(ABC):
 class ReviewerConfig(BaseModel):
     """The configuration for the reviewer"""
 
+    output_type: Literal["bool", "float"] = "bool"
     system_template: str
     instance_template: str
     #: If a submission autosubmits because of total cost or a similar exit status,
@@ -236,14 +237,24 @@ class Reviewer(AbstractReviewer):
             {"role": "user", "content": user_message},
         ]
 
-    def interpret(self, response: str) -> bool:
+    def interpret(self, response: str) -> bool | float:
         last_line = response.strip().split("\n")[-1].strip()
-        if "success" in last_line.lower():
-            return True
-        elif "fail" in last_line.lower():
+        if self._config.output_type == "bool":
+            if "success" in last_line.lower():
+                return True
+            elif "fail" in last_line.lower():
+                return False
+            self.logger.warning("Could not interpret response: %s, will reject submission.", response)
             return False
-        self.logger.warning("Could not interpret response: %s, will reject submission.", response)
-        return False
+        elif self._config.output_type == "float":
+            # use regex
+            number = re.search(r"\d+\.?\d+", last_line)
+            if number:
+                return float(number.group(0))
+            else:
+                self.logger.warning("Could not interpret response: %s, will reject submission.", response)
+                return 0.0
+        raise ValueError
 
     def review(self, instance: ProblemStatement, submission: ReviewSubmission) -> ReviewerResult:
         exit_status = submission.info.get("exit_status")
