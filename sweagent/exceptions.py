@@ -42,3 +42,7 @@ class TotalCostLimitExceededError(CostLimitExceededError):
 
 class AttemptCostLimitExceededError(CostLimitExceededError):
     """Raised when we exceed the cost limit for an attempt"""
+
+
+class ContentPolicyViolationError(Exception):
+    """Raised when the model response violates a content policy"""

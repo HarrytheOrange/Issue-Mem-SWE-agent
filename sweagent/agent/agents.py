@@ -30,7 +30,12 @@ from sweagent.agent.models import (
 from sweagent.agent.problem_statement import ProblemStatement, ProblemStatementConfig
 from sweagent.agent.reviewer import AbstractReviewLoop, ReviewLoopConfig, get_review_loop_from_config
 from sweagent.environment.swe_env import SWEEnv
-from sweagent.exceptions import ContextWindowExceededError, CostLimitExceededError, FormatError
+from sweagent.exceptions import (
+    ContentPolicyViolationError,
+    ContextWindowExceededError,
+    CostLimitExceededError,
+    FormatError,
+)
 from sweagent.tools.parsing import (
     ActionOnlyParser,
     ThoughtActionParser,
@@ -852,6 +857,11 @@ class Agent:
                 history = handle_error_with_retry(
                     exception=e, template=self.tools.config.filter.blocklist_error_template, n_requeries=n_format_fails
                 )
+            except ContentPolicyViolationError:
+                self.logger.warning("Content policy violation, trying to resample")
+                n_format_fails += 1
+                # Try if simply resampling helps here
+                pass
             except BashIncorrectSyntaxError as e:
                 n_format_fails += 1
                 history = handle_error_with_retry(

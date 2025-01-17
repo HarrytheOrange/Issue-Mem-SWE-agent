@@ -25,6 +25,7 @@ from tenacity import (
 
 from sweagent import REPO_ROOT
 from sweagent.exceptions import (
+    ContentPolicyViolationError,
     ContextWindowExceededError,
     CostLimitExceededError,
     FunctionCallingFormatError,
@@ -575,6 +576,8 @@ class LiteLLMModel(AbstractModel):
             )
         except litellm.exceptions.ContextWindowExceededError as e:
             raise ContextWindowExceededError from e
+        except litellm.exceptions.ContentPolicyViolationError as e:
+            raise ContentPolicyViolationError from e
         self.logger.info(f"Response: {response}")
         cost = litellm.cost_calculator.completion_cost(response)
         choices: litellm.types.utils.Choices = response.choices  # type: ignore
@@ -624,6 +627,7 @@ class LiteLLMModel(AbstractModel):
                     litellm.exceptions.ContentPolicyViolationError,
                     TypeError,
                     litellm.exceptions.AuthenticationError,
+                    ContentPolicyViolationError,
                 )
             ),
         ):
