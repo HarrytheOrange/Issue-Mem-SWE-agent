@@ -48,8 +48,6 @@ class ToolFilterConfig(BaseModel):
         "emacs",
         "nano",
         "su",
-        "pip install .",
-        "pip install -e .",
     ]
     """Block any command that matches one of these exactly"""
     block_unless_regex: dict[str, str] = {
