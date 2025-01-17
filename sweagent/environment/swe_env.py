@@ -7,7 +7,7 @@ from typing import Literal, Self
 from pydantic import BaseModel, ConfigDict, Field
 from swerex.deployment.abstract import AbstractDeployment
 from swerex.deployment.config import DeploymentConfig, DockerDeploymentConfig, get_deployment
-from swerex.runtime.abstract import BashAction, BashInterruptAction, CreateBashSessionRequest
+from swerex.runtime.abstract import BashAction, BashInterruptAction, CreateBashSessionRequest, ReadFileRequest
 
 from sweagent.environment.hooks.abstract import CombinedEnvHooks, EnvHook
 from sweagent.environment.repo import Repo, RepoConfig
@@ -219,22 +219,17 @@ class SWEEnv:
             )
         return output
 
-    # todo: Use the runtime for this instead
     def read_file(self, path: str | PurePath) -> str:
         """Read file contents from container
 
         Args:
-            path: Path to file relative to repository root
+            path: Absolute path to file
 
         Returns:
             file_contents: Contents of file as string
         """
-        if self.repo is None:
-            msg = "Repository not set, cannot read file"
-            raise ValueError(msg)
-
-        path_in_container = f"/{self.repo.repo_name}/{path}"
-        return self.communicate(f"cat {str(path_in_container)}")
+        r = asyncio.run(self.deployment.runtime.read_file(ReadFileRequest(path=str(path))))
+        return r.content
 
     def set_env_variables(self, env_variables: dict[str, str]) -> None:
         """Set environment variables in the environment."""

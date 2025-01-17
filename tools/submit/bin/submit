@@ -8,10 +8,10 @@ main() {
     fi
 
     git add -A
-    git diff --cached > model.patch
-    echo "<<SUBMISSION||"
-    cat model.patch
-    echo "||SUBMISSION>>"
+    git diff --cached > /root/model.patch
+    echo "<<SWE_AGENT_SUBMISSION>>"
+    cat /root/model.patch
+    echo "<<SWE_AGENT_SUBMISSION>>"
 }
 
 main "$@"

@@ -641,8 +641,10 @@ class Agent:
         """
         step = step.model_copy()
         assert self.tools is not None
-        submission = self.tools.parse_submission_cmd_output(observation or step.observation)
-        if submission is not None:
+        is_submission = self.tools.check_for_submission_cmd(observation or step.observation)
+        if is_submission:
+            assert self._env is not None
+            submission = self._env.read_file("/root/model.patch")
             if submission.strip() != "":
                 step.submission = submission
             else:

@@ -319,20 +319,11 @@ class ToolHandler:
     # Parsing & multiline commands
     # -----------------------------
 
-    def parse_submission_cmd_output(self, output: str) -> str | None:
-        """Function for extracting diff patch submission at the end of an episode.
-
-        Args:
-            output: `submit` observation
-
-        Returns:
-            submission: diff patch submission or None if no submission was found
-        """
-        pattern = r"\<\<SUBMISSION\|\|(.*)\|\|SUBMISSION\>\>"
-        match = re.search(pattern, output, re.DOTALL)
-        if match is None:
-            return None
-        return match.group(1)
+    def check_for_submission_cmd(self, output: str) -> bool:
+        """Function for checking submission request."""
+        if r"<<SWE_AGENT_SUBMISSION>>" in output:
+            return True
+        return False
 
     def parse_actions(self, output: dict) -> tuple[str, str]:
         """Parse the model output into a thought and action."""

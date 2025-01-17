@@ -37,9 +37,9 @@ def main() -> None:
         print(message)
         sys.exit(0)
 
-    print("<<SUBMISSION||")
+    print("<<SWE_AGENT_SUBMISSION>>")
     print(patch)
-    print("||SUBMISSION>>")
+    print("<<SWE_AGENT_SUBMISSION>>")
 
     patch_path.unlink()
 
