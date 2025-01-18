@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import re
 from abc import abstractmethod
 from typing import Annotated, Literal, Protocol
@@ -168,6 +169,12 @@ class CacheControlHistoryProcessor(BaseModel):
     If set to <= 0, any set cache control will be removed from all messages.
     """
 
+    last_n_messages_offset: int = 0
+    """E.g., set to 1 to start cache control after the second to last user message.
+    This can be useful in rare cases, when you want to modify the last message after
+    we've got the completion and you want to avoid cache mismatch.
+    """
+
     tagged_roles: list[str] = ["user", "tool"]
     """Only add cache control to messages with these roles."""
 
@@ -205,13 +212,54 @@ class CacheControlHistoryProcessor(BaseModel):
     def __call__(self, history: History) -> History:
         new_history = []
         n_tagged = 0
-        for entry in reversed(history):
+        for i_entry, entry in enumerate(reversed(history)):
             # Clear cache control from previous messages
             self._clear_cache_control(entry)
-            if n_tagged < self.last_n_messages and entry["role"] in self.tagged_roles:
+            if (
+                n_tagged < self.last_n_messages
+                and entry["role"] in self.tagged_roles
+                and i_entry >= self.last_n_messages_offset
+            ):
                 self._set_cache_control(entry)
                 n_tagged += 1
             new_history.append(entry)
+        return list(reversed(new_history))
+
+
+class RemoveRegex(BaseModel):
+    remove: list[str] = ["<diff>.*</diff>"]
+    keep_last: int = 0
+
+    type: Literal["remove_regex"] = "remove_regex"
+    """Do not change. Used for (de)serialization."""
+
+    # pydantic config
+    model_config = ConfigDict(extra="forbid")
+
+    def __call__(self, history: History) -> History:
+        new_history = []
+        for i_entry, entry in enumerate(reversed(history)):
+            entry = copy.deepcopy(entry)
+            if i_entry < self.keep_last:
+                new_history.append(entry)
+            else:
+                for pattern in self.remove:
+                    if isinstance(entry["content"], str):
+                        entry["content"] = re.sub(
+                            pattern,
+                            "",
+                            entry["content"],
+                            flags=re.DOTALL,
+                        )
+                    else:
+                        for i_message, message in enumerate(entry["content"]):
+                            entry["content"][i_message]["text"] = re.sub(
+                                pattern,
+                                "",
+                                message["text"],
+                                flags=re.DOTALL,
+                            )
+                new_history.append(entry)
         return list(reversed(new_history))
 
 
@@ -220,6 +268,7 @@ HistoryProcessor = Annotated[
     | LastNObservations
     | ClosedWindowHistoryProcessor
     | TagToolCallObservations
-    | CacheControlHistoryProcessor,
+    | CacheControlHistoryProcessor
+    | RemoveRegex,
     Field(discriminator="type"),
 ]
