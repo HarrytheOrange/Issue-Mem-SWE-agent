@@ -760,7 +760,6 @@ class Agent:
             if self._rloop is not None:
                 self._rloop.on_model_query(attempt_stats=self.attempt_model_stats)
             self._chook.on_model_query(messages=history, agent=self.name)
-            print("History", history)
             # todo: Add all options to the extra info
             if self._action_sampler is not None:
                 assert self._problem_statement is not None
