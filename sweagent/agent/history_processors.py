@@ -75,10 +75,17 @@ class DefaultHistoryProcessor(BaseModel):
 
 
 class LastNObservations(BaseModel):
-    """Keep the last n observations."""
+    """Keep the last n observations or remove tagged observations."""
 
     n: int
     """Number of observations to keep."""
+
+    polling: int = 1
+    """How many steps to keep between updating the number of observations to keep.
+    This is useful for caching, as we want to remove more and more messages, but every
+    time we change the history, we need to cache everything again.
+    Effectively, we will now keep between `n` and `n+polling` observations.
+    """
 
     always_remove_output_for_tags: set[str] = {"remove_output"}
     """Any observation with a `tags` field containing one of these strings will be elided,
@@ -103,14 +110,19 @@ class LastNObservations(BaseModel):
             raise ValueError(msg)
         return n
 
-    def __call__(self, history: History) -> History:
-        new_history = []
-        observation_idxs = [
+    def _get_omit_indices(self, history: History) -> list[int]:
+        observation_indices = [
             idx
             for idx, entry in enumerate(history)
             if entry["message_type"] == "observation" and not entry.get("is_demo", False)
         ]
-        omit_content_idxs = [idx for idx in observation_idxs[1 : -self.n]]
+        last_removed_idx = max(0, (len(observation_indices) // self.polling) * self.polling - self.n)
+        # Note: We never remove the first observation, as it is the instance template
+        return observation_indices[1:last_removed_idx]
+
+    def __call__(self, history: History) -> History:
+        new_history = []
+        omit_content_idxs = self._get_omit_indices(history)
         for idx, entry in enumerate(history):
             tags = set(entry.get("tags", []))
             if ((idx not in omit_content_idxs) or (tags & self.always_keep_output_for_tags)) and not (
