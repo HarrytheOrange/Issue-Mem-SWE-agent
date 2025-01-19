@@ -16,6 +16,53 @@ class AbstractHistoryProcessor(Protocol):
         raise NotImplementedError
 
 
+# Utility functions
+# -----------------
+
+
+def _get_content_text(entry: HistoryItem) -> str:
+    if isinstance(entry["content"], str):
+        return entry["content"]
+    assert len(entry["content"]) == 1, "Expected single message in content"
+    return entry["content"][0]["text"]
+
+
+def _set_content_text(entry: HistoryItem, text: str) -> None:
+    if isinstance(entry["content"], str):
+        entry["content"] = text
+    else:
+        assert len(entry["content"]) == 1, "Expected single message in content"
+        entry["content"][0]["text"] = text
+
+
+def _clear_cache_control(entry: HistoryItem) -> None:
+    if isinstance(entry["content"], list):
+        assert len(entry["content"]) == 1, "Expected single message in content"
+        entry["content"][0].pop("cache_control", None)
+    entry.pop("cache_control", None)
+
+
+def _set_cache_control(entry: HistoryItem) -> None:
+    if not isinstance(entry["content"], list):
+        entry["content"] = [  # type: ignore
+            {
+                "type": "text",
+                "text": _get_content_text(entry),
+                "cache_control": {"type": "ephemeral"},
+            }
+        ]
+    else:
+        entry["content"][0]["cache_control"] = {"type": "ephemeral"}
+    if entry["role"] == "tool":
+        # Workaruond for weird bug
+        entry["content"][0].pop("cache_control", None)
+        entry["cache_control"] = {"type": "ephemeral"}
+
+
+# History processors
+# ------------------
+
+
 class DefaultHistoryProcessor(BaseModel):
     type: Literal["default"] = "default"
     """Do not change. Used for (de)serialization."""
@@ -181,46 +228,18 @@ class CacheControlHistoryProcessor(BaseModel):
     # pydantic config
     model_config = ConfigDict(extra="forbid")
 
-    def _get_content_text(self, entry: HistoryItem) -> str:
-        if isinstance(entry["content"], list):
-            assert len(entry["content"]) == 1, "Expected single message in content"
-            return entry["content"][0]["text"]
-        return entry["content"]
-
-    def _clear_cache_control(self, entry: HistoryItem) -> None:
-        if isinstance(entry["content"], list):
-            assert len(entry["content"]) == 1, "Expected single message in content"
-            entry["content"][0].pop("cache_control", None)
-        entry.pop("cache_control", None)
-
-    def _set_cache_control(self, entry: HistoryItem) -> None:
-        if not isinstance(entry["content"], list):
-            entry["content"] = [  # type: ignore
-                {
-                    "type": "text",
-                    "text": self._get_content_text(entry),
-                    "cache_control": {"type": "ephemeral"},
-                }
-            ]
-        else:
-            entry["content"][0]["cache_control"] = {"type": "ephemeral"}
-        if entry["role"] == "tool":
-            # Workaruond for weird bug
-            entry["content"][0].pop("cache_control", None)
-            entry["cache_control"] = {"type": "ephemeral"}
-
     def __call__(self, history: History) -> History:
         new_history = []
         n_tagged = 0
         for i_entry, entry in enumerate(reversed(history)):
             # Clear cache control from previous messages
-            self._clear_cache_control(entry)
+            _clear_cache_control(entry)
             if (
                 n_tagged < self.last_n_messages
                 and entry["role"] in self.tagged_roles
                 and i_entry >= self.last_n_messages_offset
             ):
-                self._set_cache_control(entry)
+                _set_cache_control(entry)
                 n_tagged += 1
             new_history.append(entry)
         return list(reversed(new_history))
@@ -243,22 +262,10 @@ class RemoveRegex(BaseModel):
             if i_entry < self.keep_last:
                 new_history.append(entry)
             else:
+                text = _get_content_text(entry)
                 for pattern in self.remove:
-                    if isinstance(entry["content"], str):
-                        entry["content"] = re.sub(
-                            pattern,
-                            "",
-                            entry["content"],
-                            flags=re.DOTALL,
-                        )
-                    else:
-                        for i_message, message in enumerate(entry["content"]):
-                            entry["content"][i_message]["text"] = re.sub(
-                                pattern,
-                                "",
-                                message["text"],
-                                flags=re.DOTALL,
-                            )
+                    text = re.sub(pattern, "", text, flags=re.DOTALL)
+                    _set_content_text(entry, text)
                 new_history.append(entry)
         return list(reversed(new_history))
 
