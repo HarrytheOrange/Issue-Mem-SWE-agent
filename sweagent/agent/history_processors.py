@@ -5,7 +5,7 @@ import re
 from abc import abstractmethod
 from typing import Annotated, Literal, Protocol
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from sweagent.types import History, HistoryItem
 
@@ -96,11 +96,15 @@ class LastNObservations(BaseModel):
     # pydantic config
     model_config = ConfigDict(extra="forbid")
 
-    def __call__(self, history: History) -> History:
-        if self.n <= 0:
+    @field_validator("n")
+    def validate_n(cls, n: int) -> int:
+        if n <= 0:
             msg = "n must be a positive integer"
             raise ValueError(msg)
-        new_history = list()
+        return n
+
+    def __call__(self, history: History) -> History:
+        new_history = []
         observation_idxs = [
             idx
             for idx, entry in enumerate(history)
