@@ -162,6 +162,7 @@ class TrajectorySelectorScreen(ModalScreen[int]):
         self.current_index = current_index
         self.overview_stats = overview_stats
         self.all_items = []  # Store all items for filtering
+        self.filtered_indices = []
 
     def _get_list_item_texts(self, paths: list[Path]) -> list[str]:
         """Remove the common prefix from a list of paths."""
@@ -192,14 +193,16 @@ class TrajectorySelectorScreen(ModalScreen[int]):
             )
         # Store all items for later filtering
         self.all_items = self._get_list_item_texts(self.paths)
+        self.filtered_indices = list(range(len(self.all_items)))
 
     def on_input_changed(self, event: Input.Changed) -> None:
         """Filter list items based on input"""
         filter_text = event.value.lower()
         list_view = self.query_one("#trajectory-list", ListView)
 
-        # Filter items
-        filtered_items = [item for item in self.all_items if filter_text in item.lower()]
+        # Filter items and keep track of original indices
+        self.filtered_indices = [i for i, item in enumerate(self.all_items) if filter_text in item.lower()]
+        filtered_items = [self.all_items[i] for i in self.filtered_indices]
 
         if len(filtered_items) == 1:
             # Find the index of the filtered item in the original list
@@ -213,8 +216,10 @@ class TrajectorySelectorScreen(ModalScreen[int]):
             list_view.append(ListItem(Static(item)))
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
-        print(f"Selected index: {event.list_view.index}")
-        self.dismiss(event.list_view.index)
+        # Map the filtered index back to the original index
+        original_index = self.filtered_indices[event.list_view.index]
+        print(f"Selected index: {original_index}")
+        self.dismiss(original_index)
 
     CSS = """
     #dialog {
