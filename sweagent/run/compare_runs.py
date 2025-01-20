@@ -31,8 +31,8 @@ def compare_many(paths: list[Path]) -> None:
         evaluated_ids[path] = sorted(get_submitted(path))
         resolved_ids[path] = sorted(get_resolved(path))
         all_evaluated_ids.update(evaluated_ids[path])
-    header = ["ID"] + [i for i in range(len(paths))]
-    table = [header]
+    header: list[str] = ["ID"] + [str(i) for i in range(len(paths))] + ["Success rate"]
+    table: list[list[str | float | int]] = []
 
     def get_emoji(id: str, path: Path) -> str:
         if id not in evaluated_ids[path]:
@@ -43,15 +43,28 @@ def compare_many(paths: list[Path]) -> None:
 
     for id in sorted(all_evaluated_ids):
         row = [id] + [get_emoji(id, path) for path in paths]
+        n_success = sum(id in resolved_ids[path] for path in paths)
+        n_evaluated = sum(id in evaluated_ids[path] for path in paths)
+        row.append(f"{n_success/n_evaluated:.2f}")
         table.append(row)
-    print(tabulate(table, headers="firstrow"))
-
-    header = ["Name", "Resolved", "Evaluated"]
-    table = [header]
+    successes: list[str | float] = ["Successes"]
+    success_rates: list[str | float] = ["Success rates"]
     for path in paths:
-        row = [path.parent.name, len(resolved_ids[path]), len(evaluated_ids[path])]
+        n_success = sum(id in resolved_ids[path] for id in all_evaluated_ids)
+        n_evaluated = sum(id in evaluated_ids[path] for id in all_evaluated_ids)
+        successes.append(n_success)
+        success_rates.append(f"{n_success/n_evaluated:.2f}")
+    table.append(successes)
+    table.append(success_rates)
+    print(tabulate(table, headers=header))
+    print()
+
+    header: list[str] = ["#", "ID", "Successes", "Success rate"]
+    table: list[list[str | float | int]] = []
+    for i, path in enumerate(paths):
+        row = [i, path.parent.name, successes[i + 1], success_rates[i + 1]]
         table.append(row)
-    print(tabulate(table, headers="firstrow"))
+    print(tabulate(table, headers=header))
 
 
 def compare_pair(new_path: Path, old_path: Path, *, show_same=False) -> None:
