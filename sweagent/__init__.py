@@ -3,6 +3,7 @@ from __future__ import annotations
 from functools import partial
 
 from git import Repo
+from packaging import version
 
 __version__ = "1.0.0"
 
@@ -70,6 +71,18 @@ def get_agent_version_info() -> str:
     return f"This is SWE-agent version {__version__} ({hash}) with SWE-ReX {rex_version} ({rex_hash})."
 
 
+def impose_rex_lower_bound() -> None:
+    rex_version = get_rex_version()
+    minimal_rex_version = "1.0.3"
+    if version.parse(rex_version) < version.parse(minimal_rex_version):
+        msg = (
+            f"SWE-ReX version {rex_version} is too old. Please update to at least {minimal_rex_version}. "
+            "You can also rerun `pip install -e .` in this repository to install the latest version."
+        )
+        raise RuntimeError(msg)
+
+
+impose_rex_lower_bound()
 get_logger("swe-agent", emoji="👋").info(get_agent_version_info())
 
 
