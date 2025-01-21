@@ -235,7 +235,7 @@ class RunBatch:
         # Set all stream handlers to WARNING and set everything where we want to have
         # more verbosity explicitly
         set_stream_handler_levels(logging.WARNING)
-        self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(logging.TRACE)  # type: ignore
 
         with Live(self._progress_manager.render_group):
             with ThreadPoolExecutor(max_workers=self._num_workers) as executor:
