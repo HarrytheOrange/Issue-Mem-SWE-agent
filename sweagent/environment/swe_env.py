@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from swerex.deployment.abstract import AbstractDeployment
 from swerex.deployment.config import DeploymentConfig, DockerDeploymentConfig, get_deployment
 from swerex.runtime.abstract import BashAction, BashInterruptAction, CreateBashSessionRequest, ReadFileRequest
+from swerex.runtime.abstract import Command as RexCommand
 
 from sweagent.environment.hooks.abstract import CombinedEnvHooks, EnvHook
 from sweagent.environment.repo import Repo, RepoConfig
@@ -168,6 +169,7 @@ class SWEEnv:
         self.logger.info("Environment Initialized")
 
     def interrupt_session(self):
+        self.logger.info("Interrupting session")
         asyncio.run(self.deployment.runtime.run_in_session(BashInterruptAction()))
 
     # todo: return exit code?
@@ -225,3 +227,16 @@ class SWEEnv:
         _env_setters = [f"export {k}={shlex.quote(str(v))}" for k, v in env_variables.items()]
         command = " && ".join(_env_setters)
         self.communicate(command, check="raise")
+
+    def execute_command(
+        self,
+        command: str,
+        shell: bool = True,
+        check: bool = False,
+        env: dict[str, str] | None = None,
+        cwd: str | None = None,
+    ) -> None:
+        """Execute a command in the environment independent of the session (i.e., as a subprocess)"""
+        asyncio.run(
+            self.deployment.runtime.execute(RexCommand(command=command, shell=shell, check=check, env=env, cwd=cwd))
+        )
