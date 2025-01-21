@@ -5,6 +5,7 @@ from pathlib import Path
 import subprocess
 import sys
 import os
+import io
 
 from registry import registry
 
@@ -27,7 +28,7 @@ def main() -> None:
         cwd=repo_root,
     )
 
-    patch = patch_path.read_text()
+    patch = patch_path.read_text(errors="backslashreplace")
 
     if not args.force and not registry.get("SUBMIT_TRIGGERED_BEFORE"):
         message = registry.get("SUBMIT_REVIEW_MESSAGE", "")
@@ -43,4 +44,8 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    # There are some super strange "ascii can't decode x" errors when printing to the terminal
+    # that can be solved with setting the default encoding for stdout
+    # (note that python3.6 doesn't have the reconfigure method)
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
     main()

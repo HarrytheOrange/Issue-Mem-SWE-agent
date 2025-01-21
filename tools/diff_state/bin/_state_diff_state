@@ -28,7 +28,7 @@ def main() -> None:
         cwd=repo_root,
     )
 
-    patch = patch_path.read_text()
+    patch = patch_path.read_text(errors="backslashreplace")
     state["diff"] = patch.strip()
 
     state_path.write_text(json.dumps(state))
