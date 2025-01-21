@@ -667,7 +667,7 @@ class Agent:
             step.observation = submission
             if not step.exit_status:
                 step.exit_status = "submitted"
-            else:
+            elif step.submission:
                 step.exit_status = f"submitted ({step.exit_status})"
             step.done = True
             self.logger.info(f"Found submission: {submission}")
