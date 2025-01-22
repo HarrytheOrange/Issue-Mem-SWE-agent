@@ -61,7 +61,7 @@ def _filter_batch_items(
     instances: list[BatchInstance], *, filter_: str, slice_: str = "", shuffle: bool = False
 ) -> list[BatchInstance]:
     if shuffle:
-        instances = instances.copy()
+        instances = sorted(instances.copy(), key=lambda x: random.random())
         random.seed(42)
         random.shuffle(instances)
     before_filter = len(instances)
