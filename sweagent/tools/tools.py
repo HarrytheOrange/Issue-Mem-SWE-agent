@@ -66,6 +66,9 @@ class ToolConfig(BaseModel):
     equivalent to adding `export VARNAME=value` to the `reset_commands`.
     """
 
+    registry_variables: dict[str, Any] = {}
+    """Populate the registry with these variables. Will be written out as json in the registry file."""
+
     submit_command: str = "submit"
 
     parse_function: ParseFunction = Field(default_factory=FunctionCallingParser)
@@ -194,6 +197,7 @@ class ToolHandler:
     def reset(self, env: SWEEnv) -> None:
         self.logger.info("Resetting tools")
         env.set_env_variables(self.config.env_variables)
+        env.write_file("/root/.swe-agent-env", json.dumps(self.config.registry_variables))
         env.communicate(" && ".join(self._reset_commands), check="raise", timeout=self.config.install_timeout)
 
     async def _upload_bundles(self, env: SWEEnv) -> None:

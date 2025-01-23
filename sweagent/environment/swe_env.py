@@ -7,7 +7,13 @@ from typing import Literal, Self
 from pydantic import BaseModel, ConfigDict, Field
 from swerex.deployment.abstract import AbstractDeployment
 from swerex.deployment.config import DeploymentConfig, DockerDeploymentConfig, get_deployment
-from swerex.runtime.abstract import BashAction, BashInterruptAction, CreateBashSessionRequest, ReadFileRequest
+from swerex.runtime.abstract import (
+    BashAction,
+    BashInterruptAction,
+    CreateBashSessionRequest,
+    ReadFileRequest,
+    WriteFileRequest,
+)
 from swerex.runtime.abstract import Command as RexCommand
 
 from sweagent.environment.hooks.abstract import CombinedEnvHooks, EnvHook
@@ -221,6 +227,10 @@ class SWEEnv:
         """
         r = asyncio.run(self.deployment.runtime.read_file(ReadFileRequest(path=str(path))))
         return r.content
+
+    def write_file(self, path: str | PurePath, content: str) -> None:
+        """Write content to file in container"""
+        asyncio.run(self.deployment.runtime.write_file(WriteFileRequest(path=str(path), content=content)))
 
     def set_env_variables(self, env_variables: dict[str, str]) -> None:
         """Set environment variables in the environment."""
