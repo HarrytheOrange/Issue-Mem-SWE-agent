@@ -28,13 +28,15 @@ def main() -> None:
         cwd=repo_root,
     )
 
-    patch = patch_path.read_text(errors="backslashreplace")
+    patch = patch_path.read_text(encoding="utf-8", errors="backslashreplace")
 
     if not args.force and not registry.get("SUBMIT_TRIGGERED_BEFORE"):
         message = registry.get("SUBMIT_REVIEW_MESSAGE", "")
         message = message.replace("{{diff}}", patch)
         message = message.replace("{{problem_statement}}", registry.get("PROBLEM_STATEMENT", ""))
         registry["SUBMIT_TRIGGERED_BEFORE"] = True
+        # work around any encoding issues
+        message = message.encode("utf-8", errors="backslashreplace").decode("utf-8")
         print(message)
         sys.exit(0)
 
