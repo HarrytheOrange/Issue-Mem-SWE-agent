@@ -26,11 +26,9 @@ def stats_single(path: Path) -> None:
 def compare_many(paths: list[Path]) -> None:
     evaluated_ids = {}
     resolved_ids = {}
-    all_evaluated_ids = set()
     for path in paths:
         evaluated_ids[path] = sorted(get_submitted(path))
         resolved_ids[path] = sorted(get_resolved(path))
-        all_evaluated_ids.update(evaluated_ids[path])
     header: list[str] = ["ID"] + [str(i) for i in range(len(paths))] + ["Success rate"]
     table: list[list[str | float | int]] = []
 
@@ -41,7 +39,8 @@ def compare_many(paths: list[Path]) -> None:
             return "✅"
         return "❌"
 
-    for id in sorted(all_evaluated_ids):
+    ids_to_compare = set(evaluated_ids[paths[0]])
+    for id in sorted(ids_to_compare):
         row = [id] + [get_emoji(id, path) for path in paths]
         n_success = sum(id in resolved_ids[path] for path in paths)
         n_evaluated = sum(id in evaluated_ids[path] for path in paths)
@@ -50,8 +49,8 @@ def compare_many(paths: list[Path]) -> None:
     successes: list[str | float] = ["Successes"]
     success_rates: list[str | float] = ["Success rates"]
     for path in paths:
-        n_success = sum(id in resolved_ids[path] for id in all_evaluated_ids)
-        n_evaluated = sum(id in evaluated_ids[path] for id in all_evaluated_ids)
+        n_success = sum(id in resolved_ids[path] for id in ids_to_compare)
+        n_evaluated = sum(id in evaluated_ids[path] for id in ids_to_compare)
         successes.append(n_success)
         success_rates.append(f"{n_success/n_evaluated:.2f}")
     table.append(successes)
