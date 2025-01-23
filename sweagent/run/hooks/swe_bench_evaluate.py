@@ -5,6 +5,7 @@ Will be automatically added to `run_batch` if `SWEBenchInstances.evaluate` is se
 
 import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 from threading import Lock
 from time import time
@@ -29,6 +30,12 @@ class SweBenchEvaluate(RunHook):
         self.last_evaluation_time = time()
         self.evaluation_interval = continuous_submission_every
         self._running_calls = []
+        # We need to add a suffix to the run_id to avoid collisions when you reuse the name of your run
+        self._time_suffix = datetime.now().strftime("%Y%m%d%H%M%S%f")
+
+    @property
+    def run_id(self) -> str:
+        return f"{self.output_dir.name}_{self._time_suffix}"
 
     def _get_sb_call(self, preds_path: Path, submit_only: bool = False) -> list[str]:
         args = [
@@ -39,7 +46,7 @@ class SweBenchEvaluate(RunHook):
             "--predictions_path",
             str(preds_path),
             "--run_id",
-            self.output_dir.name,
+            self.run_id,
             "--output_dir",
             str(self.output_dir / "sb-cli-reports"),
         ]
