@@ -12,6 +12,7 @@ from typing import Any, Literal
 from jinja2 import Template
 from pydantic import BaseModel, ConfigDict
 
+from sweagent.agent.history_processors import _set_cache_control
 from sweagent.agent.models import AbstractModel, HumanModel, HumanThoughtModel, InstanceStats, LiteLLMModel
 from sweagent.agent.problem_statement import ProblemStatement
 from sweagent.exceptions import AttemptCostLimitExceededError
@@ -129,6 +130,7 @@ class ReviewerConfig(BaseModel):
     #: it will be desk rejected
     reject_exit_status: bool = True
     traj_formatter: TrajFormatterConfig
+    n_sample: int = 5
 
     type: Literal["reviewer"] = "reviewer"
 
@@ -269,10 +271,16 @@ class Reviewer(AbstractReviewer):
             accept = False
         else:
             messages = self.format_messages(instance, submission)
-            answer = self._model.query(messages, temperature=0.0)["message"]
-            accept = self.interpret(answer)
+            if self._config.n_sample > 1:
+                _set_cache_control(messages[-1])  # type: ignore
+            answers = []
+            accepts = []
+            for _ in range(self._config.n_sample):
+                answers.append(self._model.query(messages, temperature=0.0)["message"])
+                accepts.append(self.interpret(answers[-1]))
+            accept = sum(accepts) / len(accepts)
         self.logger.info(answer)
-        return ReviewerResult(accept=accept, output=answer, messages=messages)
+        return ReviewerResult(accept=accept, outputs=answers, messages=messages)
 
 
 # todo: Couldn't I just replace the whole thing with Jinja templates?
