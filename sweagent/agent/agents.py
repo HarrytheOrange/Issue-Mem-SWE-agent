@@ -346,7 +346,12 @@ class Agent:
         self._info_by_attempt = defaultdict(dict)  # type: ignore
         self._forwarded_vars = {}
         if self.retry_loop_config is not None:
-            self._rloop = get_retry_loop_from_config(self.retry_loop_config, problem_statement, self.model)
+            # Make sure to initialize a new model, so that the reviews itself do not count
+            # to the instance stats and in particular we can't run out of cost there.
+            rloop_model = get_model(
+                self.model.config.model_copy(update={"per_instance_cost_limit": 0}), self.tools.config
+            )
+            self._rloop = get_retry_loop_from_config(self.retry_loop_config, problem_statement, rloop_model)
         if self._rloop is not None:
             self._forwarded_vars = self._rloop.get_forwarded_vars()
         self._chook.on_tools_installation_started()

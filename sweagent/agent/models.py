@@ -231,8 +231,8 @@ class InstanceStats(PydanticBaseModel):
 
 
 class AbstractModel(ABC):
-    def __init__(self, config: PydanticBaseModel, tools: ToolConfig):
-        self.config: PydanticBaseModel
+    def __init__(self, config: ModelConfig, tools: ToolConfig):
+        self.config: ModelConfig
         self.stats: InstanceStats
 
     def reset_stats(self):
