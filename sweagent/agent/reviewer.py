@@ -70,7 +70,7 @@ class AbstractGraveToCradle(ABC):
         """
 
 
-class AbstractReviewLoop(ABC):
+class AbstractRetryLoop(ABC):
     """The review loop controls how often the agent tries to solve
     the issue and how it selects the best solution.
     """
@@ -94,20 +94,6 @@ class AbstractReviewLoop(ABC):
     @abstractmethod
     def get_best(self) -> int:
         """Returns the best solution"""
-
-    @property
-    @abstractmethod
-    def reviews(self) -> list[ReviewerResult]: ...
-
-    @property
-    @abstractmethod
-    def comparisons(self) -> list[tuple[int, int, BinaryReviewerResult]]:
-        """Get information about comparisons
-
-        Returns:
-            A list of tuples, where each tuple contains the indices of the
-            compared submissions and the result of the comparison.
-        """
 
     def get_forwarded_vars(self) -> dict[str, Any]:
         """Get the variables that should be forwarded to the next iteration.
@@ -157,24 +143,22 @@ class GTCConfig(BaseModel):
     """The configuration for the GraveToCradle"""
 
 
-class ReviewLoopConfig(BaseModel):
+class ScoreRetryLoopConfig(BaseModel):
     """The configuration for the review loop"""
 
-    review_loop_classname: str
-    reviewer_config: ReviewerConfig | None = None
-    binary_reviewer_config: BinaryReviewerConfig | None = None
-    gtc_config: GTCConfig | None = None
-    reviewer_classname: str | None = None
-    binary_reviewer_classname: str | None = None
-    gtc_classname: str = ""
+    type: Literal["score"] = "score"
+
+    reviewer_config: ReviewerConfig
+    accept_score: float
+
     #: Maximal number of attempts
-    max_samples: int = 2
+    max_attempts: int = 2
     #: Minimal number of attempts.
-    min_draws: int = 1
-    #: For use together with a `min_draws > 1`. Even if we have
-    #: not reached the `min_draws`, we will stop if we have accepted
-    #: `max_accepted_draws` submissions.
-    max_accepted_draws: int = 0
+    min_attempts: int = 1
+    #: For use together with a `min_attempts> 1`. Even if we have
+    #: not reached the `min_attempts`, we will stop if we have accepted
+    #: `max_accepted_attempts` submissions.
+    max_accepted_attempts: int = 0
     #: If set > 0 and there are more than this number of consecutive attempts
     #: with an 'exit cost' exit stats, the review loop will quit.
     max_n_consec_exit_cost: int = 0
@@ -187,22 +171,27 @@ class ReviewLoopConfig(BaseModel):
 
     def validate(self):
         """Checks config. Raises `ValueError` in case of misconfiguration"""
-        if self.min_draws < 1:
-            msg = "`min_draws` must be at least 1"
+        if self.min_attempts < 1:
+            msg = "`min_attempts` must be at least 1"
             raise ValueError(msg)
-        if self.max_samples < 1:
-            msg = "`max_samples` must be at least 1"
+        if self.max_attempts < 1:
+            msg = "`max_attempts` must be at least 1"
             raise ValueError(msg)
-        if self.max_samples < self.min_draws:
-            msg = "`max_samples` must be greater than or equal to `min_draws`"
+        if self.max_attempts < self.min_attempts:
+            msg = "`max_attempts` must be greater than or equal to `min_attempts`"
             raise ValueError(msg)
-        if self.max_accepted_draws > self.min_draws:
-            msg = "`max_accepted_draws` must be less than or equal to `min_draws`, else it has no effect"
+        if self.max_accepted_attempts > self.min_attempts:
+            msg = "`max_accepted_attempts` must be less than or equal to `min_attempts`, else it has no effect"
             raise ValueError(msg)
 
     def __post_init__(self):
         self.validate()
 
+    def get_retry_loop(self, instance: ProblemStatement, model: AbstractModel) -> AbstractRetryLoop:
+        return ScoreRetryLoop(self, instance, model)
+
+
+RetryLoopConfig = ScoreRetryLoopConfig
 
 # --- IMPLEMENTATIONS ---
 
@@ -424,40 +413,26 @@ class GraveToCradle(AbstractGraveToCradle):
                 continue
             submission = info["submission"]  # type: ignore
             review = reviews[idx].output
-            msg_lines.append(f"Submission {i+1}:\n\n{submission}\n\nReview {i+1}:\n\n{review}")
+            msg_lines.append(f"Submission {i + 1}:\n\n{submission}\n\nReview {i + 1}:\n\n{review}")
         msg = "\n\n".join(msg_lines)
         return {"failed_verdicts_with_submissions": msg}
 
 
-class ReviewLoop(AbstractReviewLoop):
+class ScoreRetryLoop(AbstractRetryLoop):
     def __init__(
         self,
-        loop_config: ReviewLoopConfig,
+        loop_config: ScoreRetryLoopConfig,
         instance: ProblemStatement,
         model: AbstractModel,
     ):
         self._model = model
         self._instance = instance
         self._reviewer: AbstractReviewer = globals()[loop_config.reviewer_classname](loop_config.reviewer_config, model)  # type: ignore
-        if loop_config.binary_reviewer_classname is not None:
-            self._breviewer: AbstractBinaryReviewer | None = globals()[loop_config.binary_reviewer_classname](
-                loop_config.binary_reviewer_config, model
-            )
-        else:
-            self._breviewer = None
-        self._gtc: AbstractGraveToCradle | None = None
-        if loop_config.gtc_classname:
-            self._gtc = globals()[loop_config.gtc_classname](loop_config.gtc_config, model)
         self._loop_config = loop_config
         # Note: These are "cumulative" submissions, i.e., they include all retries
         # up to that point.
         self._submissions: list[ReviewSubmission] = []
         self._reviews: list[ReviewerResult] = []
-        self._comparisons: list[tuple[int, int, BinaryReviewerResult]] = []
-        # Once we have k submissions, there will always be one voted at the
-        # top through k calls to the binary reviewer. Here, we store the
-        # corresponding index
-        self._best_idx: int = 0
         #: Number of consecutive exit cost submissions
         self._n_consec_exit_cost: int = 0
         #: Original temperature
@@ -472,20 +447,16 @@ class ReviewLoop(AbstractReviewLoop):
         return self._reviews
 
     @property
-    def comparisons(self) -> list[tuple[int, int, BinaryReviewerResult]]:
-        return self._comparisons
-
-    @property
     def _n_samples(self) -> int:
         return len(self._submissions)
 
     @property
     def _n_accepted(self) -> int:
-        return sum([r.accept for r in self._reviews])
+        return sum([r.accept >= self._loop_config.accept_score for r in self._reviews])
 
     # -------
 
-    def on_attempt_started(self, i_attempt: int, agent: str) -> None:
+    def _override_temperature(self, i_attempt: int) -> None:
         if not isinstance(self._model, LiteLLMModel):
             return
         # Attempts are 1-indexed
@@ -500,10 +471,12 @@ class ReviewLoop(AbstractReviewLoop):
             self._model.config.temperature = self._terminal_temperature
         self.logger.debug(f"Set temperature to {self._model.config.temperature}")
 
+    def on_attempt_started(self, i_attempt: int, agent: str) -> None:
+        self._override_temperature(i_attempt)
+
     def on_submit(self, submission: ReviewSubmission) -> None:
         self._submissions.append(submission)
         self._review()
-        self._compare()
 
     def on_model_query(self, attempt_stats: InstanceStats):
         if 0 < self._loop_config.attempt_cost_limit <= attempt_stats.instance_cost:
@@ -513,60 +486,32 @@ class ReviewLoop(AbstractReviewLoop):
     def _review(self) -> bool:
         review = self._reviewer.review(self._instance, self._submissions[-1])
         self._reviews.append(review)
-        if "exit_cost" in self._submissions[-1].info.get("exit_status", "").lower():
+        exit_status = self._submissions[-1].info.get("exit_status", "")
+        if exit_status and "exit_cost" in exit_status.lower():
             self._n_consec_exit_cost += 1
         else:
             self._n_consec_exit_cost = 0
-        return review.accept
-
-    def _compare(self) -> None:
-        if self._breviewer is None:
-            self._best_idx = self._n_samples - 1
-            return
-        if self._n_samples < 2:
-            return
-        if self._reviews[self._best_idx].accept and not self._reviews[-1].accept:
-            # Require that the best submission is accepted, so don't
-            # even need to compare here
-            return
-        if not self._reviews[self._best_idx].accept and self._reviews[-1].accept:
-            # If the best submission is not accepted, but the last one is,
-            # then the last one is the new best
-            self._best_idx = self._n_samples - 1
-            return
-        sub1 = self._submissions[self._best_idx]
-        sub2 = self._submissions[-1]
-        rev1 = self._reviews[self._best_idx]
-        rev2 = self._reviews[-1]
-        cresult = self._breviewer.compare_submissions(
-            instance=self._instance,
-            sub1=sub1,
-            sub2=sub2,
-            rev1=rev1,
-            rev2=rev2,
-        )
-        self._comparisons.append((self._best_idx, self._n_samples - 1, cresult))
-        assert cresult.choice in [0, 1]
-        # this was a comparison between the current best and the last one
-        self._best_idx = [self._best_idx, self._n_samples - 1][cresult.choice]
+        return review.accept >= self._loop_config.accept_score
 
     def retry(self) -> bool:
         stat_str = f"n_samples={self._n_samples}, n_accepted={self._n_accepted}"
         # n_samples is 1-based
-        if self._n_samples >= self._loop_config.max_samples:
+        if self._n_samples >= self._loop_config.max_attempts:
             # We've exceeded our budget. Returning best solution no matter what.
             self.logger.info(f"Exiting retry loop ({stat_str}): `max_samples` reached")
             return False
 
-        if self._n_accepted and self._n_samples >= self._loop_config.min_draws:
-            # We have an accepted submission and have reached the minimum number of draws
-            self.logger.info(f"Existing retry loop ({stat_str}): `min_draws` reached and last submission was accepted")
+        if self._n_accepted and self._n_samples >= self._loop_config.min_attempts:
+            # We have an accepted submission and have reached the minimum number of attempts
+            self.logger.info(
+                f"Existing retry loop ({stat_str}): `min_attempts` reached and last submission was accepted"
+            )
             return False
 
-        if self._n_accepted >= self._loop_config.max_accepted_draws > 0:
+        if self._n_accepted >= self._loop_config.max_accepted_attempts > 0:
             # We have reached more than the required number of accepted submissions.
-            # Exiting even if we haven't reached the minimum number of draws.
-            self.logger.info(f"Exiting retry loop ({stat_str}): `max_accepted_draws` reached")
+            # Exiting even if we haven't reached the minimum number of attempts.
+            self.logger.info(f"Exiting retry loop ({stat_str}): `max_accepted_attempts` reached")
             return False
 
         max_n_exit_cost = self._loop_config.max_n_consec_exit_cost
@@ -588,27 +533,14 @@ class ReviewLoop(AbstractReviewLoop):
         return True
 
     def get_best(self) -> int:
-        if self._breviewer is not None:
-            assert len(self._reviews) == len(self._submissions)
-        return self._best_idx
-
-    def get_forwarded_vars(self) -> dict[str, Any]:
-        if self._gtc is None:
-            return {}
-        return self._gtc.get_forwarded_vars(self._submissions, self._reviews, self._comparisons)
+        best_score = max([r.accept for r in self._reviews])
+        best_indices = [i for i, r in enumerate(self._reviews) if abs(r.accept - best_score) <= 1e-10]
+        return best_indices[0]
 
 
 def get_review_loop_from_config(
-    config: ReviewLoopConfig | None, instance: ProblemStatement, model: AbstractModel
-) -> AbstractReviewLoop | None:
+    config: RetryLoopConfig | None, instance: ProblemStatement, model: AbstractModel
+) -> AbstractRetryLoop | None:
     if config is None:
         return None
-    if not isinstance(config, ReviewLoopConfig):
-        msg = (
-            f"Expected a `ReviewLoopConfig`, got {config!r} of type {type(config)}. "
-            "This usually happens for misconfiguration issues: Make sure that all validation "
-            "conditions are satisfied (e.g., min draws <= max draws etc.) and that all "
-            "required keys are there."
-        )
-        raise ValueError(msg)
-    return globals()[config.review_loop_classname](config, instance, model)
+    return config.get_retry_loop(instance=instance, model=model)

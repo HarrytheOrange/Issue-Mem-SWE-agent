@@ -28,7 +28,7 @@ from sweagent.agent.models import (
     get_model,
 )
 from sweagent.agent.problem_statement import ProblemStatement, ProblemStatementConfig
-from sweagent.agent.reviewer import AbstractReviewLoop, ReviewLoopConfig, get_review_loop_from_config
+from sweagent.agent.reviewer import AbstractRetryLoop, ReviewLoopConfig, get_review_loop_from_config
 from sweagent.environment.swe_env import SWEEnv
 from sweagent.exceptions import (
     ContentPolicyViolationError,
@@ -197,7 +197,7 @@ class Agent:
 
         #: Number of attempts to solve the issue when using a review loop
         self._i_attempt: int = 0
-        self._rloop: AbstractReviewLoop | None = None
+        self._rloop: AbstractRetryLoop | None = None
 
         #: The following three attributes collect the information about how the agent
         #: solved the problem.
