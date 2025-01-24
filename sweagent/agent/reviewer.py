@@ -107,22 +107,28 @@ class AbstractRetryLoop(ABC):
 # --- CONFIGS ---
 
 
+class TrajFormatterConfig(BaseModel):
+    #: Filter the following actions from the trajectory
+    filter: list[str] = []
+    #: Filter outputs from the following actions from the trajectory
+    output_filter: list[str] = []
+    #: Format of the trajectory item
+    item_template: str = "Model: {{response}}\n\nObservation: {{observation}}"
+    only_show_last_n_output: int = 0
+
+
 class ReviewerConfig(BaseModel):
     """The configuration for the reviewer"""
 
-    output_type: Literal["bool", "float"] = "bool"
+    output_type: Literal["bool", "float"] = "float"
     system_template: str
     instance_template: str
     #: If a submission autosubmits because of total cost or a similar exit status,
     #: it will be desk rejected
     reject_exit_status: bool = True
-    #: Filter the following actions from the trajectory
-    traj_filter: list[str] = []
-    #: Filter outputs from the following actions from the trajectory
-    traj_output_filter: list[str] = []
-    #: Format of the trajectory item
-    traj_item_template: str = "Model: {response}\n\nObservation: {observation}"
-    filter_failed_edits: bool = False
+    traj_formatter: TrajFormatterConfig
+
+    type: Literal["reviewer"] = "reviewer"
 
 
 class BinaryReviewerConfig(BaseModel):
@@ -130,13 +136,9 @@ class BinaryReviewerConfig(BaseModel):
 
     system_template: str
     instance_template: str
-    #: Filter the following actions from the trajectory
-    traj_filter: list[str] = []
-    #: Format of the trajectory item
-    traj_item_template: str = "Model: {response}\n\nObservation: {observation}"
-    traj_output_filter: list[str] = []
-    traj_filter_failed_edits: bool = False
-    traj_only_show_last_n_output: int = 0
+    traj_formatter: TrajFormatterConfig
+
+    type: Literal["binary_reviewer"] = "binary_reviewer"
 
 
 class GTCConfig(BaseModel):
@@ -196,16 +198,11 @@ RetryLoopConfig = ScoreRetryLoopConfig
 # --- IMPLEMENTATIONS ---
 
 
-class Reviewer(AbstractReviewer):
+class Reviewer:
     def __init__(self, config: ReviewerConfig, model):
         self._config = config
         self._model = model
-        self._traj_formatter = TrajectoryFormatter(
-            traj_filter=config.traj_filter,
-            traj_item_template=config.traj_item_template,
-            traj_output_filter=config.traj_output_filter,
-            filter_failed_edits=config.filter_failed_edits,
-        )
+        self._traj_formatter = TrajectoryFormatter(config=config.traj_formatter)
         self.logger = get_logger("reviewer", emoji="🧑‍⚖️")
 
     def format_messages(self, instance: ProblemStatement, submission: ReviewSubmission):
@@ -241,7 +238,10 @@ class Reviewer(AbstractReviewer):
             if number:
                 return float(number.group(0))
             else:
-                self.logger.warning("Could not interpret response: %s, will reject submission.", response)
+                self.logger.warning(
+                    "Could not interpret response: %s, will reject submission.",
+                    response,
+                )
                 return 0.0
         raise ValueError
 
@@ -258,43 +258,33 @@ class Reviewer(AbstractReviewer):
             messages = self.format_messages(instance, submission)
             answer = self._model.query(messages, temperature=0.0)["message"]
             accept = self.interpret(answer)
-        accept_emoji = "✅" if accept else "❌"
-        self.logger.info(f"{accept_emoji}\n{answer}")
+        self.logger.info(answer)
         return ReviewerResult(accept=accept, output=answer, messages=messages)
 
 
 # todo: Couldn't I just replace the whole thing with Jinja templates?
+
+
 class TrajectoryFormatter:
     def __init__(
         self,
-        *,
-        traj_filter: list[str] | None = None,
-        traj_output_filter: list[str] | None = None,
-        traj_item_template: str = "Model: {{response}}\n\nObservation: {{observation}}",
-        filter_failed_edits: bool = False,
-        only_show_last_n_output: int = 0,
+        config: TrajFormatterConfig,
     ):
         """Formats trajectories for the use in prompts"""
-        self._traj_filter = traj_filter or []
-        self._traj_output_filter = traj_output_filter or []
-        self._traj_item_template = traj_item_template
-        self._filter_failed_edits = filter_failed_edits
-        self._only_show_last_n_output = only_show_last_n_output
+        self._config = config
 
     def _include_step(self, item: TrajectoryStep) -> bool:
         action = item["action"].strip()
-        for f in self._traj_filter:
+        for f in self._config.filter:
             if action.startswith(f):
                 return False
-        if self._filter_failed_edits and "Your proposed edit has introduced new syntax error(s)" in item["observation"]:
-            return False
         return True
 
     def _include_step_output(self, item: TrajectoryStep, i_step: int, n_steps: int) -> bool:
-        if self._only_show_last_n_output > 0 and i_step < n_steps - self._only_show_last_n_output:
+        if self._config.only_show_last_n_output > 0 and i_step < n_steps - self._config.only_show_last_n_output:
             return False
         action = item["action"].strip()
-        for f in self._traj_output_filter:
+        for f in self._config.output_filter:
             if action.startswith(f):
                 return False
         return True
@@ -303,7 +293,7 @@ class TrajectoryFormatter:
         step = copy.deepcopy(step)
         if not self._include_step_output(step, i_step, n_steps=n_steps):
             step["observation"] = "[Output omitted]"
-        return Template(self._traj_item_template).render(
+        return Template(self._config.item_template).render(
             **step,
             i_step=i_step,
             i_traj=i_traj,
@@ -319,17 +309,11 @@ class TrajectoryFormatter:
         )
 
 
-class BinaryReviewer(AbstractBinaryReviewer):
-    def __init__(self, config: BinaryReviewerConfig, model: AbstractModel):
+class BinaryReviewer:
+    def __init__(self, config: BinaryReviewerConfig, model: LiteLLMModel):
         self._config = config
         self._model = model
-        self._traj_formatter = TrajectoryFormatter(
-            traj_filter=config.traj_filter,
-            traj_item_template=config.traj_item_template,
-            traj_output_filter=config.traj_output_filter,
-            filter_failed_edits=config.traj_filter_failed_edits,
-            only_show_last_n_output=config.traj_only_show_last_n_output,
-        )
+        self._traj_formatter = TrajectoryFormatter(config=config.traj_formatter)
         self.logger = get_logger("binary_reviewer", emoji="⚖️")
 
     def format_messages(self, instance: ProblemStatement, sub1: ReviewSubmission, sub2: ReviewSubmission):
@@ -339,13 +323,15 @@ class BinaryReviewer(AbstractBinaryReviewer):
             "problem_statement": instance.get_problem_statement(),
             **instance.get_extra_fields(),
         }
-        user_message = Template(self._config.instance_template).render(
+        format_dict = {
             **ps_format_dict,
             **sub1.to_format_dict(suffix="1"),
             **sub2.to_format_dict(suffix="2"),
-            traj1=self._traj_formatter.format_trajectory(sub1.trajectory, i_traj=1),
-            traj2=self._traj_formatter.format_trajectory(sub2.trajectory, i_traj=2),
-        )
+            "traj1": self._traj_formatter.format_trajectory(sub1.trajectory, i_traj=1),
+            "traj2": self._traj_formatter.format_trajectory(sub2.trajectory, i_traj=2),
+        }
+        # print(format_dict)
+        user_message = Template(self._config.instance_template).render(**format_dict)
         self.logger.debug(f"MODEL INPUT (user)\n{user_message}")
         return [
             {"role": "system", "content": system_message},
@@ -370,7 +356,8 @@ class BinaryReviewer(AbstractBinaryReviewer):
         elif "second" in last_line.lower():
             return (1, confidence)
         self.logger.warning(
-            "Could not interpret response: %s, will choose first submission with confidence 0.0.", response
+            "Could not interpret response: %s, will choose first submission with confidence 0.0.",
+            response,
         )
         return (0, 0.0)
 
