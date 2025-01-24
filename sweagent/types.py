@@ -123,7 +123,7 @@ class ReviewSubmission(BaseModel):
 class ReviewerResult(BaseModel):
     accept: bool | float
     outputs: list[str]
-    messages: list[dict[str, str]]
+    messages: list[dict[str, Any]]
 
 
 class BinaryReviewerResult(BaseModel):

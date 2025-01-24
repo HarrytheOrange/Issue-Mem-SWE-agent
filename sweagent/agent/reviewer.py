@@ -164,16 +164,11 @@ class ScoreRetryLoopConfig(BaseModel):
     type: Literal["score"] = "score"
 
     reviewer_config: ReviewerConfig
-    accept_score: float
 
-    #: Maximal number of attempts
-    max_attempts: int = 2
-    #: Minimal number of attempts.
-    min_attempts: int = 1
-    #: For use together with a `min_attempts> 1`. Even if we have
-    #: not reached the `min_attempts`, we will stop if we have accepted
-    #: `max_accepted_attempts` submissions.
-    max_accepted_attempts: int = 0
+    max_attempts_for_score: dict[float, int] = {}
+    #: Given a maximum score, the maximum number of attempts
+    #: to try. This is a very general way of configuring when to stop.
+
     #: If set > 0 and there are more than this number of consecutive attempts
     #: with an 'exit cost' exit stats, the review loop will quit.
     max_n_consec_exit_cost: int = 0
@@ -188,18 +183,7 @@ class ScoreRetryLoopConfig(BaseModel):
 
     def validate(self):
         """Checks config. Raises `ValueError` in case of misconfiguration"""
-        if self.min_attempts < 1:
-            msg = "`min_attempts` must be at least 1"
-            raise ValueError(msg)
-        if self.max_attempts < 1:
-            msg = "`max_attempts` must be at least 1"
-            raise ValueError(msg)
-        if self.max_attempts < self.min_attempts:
-            msg = "`max_attempts` must be greater than or equal to `min_attempts`"
-            raise ValueError(msg)
-        if self.max_accepted_attempts > self.min_attempts:
-            msg = "`max_accepted_attempts` must be less than or equal to `min_attempts`, else it has no effect"
-            raise ValueError(msg)
+        ...
 
     def __post_init__(self):
         self.validate()
@@ -264,10 +248,10 @@ class Reviewer(AbstractReviewer):
         exit_status = submission.info.get("exit_status")
         messages = []
         if not exit_status:
-            answer = "No exit status in submission, will reject."
+            answers = ["No exit status in submission, will reject."]
             accept = False
         elif self._config.reject_exit_status and exit_status.strip() != "submitted":
-            answer = f"Submission desk-rejected because of exit status {exit_status!r}."
+            answers = [f"Submission desk-rejected because of exit status {exit_status!r}."]
             accept = False
         else:
             messages = self.format_messages(instance, submission)
@@ -279,7 +263,8 @@ class Reviewer(AbstractReviewer):
                 answers.append(self._model.query(messages, temperature=0.0)["message"])
                 accepts.append(self.interpret(answers[-1]))
             accept = sum(accepts) / len(accepts)
-        self.logger.info(answer)
+        self.logger.info(f"First answer: {answers[0]}")
+        self.logger.info(f"Final score: {accept}")
         return ReviewerResult(accept=accept, outputs=answers, messages=messages)
 
 
@@ -420,7 +405,8 @@ class GraveToCradle(AbstractGraveToCradle):
             if not info.get("submission"):
                 continue
             submission = info["submission"]  # type: ignore
-            review = reviews[idx].output
+            # todo: currently we only take the first output
+            review = reviews[idx].outputs[0]
             msg_lines.append(f"Submission {i + 1}:\n\n{submission}\n\nReview {i + 1}:\n\n{review}")
         msg = "\n\n".join(msg_lines)
         return {"failed_verdicts_with_submissions": msg}
@@ -455,12 +441,8 @@ class ScoreRetryLoop(AbstractRetryLoop):
         return self._reviews
 
     @property
-    def _n_samples(self) -> int:
+    def _n_attempts(self) -> int:
         return len(self._submissions)
-
-    @property
-    def _n_accepted(self) -> int:
-        return sum([r.accept >= self._loop_config.accept_score for r in self._reviews])
 
     # -------
 
@@ -491,7 +473,7 @@ class ScoreRetryLoop(AbstractRetryLoop):
             self.logger.info("Exiting retry loop: Cost limit exceeded")
             raise AttemptCostLimitExceededError()
 
-    def _review(self) -> bool:
+    def _review(self) -> float:
         review = self._reviewer.review(self._instance, self._submissions[-1])
         self._reviews.append(review)
         exit_status = self._submissions[-1].info.get("exit_status", "")
@@ -499,27 +481,26 @@ class ScoreRetryLoop(AbstractRetryLoop):
             self._n_consec_exit_cost += 1
         else:
             self._n_consec_exit_cost = 0
-        return review.accept >= self._loop_config.accept_score
+        return review.accept
 
     def retry(self) -> bool:
-        stat_str = f"n_samples={self._n_samples}, n_accepted={self._n_accepted}"
-        # n_samples is 1-based
-        if self._n_samples >= self._loop_config.max_attempts:
-            # We've exceeded our budget. Returning best solution no matter what.
-            self.logger.info(f"Exiting retry loop ({stat_str}): `max_samples` reached")
-            return False
+        max_score = max([r.accept for r in self._reviews])
+        stat_str = f"n_samples={self._n_attempts}, max_score={max_score}"
 
-        if self._n_accepted and self._n_samples >= self._loop_config.min_attempts:
-            # We have an accepted submission and have reached the minimum number of attempts
+        # Given a maximum score, look up what the minimum and maximum number of attempts are
+        for _score, _max_attempts in sorted(
+            self._loop_config.max_attempts_for_score.items(), reverse=True, key=lambda x: x[0]
+        ):
+            if max_score >= _score:
+                max_attempts = _max_attempts
+                break
+        else:
+            max_attempts = 0
+
+        if self._n_attempts >= max_attempts > 0:
             self.logger.info(
-                f"Existing retry loop ({stat_str}): `min_attempts` reached and last submission was accepted"
+                f"Exiting retry loop ({stat_str}): `max_attempts`={max_attempts} for highscore {max_score} reached"
             )
-            return False
-
-        if self._n_accepted >= self._loop_config.max_accepted_attempts > 0:
-            # We have reached more than the required number of accepted submissions.
-            # Exiting even if we haven't reached the minimum number of attempts.
-            self.logger.info(f"Exiting retry loop ({stat_str}): `max_accepted_attempts` reached")
             return False
 
         max_n_exit_cost = self._loop_config.max_n_consec_exit_cost
