@@ -248,10 +248,10 @@ class Reviewer(AbstractReviewer):
             self.logger.warning("Could not interpret response: %s, will reject submission.", response)
             return False
         elif self._config.output_type == "float":
-            # use regex
-            number = re.search(r"\d+\.?\d*", last_line)
-            if number:
-                return float(number.group(0))
+            # Find all numbers in the last line and take the last one
+            numbers = re.findall(r"\d+\.?\d*", last_line)
+            if numbers:
+                return float(numbers[-1])
             else:
                 self.logger.warning(
                     "Could not interpret response: %s, will reject submission.",
