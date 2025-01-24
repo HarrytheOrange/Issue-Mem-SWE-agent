@@ -295,7 +295,6 @@ class HumanModel(AbstractModel):
         self,
         history: History,
         action_prompt: str = "> ",
-        **kwargs,
     ) -> dict:
         """Logic for handling user input to pass to SWEEnv"""
         action = input(action_prompt)
@@ -329,7 +328,7 @@ class HumanModel(AbstractModel):
         _handle_raise_commands(action)
         return {"message": action}
 
-    def query(self, history: History, action_prompt: str = "> ", n: int | None = None) -> dict | list[dict]:
+    def query(self, history: History, action_prompt: str = "> ", n: int | None = None, **kwargs) -> dict | list[dict]:
         """Wrapper to separate action prompt from formatting"""
         out = []
         n_samples = n or 1

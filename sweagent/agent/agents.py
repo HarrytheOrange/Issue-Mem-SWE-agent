@@ -28,7 +28,7 @@ from sweagent.agent.models import (
     get_model,
 )
 from sweagent.agent.problem_statement import ProblemStatement, ProblemStatementConfig
-from sweagent.agent.reviewer import AbstractRetryLoop, ReviewLoopConfig, get_review_loop_from_config
+from sweagent.agent.reviewer import AbstractRetryLoop, RetryLoopConfig, get_retry_loop_from_config
 from sweagent.environment.swe_env import SWEEnv
 from sweagent.exceptions import (
     ContentPolicyViolationError,
@@ -136,7 +136,7 @@ class AgentConfig(BaseModel):
     """Maximum number of times to requery the model after an error, such as a
     formatting error, a blocked action, or a bash syntax error.
     """
-    review_loop: ReviewLoopConfig | None = None
+    retry_loop: RetryLoopConfig | None = None
     action_sampler: ActionSamplerConfig | None = None
 
     # pydantic config
@@ -169,7 +169,7 @@ class Agent:
         name: str = "main",
         _catch_errors: bool = True,
         _always_require_zero_exit_code: bool = False,
-        review_loop_config: ReviewLoopConfig | None = None,
+        retry_loop_config: RetryLoopConfig | None = None,
         action_sampler_config: ActionSamplerConfig | None = None,
     ):
         """The agent handles the behaviour of the model and how it interacts with the environment.
@@ -189,7 +189,7 @@ class Agent:
         self.history_processors = history_processors
         self.max_requeries = max_requeries
         self.logger = get_logger("swea-agent", emoji="🤠")
-        self.review_loop_config = review_loop_config
+        self.retry_loop_config = retry_loop_config
         # Set in run method
         self._env: SWEEnv | None = None
         self._problem_statement: ProblemStatement | ProblemStatementConfig | None = None
@@ -233,7 +233,7 @@ class Agent:
             history_processors=config.history_processors,
             model=model,
             max_requeries=config.max_requeries,
-            review_loop_config=config.review_loop,
+            retry_loop_config=config.retry_loop,
             action_sampler_config=config.action_sampler,
         )
 
@@ -301,7 +301,7 @@ class Agent:
         for processor in self.history_processors:
             messages = processor(messages)
 
-        return messages
+        return messages  # type: ignore
 
     @property
     def attempt_model_stats(self) -> InstanceStats:
@@ -345,8 +345,8 @@ class Agent:
         self._trajectory_by_attempt = defaultdict(list)
         self._info_by_attempt = defaultdict(dict)  # type: ignore
         self._forwarded_vars = {}
-        if self.review_loop_config is not None:
-            self._rloop = get_review_loop_from_config(self.review_loop_config, problem_statement, self.model)
+        if self.retry_loop_config is not None:
+            self._rloop = get_retry_loop_from_config(self.retry_loop_config, problem_statement, self.model)
         if self._rloop is not None:
             self._forwarded_vars = self._rloop.get_forwarded_vars()
         self._chook.on_tools_installation_started()
@@ -531,7 +531,7 @@ class Agent:
         if self.templates.strategy_template is not None:
             templates.append(self.templates.strategy_template)
 
-        self._add_templated_messages_to_history(templates, **state)
+        self._add_templated_messages_to_history(templates, **state)  # type: ignore
 
     def get_trajectory_data(self) -> dict[str, Any]:
         """Get all data that we save in .traj files."""
@@ -563,7 +563,7 @@ class Agent:
             data["info"]["best_attempt_idx"] = best_attempt_idx
             # Total model stats
             data["info"]["model_stats"] = self.model.stats.model_dump()
-            data["extra_info"] = {"comparisons": [(a, b, comp.model_dump()) for a, b, comp in self._rloop.comparisons]}
+            # data["extra_info"] = {"comparisons": [(a, b, comp.model_dump()) for a, b, comp in self._rloop.comparisons]}
         else:
             data = {
                 **get_attempt_data(0),
@@ -1005,7 +1005,7 @@ class Agent:
             if step_output.done:
                 if self._rloop is not None:
                     self._rloop.on_submit(ReviewSubmission(trajectory=self.trajectory, info=self.info))
-                    self.info["review"] = self._rloop.reviews[-1].model_dump()
+                    self.info["review"] = self._rloop.reviews[-1].model_dump()  # type: ignore
                     self.save_trajectory()
                     if self._rloop.retry():
                         assert self._env is not None

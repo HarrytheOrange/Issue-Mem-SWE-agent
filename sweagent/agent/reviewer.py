@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Literal
 
 from jinja2 import Template
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from sweagent.agent.models import AbstractModel, HumanModel, HumanThoughtModel, InstanceStats, LiteLLMModel
 from sweagent.agent.problem_statement import ProblemStatement
@@ -116,6 +116,8 @@ class TrajFormatterConfig(BaseModel):
     item_template: str = "Model: {{response}}\n\nObservation: {{observation}}"
     only_show_last_n_output: int = 0
 
+    model_config = ConfigDict(extra="forbid")
+
 
 class ReviewerConfig(BaseModel):
     """The configuration for the reviewer"""
@@ -130,6 +132,11 @@ class ReviewerConfig(BaseModel):
 
     type: Literal["reviewer"] = "reviewer"
 
+    model_config = ConfigDict(extra="forbid")
+
+    def get_reviewer(self, model: AbstractModel) -> AbstractReviewer:
+        return Reviewer(self, model)
+
 
 class BinaryReviewerConfig(BaseModel):
     """The configuration for the binary reviewer"""
@@ -140,9 +147,13 @@ class BinaryReviewerConfig(BaseModel):
 
     type: Literal["binary_reviewer"] = "binary_reviewer"
 
+    model_config = ConfigDict(extra="forbid")
+
 
 class GTCConfig(BaseModel):
     """The configuration for the GraveToCradle"""
+
+    model_config = ConfigDict(extra="forbid")
 
 
 class ScoreRetryLoopConfig(BaseModel):
@@ -171,6 +182,8 @@ class ScoreRetryLoopConfig(BaseModel):
     #: Override model temperature for first len(list) attempts
     temperature_override: list[float] = [0.0]
 
+    model_config = ConfigDict(extra="forbid")
+
     def validate(self):
         """Checks config. Raises `ValueError` in case of misconfiguration"""
         if self.min_attempts < 1:
@@ -198,7 +211,7 @@ RetryLoopConfig = ScoreRetryLoopConfig
 # --- IMPLEMENTATIONS ---
 
 
-class Reviewer:
+class Reviewer(AbstractReviewer):
     def __init__(self, config: ReviewerConfig, model):
         self._config = config
         self._model = model
@@ -414,7 +427,7 @@ class ScoreRetryLoop(AbstractRetryLoop):
     ):
         self._model = model
         self._instance = instance
-        self._reviewer: AbstractReviewer = globals()[loop_config.reviewer_classname](loop_config.reviewer_config, model)  # type: ignore
+        self._reviewer: AbstractReviewer = loop_config.reviewer_config.get_reviewer(model)
         self._loop_config = loop_config
         # Note: These are "cumulative" submissions, i.e., they include all retries
         # up to that point.
@@ -520,12 +533,14 @@ class ScoreRetryLoop(AbstractRetryLoop):
         return True
 
     def get_best(self) -> int:
+        if len(self._reviews) == 0:
+            return 0
         best_score = max([r.accept for r in self._reviews])
         best_indices = [i for i, r in enumerate(self._reviews) if abs(r.accept - best_score) <= 1e-10]
         return best_indices[0]
 
 
-def get_review_loop_from_config(
+def get_retry_loop_from_config(
     config: RetryLoopConfig | None, instance: ProblemStatement, model: AbstractModel
 ) -> AbstractRetryLoop | None:
     if config is None:
