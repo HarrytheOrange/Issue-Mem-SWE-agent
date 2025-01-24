@@ -211,7 +211,10 @@ class RunBatch:
         else:
             self.main_multi_worker()
 
-        merge_predictions([self.output_dir], self.output_dir / "preds.json")
+        output_dirs = []
+        for instance in self.instances:
+            output_dirs.append(self.output_dir / instance.problem_statement.id)
+        merge_predictions(output_dirs, self.output_dir / "preds.json")
 
         self._chooks.on_end()
 
