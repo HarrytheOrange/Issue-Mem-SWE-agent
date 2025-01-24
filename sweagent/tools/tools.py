@@ -26,7 +26,6 @@ class ToolFilterConfig(BaseModel):
         "emacs",
         "nano",
         "nohup",
-        "git",
         "gdb",
         "less",
         "tail -f",
@@ -54,7 +53,7 @@ class ToolFilterConfig(BaseModel):
         "radare2": r"\b(?:radare2)\b.*\s+-c\s+.*",
         "r2": r"\b(?:radare2)\b.*\s+-c\s+.*",
     }
-    """Block any command that matches one of these regexes unless it also matches the regex"""
+    """Block any command that matches one of these names unless it also matches the regex"""
 
 
 class ToolConfig(BaseModel):
