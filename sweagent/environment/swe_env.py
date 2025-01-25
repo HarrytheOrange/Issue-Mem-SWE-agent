@@ -217,16 +217,22 @@ class SWEEnv:
                 raise RuntimeError(msg)
         return output
 
-    def read_file(self, path: str | PurePath) -> str:
+    def read_file(self, path: str | PurePath, encoding: str | None = None, errors: str | None = None) -> str:
         """Read file contents from container
 
         Args:
             path: Absolute path to file
+            encoding: Encoding to use when reading the file. None means default encoding.
+                This is the same as the `encoding` argument of `Path.read_text()`
+            errors: Error handling to use when reading the file. None means default error handling.
+                This is the same as the `errors` argument of `Path.read_text()`
 
         Returns:
             file_contents: Contents of file as string
         """
-        r = asyncio.run(self.deployment.runtime.read_file(ReadFileRequest(path=str(path))))
+        r = asyncio.run(
+            self.deployment.runtime.read_file(ReadFileRequest(path=str(path), encoding=encoding, errors=errors))
+        )
         return r.content
 
     def write_file(self, path: str | PurePath, content: str) -> None:

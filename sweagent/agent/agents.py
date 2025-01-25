@@ -661,9 +661,12 @@ class Agent:
         if is_submission or force_submission:
             assert self._env is not None
             try:
-                submission = self._env.read_file("/root/model.patch")
+                submission = self._env.read_file("/root/model.patch", encoding="utf-8", errors="backslashreplace")
             except FileNotFoundError:
                 self.logger.warning("Submission file not found, no submission was made")
+                return step
+            except Exception as e:
+                self.logger.exception("Failed to read submission file, got %s", e)
                 return step
             if submission.strip() != "":
                 step.submission = submission

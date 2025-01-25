@@ -73,7 +73,7 @@ def get_agent_version_info() -> str:
 
 def impose_rex_lower_bound() -> None:
     rex_version = get_rex_version()
-    minimal_rex_version = "1.0.3"
+    minimal_rex_version = "1.1.0"
     if version.parse(rex_version) < version.parse(minimal_rex_version):
         msg = (
             f"SWE-ReX version {rex_version} is too old. Please update to at least {minimal_rex_version}. "
