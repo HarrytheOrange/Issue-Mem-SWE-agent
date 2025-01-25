@@ -71,7 +71,7 @@ def get_logger(name: str, *, emoji: str = "") -> logging.Logger:
         show_path=False,
     )
     handler.setLevel(_STREAM_LEVEL)
-    logger.setLevel(min(_STREAM_LEVEL, _FILE_LEVEL))
+    logger.setLevel(0)
     logger.addHandler(handler)
     logger.propagate = False
     _SET_UP_LOGGERS.add(name)
