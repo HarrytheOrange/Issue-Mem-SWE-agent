@@ -13,10 +13,19 @@ from jinja2 import Template
 from pydantic import BaseModel, ConfigDict
 
 from sweagent.agent.history_processors import _set_cache_control
-from sweagent.agent.models import AbstractModel, HumanModel, HumanThoughtModel, InstanceStats, LiteLLMModel
+from sweagent.agent.models import (
+    AbstractModel,
+    HumanModel,
+    HumanThoughtModel,
+    InstanceStats,
+    LiteLLMModel,
+    ModelConfig,
+    get_model,
+)
 from sweagent.agent.problem_statement import ProblemStatement
 from sweagent.exceptions import AttemptCostLimitExceededError
-from sweagent.types import BinaryReviewerResult, History, ReviewerResult, ReviewSubmission, Trajectory, TrajectoryStep
+from sweagent.tools.tools import ToolConfig
+from sweagent.types import ReviewerResult, ReviewSubmission, Trajectory, TrajectoryStep
 from sweagent.utils.log import get_logger
 
 # --- INTERFACES ---
@@ -30,45 +39,6 @@ class AbstractReviewer(ABC):
     @abstractmethod
     def review(self, instance: ProblemStatement, submission: ReviewSubmission) -> ReviewerResult:
         """Returns True if the submission is believed to be correct"""
-
-
-class AbstractBinaryReviewer(ABC):
-    """The binary reviewer checks two solutions and tries to predict
-    which one is better.
-    """
-
-    @abstractmethod
-    def compare_submissions(
-        self,
-        *,
-        instance: ProblemStatement,
-        sub1: ReviewSubmission,
-        sub2: ReviewSubmission,
-        rev1: ReviewerResult | None,
-        rev2: ReviewerResult | None,
-    ) -> BinaryReviewerResult:
-        """Returns 0 if sub1 is better, 1 if sub2 is better"""
-
-
-class AbstractGraveToCradle(ABC):
-    """Forward messages from past attempts to the next one"""
-
-    @abstractmethod
-    def get_forwarded_vars(
-        self,
-        submissions: list[ReviewSubmission],
-        reviews: list[ReviewerResult],
-        breviews: list[tuple[int, int, BinaryReviewerResult]],
-    ) -> dict[str, Any]:
-        """Get the variables that should be forwarded to the next iteration.
-
-        Note: Must return a dictionary with the correct keys even when called
-        with empty lists. This is because else we cannot use the variables in the template
-        when we call for the first attempt.
-
-        Returns:
-            A dictionary of variables that should be forwarded to the next iteration.
-        """
 
 
 class AbstractRetryLoop(ABC):
@@ -140,24 +110,6 @@ class ReviewerConfig(BaseModel):
         return Reviewer(self, model)
 
 
-class BinaryReviewerConfig(BaseModel):
-    """The configuration for the binary reviewer"""
-
-    system_template: str
-    instance_template: str
-    traj_formatter: TrajFormatterConfig
-
-    type: Literal["binary_reviewer"] = "binary_reviewer"
-
-    model_config = ConfigDict(extra="forbid")
-
-
-class GTCConfig(BaseModel):
-    """The configuration for the GraveToCradle"""
-
-    model_config = ConfigDict(extra="forbid")
-
-
 class ScoreRetryLoopConfig(BaseModel):
     """The configuration for the review loop"""
 
@@ -179,6 +131,8 @@ class ScoreRetryLoopConfig(BaseModel):
     #: Override model temperature for first len(list) attempts
     temperature_override: list[float] = [0.0]
 
+    model: ModelConfig
+
     model_config = ConfigDict(extra="forbid")
 
     def validate(self):
@@ -188,8 +142,8 @@ class ScoreRetryLoopConfig(BaseModel):
     def __post_init__(self):
         self.validate()
 
-    def get_retry_loop(self, instance: ProblemStatement, model: AbstractModel) -> AbstractRetryLoop:
-        return ScoreRetryLoop(self, instance, model)
+    def get_retry_loop(self, instance: ProblemStatement) -> AbstractRetryLoop:
+        return ScoreRetryLoop(self, instance)
 
 
 RetryLoopConfig = ScoreRetryLoopConfig
@@ -315,113 +269,15 @@ class TrajectoryFormatter:
         )
 
 
-class BinaryReviewer:
-    def __init__(self, config: BinaryReviewerConfig, model: LiteLLMModel):
-        self._config = config
-        self._model = model
-        self._traj_formatter = TrajectoryFormatter(config=config.traj_formatter)
-        self.logger = get_logger("binary_reviewer", emoji="⚖️")
-
-    def format_messages(self, instance: ProblemStatement, sub1: ReviewSubmission, sub2: ReviewSubmission):
-        system_message = self._config.system_template
-        self.logger.debug(f"MODEL INPUT (system)\n{system_message}")
-        ps_format_dict = {
-            "problem_statement": instance.get_problem_statement(),
-            **instance.get_extra_fields(),
-        }
-        format_dict = {
-            **ps_format_dict,
-            **sub1.to_format_dict(suffix="1"),
-            **sub2.to_format_dict(suffix="2"),
-            "traj1": self._traj_formatter.format_trajectory(sub1.trajectory, i_traj=1),
-            "traj2": self._traj_formatter.format_trajectory(sub2.trajectory, i_traj=2),
-        }
-        # print(format_dict)
-        user_message = Template(self._config.instance_template).render(**format_dict)
-        self.logger.debug(f"MODEL INPUT (user)\n{user_message}")
-        return [
-            {"role": "system", "content": system_message},
-            {"role": "user", "content": user_message},
-        ]
-
-    def interpret(self, response: str) -> tuple[Literal[0, 1], float]:
-        """Interpret response from LM. Note: 1-based indexing"""
-        last_line = response.strip().split("\n")[-1].strip()
-        number = re.search(r"\d+\.?\d*", last_line)
-        if number:
-            confidence = float(number.group(0))
-        else:
-            self.logger.warning(f"No confidence found in {last_line}")
-            confidence = 0.0
-        if confidence > 100.0:
-            self.logger.warning(f"Confidence {confidence} is greater than 100.0")
-            confidence = 100.0
-        confidence /= 100.0
-        if "first" in last_line.lower():
-            return (0, confidence)
-        elif "second" in last_line.lower():
-            return (1, confidence)
-        self.logger.warning(
-            "Could not interpret response: %s, will choose first submission with confidence 0.0.",
-            response,
-        )
-        return (0, 0.0)
-
-    def compare_submissions(
-        self,
-        instance: ProblemStatement,
-        sub1: ReviewSubmission,
-        sub2: ReviewSubmission,
-        rev1: ReviewerResult | None,
-        rev2: ReviewerResult | None,
-    ) -> BinaryReviewerResult:
-        messages: History = self.format_messages(instance, sub1, sub2)  # type: ignore
-        answer = self._model.query(messages, temperature=0.0)["message"]
-        idx, confidence = self.interpret(answer)
-        # Use words because else confusion with 0-based vs 1-based indices
-        choice_emoji = "first" if idx == 0 else "second"
-        self.logger.info(f"{choice_emoji}\n{answer}")
-        return BinaryReviewerResult(choice=idx, output=answer, messages=messages, confidence=confidence)  # type: ignore
-
-
-class GraveToCradle(AbstractGraveToCradle):
-    def __init__(self, config: GTCConfig, model: AbstractModel):
-        self._config = config
-        self._model = model
-
-    def get_forwarded_vars(
-        self,
-        submissions: list[ReviewSubmission],
-        reviews: list[ReviewerResult],
-        breviews: list[tuple[int, int, BinaryReviewerResult]],
-    ) -> dict[str, Any]:
-        assert len(submissions) == len(reviews)
-        failed_idxs = [i for i, r in enumerate(reviews) if not r.accept]
-        if not failed_idxs:
-            return {"failed_verdicts_with_submissions": ""}
-        msg_lines = ["The following previous submissions were deemed to be incorrect:"]
-        for i, idx in enumerate(failed_idxs):
-            info = submissions[idx].info
-            if not info.get("submission"):
-                continue
-            submission = info["submission"]  # type: ignore
-            # todo: currently we only take the first output
-            review = reviews[idx].outputs[0]
-            msg_lines.append(f"Submission {i + 1}:\n\n{submission}\n\nReview {i + 1}:\n\n{review}")
-        msg = "\n\n".join(msg_lines)
-        return {"failed_verdicts_with_submissions": msg}
-
-
 class ScoreRetryLoop(AbstractRetryLoop):
     def __init__(
         self,
         loop_config: ScoreRetryLoopConfig,
         instance: ProblemStatement,
-        model: AbstractModel,
     ):
-        self._model = model
+        self._model = get_model(loop_config.model, tools=ToolConfig())
         self._instance = instance
-        self._reviewer: AbstractReviewer = loop_config.reviewer_config.get_reviewer(model)
+        self._reviewer: AbstractReviewer = loop_config.reviewer_config.get_reviewer(self._model)
         self._loop_config = loop_config
         # Note: These are "cumulative" submissions, i.e., they include all retries
         # up to that point.
@@ -529,9 +385,7 @@ class ScoreRetryLoop(AbstractRetryLoop):
         return best_indices[0]
 
 
-def get_retry_loop_from_config(
-    config: RetryLoopConfig | None, instance: ProblemStatement, model: AbstractModel
-) -> AbstractRetryLoop | None:
+def get_retry_loop_from_config(config: RetryLoopConfig | None, instance: ProblemStatement) -> AbstractRetryLoop | None:
     if config is None:
         return None
-    return config.get_retry_loop(instance=instance, model=model)
+    return config.get_retry_loop(instance=instance)
