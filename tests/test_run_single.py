@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from sweagent import CONFIG_DIR, TOOLS_DIR
-from sweagent.agent.agents import AgentConfig
+from sweagent.agent.agents import DefaultAgentConfig
 from sweagent.agent.models import InstantEmptySubmitModelConfig
 from sweagent.environment.swe_env import EnvironmentConfig
 from sweagent.run.common import BasicCLI
@@ -22,7 +22,7 @@ class RaisesExceptionHook(RunHook):
 
 @pytest.mark.slow
 def test_run_single_raises_exception():
-    rsc = RunSingleConfig(agent=AgentConfig(model=InstantEmptySubmitModelConfig()))
+    rsc = RunSingleConfig(agent=DefaultAgentConfig(model=InstantEmptySubmitModelConfig()))
     rs = RunSingle.from_config(rsc)
     rs.add_hook(RaisesExceptionHook())
     with pytest.raises(ValueError, match="test exception"):
@@ -31,7 +31,7 @@ def test_run_single_raises_exception():
 
 @pytest.fixture
 def agent_config_with_commands():
-    ac = AgentConfig(model=InstantEmptySubmitModelConfig())
+    ac = DefaultAgentConfig(model=InstantEmptySubmitModelConfig())
     ac.tools.bundles = [
         Bundle(path=TOOLS_DIR / "registry"),
         Bundle(path=TOOLS_DIR / "defaults"),
@@ -46,7 +46,7 @@ def agent_config_with_commands():
 
 @pytest.mark.slow
 def test_hidden_tools(tmpdir):
-    ac = AgentConfig(model=InstantEmptySubmitModelConfig())
+    ac = DefaultAgentConfig(model=InstantEmptySubmitModelConfig())
     ac.tools.env_variables = {"WINDOW": 100}
     ac.tools.bundles = [
         Bundle(path=TOOLS_DIR / "registry"),
