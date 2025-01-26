@@ -686,7 +686,16 @@ class Agent:
         """Get the edited files with context from the patch"""
         assert self._env is not None
         try:
-            pf = PatchFormatter(patch, read_method=self._env.read_file) if patch else None
+            if self._env.repo is None:
+                pf = None
+            else:
+                pf = (
+                    PatchFormatter(
+                        patch, read_method=lambda path: self._env.read_file(Path("/") / self._env.repo.repo_name / path)
+                    )
+                    if patch
+                    else None
+                )
         except UnidiffParseError:
             self.logger.error("Failed to parse patch with unidiff. Some variables will be empty.")
             pf = None
