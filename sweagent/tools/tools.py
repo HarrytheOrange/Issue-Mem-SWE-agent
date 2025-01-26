@@ -250,12 +250,15 @@ class ToolHandler:
     # Getting state
     # -------------
 
-    def _get_state(self, state_command: str, env: SWEEnv) -> dict[str, str]:
+    def _get_state(self, env: SWEEnv) -> dict[str, str]:
         """Retrieve the state from the environment"""
         try:
             state_str = env.read_file(Path("/root/state.json"))
         except FileNotFoundError:
             self.logger.warning("State file not found, returning empty state")
+            return {}
+        if not state_str.strip():
+            self.logger.warning("State file is empty, returning empty state")
             return {}
         try:
             state = json.loads(state_str)
@@ -276,7 +279,7 @@ class ToolHandler:
 
         for state_command in self.config.state_commands:
             env.communicate(state_command, check="warn")
-        combined_state = self._get_state(state_command, env)
+        combined_state = self._get_state(env)
         self.logger.debug(f"Retrieved state from environment: {combined_state}")
         return combined_state
 
