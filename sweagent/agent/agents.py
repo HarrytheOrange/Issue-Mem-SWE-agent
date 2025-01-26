@@ -24,6 +24,7 @@ from sweagent.agent.models import (
     AbstractModel,
     HumanModel,
     HumanThoughtModel,
+    InstanceStats,
     ModelConfig,
     get_model,
 )
@@ -179,6 +180,10 @@ class AbstractAgent:
 
     def add_hook(self, hook: AbstractAgentHook) -> None: ...
 
+    def get_trajectory_data(self) -> dict[str, Any]: ...
+
+    def step(self) -> StepOutput: ...
+
     def run(self, *args, **kwargs) -> AgentRunResult: ...
 
 
@@ -188,53 +193,80 @@ class RetryAgent(AbstractAgent):
         self._hooks = []
         self._i_attempt = 0
         self.logger = get_logger("swea-agent", emoji="🤠")
+        self._agent: DefaultAgent | None = None
+        self._attempt_data: list[dict[str, Any]] = []
+        self._total_instance_stats = InstanceStats()
+        self._chook = CombinedAgentHook()
+        self._traj_path: Path | None = None
 
     @classmethod
     def from_config(cls, config: RetryAgentConfig) -> Self:
         return cls(config)
 
     def add_hook(self, hook: AbstractAgentHook) -> None:
+        self._chook.add_hook(hook)
         self._hooks.append(hook)
 
-    def save_trajectory(self) -> None: ...
+    def setup(
+        self, env: SWEEnv, problem_statement: ProblemStatement | ProblemStatementConfig, output_dir: Path = Path(".")
+    ) -> None:
+        self.traj_path = output_dir / (self._problem_statement.id + ".traj")
+        self._env = env
+        self._problem_statement = problem_statement
+        self._output_dir = output_dir
+        self._rloop = get_retry_loop_from_config(self.config.retry_loop, problem_statement=problem_statement)
+
+    def _setup_agent(self) -> AbstractAgent:
+        # todo: Could select "best" agent config based on previous attempts if I run > number of set up configs
+        self._agent = DefaultAgent.from_config(
+            self.config.agent_configs[self._i_attempt % len(self.config.agent_configs)]
+        )
+        for hook in self._hooks:
+            self._agent.add_hook(hook)
+        sub_agent_output_dir = self._output_dir / f"attempt_{self._i_attempt}"
+        self._agent.setup(env=self._env, problem_statement=self._problem_statement, output_dir=sub_agent_output_dir)
+        return self._agent
+
+    def _next_attempt(self) -> None:
+        self._i_attempt += 1
+        self._env.hard_reset()
+        self._setup_agent()
+
+    def step(self) -> StepOutput:
+        assert self._agent is not None
+        return self._agent.step()
+
+    def _finalize_agent_run(self) -> None:
+        assert self._agent is not None
+        self._attempt_data.append(self._agent.get_trajectory_data())
+        self._total_instance_stats += self._agent.model.stats
+
+    def get_trajectory_data(self) -> dict[str, Any]:
+        """Get all data that we save in .traj files."""
+        assert self._rloop is not None
+
+        best_attempt_idx = self._rloop.get_best()
+        data = {
+            "attempts": [self._attempt_data[i] for i in range(self._i_attempt + 1)],
+            **self._attempt_data[best_attempt_idx],
+        }
+        data["info"]["best_attempt_idx"] = best_attempt_idx
+        # Overwrite model stats with total stats
+        data["info"]["model_stats"] = self._total_instance_stats.model_dump()
+
+        return data
+
+    def save_trajectory(self) -> None:
+        data = self.get_trajectory_data()
+        assert self._traj_path is not None
+        self._traj_path.write_text(json.dumps(data, indent=2))
 
     def run(
-        self, env: SWEEnv, problem_statement: ProblemStatement | ProblemStatementConfig, output_dir: Path = Path(".")
-    ) -> AgentRunResult:
-        output_dir.mkdir(parents=True, exist_ok=True)
-        self._chook.on_run_start()
-        self._rloop = get_retry_loop_from_config(self.config.retry_loop, instance=problem_statement)
-        assert self._rloop is not None
-        assert env is not None
-        while True:
-            agent = Agent.from_config(self.config.agent_configs[self._i_attempt])
-            # todo: change the output dir
-            attempt_output = agent.run(env, problem_statement, output_dir)
-            self._rloop.on_submit(ReviewSubmission(trajectory=attempt_output.trajectory, info=attempt_output.info))
-            attempt_output.info["review"] = self._rloop.reviews[-1].model_dump()  # type: ignore
-            self.save_trajectory()
-            if not self._rloop.retry():
-                break
-            self._i_attempt += 1
-            env.hard_reset()
-
-        self._chook.on_run_done(trajectory=self.trajectory, info=self.info)
-
-        self.logger.info("Trajectory saved to %s", self.traj_path)
-
-        # Here we want to return the "global" information (e.g., submission should
-        # be the best submission instead of the last one, etc.), so we get it from the traj file
-        data = self.get_trajectory_data()
-        return AgentRunResult(info=data["info"], trajectory=data["trajectory"])
-
-        return AgentRunResult(info=attempt_output.info, trajectory=attempt_output.trajectory)
-
-    def _run_attempt(
         self,
         env: SWEEnv,
         problem_statement: ProblemStatement | ProblemStatementConfig,
         output_dir: Path = Path("."),
-    ) -> StepOutput:
+    ) -> AgentRunResult:
         """Run the agent on a problem instance. This method contains the
         main loop that repeatedly calls `self._step` until the problem is solved.
 
@@ -249,19 +281,21 @@ class RetryAgent(AbstractAgent):
         # Run action/observation loop
         self._chook.on_run_start()
         step_output = StepOutput()
+        self._setup_agent()
+        assert self._agent is not None
         while not step_output.done:
             step_output = self.step()
             self.save_trajectory()
             if step_output.done:
                 if self._rloop is not None:
-                    self._rloop.on_submit(ReviewSubmission(trajectory=self.trajectory, info=self.info))
+                    self._rloop.on_submit(ReviewSubmission(trajectory=self._agent.trajectory, info=self._agent.info))
                     self.info["review"] = self._rloop.reviews[-1].model_dump()  # type: ignore
                     self.save_trajectory()
                     if self._rloop.retry():
                         assert self._env is not None
-                        self.setup_attempt(hard_reset=True)
+                        self._next_attempt()
                         step_output.done = False
-        self._chook.on_run_done(trajectory=self.trajectory, info=self.info)
+        self._chook.on_run_done(trajectory=self._agent.trajectory, info=self._agent.info)
 
         self.logger.info("Trajectory saved to %s", self.traj_path)
 
@@ -271,7 +305,7 @@ class RetryAgent(AbstractAgent):
         return AgentRunResult(info=data["info"], trajectory=data["trajectory"])
 
 
-class Agent(AbstractAgent):
+class DefaultAgent(AbstractAgent):
     def __init__(
         self,
         *,

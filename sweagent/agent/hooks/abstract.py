@@ -4,11 +4,11 @@ from sweagent.types import AgentInfo, StepOutput, Trajectory
 
 if TYPE_CHECKING:
     # avoid circular import
-    from sweagent.agent.agents import Agent
+    from sweagent.agent.agents import DefaultAgent
 
 
 class AbstractAgentHook:
-    def on_init(self, *, agent: "Agent"):
+    def on_init(self, *, agent: "DefaultAgent"):
         """Note: Depending on the internals of `Agent` should be done with care,
         it's best to use this as little as possible.
         """
@@ -64,7 +64,7 @@ class CombinedAgentHook(AbstractAgentHook):
     def hooks(self) -> list[AbstractAgentHook]:
         return self._hooks
 
-    def on_init(self, *, agent: "Agent"):
+    def on_init(self, *, agent: "DefaultAgent"):
         for hook in self.hooks:
             hook.on_init(agent=agent)
 

@@ -47,7 +47,7 @@ from pydantic_settings import BaseSettings
 from rich.live import Live
 from swerex.deployment.hooks.status import SetStatusDeploymentHook
 
-from sweagent.agent.agents import Agent, AgentConfig
+from sweagent.agent.agents import AgentConfig, DefaultAgent
 from sweagent.agent.hooks.status import SetStatusAgentHook
 from sweagent.environment.hooks.status import SetStatusEnvironmentHook
 from sweagent.environment.swe_env import SWEEnv
@@ -308,7 +308,7 @@ class RunBatch:
         output_dir = Path(self.output_dir) / instance.problem_statement.id
         output_dir.mkdir(parents=True, exist_ok=True)
         self.agent_config.name = f"{instance.problem_statement.id}"
-        agent = Agent.from_config(self.agent_config)
+        agent = DefaultAgent.from_config(self.agent_config)
         single_run_replay_config = RunSingleConfig(
             agent=self.agent_config,
             problem_statement=instance.problem_statement,

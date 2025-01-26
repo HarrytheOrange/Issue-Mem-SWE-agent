@@ -142,8 +142,8 @@ class ScoreRetryLoopConfig(BaseModel):
     def __post_init__(self):
         self.validate()
 
-    def get_retry_loop(self, instance: ProblemStatement) -> AbstractRetryLoop:
-        return ScoreRetryLoop(self, instance)
+    def get_retry_loop(self, problem_statement: ProblemStatement) -> AbstractRetryLoop:
+        return ScoreRetryLoop(self, problem_statement)
 
 
 RetryLoopConfig = ScoreRetryLoopConfig
@@ -273,10 +273,10 @@ class ScoreRetryLoop(AbstractRetryLoop):
     def __init__(
         self,
         loop_config: ScoreRetryLoopConfig,
-        instance: ProblemStatement,
+        problem_statement: ProblemStatement,
     ):
         self._model = get_model(loop_config.model, tools=ToolConfig())
-        self._instance = instance
+        self._problem_statement = problem_statement
         self._reviewer: AbstractReviewer = loop_config.reviewer_config.get_reviewer(self._model)
         self._loop_config = loop_config
         # Note: These are "cumulative" submissions, i.e., they include all retries
@@ -330,7 +330,7 @@ class ScoreRetryLoop(AbstractRetryLoop):
             raise AttemptCostLimitExceededError()
 
     def _review(self) -> float:
-        review = self._reviewer.review(self._instance, self._submissions[-1])
+        review = self._reviewer.review(self._problem_statement, self._submissions[-1])
         self._reviews.append(review)
         exit_status = self._submissions[-1].info.get("exit_status", "")
         if exit_status and "exit_cost" in exit_status.lower():
@@ -385,7 +385,9 @@ class ScoreRetryLoop(AbstractRetryLoop):
         return best_indices[0]
 
 
-def get_retry_loop_from_config(config: RetryLoopConfig | None, instance: ProblemStatement) -> AbstractRetryLoop | None:
+def get_retry_loop_from_config(
+    config: RetryLoopConfig | None, problem_statement: ProblemStatement
+) -> AbstractRetryLoop | None:
     if config is None:
         return None
-    return config.get_retry_loop(instance=instance)
+    return config.get_retry_loop(problem_statement=problem_statement)

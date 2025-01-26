@@ -5,7 +5,7 @@ from swerex.runtime.abstract import Action, BashObservation, Observation
 from swerex.runtime.dummy import DummyRuntime
 
 from sweagent import CONFIG_DIR
-from sweagent.agent.agents import Agent, AgentConfig
+from sweagent.agent.agents import DefaultAgent, DefaultAgentConfig
 from sweagent.agent.models import InstantEmptySubmitModelConfig, PredeterminedTestModel
 from sweagent.agent.problem_statement import EmptyProblemStatement, TextProblemStatement
 from sweagent.environment.swe_env import SWEEnv
@@ -19,7 +19,7 @@ def test_dummy_env(dummy_env):
 
 @pytest.fixture
 def identity_agent_config():
-    return AgentConfig(
+    return DefaultAgentConfig(
         model=InstantEmptySubmitModelConfig(),
         tools=ToolConfig(
             parse_function=Identity(),
@@ -29,7 +29,7 @@ def identity_agent_config():
 
 @pytest.fixture
 def thought_action_agent_config():
-    return AgentConfig(
+    return DefaultAgentConfig(
         model=InstantEmptySubmitModelConfig(),
         tools=ToolConfig(
             parse_function=ThoughtActionParser(),
@@ -39,7 +39,7 @@ def thought_action_agent_config():
 
 @pytest.fixture
 def function_calling_agent_config():
-    return AgentConfig(
+    return DefaultAgentConfig(
         model=InstantEmptySubmitModelConfig(),
         tools=ToolConfig(
             parse_function=FunctionCallingParser(),
@@ -52,32 +52,32 @@ def default_agent_config():
     config = yaml.safe_load((CONFIG_DIR / "default_no_fcalls.yaml").read_text())
     config["agent"]["model"] = {"name": "instant_empty_submit"}
     print(yaml.dump(config))
-    return AgentConfig.model_validate(config["agent"])
+    return DefaultAgentConfig.model_validate(config["agent"])
 
 
 @pytest.fixture
-def default_agent(default_agent_config: AgentConfig) -> Agent:
-    a = Agent.from_config(default_agent_config)
+def default_agent(default_agent_config: DefaultAgentConfig) -> DefaultAgent:
+    a = DefaultAgent.from_config(default_agent_config)
     a.tools.mock_state = {"open_file": "asdf123", "working_dir": "/root"}
     return a
 
 
 @pytest.fixture
-def test_agent(identity_agent_config: AgentConfig) -> Agent:
-    return Agent.from_config(identity_agent_config)
+def test_agent(identity_agent_config: DefaultAgentConfig) -> DefaultAgent:
+    return DefaultAgent.from_config(identity_agent_config)
 
 
 @pytest.fixture
-def thought_action_agent(thought_action_agent_config: AgentConfig) -> Agent:
-    return Agent.from_config(thought_action_agent_config)
+def thought_action_agent(thought_action_agent_config: DefaultAgentConfig) -> DefaultAgent:
+    return DefaultAgent.from_config(thought_action_agent_config)
 
 
 @pytest.fixture
-def function_calling_agent(function_calling_agent_config: AgentConfig) -> Agent:
-    return Agent.from_config(function_calling_agent_config)
+def function_calling_agent(function_calling_agent_config: DefaultAgentConfig) -> DefaultAgent:
+    return DefaultAgent.from_config(function_calling_agent_config)
 
 
-def test_exit_cost(dummy_env: SWEEnv, test_agent: Agent, tmp_path):
+def test_exit_cost(dummy_env: SWEEnv, test_agent: DefaultAgent, tmp_path):
     test_agent.model = PredeterminedTestModel(["raise_cost"])  # type: ignore
     r = test_agent.run(
         problem_statement=EmptyProblemStatement(),
@@ -87,7 +87,7 @@ def test_exit_cost(dummy_env: SWEEnv, test_agent: Agent, tmp_path):
     assert r.info["exit_status"] == "exit_cost"  # type: ignore
 
 
-def test_exit_context(dummy_env: SWEEnv, test_agent: Agent, tmp_path):
+def test_exit_context(dummy_env: SWEEnv, test_agent: DefaultAgent, tmp_path):
     test_agent.model = PredeterminedTestModel(["raise_context"])  # type: ignore
     r = test_agent.run(
         problem_statement=EmptyProblemStatement(),
@@ -97,7 +97,7 @@ def test_exit_context(dummy_env: SWEEnv, test_agent: Agent, tmp_path):
     assert r.info["exit_status"] == "exit_context"  # type: ignore
 
 
-def test_exit_model_error(dummy_env: SWEEnv, test_agent: Agent, tmp_path):
+def test_exit_model_error(dummy_env: SWEEnv, test_agent: DefaultAgent, tmp_path):
     test_agent.model = PredeterminedTestModel(["raise_runtime"])  # type: ignore
     r = test_agent.run(
         problem_statement=EmptyProblemStatement(),
@@ -107,7 +107,7 @@ def test_exit_model_error(dummy_env: SWEEnv, test_agent: Agent, tmp_path):
     assert r.info["exit_status"] == "exit_environment_error"  # type: ignore
 
 
-def test_exit_format(dummy_env: SWEEnv, thought_action_agent: Agent, tmp_path):
+def test_exit_format(dummy_env: SWEEnv, thought_action_agent: DefaultAgent, tmp_path):
     thought_action_agent.model = PredeterminedTestModel(["a", "b", "c", "d"])  # type: ignore
     r = thought_action_agent.run(
         problem_statement=EmptyProblemStatement(),
@@ -117,7 +117,7 @@ def test_exit_format(dummy_env: SWEEnv, thought_action_agent: Agent, tmp_path):
     assert r.info["exit_status"] == "exit_format"  # type: ignore
 
 
-def test_exit_blocklist(dummy_env: SWEEnv, test_agent: Agent, tmp_path):
+def test_exit_blocklist(dummy_env: SWEEnv, test_agent: DefaultAgent, tmp_path):
     test_agent.model = PredeterminedTestModel(["vim", "python", "su", "nano"])  # type: ignore
     r = test_agent.run(
         problem_statement=EmptyProblemStatement(),
@@ -134,7 +134,7 @@ class RuntimeRaisesFirst(DummyRuntime):
         return await super().run_in_session(action)
 
 
-def test_early_exit(dummy_env: SWEEnv, test_agent: Agent, tmp_path):
+def test_early_exit(dummy_env: SWEEnv, test_agent: DefaultAgent, tmp_path):
     test_agent.model = PredeterminedTestModel(["raise"])  # type: ignore
     test_agent._catch_errors = True
     dummy_env.deployment.runtime = RuntimeRaisesFirst()  # type: ignore
@@ -146,7 +146,7 @@ def test_early_exit(dummy_env: SWEEnv, test_agent: Agent, tmp_path):
     assert r.info["exit_status"] == "exit_environment_error"  # type: ignore
 
 
-def test_run_step_by_step_checking_history(dummy_env: SWEEnv, default_agent: Agent, tmp_path):
+def test_run_step_by_step_checking_history(dummy_env: SWEEnv, default_agent: DefaultAgent, tmp_path):
     a = default_agent
     a.model = PredeterminedTestModel(["asdf", "```\nls\n```", "```\necho 'asdf'\n```", "raise_cost"])  # type: ignore
     a.setup(dummy_env, TextProblemStatement(text="asdf123"))
@@ -188,7 +188,7 @@ def test_run_step_by_step_checking_history(dummy_env: SWEEnv, default_agent: Age
 
 # todo: fixme; Needs real environment or mocking of read_file
 @pytest.mark.xfail
-def test_run_autosubmit(dummy_env: SWEEnv, default_agent: Agent, tmp_path):
+def test_run_autosubmit(dummy_env: SWEEnv, default_agent: DefaultAgent, tmp_path):
     a = default_agent
     a.model = PredeterminedTestModel(["raise_cost"])  # type: ignore
     a.setup(dummy_env, EmptyProblemStatement())
@@ -208,7 +208,7 @@ def test_run_autosubmit(dummy_env: SWEEnv, default_agent: Agent, tmp_path):
     assert "cost limit" in r.thought
 
 
-def test_show_no_output_template(dummy_env: SWEEnv, default_agent: Agent, tmp_path):
+def test_show_no_output_template(dummy_env: SWEEnv, default_agent: DefaultAgent, tmp_path):
     a = default_agent
     a.templates.next_step_no_output_template = "no output template"
     a.setup(dummy_env, EmptyProblemStatement())
@@ -221,7 +221,7 @@ def test_show_no_output_template(dummy_env: SWEEnv, default_agent: Agent, tmp_pa
 
 # todo: fixme; Needs real environment or mocking of read_file
 @pytest.mark.xfail
-def test_successful_submission(dummy_env: SWEEnv, default_agent: Agent, tmp_path):
+def test_successful_submission(dummy_env: SWEEnv, default_agent: DefaultAgent, tmp_path):
     a = default_agent
     a.model = PredeterminedTestModel(["```\nsubmit\n```"])  # type: ignore
     a.setup(dummy_env, EmptyProblemStatement())
@@ -233,7 +233,7 @@ def test_successful_submission(dummy_env: SWEEnv, default_agent: Agent, tmp_path
     assert a.trajectory[-1]["observation"] == "test"
 
 
-def test_human_exit(dummy_env: SWEEnv, default_agent: Agent, tmp_path):
+def test_human_exit(dummy_env: SWEEnv, default_agent: DefaultAgent, tmp_path):
     a = default_agent
     a.model = PredeterminedTestModel(["```\nexit\n```"])  # type: ignore
     a.setup(dummy_env, EmptyProblemStatement())
@@ -243,7 +243,7 @@ def test_human_exit(dummy_env: SWEEnv, default_agent: Agent, tmp_path):
     assert r.action.strip() == "exit"
 
 
-def test_function_calling(dummy_env: SWEEnv, function_calling_agent: Agent, tmp_path):
+def test_function_calling(dummy_env: SWEEnv, function_calling_agent: DefaultAgent, tmp_path):
     a = function_calling_agent
     # Simulate a valid function call response from the model
     valid_response = {

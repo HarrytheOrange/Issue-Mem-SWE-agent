@@ -34,7 +34,7 @@ from swerex.deployment.abstract import AbstractDeployment
 from swerex.deployment.config import DeploymentConfig, get_deployment
 from typing_extensions import Self
 
-from sweagent.agent.agents import Agent
+from sweagent.agent.agents import DefaultAgent
 from sweagent.agent.models import ReplayModelConfig
 from sweagent.environment.swe_env import SWEEnv
 from sweagent.run.common import BasicCLI, ConfigHelper
@@ -174,8 +174,8 @@ class RunReplay:
             post_startup_commands=[],
         )
 
-    def _get_agent(self) -> Agent:
-        agent = Agent.from_config(self.config.agent)
+    def _get_agent(self) -> DefaultAgent:
+        agent = DefaultAgent.from_config(self.config.agent)
         agent._catch_errors = self._catch_errors
         agent._always_require_zero_exit_code = self._require_zero_exit_code
         return agent

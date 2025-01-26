@@ -36,7 +36,7 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic_settings import BaseSettings
 
-from sweagent.agent.agents import Agent, AgentConfig
+from sweagent.agent.agents import AgentConfig, DefaultAgent
 from sweagent.agent.problem_statement import (
     EmptyProblemStatement,
     ProblemStatement,
@@ -114,7 +114,7 @@ class RunSingle:
     def __init__(
         self,
         env: SWEEnv,
-        agent: Agent,
+        agent: DefaultAgent,
         problem_statement: ProblemStatement | ProblemStatementConfig,
         *,
         output_dir: Path = Path("."),
@@ -154,7 +154,7 @@ class RunSingle:
         load_environment_variables(config.env_var_path)
         config.set_default_output_dir()
         config.output_dir.mkdir(parents=True, exist_ok=True)
-        agent = Agent.from_config(config.agent)
+        agent = DefaultAgent.from_config(config.agent)
         agent.replay_config = config
         self = cls(
             env=SWEEnv.from_config(config.env),
