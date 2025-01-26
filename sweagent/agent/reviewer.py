@@ -377,9 +377,9 @@ class ScoreRetryLoop(AbstractRetryLoop):
 
         return True
 
-    def get_best(self) -> int:
+    def get_best(self) -> int | None:
         if len(self._reviews) == 0:
-            return 0
+            return None
         best_score = max([r.accept for r in self._reviews])
         best_indices = [i for i, r in enumerate(self._reviews) if abs(r.accept - best_score) <= 1e-10]
         return best_indices[0]

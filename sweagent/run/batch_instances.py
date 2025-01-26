@@ -103,8 +103,6 @@ class SimpleBatchInstance(BaseModel):
 
     def to_full_batch_instance(self, deployment: DeploymentConfig) -> BatchInstance:
         """Merge the deployment options into the `SimpleBatchInstance` object to get a full `BatchInstance`."""
-        # Combine image name and deployment options into a DeploymentConfig object. Because this can be one of many
-        # subclasses, we use a TypeAdapter to validate/instantiate the object.
         # Very important: Make a copy of the deployment config because it will be shared among instances!!!
         deployment = deployment.model_copy()
         problem_statement = TextProblemStatement(

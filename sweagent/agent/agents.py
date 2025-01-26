@@ -3,9 +3,10 @@ from __future__ import annotations
 import copy
 import json
 import logging
+import pprint
 import time
 from pathlib import Path
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 import yaml
 from jinja2 import Template
@@ -152,7 +153,7 @@ class RetryAgentConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-AgentConfig = DefaultAgentConfig | RetryAgentConfig
+AgentConfig = Annotated[DefaultAgentConfig | RetryAgentConfig, Field(discriminator="type")]
 
 
 class _BlockedActionError(Exception):
@@ -187,6 +188,17 @@ class AbstractAgent:
     def run(self, *args, **kwargs) -> AgentRunResult: ...
 
 
+def get_agent_from_config(config: AgentConfig) -> AbstractAgent:
+    pprint.pprint(config)
+    if config.type == "default":
+        return DefaultAgent.from_config(config)
+    elif config.type == "retry":
+        return RetryAgent.from_config(config)
+    else:
+        msg = f"Unknown agent type: {config.type}"
+        raise ValueError(msg)
+
+
 class RetryAgent(AbstractAgent):
     def __init__(self, config: RetryAgentConfig):
         self.config = config
@@ -198,6 +210,7 @@ class RetryAgent(AbstractAgent):
         self._total_instance_stats = InstanceStats()
         self._chook = CombinedAgentHook()
         self._traj_path: Path | None = None
+        self._problem_statement: ProblemStatement | None = None
 
     @classmethod
     def from_config(cls, config: RetryAgentConfig) -> Self:
@@ -210,9 +223,9 @@ class RetryAgent(AbstractAgent):
     def setup(
         self, env: SWEEnv, problem_statement: ProblemStatement | ProblemStatementConfig, output_dir: Path = Path(".")
     ) -> None:
-        self.traj_path = output_dir / (self._problem_statement.id + ".traj")
-        self._env = env
         self._problem_statement = problem_statement
+        self._traj_path = output_dir / (self._problem_statement.id + ".traj")
+        self._env = env
         self._output_dir = output_dir
         self._rloop = get_retry_loop_from_config(self.config.retry_loop, problem_statement=problem_statement)
 
@@ -224,6 +237,7 @@ class RetryAgent(AbstractAgent):
         for hook in self._hooks:
             self._agent.add_hook(hook)
         sub_agent_output_dir = self._output_dir / f"attempt_{self._i_attempt}"
+        assert self._problem_statement is not None
         self._agent.setup(env=self._env, problem_statement=self._problem_statement, output_dir=sub_agent_output_dir)
         return self._agent
 
@@ -234,7 +248,11 @@ class RetryAgent(AbstractAgent):
 
     def step(self) -> StepOutput:
         assert self._agent is not None
-        return self._agent.step()
+        try:
+            return self._agent.step()
+        except Exception as e:
+            self._finalize_agent_run()
+            raise e
 
     def _finalize_agent_run(self) -> None:
         assert self._agent is not None
@@ -246,10 +264,13 @@ class RetryAgent(AbstractAgent):
         assert self._rloop is not None
 
         best_attempt_idx = self._rloop.get_best()
-        data = {
-            "attempts": [self._attempt_data[i] for i in range(self._i_attempt + 1)],
-            **self._attempt_data[best_attempt_idx],
-        }
+        if best_attempt_idx is None:
+            data = {"info": {}}
+        else:
+            data = {
+                "attempts": self._attempt_data,
+                **self._attempt_data[best_attempt_idx],
+            }
         data["info"]["best_attempt_idx"] = best_attempt_idx
         # Overwrite model stats with total stats
         data["info"]["model_stats"] = self._total_instance_stats.model_dump()
@@ -287,17 +308,19 @@ class RetryAgent(AbstractAgent):
             step_output = self.step()
             self.save_trajectory()
             if step_output.done:
+                self._finalize_agent_run()
                 if self._rloop is not None:
                     self._rloop.on_submit(ReviewSubmission(trajectory=self._agent.trajectory, info=self._agent.info))
-                    self.info["review"] = self._rloop.reviews[-1].model_dump()  # type: ignore
+                    self._agent.info["review"] = self._rloop.reviews[-1].model_dump()  # type: ignore
                     self.save_trajectory()
                     if self._rloop.retry():
                         assert self._env is not None
                         self._next_attempt()
                         step_output.done = False
+        self.save_trajectory()  # call again after we finalized
         self._chook.on_run_done(trajectory=self._agent.trajectory, info=self._agent.info)
 
-        self.logger.info("Trajectory saved to %s", self.traj_path)
+        self.logger.info("Trajectory saved to %s", self._traj_path)
 
         # Here we want to return the "global" information (e.g., submission should
         # be the best submission instead of the last one, etc.), so we get it from the traj file
