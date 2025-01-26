@@ -42,7 +42,7 @@ from pathlib import Path
 from typing import Self
 
 import yaml
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings
 from rich.live import Live
 from swerex.deployment.hooks.status import SetStatusDeploymentHook
@@ -106,6 +106,19 @@ class RunBatchConfig(BaseSettings, cli_implicit_flags=False):
                 config_file = Path(config_file).stem
             suffix = f"__{self.suffix}" if self.suffix else ""
             self.output_dir = Path.cwd() / "trajectories" / user_id / f"{config_file}__{model_id}___{source_id}{suffix}"
+
+    @model_validator(mode="after")
+    def evaluate_and_redo_existing(self) -> Self:
+        if not isinstance(self.instances, SWEBenchInstances):
+            return self
+        if self.instances.evaluate and self.redo_existing:
+            msg = (
+                "Cannot evaluate and redo existing at the same time. This would cause invalid results, because "
+                "after the first merge_preds gives you a preds.json, this file would be submitted to SB-CLI, causing"
+                "evaluation of old instances, which could then not be overwritten by the new ones."
+            )
+            raise ValueError(msg)
+        return self
 
 
 class _BreakLoop(Exception):
