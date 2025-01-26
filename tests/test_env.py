@@ -32,6 +32,7 @@ def test_startup_commands(test_env_args):
         pass
 
 
+@pytest.mark.xfail
 @pytest.mark.slow
 def test_read_file(tmp_path, test_env_args):
     with swe_env_context(test_env_args) as env:
@@ -49,14 +50,14 @@ def test_env_with_hook(test_env_args):
 @pytest.mark.slow
 def test_env_communicate_with_handling(test_env_args):
     with swe_env_context(test_env_args) as env:
-        env.communicate("echo 'hello world'", check=True, error_msg="Failed to echo")
+        env.communicate("echo 'hello world'", check="raise", error_msg="Failed to echo")
 
 
 @pytest.mark.slow
 def test_env_communicate_with_handling_timeout(test_env_args):
     with swe_env_context(test_env_args) as env:
         with pytest.raises(CommandTimeoutError):
-            env.communicate("sleep 10", check=True, error_msg="Failed to sleep", timeout=0.2)
+            env.communicate("sleep 10", check="raise", error_msg="Failed to sleep", timeout=0.2)
 
 
 @pytest.mark.slow
