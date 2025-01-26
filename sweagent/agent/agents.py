@@ -14,6 +14,7 @@ from simple_parsing.helpers.fields import field
 from swerex.exceptions import BashIncorrectSyntaxError, CommandTimeoutError, SwerexException
 from tenacity import RetryError
 from typing_extensions import Self
+from unidiff import UnidiffParseError
 
 from sweagent import __version__, get_agent_commit_hash, get_rex_commit_hash, get_rex_version
 from sweagent.agent.action_sampler import AbstractActionSampler, ActionSamplerConfig
@@ -684,7 +685,12 @@ class Agent:
     def _get_edited_files_with_context(self, patch: str) -> dict[str, str]:
         """Get the edited files with context from the patch"""
         assert self._env is not None
-        pf = PatchFormatter(patch, read_method=self._env.read_file) if patch else None
+        try:
+            pf = PatchFormatter(patch, read_method=self._env.read_file) if patch else None
+        except UnidiffParseError:
+            self.logger.error("Failed to parse patch with unidiff. Some variables will be empty.")
+            pf = None
+            # We still need to populate the variables
         out = {}
         for context_length in [30, 50, 70]:
             value = "Empty. No edited files found."
