@@ -154,6 +154,13 @@ class GenericAPIModelConfig(PydanticBaseModel):
 class ReplayModelConfig(GenericAPIModelConfig):
     replay_path: Path = Field(description="Path to replay file when using the replay model.")
 
+    per_instance_cost_limit: float = Field(
+        default=0.0, description="Cost limit for every instance (task). This is a dummy value here."
+    )
+    total_cost_limit: float = Field(
+        default=0.0, description="Cost limit for all instances (tasks). This is a dummy value here."
+    )
+
     name: Literal["replay"] = Field(default="replay", description="Model name.")
 
     model_config = ConfigDict(extra="forbid")
@@ -164,6 +171,12 @@ class InstantEmptySubmitModelConfig(GenericAPIModelConfig):
 
     name: Literal["instant_empty_submit"] = Field(default="instant_empty_submit", description="Model name.")
 
+    per_instance_cost_limit: float = Field(
+        default=0.0, description="Cost limit for every instance (task). This is a dummy value here."
+    )
+    total_cost_limit: float = Field(
+        default=0.0, description="Cost limit for all instances (tasks). This is a dummy value here."
+    )
     delay: float = 0.0
     """Delay before answering"""
 
@@ -173,11 +186,24 @@ class InstantEmptySubmitModelConfig(GenericAPIModelConfig):
 class HumanModelConfig(GenericAPIModelConfig):
     name: Literal["human"] = Field(default="human", description="Model name.")
 
+    per_instance_cost_limit: float = Field(
+        default=0.0, description="Cost limit for every instance (task). This is a dummy value here."
+    )
+    total_cost_limit: float = Field(default=0.0, description="Cost limit for all instances (tasks).")
+    cost_per_call: float = 0.0
     model_config = ConfigDict(extra="forbid")
 
 
 class HumanThoughtModelConfig(HumanModelConfig):
     name: Literal["human_thought"] = Field(default="human_thought", description="Model name.")
+
+    per_instance_cost_limit: float = Field(
+        default=0.0, description="Cost limit for every instance (task). This is a dummy value here."
+    )
+    total_cost_limit: float = Field(
+        default=0.0, description="Cost limit for all instances (tasks). This is a dummy value here."
+    )
+    cost_per_call: float = 0.0
 
     model_config = ConfigDict(extra="forbid")
 
@@ -267,7 +293,7 @@ class HumanModel(AbstractModel):
     def __init__(self, config: HumanModelConfig, tools: ToolConfig):
         """Model that allows for human-in-the-loop"""
         self.logger = get_logger("swea-lm", emoji="🤖")
-        self.config = config
+        self.config: HumanModelConfig = config
         self.stats = InstanceStats()
 
         # Determine which commands require multi-line input
@@ -290,6 +316,18 @@ class HumanModel(AbstractModel):
         if readline is None:
             return
         readline.write_history_file(self._readline_histfile)
+
+    def _update_stats(
+        self,
+    ) -> None:
+        self.stats.instance_cost += self.config.cost_per_call
+        self.stats.api_calls += 1
+        if self.stats.instance_cost > self.config.per_instance_cost_limit:
+            msg = f"Instance cost limit exceeded: {self.stats.instance_cost} > {self.config.per_instance_cost_limit}"
+            raise InstanceCostLimitExceededError(msg)
+        if self.stats.instance_cost > self.config.total_cost_limit:
+            msg = f"Total cost limit exceeded: {self.stats.instance_cost} > {self.config.total_cost_limit}"
+            raise TotalCostLimitExceededError(msg)
 
     def _query(
         self,
@@ -326,6 +364,7 @@ class HumanModel(AbstractModel):
             # Input has escaped things like \n, so we need to unescape it
             action = action.encode("utf8").decode("unicode_escape")
         _handle_raise_commands(action)
+        self._update_stats()
         return {"message": action}
 
     def query(self, history: History, action_prompt: str = "> ", n: int | None = None, **kwargs) -> dict | list[dict]:

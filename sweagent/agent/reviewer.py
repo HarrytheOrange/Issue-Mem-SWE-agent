@@ -15,8 +15,6 @@ from pydantic import BaseModel, ConfigDict
 from sweagent.agent.history_processors import _set_cache_control
 from sweagent.agent.models import (
     AbstractModel,
-    HumanModel,
-    HumanThoughtModel,
     InstanceStats,
     LiteLLMModel,
     ModelConfig,
@@ -361,8 +359,6 @@ class ScoreRetryLoop(AbstractRetryLoop):
         if (
             self._loop_config.min_budget_for_new_attempt > 0
             and remaining_budget < self._loop_config.min_budget_for_new_attempt
-            and not isinstance(self._model, HumanModel)
-            and not isinstance(self._model, HumanThoughtModel)
         ):
             self.logger.info(f"Exiting retry loop ({stat_str}): Not enough budget left for a new attempt")
             return False
