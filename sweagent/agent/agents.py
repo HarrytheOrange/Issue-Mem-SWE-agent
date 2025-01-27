@@ -252,11 +252,12 @@ class RetryAgent(AbstractAgent):
             # This is a bit of a hack to raise exit_cost within the sub-agent,
             # which ensures we handle the cost limit properly within the sub-agent (autosubmission etc.)
             self.logger.warning(
-                "Cost limit (all attempts) exceeded: %s > %s. Setting current agent's per-instance cost limit to 0.0",
+                "Cost limit (all attempts) exceeded: %s > %s. Setting current agent's per-instance cost limit to 0.01",
                 current_total_cost,
                 self.config.retry_loop.cost_limit,
             )
-            self._agent.model.config.per_instance_cost_limit = 0.0
+            # Don't set it to 0, it will disable the cost limit entirely
+            self._agent.model.config.per_instance_cost_limit = 0.01
         try:
             return self._agent.step()
         except Exception as e:
