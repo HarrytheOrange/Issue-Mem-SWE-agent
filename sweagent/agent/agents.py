@@ -30,7 +30,7 @@ from sweagent.agent.models import (
     get_model,
 )
 from sweagent.agent.problem_statement import ProblemStatement, ProblemStatementConfig
-from sweagent.agent.reviewer import RetryLoopConfig, get_retry_loop_from_config
+from sweagent.agent.reviewer import RetryLoopConfig, ReviewSubmission, get_retry_loop_from_config
 from sweagent.environment.swe_env import SWEEnv
 from sweagent.exceptions import (
     ContentPolicyViolationError,
@@ -43,7 +43,7 @@ from sweagent.tools.parsing import (
     ThoughtActionParser,
 )
 from sweagent.tools.tools import ToolConfig, ToolHandler
-from sweagent.types import AgentInfo, AgentRunResult, ReviewSubmission, StepOutput, Trajectory, TrajectoryStep
+from sweagent.types import AgentInfo, AgentRunResult, StepOutput, Trajectory, TrajectoryStep
 from sweagent.utils.config import _convert_paths_to_abspath, _strip_abspath_from_dict
 from sweagent.utils.jinja_warnings import _warn_probably_wrong_jinja_syntax
 from sweagent.utils.log import get_logger
@@ -151,7 +151,6 @@ class RetryAgentConfig(BaseModel):
     retry_loop: RetryLoopConfig
     type: Literal["retry"] = "retry"
     model_config = ConfigDict(extra="forbid")
-    total_cost_limit: float
 
 
 AgentConfig = Annotated[DefaultAgentConfig | RetryAgentConfig, Field(discriminator="type")]
@@ -250,13 +249,13 @@ class RetryAgent(AbstractAgent):
     def step(self) -> StepOutput:
         assert self._agent is not None
         current_total_cost = self._total_instance_stats.instance_cost + self._agent.model.stats.instance_cost
-        if current_total_cost > self.config.total_cost_limit:
+        if current_total_cost > self.config.retry_loop.cost_limit:
             # This is a bit of a hack to raise exit_cost within the sub-agent,
             # which ensures we handle the cost limit properly within the sub-agent (autosubmission etc.)
             self.logger.warning(
                 "Cost limit (all attempts) exceeded: %s > %s. Setting current agent's per-instance cost limit to 0.0",
                 current_total_cost,
-                self.config.total_cost_limit,
+                self.config.retry_loop.cost_limit,
             )
             self._agent.model.config.per_instance_cost_limit = 0.0
         try:
@@ -284,7 +283,7 @@ class RetryAgent(AbstractAgent):
             }
         data["info"]["best_attempt_idx"] = best_attempt_idx
         # Overwrite model stats with total stats
-        data["info"]["model_stats"] = self._total_instance_stats.model_dump()
+        data["info"]["model_stats"] = (self._total_instance_stats + self._rloop.model_stats).model_dump()
 
         return data
 
@@ -321,7 +320,13 @@ class RetryAgent(AbstractAgent):
             if step_output.done:
                 self._finalize_agent_run()
                 if self._rloop is not None:
-                    self._rloop.on_submit(ReviewSubmission(trajectory=self._agent.trajectory, info=self._agent.info))
+                    self._rloop.on_submit(
+                        ReviewSubmission(
+                            trajectory=self._agent.trajectory,
+                            info=self._agent.info,
+                            model_stats=self._agent.model.stats,
+                        )
+                    )
                     self._agent.info["review"] = self._rloop.reviews[-1].model_dump()  # type: ignore
                     self.save_trajectory()
                     if self._rloop.retry():

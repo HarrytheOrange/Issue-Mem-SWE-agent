@@ -22,8 +22,44 @@ from sweagent.agent.models import (
 )
 from sweagent.agent.problem_statement import ProblemStatement
 from sweagent.tools.tools import ToolConfig
-from sweagent.types import ReviewerResult, ReviewSubmission, Trajectory, TrajectoryStep
+from sweagent.types import AgentInfo, Trajectory, TrajectoryStep
 from sweagent.utils.log import get_logger
+
+
+class ReviewSubmission(BaseModel):
+    """Information that's passed to the reviewer"""
+
+    #: Total trajectory (including several retries)
+    trajectory: Trajectory
+    #: Aggregate info dict (including several retries)
+    info: AgentInfo
+    #: Model stats for this attempt
+    model_stats: InstanceStats
+
+    def to_format_dict(self, *, suffix="") -> dict[str, Any]:
+        """Return all the data that is used to format the
+        messages. Trajectory is excluded because it needs special treatment.
+        """
+        out = {}
+        info = copy.deepcopy(self.info)
+        if not info.get("submission"):
+            # Observed that not all exit_cost lead to autosubmission
+            # so sometimes this might be missing.
+            info["submission"] = ""
+        for k, v in info.items():
+            if isinstance(v, str):
+                out[f"{k}{suffix}"] = v
+            elif isinstance(v, dict):
+                for k2, v2 in v.items():
+                    out[f"{k}_{k2}{suffix}"] = v2
+        return out
+
+
+class ReviewerResult(BaseModel):
+    accept: bool | float
+    outputs: list[str]
+    messages: list[dict[str, Any]]
+
 
 # --- INTERFACES ---
 
@@ -126,6 +162,8 @@ class ScoreRetryLoopConfig(BaseModel):
     #: Override model temperature for first len(list) attempts
     temperature_override: list[float] = [0.0]
 
+    cost_limit: float
+
     model: ModelConfig
 
     model_config = ConfigDict(extra="forbid")
@@ -137,7 +175,7 @@ class ScoreRetryLoopConfig(BaseModel):
     def __post_init__(self):
         self.validate()
 
-    def get_retry_loop(self, problem_statement: ProblemStatement) -> AbstractRetryLoop:
+    def get_retry_loop(self, problem_statement: ProblemStatement) -> ScoreRetryLoop:
         return ScoreRetryLoop(self, problem_statement)
 
 
@@ -267,21 +305,20 @@ class TrajectoryFormatter:
 class ScoreRetryLoop(AbstractRetryLoop):
     def __init__(
         self,
-        loop_config: ScoreRetryLoopConfig,
+        config: ScoreRetryLoopConfig,
         problem_statement: ProblemStatement,
     ):
-        self._model = get_model(loop_config.model, tools=ToolConfig())
+        # This model will not share instance cost with the parent agent
+        self._model = get_model(config.model, tools=ToolConfig())
         self._problem_statement = problem_statement
-        self._reviewer: AbstractReviewer = loop_config.reviewer_config.get_reviewer(self._model)
-        self._loop_config = loop_config
+        self._reviewer: AbstractReviewer = config.reviewer_config.get_reviewer(self._model)
+        self._config = config
         # Note: These are "cumulative" submissions, i.e., they include all retries
         # up to that point.
         self._submissions: list[ReviewSubmission] = []
         self._reviews: list[ReviewerResult] = []
         #: Number of consecutive exit cost submissions
         self._n_consec_exit_cost: int = 0
-        #: Original temperature
-        self._terminal_temperature: float | None = None
         self.logger = get_logger("review_loop", emoji="🔄")
 
     # Properties
@@ -295,6 +332,14 @@ class ScoreRetryLoop(AbstractRetryLoop):
     def _n_attempts(self) -> int:
         return len(self._submissions)
 
+    @property
+    def model_stats(self) -> InstanceStats:
+        return self._model.stats
+
+    @property
+    def _total_attempt_stats(self) -> InstanceStats:
+        return sum((s.model_stats for s in self._submissions), start=InstanceStats())
+
     # -------
 
     def _override_temperature(self, i_attempt: int) -> None:
@@ -305,8 +350,8 @@ class ScoreRetryLoop(AbstractRetryLoop):
         if i_attempt == 0:
             self._terminal_temperature = self._model.config.temperature
             self.logger.debug(f"Set terminal temperature to {self._terminal_temperature}")
-        if i_attempt < len(self._loop_config.temperature_override):
-            self._model.config.temperature = self._loop_config.temperature_override[i_attempt]
+        if i_attempt < len(self._config.temperature_override):
+            self._model.config.temperature = self._config.temperature_override[i_attempt]
         else:
             assert self._terminal_temperature is not None
             self._model.config.temperature = self._terminal_temperature
@@ -333,9 +378,16 @@ class ScoreRetryLoop(AbstractRetryLoop):
         max_score = max([r.accept for r in self._reviews])
         stat_str = f"n_samples={self._n_attempts}, max_score={max_score}"
 
+        if self._config.cost_limit > 0 and self._total_attempt_stats.instance_cost > self._config.cost_limit:
+            self.logger.info(
+                f"Exiting retry loop ({stat_str}): Total attempt cost ({self._total_attempt_stats.instance_cost}) "
+                f"exceeds cost limit ({self._config.cost_limit})"
+            )
+            return False
+
         # Given a maximum score, look up what the minimum and maximum number of attempts are
         for _score, _max_attempts in sorted(
-            self._loop_config.max_attempts_for_score.items(), reverse=True, key=lambda x: x[0]
+            self._config.max_attempts_for_score.items(), reverse=True, key=lambda x: x[0]
         ):
             if max_score >= _score:
                 max_attempts = _max_attempts
@@ -349,18 +401,19 @@ class ScoreRetryLoop(AbstractRetryLoop):
             )
             return False
 
-        max_n_exit_cost = self._loop_config.max_n_consec_exit_cost
+        max_n_exit_cost = self._config.max_n_consec_exit_cost
         if self._n_consec_exit_cost >= max_n_exit_cost > 0:
             self.logger.info(f"Exiting retry loop ({stat_str}): {max_n_exit_cost} exit cost attempts reached")
             return False
 
         # Todo: Check if there's enough budget left for a new reasonable attempt
-        remaining_budget = self._model.instance_cost_limit - self._model.stats.instance_cost
-        if (
-            self._loop_config.min_budget_for_new_attempt > 0
-            and remaining_budget < self._loop_config.min_budget_for_new_attempt
-        ):
-            self.logger.info(f"Exiting retry loop ({stat_str}): Not enough budget left for a new attempt")
+        remaining_budget = self._config.cost_limit - self._total_attempt_stats.instance_cost
+        if self._config.min_budget_for_new_attempt > 0 and remaining_budget < self._config.min_budget_for_new_attempt:
+            msg = (
+                f"Exiting retry loop ({stat_str}): Not enough budget left for a new attempt "
+                f"({remaining_budget} remaining, {self._config.min_budget_for_new_attempt} required)"
+            )
+            self.logger.info(msg)
             return False
 
         return True
@@ -375,7 +428,7 @@ class ScoreRetryLoop(AbstractRetryLoop):
 
 def get_retry_loop_from_config(
     config: RetryLoopConfig | None, problem_statement: ProblemStatement
-) -> AbstractRetryLoop | None:
+) -> ScoreRetryLoop | None:
     if config is None:
         return None
     return config.get_retry_loop(problem_statement=problem_statement)

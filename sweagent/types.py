@@ -6,7 +6,6 @@ because of circular dependencies.
 
 from __future__ import annotations
 
-import copy
 from typing import Any, Literal
 
 from pydantic import BaseModel
@@ -91,46 +90,6 @@ class AgentInfo(TypedDict, total=False):
     swe_agent_version: str
     swe_rex_version: str
     swe_rex_hash: str
-
-
-class ReviewSubmission(BaseModel):
-    """Information that's passed to the reviewer"""
-
-    #: Total trajectory (including several retries)
-    trajectory: Trajectory
-    #: Aggregate info dict (including several retries)
-    info: AgentInfo
-
-    def to_format_dict(self, *, suffix="") -> dict[str, Any]:
-        """Return all the data that is used to format the
-        messages. Trajectory is excluded because it needs special treatment.
-        """
-        out = {}
-        info = copy.deepcopy(self.info)
-        if not info.get("submission"):
-            # Observed that not all exit_cost lead to autosubmission
-            # so sometimes this might be missing.
-            info["submission"] = ""
-        for k, v in info.items():
-            if isinstance(v, str):
-                out[f"{k}{suffix}"] = v
-            elif isinstance(v, dict):
-                for k2, v2 in v.items():
-                    out[f"{k}_{k2}{suffix}"] = v2
-        return out
-
-
-class ReviewerResult(BaseModel):
-    accept: bool | float
-    outputs: list[str]
-    messages: list[dict[str, Any]]
-
-
-class BinaryReviewerResult(BaseModel):
-    choice: Literal[0, 1]
-    output: str
-    messages: list[dict[str, str]]
-    confidence: float = 1.0
 
 
 class AgentRunResult(BaseModel):
