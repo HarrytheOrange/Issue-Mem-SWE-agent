@@ -126,7 +126,6 @@ class TrajFormatterConfig(BaseModel):
 class ReviewerConfig(BaseModel):
     """The configuration for the reviewer"""
 
-    output_type: Literal["bool", "float"] = "float"
     system_template: str
     instance_template: str
     #: If a submission autosubmits because of total cost or a similar exit status,
@@ -134,6 +133,9 @@ class ReviewerConfig(BaseModel):
     reject_exit_status: bool = True
     traj_formatter: TrajFormatterConfig
     n_sample: int = 5
+    score_range: tuple[float | None, float | None] = (None, None)
+    #: If set, we assume that the score is in the range [score_range[0], score_range[1]]
+    #: Reviews that are outside this range will be ignored
 
     type: Literal["reviewer"] = "reviewer"
 
@@ -211,25 +213,19 @@ class Reviewer(AbstractReviewer):
 
     def interpret(self, response: str) -> bool | float:
         last_line = response.strip().split("\n")[-1].strip()
-        if self._config.output_type == "bool":
-            if "success" in last_line.lower():
-                return True
-            elif "fail" in last_line.lower():
-                return False
-            self.logger.warning("Could not interpret response: %s, will reject submission.", response)
-            return False
-        elif self._config.output_type == "float":
-            # Find all numbers in the last line and take the last one
-            numbers = re.findall(r"\d+\.?\d*", last_line)
-            if numbers:
-                return float(numbers[-1])
-            else:
-                self.logger.warning(
-                    "Could not interpret response: %s, will reject submission.",
-                    response,
-                )
-                return 0.0
-        raise ValueError
+        # Find all numbers in the last line and take the last one
+        numbers = re.findall(r"\d+\.?\d*", last_line)
+        if not numbers:
+            msg = f"Could not interpret response: {last_line!r}"
+            raise ValueError(msg)
+        number = float(numbers[-1])
+        if self._config.score_range[0] is not None and number < self._config.score_range[0]:
+            msg = f"Score {number} is below the minimum score {self._config.score_range[0]}"
+            raise ValueError(msg)
+        if self._config.score_range[1] is not None and number > self._config.score_range[1]:
+            msg = f"Score {number} is above the maximum score {self._config.score_range[1]}"
+            raise ValueError(msg)
+        return number
 
     def review(self, instance: ProblemStatement, submission: ReviewSubmission) -> ReviewerResult:
         exit_status = submission.info.get("exit_status")
@@ -247,8 +243,14 @@ class Reviewer(AbstractReviewer):
             answers = []
             accepts = []
             for _ in range(self._config.n_sample):
-                answers.append(self._model.query(messages, temperature=0.0)["message"])
-                accepts.append(self.interpret(answers[-1]))
+                answer = self._model.query(messages)["message"]
+                try:
+                    score = self.interpret(answer)
+                except ValueError as e:
+                    self.logger.warning(f"Could not interpret response: {answer!r}, got {e}")
+                    continue
+                answers.append(answer)
+                accepts.append(score)
             accept = sum(accepts) / len(accepts)
         self.logger.info(f"First answer: {answers[0]}")
         self.logger.info(f"Final score: {accept}")
