@@ -129,8 +129,8 @@ class ReviewerConfig(BaseModel):
     system_template: str
     instance_template: str
     #: If a submission autosubmits because of total cost or a similar exit status,
-    #: it will be desk rejected
-    reject_exit_status: bool = True
+    #: it will get this malus to its score
+    failure_score_penalty: float = 0.0
     traj_formatter: TrajFormatterConfig
     n_sample: int = 5
     score_range: tuple[float | None, float | None] = (None, None)
@@ -230,30 +230,26 @@ class Reviewer(AbstractReviewer):
     def review(self, instance: ProblemStatement, submission: ReviewSubmission) -> ReviewerResult:
         exit_status = submission.info.get("exit_status")
         messages = []
-        if not exit_status:
-            answers = ["No exit status in submission, will reject."]
-            accept = False
-        elif self._config.reject_exit_status and exit_status.strip() != "submitted":
-            answers = [f"Submission desk-rejected because of exit status {exit_status!r}."]
-            accept = False
-        else:
-            messages = self.format_messages(instance, submission)
-            if self._config.n_sample > 1:
-                _set_cache_control(messages[-1])  # type: ignore
-            answers = []
-            accepts = []
-            for _ in range(self._config.n_sample):
-                answer = self._model.query(messages)["message"]
-                try:
-                    score = self.interpret(answer)
-                except ValueError as e:
-                    self.logger.warning(f"Could not interpret response: {answer!r}, got {e}")
-                    continue
-                answers.append(answer)
-                accepts.append(score)
-            accept = sum(accepts) / len(accepts)
+        penalty = 0.0
+        if not exit_status or exit_status.strip() != "submitted":
+            penalty = self._config.failure_score_penalty
+        messages = self.format_messages(instance, submission)
+        if self._config.n_sample > 1:
+            _set_cache_control(messages[-1])  # type: ignore
+        answers = []
+        accepts = []
+        for _ in range(self._config.n_sample):
+            answer = self._model.query(messages)["message"]
+            try:
+                score = self.interpret(answer)
+            except ValueError as e:
+                self.logger.warning(f"Could not interpret response: {answer!r}, got {e}")
+                continue
+            answers.append(answer)
+            accepts.append(score)
+        accept = sum(accepts) / len(accepts) - penalty
         self.logger.info(f"First answer: {answers[0]}")
-        self.logger.info(f"Final score: {accept}")
+        self.logger.info(f"Final score: {accept} (penalty: {penalty})")
         return ReviewerResult(accept=accept, outputs=answers, messages=messages)
 
 
