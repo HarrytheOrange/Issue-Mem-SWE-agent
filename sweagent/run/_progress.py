@@ -120,7 +120,7 @@ class RunBatchProgressManager:
                 instance_id=instance_id,
             )
 
-    def on_instance_end(self, instance_id: str, exit_status: str) -> None:
+    def on_instance_end(self, instance_id: str, exit_status: str | None) -> None:
         self._instances_by_exit_status[exit_status].append(instance_id)
         with self._lock:
             self._task_progress_bar.remove_task(self._spinner_tasks[instance_id])

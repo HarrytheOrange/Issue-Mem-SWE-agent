@@ -147,6 +147,7 @@ class DefaultAgentConfig(BaseModel):
 
 
 class RetryAgentConfig(BaseModel):
+    name: str = "retry_main"
     agent_configs: list[DefaultAgentConfig]
     retry_loop: RetryLoopConfig
     type: Literal["retry"] = "retry"
@@ -777,7 +778,8 @@ class DefaultAgent(AbstractAgent):
             else:
                 pf = (
                     PatchFormatter(
-                        patch, read_method=lambda path: self._env.read_file(Path("/") / self._env.repo.repo_name / path)
+                        patch,
+                        read_method=lambda path: self._env.read_file(Path("/") / self._env.repo.repo_name / path),  # type: ignore[attr-defined]
                     )
                     if patch
                     else None

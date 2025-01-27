@@ -47,7 +47,7 @@ from pydantic_settings import BaseSettings
 from rich.live import Live
 from swerex.deployment.hooks.status import SetStatusDeploymentHook
 
-from sweagent.agent.agents import AgentConfig, DefaultAgent
+from sweagent.agent.agents import AgentConfig, get_agent_from_config
 from sweagent.agent.hooks.status import SetStatusAgentHook
 from sweagent.environment.hooks.status import SetStatusEnvironmentHook
 from sweagent.environment.swe_env import SWEEnv
@@ -150,7 +150,7 @@ class RunBatch:
             progress_bar: Whether to show a progress bar. Progress bar is never shown for human models.
                 Progress bar is always shown for multi-worker runs.
         """
-        if agent_config.model.name in ["human", "human_thought"] and num_workers > 1:
+        if self._model_id in ["human", "human_thought"] and num_workers > 1:
             msg = "Cannot run with human model in parallel"
             raise ValueError(msg)
 
@@ -173,6 +173,13 @@ class RunBatch:
             num_instances=len(instances), yaml_report_path=output_dir / "run_batch_exit_statuses.yaml"
         )
         self._show_progress_bar = progress_bar
+
+    @property
+    def _model_id(self) -> str:
+        try:
+            return self.agent_config.model.id  # type: ignore[attr-defined]
+        except AttributeError:
+            return "unknown"
 
     @classmethod
     def from_config(cls, config: RunBatchConfig) -> Self:
@@ -237,7 +244,7 @@ class RunBatch:
     def main_single_worker(self) -> None:
         with ExitStack() as stack:
             # Conditionally add progress bar
-            if self.agent_config.model.name not in ["human", "human_thought"] and self._show_progress_bar:
+            if self._model_id not in ["human", "human_thought"] and self._show_progress_bar:
                 stack.enter_context(Live(self._progress_manager.render_group))
             for instance in self.instances:
                 try:
@@ -311,7 +318,7 @@ class RunBatch:
         output_dir = Path(self.output_dir) / instance.problem_statement.id
         output_dir.mkdir(parents=True, exist_ok=True)
         self.agent_config.name = f"{instance.problem_statement.id}"
-        agent = DefaultAgent.from_config(self.agent_config)
+        agent = get_agent_from_config(self.agent_config)
         single_run_replay_config = RunSingleConfig(
             agent=self.agent_config,
             problem_statement=instance.problem_statement,
@@ -320,7 +327,7 @@ class RunBatch:
         (output_dir / f"{instance.problem_statement.id}.config.yaml").write_text(
             yaml.dump(single_run_replay_config.model_dump_json(), indent=2)
         )
-        agent.replay_config = single_run_replay_config
+        agent.replay_config = single_run_replay_config  # type: ignore[attr-defined]
         agent.add_hook(SetStatusAgentHook(instance.problem_statement.id, self._progress_manager.update_instance_status))
         self._progress_manager.update_instance_status(instance.problem_statement.id, "Starting environment")
         instance.env.name = f"{instance.problem_statement.id}"
@@ -342,7 +349,7 @@ class RunBatch:
         except Exception:
             # The actual handling is happening in `run_instance`, but we need to make sure that
             # we log it to the agent specific logger as well
-            agent.logger.error(traceback.format_exc())
+            agent.logger.error(traceback.format_exc())  # type: ignore[attr-defined]
             raise
         finally:
             env.close()
@@ -400,6 +407,7 @@ def run_from_config(config: RunBatchConfig):
 def run_from_cli(args: list[str] | None = None):
     if args is None:
         args = sys.argv[1:]
+    assert __doc__ is not None
     help_text = (  # type: ignore
         __doc__ + "\n[cyan][bold]=== ALL THE OPTIONS ===[/bold][/cyan]\n\n" + ConfigHelper().get_help(RunBatchConfig)
     )
