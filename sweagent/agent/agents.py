@@ -151,6 +151,7 @@ class RetryAgentConfig(BaseModel):
     retry_loop: RetryLoopConfig
     type: Literal["retry"] = "retry"
     model_config = ConfigDict(extra="forbid")
+    total_cost_limit: float
 
 
 AgentConfig = Annotated[DefaultAgentConfig | RetryAgentConfig, Field(discriminator="type")]
@@ -248,6 +249,16 @@ class RetryAgent(AbstractAgent):
 
     def step(self) -> StepOutput:
         assert self._agent is not None
+        current_total_cost = self._total_instance_stats.instance_cost + self._agent.model.stats.instance_cost
+        if current_total_cost > self.config.total_cost_limit:
+            # This is a bit of a hack to raise exit_cost within the sub-agent,
+            # which ensures we handle the cost limit properly within the sub-agent (autosubmission etc.)
+            self.logger.warning(
+                "Cost limit (all attempts) exceeded: %s > %s. Setting current agent's per-instance cost limit to 0.0",
+                current_total_cost,
+                self.config.total_cost_limit,
+            )
+            self._agent.model.config.per_instance_cost_limit = 0.0
         try:
             return self._agent.step()
         except Exception as e:

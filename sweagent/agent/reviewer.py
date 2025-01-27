@@ -23,7 +23,6 @@ from sweagent.agent.models import (
     get_model,
 )
 from sweagent.agent.problem_statement import ProblemStatement
-from sweagent.exceptions import AttemptCostLimitExceededError
 from sweagent.tools.tools import ToolConfig
 from sweagent.types import ReviewerResult, ReviewSubmission, Trajectory, TrajectoryStep
 from sweagent.utils.log import get_logger
@@ -124,8 +123,6 @@ class ScoreRetryLoopConfig(BaseModel):
     #: If set > 0 and there are more than this number of consecutive attempts
     #: with an 'exit cost' exit stats, the review loop will quit.
     max_n_consec_exit_cost: int = 0
-    #: Cost limit for attempt (<=0: no limit)
-    attempt_cost_limit: float = 0.0
     #: Minimal $ that need to be left in order for us to start a new attempt
     min_budget_for_new_attempt: float = 0.0
     #: Override model temperature for first len(list) attempts
@@ -323,11 +320,6 @@ class ScoreRetryLoop(AbstractRetryLoop):
     def on_submit(self, submission: ReviewSubmission) -> None:
         self._submissions.append(submission)
         self._review()
-
-    def on_model_query(self, attempt_stats: InstanceStats):
-        if 0 < self._loop_config.attempt_cost_limit <= attempt_stats.instance_cost:
-            self.logger.info("Exiting retry loop: Cost limit exceeded")
-            raise AttemptCostLimitExceededError()
 
     def _review(self) -> float:
         review = self._reviewer.review(self._problem_statement, self._submissions[-1])
