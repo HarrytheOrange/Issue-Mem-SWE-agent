@@ -85,7 +85,7 @@ class RunSingleConfig(BaseSettings, cli_implicit_flags=False):
             user_id = getpass.getuser()
             problem_id = self.problem_statement.id
             try:
-                model_id = self.agent.model.id
+                model_id = self.agent.model.id  # type: ignore[attr-defined]
             except AttributeError:
                 model_id = "unknown_model"
             config_file = getattr(self, "_config_files", ["no_config"])[0]
@@ -158,7 +158,7 @@ class RunSingle:
         config.set_default_output_dir()
         config.output_dir.mkdir(parents=True, exist_ok=True)
         agent = get_agent_from_config(config.agent)
-        agent.replay_config = config
+        agent.replay_config = config  # type: ignore[attr-defined]
         self = cls(
             env=SWEEnv.from_config(config.env),
             agent=agent,
@@ -184,8 +184,8 @@ class RunSingle:
         self._chooks.on_instance_start(index=0, env=self.env, problem_statement=self.problem_statement)
         output_dir = self.output_dir / self.problem_statement.id
         output_dir.mkdir(parents=True, exist_ok=True)
-        if self.agent.replay_config is not None:
-            (output_dir / "config.yaml").write_text(yaml.dump(self.agent.replay_config.model_dump_json(), indent=2))
+        if self.agent.replay_config is not None:  # type: ignore[attr-defined]
+            (output_dir / "config.yaml").write_text(yaml.dump(self.agent.replay_config.model_dump_json(), indent=2))  # type: ignore[attr-defined]
         result = self.agent.run(
             problem_statement=self.problem_statement,
             env=self.env,
@@ -205,6 +205,7 @@ def run_from_config(config: RunSingleConfig):
 def run_from_cli(args: list[str] | None = None):
     if args is None:
         args = sys.argv[1:]
+    assert __doc__ is not None
     help_text = (  # type: ignore
         __doc__ + "\n[cyan][bold]=== ALL THE OPTIONS ===[/bold][/cyan]\n\n" + ConfigHelper().get_help(RunSingleConfig)
     )
