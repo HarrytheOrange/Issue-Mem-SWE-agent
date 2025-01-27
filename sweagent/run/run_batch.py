@@ -100,7 +100,10 @@ class RunBatchConfig(BaseSettings, cli_implicit_flags=False):
         if self.output_dir == Path("DEFAULT"):
             user_id = getpass.getuser()
             source_id = self.instances.id
-            model_id = self.agent.model.id
+            try:
+                model_id = self.agent.model.id  # type: ignore[attr-defined]
+            except AttributeError:
+                model_id = "unknown"
             config_file = getattr(self, "_config_files", ["no_config"])[0]
             if config_file != "no_config":
                 config_file = Path(config_file).stem
