@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import json
+import os
 import random
 import shlex
 import threading
@@ -82,6 +83,7 @@ class GenericAPIModelConfig(PydanticBaseModel):
     or putting your environment variables in a `.env` file.
     You can concatenate more than one key by separating them with `:::`, e.g.,
     `key1:::key2`.
+    If field starts with `$`, it will be interpreted as an environment variable.
     """
     stop: list[str] = []
     """Custom stop sequences"""
@@ -124,7 +126,16 @@ class GenericAPIModelConfig(PydanticBaseModel):
         """
         if self.api_key is None:
             return []
-        return self.api_key.get_secret_value().split(":::")
+        api_key = self.api_key.get_secret_value()
+        if not api_key:
+            return []
+        if api_key.startswith("$"):
+            env_var_name = api_key[1:]
+            api_key = os.getenv(env_var_name, "")
+            if not api_key:
+                get_logger("swea-config", emoji="🔧").warning(f"Environment variable {env_var_name} not set")
+                return []
+        return api_key.split(":::")
 
     def choose_api_key(self) -> str | None:
         """Chooses an API key based on the API keys explicitly set in this config.
