@@ -317,21 +317,20 @@ class RetryAgent(AbstractAgent):
             step_output = self.step()
             self.save_trajectory()
             if step_output.done:
-                self._finalize_agent_run()
-                if self._rloop is not None:
-                    self._rloop.on_submit(
-                        ReviewSubmission(
-                            trajectory=self._agent.trajectory,
-                            info=self._agent.info,
-                            model_stats=self._agent.model.stats,
-                        )
+                self._rloop.on_submit(
+                    ReviewSubmission(
+                        trajectory=self._agent.trajectory,
+                        info=self._agent.info,
+                        model_stats=self._agent.model.stats,
                     )
-                    self._agent.info["review"] = self._rloop.reviews[-1].model_dump()  # type: ignore
-                    self.save_trajectory()
-                    if self._rloop.retry():
-                        assert self._env is not None
-                        self._next_attempt()
-                        step_output.done = False
+                )
+                self._agent.info["review"] = self._rloop.reviews[-1].model_dump()  # type: ignore
+                self._finalize_agent_run()
+                self.save_trajectory()
+                if self._rloop.retry():
+                    assert self._env is not None
+                    self._next_attempt()
+                    step_output.done = False
         self.save_trajectory()  # call again after we finalized
         self._chook.on_run_done(trajectory=self._agent.trajectory, info=self._agent.info)
 

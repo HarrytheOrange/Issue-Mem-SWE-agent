@@ -424,9 +424,5 @@ class ScoreRetryLoop(AbstractRetryLoop):
         return best_indices[0]
 
 
-def get_retry_loop_from_config(
-    config: RetryLoopConfig | None, problem_statement: ProblemStatement
-) -> ScoreRetryLoop | None:
-    if config is None:
-        return None
+def get_retry_loop_from_config(config: RetryLoopConfig, problem_statement: ProblemStatement) -> ScoreRetryLoop:
     return config.get_retry_loop(problem_statement=problem_statement)
