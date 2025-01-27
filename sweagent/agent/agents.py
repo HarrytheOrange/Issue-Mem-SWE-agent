@@ -3,7 +3,6 @@ from __future__ import annotations
 import copy
 import json
 import logging
-import pprint
 import time
 from pathlib import Path
 from typing import Annotated, Any, Literal
@@ -190,7 +189,6 @@ class AbstractAgent:
 
 
 def get_agent_from_config(config: AgentConfig) -> AbstractAgent:
-    pprint.pprint(config)
     if config.type == "default":
         return DefaultAgent.from_config(config)
     elif config.type == "retry":
