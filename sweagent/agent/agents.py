@@ -259,10 +259,12 @@ class RetryAgent(AbstractAgent):
             # Don't set it to 0, it will disable the cost limit entirely
             self._agent.model.config.per_instance_cost_limit = 0.01
         try:
-            return self._agent.step()
+            step = self._agent.step()
         except Exception as e:
             self._finalize_agent_run()
             raise e
+        self._agent.save_trajectory()
+        return step
 
     def _finalize_agent_run(self) -> None:
         assert self._agent is not None
@@ -468,6 +470,7 @@ class DefaultAgent(AbstractAgent):
 
         This method is called by `self.run`.
         """
+        output_dir.mkdir(parents=True, exist_ok=True)
         self._problem_statement = problem_statement
         self._env = env
         iid = self._problem_statement.id
@@ -1100,7 +1103,6 @@ class DefaultAgent(AbstractAgent):
             env: The environment to run the agent on.
             traj_dir: Directory to save the trajectory to
         """
-        output_dir.mkdir(parents=True, exist_ok=True)
         self.setup(env=env, problem_statement=problem_statement, output_dir=output_dir)
 
         # Run action/observation loop
