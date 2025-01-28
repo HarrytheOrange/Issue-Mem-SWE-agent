@@ -112,8 +112,9 @@ class GenericAPIModelConfig(PydanticBaseModel):
     for more information.
     """
 
-    choose_api_key_by_thread: bool = False
-    """Whether to choose the API key based on the thread name. This ensures that with
+    choose_api_key_by_thread: bool = True
+    """Whether to choose the API key based on the thread name (if multiple are configured).
+    This ensures that with
     run-batch, we use the same API key within a single-thread so that prompt caching still works.
     """
 
