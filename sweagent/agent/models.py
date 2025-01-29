@@ -375,7 +375,7 @@ class HumanModel(AbstractModel):
         else:
             # Input has escaped things like \n, so we need to unescape it
             action = action.encode("utf8").decode("unicode_escape")
-        if action.strip().split()[0] == "spend_money":
+        if action.strip() and action.strip().split()[0] == "spend_money":
             money = float(action.strip().split()[1])
             self.stats.instance_cost += money
             action = f"echo 'Spent {money} dollars'"
