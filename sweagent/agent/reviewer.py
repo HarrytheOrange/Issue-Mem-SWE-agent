@@ -155,9 +155,6 @@ class ScoreRetryLoopConfig(BaseModel):
     #: Given a maximum score, the maximum number of attempts
     #: to try. This is a very general way of configuring when to stop.
 
-    #: If set > 0 and there are more than this number of consecutive attempts
-    #: with an 'exit cost' exit stats, the review loop will quit.
-    max_n_consec_exit_cost: int = 0
     #: Minimal $ that need to be left in order for us to start a new attempt
     min_budget_for_new_attempt: float = 0.0
     #: Override model temperature for first len(list) attempts
@@ -377,11 +374,6 @@ class ScoreRetryLoop(AbstractRetryLoop):
             self.logger.info(
                 f"Exiting retry loop ({stat_str}): `max_attempts`={max_attempts} for highscore {max_score} reached"
             )
-            return False
-
-        max_n_exit_cost = self._config.max_n_consec_exit_cost
-        if self._n_consec_exit_cost >= max_n_exit_cost > 0:
-            self.logger.info(f"Exiting retry loop ({stat_str}): {max_n_exit_cost} exit cost attempts reached")
             return False
 
         # Todo: Check if there's enough budget left for a new reasonable attempt
