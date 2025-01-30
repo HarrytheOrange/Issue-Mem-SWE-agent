@@ -16,7 +16,6 @@ from sweagent.agent.history_processors import _set_cache_control
 from sweagent.agent.models import (
     AbstractModel,
     InstanceStats,
-    LiteLLMModel,
     ModelConfig,
     get_model,
 )
@@ -162,7 +161,6 @@ class ScoreRetryLoopConfig(BaseModel):
     #: Minimal $ that need to be left in order for us to start a new attempt
     min_budget_for_new_attempt: float = 0.0
     #: Override model temperature for first len(list) attempts
-    temperature_override: list[float] = [0.0]
 
     cost_limit: float
 
@@ -339,24 +337,6 @@ class ScoreRetryLoop(AbstractRetryLoop):
         return sum((s.model_stats for s in self._submissions), start=InstanceStats())
 
     # -------
-
-    def _override_temperature(self, i_attempt: int) -> None:
-        if not isinstance(self._model, LiteLLMModel):
-            return
-        # Attempts are 1-indexed
-        self.logger.debug(f"Setting temperature for attempt {i_attempt}")
-        if i_attempt == 0:
-            self._terminal_temperature = self._model.config.temperature
-            self.logger.debug(f"Set terminal temperature to {self._terminal_temperature}")
-        if i_attempt < len(self._config.temperature_override):
-            self._model.config.temperature = self._config.temperature_override[i_attempt]
-        else:
-            assert self._terminal_temperature is not None
-            self._model.config.temperature = self._terminal_temperature
-        self.logger.debug(f"Set temperature to {self._model.config.temperature}")
-
-    def on_attempt_started(self, i_attempt: int, agent: str) -> None:
-        self._override_temperature(i_attempt)
 
     def on_submit(self, submission: ReviewSubmission) -> None:
         self._submissions.append(submission)
