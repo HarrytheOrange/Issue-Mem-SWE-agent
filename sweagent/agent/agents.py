@@ -716,6 +716,25 @@ class DefaultAgent(AbstractAgent):
         step = step.model_copy()
         step.done = True
         assert self._env is not None
+        if not self._env.deployment.is_alive(timeout=10):
+            self.logger.error("Runtime is no longer alive")
+            try:
+                last_trajectory_step = self.trajectory[-1]
+            except IndexError:
+                self.logger.info("No last trajectory step to extract patch from")
+                return step
+            if "diff" not in last_trajectory_step["state"]:
+                self.logger.info("No diff in last trajectory step state, cannot autosubmit")
+                return step
+            diff = last_trajectory_step["state"]["diff"]
+            self.logger.info("Using diff from last trajectory step to autosubmit")
+            step.submission = diff
+            if step.submission:
+                step.observation = "Environment died unexpectedly. Exited (autosubmitted)"
+                step.exit_status = f"submitted ({step.exit_status})"
+            else:
+                self.logger.info("Diff from last traj step empty.")
+            return step
         repo_name = "/"
         if self._env.repo is not None:
             repo_name = f"/{self._env.repo.repo_name}"
