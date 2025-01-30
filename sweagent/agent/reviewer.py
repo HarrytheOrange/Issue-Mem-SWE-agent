@@ -151,9 +151,11 @@ class ScoreRetryLoopConfig(BaseModel):
 
     reviewer_config: ReviewerConfig
 
-    max_attempts_for_score: dict[float, int] = {}
-    #: Given a maximum score, the maximum number of attempts
-    #: to try. This is a very general way of configuring when to stop.
+    accept_score: float
+    max_accepts: int
+    fallback_keep_top_scores: int
+    choice_variable: Literal["n_steps", "score"]
+    max_attempts: int
 
     #: Minimal $ that need to be left in order for us to start a new attempt
     min_budget_for_new_attempt: float = 0.0
@@ -326,6 +328,10 @@ class ScoreRetryLoop(AbstractRetryLoop):
         return len(self._submissions)
 
     @property
+    def _n_accepted(self) -> int:
+        return sum(r.accept >= self._config.accept_score for r in self._reviews)
+
+    @property
     def model_stats(self) -> InstanceStats:
         return self._model.stats
 
@@ -351,7 +357,7 @@ class ScoreRetryLoop(AbstractRetryLoop):
 
     def retry(self) -> bool:
         max_score = max([r.accept for r in self._reviews])
-        stat_str = f"n_samples={self._n_attempts}, max_score={max_score}"
+        stat_str = f"n_samples={self._n_attempts}, max_score={max_score}, n_accepted={self._n_accepted}"
 
         if self._config.cost_limit > 0 and self._total_attempt_stats.instance_cost > self._config.cost_limit:
             self.logger.info(
@@ -360,23 +366,14 @@ class ScoreRetryLoop(AbstractRetryLoop):
             )
             return False
 
-        # Given a maximum score, look up what the minimum and maximum number of attempts are
-        for _score, _max_attempts in sorted(
-            self._config.max_attempts_for_score.items(), reverse=True, key=lambda x: x[0]
-        ):
-            if max_score >= _score:
-                max_attempts = _max_attempts
-                break
-        else:
-            max_attempts = 0
-
-        if self._n_attempts >= max_attempts > 0:
-            self.logger.info(
-                f"Exiting retry loop ({stat_str}): `max_attempts`={max_attempts} for highscore {max_score} reached"
-            )
+        if self._n_attempts >= self._config.max_attempts:
+            self.logger.info(f"Exiting retry loop ({stat_str}): max_attempts={self._config.max_attempts} reached")
             return False
 
-        # Todo: Check if there's enough budget left for a new reasonable attempt
+        if self._n_accepted >= self._config.max_accepts:
+            self.logger.info(f"Exiting retry loop ({stat_str}): max_accepts={self._config.max_accepts} reached")
+            return False
+
         remaining_budget = self._config.cost_limit - self._total_attempt_stats.instance_cost
         if self._config.min_budget_for_new_attempt > 0 and remaining_budget < self._config.min_budget_for_new_attempt:
             msg = (
@@ -391,9 +388,28 @@ class ScoreRetryLoop(AbstractRetryLoop):
     def get_best(self) -> int | None:
         if len(self._reviews) == 0:
             return None
-        best_score = max([r.accept for r in self._reviews])
-        best_indices = [i for i, r in enumerate(self._reviews) if abs(r.accept - best_score) <= 1e-10]
-        return best_indices[0]
+        good_submissions = [i for i, r in enumerate(self._reviews) if r.accept >= self._config.accept_score]
+        self.logger.debug(
+            f"Good submissions: {good_submissions} with scores: {[self._reviews[i].accept for i in good_submissions]}"
+        )
+        if not good_submissions:
+            # Take the highest scoring submissions, no matter if they reached the accept score or not
+            good_submissions = sorted(range(len(self._reviews)), key=lambda i: self._reviews[i].accept, reverse=True)[
+                : self._config.fallback_keep_top_scores
+            ]
+            self.logger.debug(f"No good submissions found, taking top scores: {good_submissions}")
+        if self._config.choice_variable == "n_steps":
+            # Lowest number of steps
+            chosen_idx = sorted(
+                good_submissions,
+                key=lambda i: self._submissions[i].info["model_stats"]["api_calls"],  # type: ignore
+                reverse=False,
+            )[0]
+        elif self._config.choice_variable == "score":
+            # Highest score
+            chosen_idx = sorted(good_submissions, key=lambda i: self._reviews[i].accept, reverse=True)[0]
+        self.logger.info(f"Best submission: {chosen_idx}")
+        return chosen_idx
 
 
 def get_retry_loop_from_config(config: RetryLoopConfig, problem_statement: ProblemStatement) -> ScoreRetryLoop:
