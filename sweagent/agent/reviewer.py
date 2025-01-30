@@ -389,7 +389,8 @@ class ScoreRetryLoop(AbstractRetryLoop):
         if len(self._reviews) == 0:
             return None
         scores = [r.accept for r in self._reviews]
-        steps = [s.info["model_stats"]["api_calls"] for s in self._submissions]  # type: ignore[index]
+        # IMPORTANT: Do not take s.info.model_stats.api_calls, because this is the cumulative cost over all attempts
+        steps = [s.model_stats.api_calls for s in self._submissions]
         self.logger.debug(f"Scores: {scores}, n_steps: {steps}")
         good_submissions = [i for i, s in enumerate(scores) if s >= self._config.accept_score]
         self.logger.debug(f"Good submissions: {good_submissions} with scores: {[scores[i] for i in good_submissions]}")
