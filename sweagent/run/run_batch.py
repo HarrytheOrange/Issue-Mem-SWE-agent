@@ -312,7 +312,6 @@ class RunBatch:
         env.add_hook(
             SetStatusEnvironmentHook(instance.problem_statement.id, self._progress_manager.update_instance_status)
         )
-        env.logger.setLevel(logging.DEBUG if self._num_workers == 1 else logging.INFO)
         env.deployment.add_hook(
             SetStatusDeploymentHook(instance.problem_statement.id, self._progress_manager.update_instance_status)
         )
