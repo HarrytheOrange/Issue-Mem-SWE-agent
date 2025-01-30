@@ -589,11 +589,11 @@ class LiteLLMModel(AbstractModel):
             raise InstanceCostLimitExceededError(msg)
 
     def _sleep(self) -> None:
-        with GLOBAL_STATS_LOCK:
-            GLOBAL_STATS.last_query_timestamp = time.time()
         elapsed_time = time.time() - GLOBAL_STATS.last_query_timestamp
         if elapsed_time < self.config.delay:
             time.sleep(self.config.delay - elapsed_time)
+        with GLOBAL_STATS_LOCK:
+            GLOBAL_STATS.last_query_timestamp = time.time()
 
     def _single_query(
         self, messages: list[dict[str, str]], n: int | None = None, temperature: float | None = None
