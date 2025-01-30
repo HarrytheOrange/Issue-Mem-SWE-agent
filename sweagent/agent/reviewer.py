@@ -388,26 +388,23 @@ class ScoreRetryLoop(AbstractRetryLoop):
     def get_best(self) -> int | None:
         if len(self._reviews) == 0:
             return None
-        good_submissions = [i for i, r in enumerate(self._reviews) if r.accept >= self._config.accept_score]
-        self.logger.debug(
-            f"Good submissions: {good_submissions} with scores: {[self._reviews[i].accept for i in good_submissions]}"
-        )
+        scores = [r.accept for r in self._reviews]
+        steps = [s.info["model_stats"]["api_calls"] for s in self._submissions]  # type: ignore[index]
+        self.logger.debug(f"Scores: {scores}, n_steps: {steps}")
+        good_submissions = [i for i, s in enumerate(scores) if s >= self._config.accept_score]
+        self.logger.debug(f"Good submissions: {good_submissions} with scores: {[scores[i] for i in good_submissions]}")
         if not good_submissions:
             # Take the highest scoring submissions, no matter if they reached the accept score or not
-            good_submissions = sorted(range(len(self._reviews)), key=lambda i: self._reviews[i].accept, reverse=True)[
+            good_submissions = sorted(range(len(self._reviews)), key=lambda i: scores[i], reverse=True)[
                 : self._config.fallback_keep_top_scores
             ]
             self.logger.debug(f"No good submissions found, taking top scores: {good_submissions}")
         if self._config.choice_variable == "n_steps":
             # Lowest number of steps
-            chosen_idx = sorted(
-                good_submissions,
-                key=lambda i: self._submissions[i].info["model_stats"]["api_calls"],  # type: ignore
-                reverse=False,
-            )[0]
+            chosen_idx = min(good_submissions, key=lambda i: steps[i])
         elif self._config.choice_variable == "score":
             # Highest score
-            chosen_idx = sorted(good_submissions, key=lambda i: self._reviews[i].accept, reverse=True)[0]
+            chosen_idx = max(good_submissions, key=lambda i: scores[i])
         self.logger.info(f"Best submission: {chosen_idx}")
         return chosen_idx
 
