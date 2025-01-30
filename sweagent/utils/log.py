@@ -28,7 +28,6 @@ def _interpret_level(level: int | str | None, *, default=logging.DEBUG) -> int:
 
 
 _STREAM_LEVEL = _interpret_level(os.environ.get("SWE_AGENT_LOG_STREAM_LEVEL"))
-_FILE_LEVEL = _interpret_level(os.environ.get("SWE_AGENT_LOG_FILE_LEVEL"), default=logging.TRACE)  # type: ignore
 _INCLUDE_LOGGER_NAME_IN_STREAM_HANDLER = False
 
 _THREAD_NAME_TO_LOG_SUFFIX: dict[str, str] = {}
@@ -93,7 +92,7 @@ def add_file_handler(
     path: PurePath | str,
     *,
     filter: str | Callable[[str], bool] | None = None,
-    level: int | str = _FILE_LEVEL,
+    level: int | str = logging.TRACE,  # type: ignore[attr-defined]
     id_: str = "",
 ) -> str:
     """Adds a file handler to all loggers that we have set up
@@ -149,9 +148,6 @@ def add_logger_names_to_stream_handlers() -> None:
     _INCLUDE_LOGGER_NAME_IN_STREAM_HANDLER = True
     for logger in _SET_UP_LOGGERS:
         _add_logger_name_to_stream_handler(logging.getLogger(logger))
-
-
-default_logger = get_logger("swe-agent")
 
 
 def set_stream_handler_levels(level: int) -> None:
