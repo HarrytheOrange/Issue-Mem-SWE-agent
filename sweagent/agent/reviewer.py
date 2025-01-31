@@ -153,7 +153,7 @@ class ScoreRetryLoopConfig(BaseModel):
 
     accept_score: float
     max_accepts: int
-    fallback_keep_top_scores: int
+    keep_top_scores: int
     choice_variable: Literal["n_steps", "score"]
     max_attempts: int
 
@@ -395,11 +395,9 @@ class ScoreRetryLoop(AbstractRetryLoop):
         good_submissions = [i for i, s in enumerate(scores) if s >= self._config.accept_score]
         self.logger.debug(f"Good submissions: {good_submissions} with scores: {[scores[i] for i in good_submissions]}")
         if not good_submissions:
-            # Take the highest scoring submissions, no matter if they reached the accept score or not
-            good_submissions = sorted(range(len(self._reviews)), key=lambda i: scores[i], reverse=True)[
-                : self._config.fallback_keep_top_scores
-            ]
-            self.logger.debug(f"No good submissions found, taking top scores: {good_submissions}")
+            good_submissions = list(range(len(self._reviews)))
+            self.logger.debug("No good submissions found.")
+        good_submissions = sorted(good_submissions, key=lambda i: scores[i])[: self._config.keep_top_scores]
         if self._config.choice_variable == "n_steps":
             # Lowest number of steps
             chosen_idx = min(good_submissions, key=lambda i: steps[i])
