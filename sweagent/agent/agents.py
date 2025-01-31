@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import copy
 import json
 import logging
@@ -716,7 +717,7 @@ class DefaultAgent(AbstractAgent):
         step = step.model_copy()
         step.done = True
         assert self._env is not None
-        if not self._env.deployment.is_alive(timeout=10):
+        if not asyncio.run(self._env.deployment.is_alive(timeout=10)):
             self.logger.error("Runtime is no longer alive")
             try:
                 last_trajectory_step = self.trajectory[-1]
