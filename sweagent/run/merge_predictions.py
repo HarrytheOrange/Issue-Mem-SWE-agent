@@ -43,7 +43,7 @@ def merge_predictions(directories: list[Path], output: Path | None = None) -> No
             raise ValueError(msg)
         data[instance_id] = _data
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(data))
+    output.write_text(json.dumps(data, indent=4))
     logger.info("Wrote merged predictions to %s", output)
 
 
