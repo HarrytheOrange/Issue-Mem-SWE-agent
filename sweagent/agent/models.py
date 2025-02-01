@@ -30,6 +30,7 @@ from sweagent.exceptions import (
     ContextWindowExceededError,
     CostLimitExceededError,
     FunctionCallingFormatError,
+    InstanceCallLimitExceededError,
     InstanceCostLimitExceededError,
     TotalCostLimitExceededError,
 )
@@ -72,6 +73,7 @@ class GenericAPIModelConfig(PydanticBaseModel):
         description="Cost limit for every instance (task).",
     )
     total_cost_limit: float = Field(default=0.0, description="Total cost limit.")
+    per_instance_call_limit: int = Field(default=0, description="Per instance call limit.")
     temperature: float = 0.0
     """Sampling temperature"""
     top_p: float | None = 1.0
@@ -576,17 +578,22 @@ class LiteLLMModel(AbstractModel):
         )
 
         # Check whether total cost or instance cost limits have been exceeded
-        if 0 < self.config.total_cost_limit <= GLOBAL_STATS.total_cost:
+        if 0 < self.config.total_cost_limit < GLOBAL_STATS.total_cost:
             self.logger.warning(f"Cost {GLOBAL_STATS.total_cost:.2f} exceeds limit {self.config.total_cost_limit:.2f}")
             msg = "Total cost limit exceeded"
             raise TotalCostLimitExceededError(msg)
 
-        if 0 < self.config.per_instance_cost_limit <= self.stats.instance_cost:
+        if 0 < self.config.per_instance_cost_limit < self.stats.instance_cost:
             self.logger.warning(
                 f"Cost {self.stats.instance_cost:.2f} exceeds limit {self.config.per_instance_cost_limit:.2f}"
             )
             msg = "Instance cost limit exceeded"
             raise InstanceCostLimitExceededError(msg)
+
+        if 0 < self.config.per_instance_call_limit < self.stats.api_calls:
+            self.logger.warning(f"API calls {self.stats.api_calls} exceeds limit {self.config.per_instance_call_limit}")
+            msg = "Per instance call limit exceeded"
+            raise InstanceCallLimitExceededError(msg)
 
     def _sleep(self) -> None:
         elapsed_time = time.time() - GLOBAL_STATS.last_query_timestamp

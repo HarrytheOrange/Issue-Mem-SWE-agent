@@ -40,5 +40,9 @@ class TotalCostLimitExceededError(CostLimitExceededError):
     """Raised when we exceed the total cost limit"""
 
 
+class InstanceCallLimitExceededError(CostLimitExceededError):
+    """Raised when we exceed the per instance call limit"""
+
+
 class ContentPolicyViolationError(Exception):
     """Raised when the model response violates a content policy"""
