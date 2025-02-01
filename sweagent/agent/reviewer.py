@@ -152,9 +152,7 @@ class ScoreRetryLoopConfig(BaseModel):
     reviewer_config: ReviewerConfig
 
     accept_score: float
-    max_accepts: int
-    keep_top_scores: int
-    choice_variable: Literal["n_steps", "score"]
+    max_accepts: int = 1
     max_attempts: int
 
     #: Minimal $ that need to be left in order for us to start a new attempt
@@ -389,23 +387,32 @@ class ScoreRetryLoop(AbstractRetryLoop):
         if len(self._reviews) == 0:
             return None
         scores = [r.accept for r in self._reviews]
-        # IMPORTANT: Do not take s.info.model_stats.api_calls, because this is the cumulative cost over all attempts
-        steps = [s.model_stats.api_calls for s in self._submissions]
-        self.logger.debug(f"Scores: {scores}, n_steps: {steps}")
-        good_submissions = [i for i, s in enumerate(scores) if s >= self._config.accept_score]
-        self.logger.debug(f"Good submissions: {good_submissions} with scores: {[scores[i] for i in good_submissions]}")
-        if not good_submissions:
-            good_submissions = list(range(len(self._reviews)))
-            self.logger.debug("No good submissions found.")
-        good_submissions = sorted(good_submissions, key=lambda i: scores[i])[: self._config.keep_top_scores]
-        if self._config.choice_variable == "n_steps":
-            # Lowest number of steps
-            chosen_idx = min(good_submissions, key=lambda i: steps[i])
-        elif self._config.choice_variable == "score":
-            # Highest score
-            chosen_idx = max(good_submissions, key=lambda i: scores[i])
+        self.logger.debug(f"Scores: {scores}")
+        chosen_idx = max(range(len(scores)), key=scores.__getitem__)
         self.logger.info(f"Best submission: {chosen_idx}")
         return chosen_idx
+
+    # def get_best(self) -> int | None:
+    #     if len(self._reviews) == 0:
+    #         return None
+    #     scores = [r.accept for r in self._reviews]
+    #     # IMPORTANT: Do not take s.info.model_stats.api_calls, because this is the cumulative cost over all attempts
+    #     steps = [s.model_stats.api_calls for s in self._submissions]
+    #     self.logger.debug(f"Scores: {scores}, n_steps: {steps}")
+    #     good_submissions = [i for i, s in enumerate(scores) if s >= self._config.accept_score]
+    #     self.logger.debug(f"Good submissions: {good_submissions} with scores: {[scores[i] for i in good_submissions]}")
+    #     if not good_submissions:
+    #         good_submissions = list(range(len(self._reviews)))
+    #         self.logger.debug("No good submissions found.")
+    #     good_submissions = sorted(good_submissions, key=lambda i: scores[i])[: self._config.keep_top_scores]
+    #     if self._config.choice_variable == "n_steps":
+    #         # Lowest number of steps
+    #         chosen_idx = min(good_submissions, key=lambda i: steps[i])
+    #     elif self._config.choice_variable == "score":
+    #         # Highest score
+    #         chosen_idx = max(good_submissions, key=lambda i: scores[i])
+    #     self.logger.info(f"Best submission: {chosen_idx}")
+    #     return chosen_idx
 
 
 def get_retry_loop_from_config(config: RetryLoopConfig, problem_statement: ProblemStatement) -> ScoreRetryLoop:
