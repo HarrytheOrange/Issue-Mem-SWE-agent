@@ -287,6 +287,7 @@ class RunBatch:
 
         if self.should_skip(instance):
             self._progress_manager.on_instance_end(instance.problem_statement.id, exit_status="skipped")
+            self._remove_instance_log_file_handlers(instance.problem_statement.id)
             return
 
         # Either catch and silence exception, or raise _BreakLoop to stop the loop
