@@ -639,6 +639,10 @@ class LiteLLMModel(AbstractModel):
             raise ContextWindowExceededError from e
         except litellm.exceptions.ContentPolicyViolationError as e:
             raise ContentPolicyViolationError from e
+        except litellm.exceptions.BadRequestError as e:
+            if "is longer than the model's context length" in str(e):
+                raise ContextWindowExceededError from e
+            raise
         self.logger.info(f"Response: {response}")
         cost = litellm.cost_calculator.completion_cost(response)
         choices: litellm.types.utils.Choices = response.choices  # type: ignore
