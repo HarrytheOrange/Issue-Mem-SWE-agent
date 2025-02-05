@@ -255,13 +255,13 @@ class RetryAgent(AbstractAgent):
         try:
             step = self._agent.step()
         except Exception as e:
-            self._finalize_agent_run()
-            raise e
-        self._agent.save_trajectory()
+            self.logger.critical("Error in agent step: %s. Triggering autosubmit.", e, exc_info=True)
+            step = self._agent.attempt_autosubmission_after_error(step=StepOutput())
         return step
 
     def _finalize_agent_run(self) -> None:
         assert self._agent is not None
+        self._agent.save_trajectory()
         self._attempt_data.append(self._agent.get_trajectory_data())
         self._total_instance_stats += self._agent.model.stats
 
@@ -710,10 +710,13 @@ class DefaultAgent(AbstractAgent):
         """For most exceptions, we attempt to still extract the patch and submit that.
         This means we send the `submit` command to the runtime and parse the output.
         """
+        self.logger.warning("Attempting autosubmission after error")
         step = step.model_copy(deep=True)
         step.done = True
         assert self._env is not None
         if not asyncio.run(self._env.deployment.is_alive(timeout=10)):
+            # The agent is dead. This is very bad. Maybe we can take a 'diff' that was saved
+            # for a previous step? (if running with diff in tools)
             self.logger.error("Runtime is no longer alive")
             try:
                 last_trajectory_step = self.trajectory[-1]
@@ -732,6 +735,7 @@ class DefaultAgent(AbstractAgent):
             else:
                 self.logger.info("Diff from last traj step empty.")
             return step
+        # Let us manually run the submission command and collect the output
         repo_name = "/"
         if self._env.repo is not None:
             repo_name = f"/{self._env.repo.repo_name}"
