@@ -366,7 +366,7 @@ class ScoreRetryLoop(AbstractRetryLoop):
         return review.accept
 
     def retry(self) -> bool:
-        max_score = max([r.accept for r in self._reviews])
+        max_score = max([r.accept for r in self._reviews], default=-100.0)
         stat_str = f"n_samples={self._n_attempts}, max_score={max_score}, n_accepted={self._n_accepted}"
 
         if self._total_attempt_stats.instance_cost > self._config.cost_limit > 0:
