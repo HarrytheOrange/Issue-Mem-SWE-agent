@@ -9,6 +9,7 @@ import re
 from abc import ABC, abstractmethod
 from typing import Any, Literal
 
+import numpy as np
 from jinja2 import Template
 from pydantic import BaseModel, ConfigDict
 
@@ -132,6 +133,7 @@ class ReviewerConfig(BaseModel):
     failure_score_penalty: float = 0.0
     traj_formatter: TrajFormatterConfig
     n_sample: int = 5
+    reduce_by_std: float = 0.0
     score_range: tuple[float | None, float | None] = (None, None)
     #: If set, we assume that the score is in the range [score_range[0], score_range[1]]
     #: Reviews that are outside this range will be ignored
@@ -243,8 +245,11 @@ class Reviewer(AbstractReviewer):
             answers.append(answer)
             accepts.append(score)
         accept = sum(accepts) / len(accepts) - penalty
+        std = np.std(accepts).item()
+        if self._config.reduce_by_std > 0:
+            accept -= std * self._config.reduce_by_std
         self.logger.info(f"First answer: {answers[0]}")
-        self.logger.info(f"Final score: {accept} (penalty: {penalty})")
+        self.logger.info(f"Final score: {accept} (penalty: {penalty}, std: {std}), individual: {accepts}")
         return ReviewerResult(accept=accept, outputs=answers, messages=messages)
 
 
