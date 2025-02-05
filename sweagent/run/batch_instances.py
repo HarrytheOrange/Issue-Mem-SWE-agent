@@ -104,7 +104,7 @@ class SimpleBatchInstance(BaseModel):
     def to_full_batch_instance(self, deployment: DeploymentConfig) -> BatchInstance:
         """Merge the deployment options into the `SimpleBatchInstance` object to get a full `BatchInstance`."""
         # Very important: Make a copy of the deployment config because it will be shared among instances!!!
-        deployment = deployment.model_copy()
+        deployment = deployment.model_copy(deep=True)
         problem_statement = TextProblemStatement(
             text=self.problem_statement, id=self.id, extra_fields=self.extra_fields
         )

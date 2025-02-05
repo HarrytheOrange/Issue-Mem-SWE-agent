@@ -717,7 +717,7 @@ class DefaultAgent(AbstractAgent):
         """For most exceptions, we attempt to still extract the patch and submit that.
         This means we send the `submit` command to the runtime and parse the output.
         """
-        step = step.model_copy()
+        step = step.model_copy(deep=True)
         step.done = True
         assert self._env is not None
         if not asyncio.run(self._env.deployment.is_alive(timeout=10)):
@@ -767,7 +767,7 @@ class DefaultAgent(AbstractAgent):
         Returns:
             step: step with submission and observation updated (if submission was found)
         """
-        step = step.model_copy()
+        step = step.model_copy(deep=True)
         assert self.tools is not None
         is_submission = self.tools.check_for_submission_cmd(observation or step.observation)
         if is_submission or force_submission:
