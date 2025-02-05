@@ -357,18 +357,18 @@ class ScoreRetryLoop(AbstractRetryLoop):
         max_score = max([r.accept for r in self._reviews])
         stat_str = f"n_samples={self._n_attempts}, max_score={max_score}, n_accepted={self._n_accepted}"
 
-        if self._config.cost_limit > 0 and self._total_attempt_stats.instance_cost > self._config.cost_limit:
+        if self._total_attempt_stats.instance_cost > self._config.cost_limit > 0:
             self.logger.info(
                 f"Exiting retry loop ({stat_str}): Total attempt cost ({self._total_attempt_stats.instance_cost}) "
                 f"exceeds cost limit ({self._config.cost_limit})"
             )
             return False
 
-        if self._n_attempts >= self._config.max_attempts:
+        if self._n_attempts >= self._config.max_attempts > 0:
             self.logger.info(f"Exiting retry loop ({stat_str}): max_attempts={self._config.max_attempts} reached")
             return False
 
-        if self._n_accepted >= self._config.max_accepts:
+        if self._n_accepted >= self._config.max_accepts > 0:
             self.logger.info(f"Exiting retry loop ({stat_str}): max_accepts={self._config.max_accepts} reached")
             return False
 
