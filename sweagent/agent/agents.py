@@ -401,7 +401,7 @@ class DefaultAgent(AbstractAgent):
 
         #: Count how many timeout errors have occurred consecutively. Kills agent
         #: after 5 of them.
-        self._n_consecutive_timeouts = 0
+        self._n_timeouts = 0
 
     @classmethod
     def from_config(cls, config: DefaultAgentConfig) -> Self:
@@ -851,12 +851,12 @@ class DefaultAgent(AbstractAgent):
             )
         except CommandTimeoutError:
             try:
-                if self._n_consecutive_timeouts >= 5:
-                    msg = "Exiting agent due to too many consecutive timeouts"
+                if self._n_timeouts >= 3:
+                    msg = "Exiting agent due to too many timeouts"
                     self.logger.critical(msg)
                     raise
                 self._env.interrupt_session()
-                self._n_consecutive_timeouts += 1
+                self._n_timeouts += 1
             except Exception as f:
                 self.logger.exception("Failed to interrupt session after command timeout: %s", f, exc_info=True)
                 raise
@@ -865,8 +865,6 @@ class DefaultAgent(AbstractAgent):
                 timeout=self.tools.config.execution_timeout,
                 command=run_action,
             )
-        else:
-            self._n_consecutive_timeouts = 0
         step.execution_time = time.perf_counter() - execution_t0
         self._chook.on_action_executed(step=step)
         step.state = self.tools.get_state(env=self._env)
