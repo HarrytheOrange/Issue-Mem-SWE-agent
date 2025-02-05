@@ -400,7 +400,11 @@ class ScoreRetryLoop(AbstractRetryLoop):
             return None
         scores = [r.accept for r in self._reviews]
         self.logger.debug(f"Scores: {scores}")
-        chosen_idx = max(range(len(scores)), key=scores.__getitem__)
+        max_score = np.max(scores)
+        max_indices = [i for i, s in enumerate(scores) if np.isclose(s, max_score)]
+        # If there are multiple submissions with the same score, choose the shortest one
+        max_indices = sorted(max_indices, key=lambda i: self._submissions[i].model_stats.api_calls or float("inf"))
+        chosen_idx = max_indices[0]
         self.logger.info(f"Best submission: {chosen_idx}")
         return chosen_idx
 
