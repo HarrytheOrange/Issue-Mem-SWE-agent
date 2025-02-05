@@ -174,7 +174,8 @@ class ToolHandler:
         - Decide if an action should be blocked
         - Get the current state of the environment
         """
-        self.config = tools
+        # Always copy config to avoid shared state between different instances across threads
+        self.config = tools.model_copy(deep=True)
         # partially initialized in `install_commands`.
         self._reset_commands = []
         self._command_patterns = self._get_command_patterns()

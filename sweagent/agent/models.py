@@ -538,7 +538,8 @@ class InstantEmptySubmitTestModel(AbstractModel):
 class LiteLLMModel(AbstractModel):
     def __init__(self, args: GenericAPIModelConfig, tools: ToolConfig):
         """Model served by the `litellm` library."""
-        self.config: GenericAPIModelConfig = args
+        # Always copy config to avoid shared state between different instances
+        self.config: GenericAPIModelConfig = args.model_copy(deep=True)
         self.stats = InstanceStats()
         self.tools = tools
         if tools.use_function_calling:

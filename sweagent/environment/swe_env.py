@@ -79,6 +79,8 @@ class SWEEnv:
         This is the recommended way to create an environment instance, unless you need
         more flexibility.
         """
+        # Always copy config to avoid shared state between different instances
+        config = config.model_copy(deep=True)
         return cls(
             deployment=get_deployment(config.deployment),
             repo=config.repo,

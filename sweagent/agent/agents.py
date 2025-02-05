@@ -201,7 +201,8 @@ def get_agent_from_config(config: AgentConfig) -> AbstractAgent:
 
 class RetryAgent(AbstractAgent):
     def __init__(self, config: RetryAgentConfig):
-        self.config = config
+        # Always copy config to avoid shared state between different instances
+        self.config = config.model_copy(deep=True)
         self._hooks = []
         self._i_attempt = 0
         self.logger = get_logger("swea-agent", emoji="🤠")
