@@ -224,6 +224,9 @@ class RetryAgent(AbstractAgent):
     def setup(
         self, env: SWEEnv, problem_statement: ProblemStatement | ProblemStatementConfig, output_dir: Path = Path(".")
     ) -> None:
+        """Setup the retry agent for a new problem instance.
+        This is mostly a bookkeeping step.
+        """
         self._problem_statement = problem_statement
         self._traj_path = output_dir / (self._problem_statement.id + ".traj")
         self._env = env
@@ -231,6 +234,7 @@ class RetryAgent(AbstractAgent):
         self._rloop = get_retry_loop_from_config(self.config.retry_loop, problem_statement=problem_statement)
 
     def _setup_agent(self) -> AbstractAgent:
+        """Setup the agent for the current attempt."""
         # todo: Could select "best" agent config based on previous attempts if I run > number of set up configs
         agent_config = self.config.agent_configs[self._i_attempt % len(self.config.agent_configs)].model_copy(deep=True)
         remaining_budget = self.config.retry_loop.cost_limit - self._total_instance_stats.instance_cost
@@ -246,20 +250,26 @@ class RetryAgent(AbstractAgent):
         return self._agent
 
     def _next_attempt(self) -> None:
+        """Prepare for the next attempt: Reset the environment and setup the next agent."""
         self._i_attempt += 1
         self._env.hard_reset()
         self._setup_agent()
 
     def step(self) -> StepOutput:
+        """Step the agent of the current attempt.
+        Attempt autosubmit if an error occurs (though all errors should already be handled by the attempt agent).
+        """
         assert self._agent is not None
         try:
             step = self._agent.step()
         except Exception as e:
-            self.logger.critical("Error in agent step: %s. Triggering autosubmit.", e, exc_info=True)
+            msg = "Error in agent step: %s. This really shouldn't happen, please report this. Triggering autosubmit."
+            self.logger.critical(msg, e, exc_info=True)
             step = self._agent.attempt_autosubmission_after_error(step=StepOutput())
         return step
 
     def _finalize_agent_run(self) -> None:
+        """Add the agent results to our list of results"""
         assert self._agent is not None
         self._agent.save_trajectory()
         self._attempt_data.append(self._agent.get_trajectory_data())
@@ -298,9 +308,9 @@ class RetryAgent(AbstractAgent):
         main loop that repeatedly calls `self._step` until the problem is solved.
 
         Args:
-            setup_args: Arguments to pass to the agent's setup method.
             env: The environment to run the agent on.
-            traj_dir: Directory to save the trajectory to
+            problem_statement: The problem statement to run the agent on.
+            output_dir: Directory to save the trajectory to
         """
         output_dir.mkdir(parents=True, exist_ok=True)
         self.setup(env=env, problem_statement=problem_statement, output_dir=output_dir)
