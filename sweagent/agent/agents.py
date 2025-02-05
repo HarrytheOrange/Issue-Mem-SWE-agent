@@ -405,6 +405,9 @@ class DefaultAgent(AbstractAgent):
 
     @classmethod
     def from_config(cls, config: DefaultAgentConfig) -> Self:
+        # To ensure that all models stay completely independent, we deepcopy the
+        # model config, because it lives on as a property in the model, tools, etc.
+        config = config.model_copy(deep=True)
         model = get_model(config.model, config.tools)
         return cls(
             templates=config.templates,
