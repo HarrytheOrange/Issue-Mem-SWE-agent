@@ -96,6 +96,15 @@ class ToolConfig(BaseModel):
     install_timeout: int = 300
     """Timeout used for each of the installation commands"""
 
+    total_execution_timeout: int = 1800
+    """Timeout for executing all commands in the environment.
+    Note: Does not interrupt running commands, but will stop the agent for the next step.
+    """
+
+    max_consecutive_execution_timeouts: int = 3
+    """Maximum number of consecutive execution timeouts before the agent exits.
+    """
+
     @cached_property
     def use_function_calling(self) -> bool:
         return isinstance(self.parse_function, FunctionCallingParser)

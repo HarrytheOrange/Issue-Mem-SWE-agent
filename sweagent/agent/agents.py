@@ -161,10 +161,16 @@ class _BlockedActionError(Exception):
     """Raised when the agent's action is blocked"""
 
 
-class _RetryWithOutput(Exception): ...
+class _RetryWithOutput(Exception):
+    """Used for internal control flow"""
 
 
-class _RetryWithoutOutput(Exception): ...
+class _RetryWithoutOutput(Exception):
+    """Used for internal control flow"""
+
+
+class _TotalExecutionTimeExceeded(Exception):
+    """Used for internal control flow"""
 
 
 RETRY_WITH_OUTPUT_TOKEN = "###SWE-AGENT-RETRY-WITH-OUTPUT###"
@@ -405,6 +411,7 @@ class DefaultAgent(AbstractAgent):
         #: Count how many timeout errors have occurred consecutively. Kills agent
         #: after 5 of them.
         self._n_consecutive_timeouts = 0
+        self._total_execution_time = 0.0
 
     @classmethod
     def from_config(cls, config: DefaultAgentConfig) -> Self:
@@ -861,8 +868,8 @@ class DefaultAgent(AbstractAgent):
             )
         except CommandTimeoutError:
             try:
-                if self._n_consecutive_timeouts >= 5:
-                    msg = "Exiting agent due to too many consecutive timeouts"
+                if self._n_consecutive_timeouts >= self.tools.config.max_consecutive_execution_timeouts:
+                    msg = "Exiting agent due to too many consecutive execution timeouts"
                     self.logger.critical(msg)
                     raise
                 self._env.interrupt_session()
@@ -878,6 +885,7 @@ class DefaultAgent(AbstractAgent):
         else:
             self._n_consecutive_timeouts = 0
         step.execution_time = time.perf_counter() - execution_t0
+        self._total_execution_time += step.execution_time
         self._chook.on_action_executed(step=step)
         step.state = self.tools.get_state(env=self._env)
 
@@ -902,6 +910,9 @@ class DefaultAgent(AbstractAgent):
         Returns:
             step_output: step output
         """
+        if self._total_execution_time > self.tools.config.total_execution_timeout:
+            raise _TotalExecutionTimeExceeded()
+
         # we continuously add actions, output etc. to the step object
         # because some of the specific exception handling requires some of these
         # attributes (e.g., if we want to requery the model for a bash syntax error, we
@@ -1030,6 +1041,19 @@ class DefaultAgent(AbstractAgent):
                 # Requery with the same template as the last step
 
             # Errors that cause exit
+            except _TotalExecutionTimeExceeded:
+                self.logger.exception("Exiting due to total execution time exceeded", exc_info=True)
+                return handle_error_with_autosubmission(
+                    "exit_total_execution_time",
+                    "Exit due to total execution time exceeded",
+                )
+
+            except CommandTimeoutError:
+                self.logger.exception("Exiting due to multiple consecutive command timeouts", exc_info=True)
+                return handle_error_with_autosubmission(
+                    "exit_command_timeout",
+                    "Exit due to multiple consecutive command timeouts",
+                )
 
             except ContextWindowExceededError:
                 return handle_error_with_autosubmission(
