@@ -236,7 +236,11 @@ class Reviewer(AbstractReviewer):
         answers = []
         accepts = []
         for _ in range(self._config.n_sample):
-            answer = self._model.query(messages)["message"]
+            try:
+                answer = self._model.query(messages)["message"]
+            except Exception as e:
+                self.logger.warning(f"Query failed: {e}", exc_info=True)
+                continue
             try:
                 score = self.interpret(answer)
             except ValueError as e:
@@ -244,6 +248,9 @@ class Reviewer(AbstractReviewer):
                 continue
             answers.append(answer)
             accepts.append(score)
+        if not accepts:
+            answers = ["No valid scores found, failing submission"]
+            accepts = [-100.0]
         accept = sum(accepts) / len(accepts) - penalty
         std = np.std(accepts).item()
         if self._config.reduce_by_std > 0:
