@@ -232,9 +232,12 @@ class RetryAgent(AbstractAgent):
 
     def _setup_agent(self) -> AbstractAgent:
         # todo: Could select "best" agent config based on previous attempts if I run > number of set up configs
-        self._agent = DefaultAgent.from_config(
-            self.config.agent_configs[self._i_attempt % len(self.config.agent_configs)]
-        )
+        agent_config = self.config.agent_configs[self._i_attempt % len(self.config.agent_configs)].model_copy(deep=True)
+        remaining_budget = self.config.retry_loop.cost_limit - self._total_instance_stats.instance_cost
+        if remaining_budget < agent_config.model.per_instance_cost_limit:
+            self.logger.debug("Setting agent per-attempt cost limit to remaining budget: %s", remaining_budget)
+            agent_config.model.per_instance_cost_limit = remaining_budget
+        self._agent = DefaultAgent.from_config(agent_config)
         for hook in self._hooks:
             self._agent.add_hook(hook)
         sub_agent_output_dir = self._output_dir / f"attempt_{self._i_attempt}"
@@ -249,17 +252,6 @@ class RetryAgent(AbstractAgent):
 
     def step(self) -> StepOutput:
         assert self._agent is not None
-        current_total_cost = self._total_instance_stats.instance_cost + self._agent.model.stats.instance_cost
-        if current_total_cost > self.config.retry_loop.cost_limit:
-            # This is a bit of a hack to raise exit_cost within the sub-agent,
-            # which ensures we handle the cost limit properly within the sub-agent (autosubmission etc.)
-            self.logger.warning(
-                "Cost limit (all attempts) exceeded: %s > %s. Setting current agent's per-instance cost limit to 0.01",
-                current_total_cost,
-                self.config.retry_loop.cost_limit,
-            )
-            # Don't set it to 0, it will disable the cost limit entirely
-            self._agent.model.config.per_instance_cost_limit = 0.01
         try:
             step = self._agent.step()
         except Exception as e:
