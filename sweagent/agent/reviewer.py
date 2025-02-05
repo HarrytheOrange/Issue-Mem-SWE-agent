@@ -211,7 +211,7 @@ class Reviewer(AbstractReviewer):
     def interpret(self, response: str) -> bool | float:
         last_line = response.strip().split("\n")[-1].strip()
         # Find all numbers in the last line and take the last one
-        numbers = re.findall(r"\d+\.?\d*", last_line)
+        numbers = re.findall(r"-?\d+\.?\d*", last_line)
         if not numbers:
             msg = f"Could not interpret response: {last_line!r}"
             raise ValueError(msg)
