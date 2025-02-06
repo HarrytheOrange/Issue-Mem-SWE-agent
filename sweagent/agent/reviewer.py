@@ -157,11 +157,16 @@ class ScoreRetryLoopConfig(BaseModel):
     max_accepts: int = 1
     max_attempts: int
 
-    #: Minimal $ that need to be left in order for us to start a new attempt
     min_budget_for_new_attempt: float = 0.0
-    #: Override model temperature for first len(list) attempts
+    """Minimal $ that need to be left in order for us to start a new attempt.
+    If set to 0: Always.
+    """
 
     cost_limit: float
+    """The maximum cost to spend on all attempts and reviews except the last review.
+    The last review is not included in the cost limit, because we would waste the last
+    attempt if we couldn't score it.
+    """
 
     model: ModelConfig
 
