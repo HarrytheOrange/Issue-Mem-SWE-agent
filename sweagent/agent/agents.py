@@ -294,6 +294,7 @@ class RetryAgent(AbstractAgent):
                 **self._attempt_data[best_attempt_idx],
             }
         data["info"]["best_attempt_idx"] = best_attempt_idx
+        data["info"]["rloop_model_stats"] = self._rloop.model_stats.model_dump()
         # Overwrite model stats with total stats
         data["info"]["model_stats"] = (self._total_instance_stats + self._rloop.model_stats).model_dump()
 
