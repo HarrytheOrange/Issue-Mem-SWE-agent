@@ -236,6 +236,7 @@ class RetryAgent(AbstractAgent):
         """Setup the retry agent for a new problem instance.
         This is mostly a bookkeeping step.
         """
+        self._total_instance_stats = InstanceStats()
         self._problem_statement = problem_statement
         self._traj_path = output_dir / (self._problem_statement.id + ".traj")
         self._env = env
