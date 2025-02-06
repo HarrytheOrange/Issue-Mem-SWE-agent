@@ -30,7 +30,7 @@ from sweagent.agent.models import (
     get_model,
 )
 from sweagent.agent.problem_statement import ProblemStatement, ProblemStatementConfig
-from sweagent.agent.reviewer import RetryLoopConfig, ReviewSubmission, get_retry_loop_from_config
+from sweagent.agent.reviewer import RetryLoopConfig, ReviewSubmission, ScoreRetryLoop, get_retry_loop_from_config
 from sweagent.environment.swe_env import SWEEnv
 from sweagent.exceptions import (
     ContentPolicyViolationError,
@@ -218,6 +218,9 @@ class RetryAgent(AbstractAgent):
         self._chook = CombinedAgentHook()
         self._traj_path: Path | None = None
         self._problem_statement: ProblemStatement | None = None
+        self._env: SWEEnv | None = None
+        self._output_dir: Path | None = None
+        self._rloop: ScoreRetryLoop | None = None
 
     @classmethod
     def from_config(cls, config: RetryAgentConfig) -> Self:
@@ -250,13 +253,16 @@ class RetryAgent(AbstractAgent):
         self._agent = DefaultAgent.from_config(agent_config)
         for hook in self._hooks:
             self._agent.add_hook(hook)
+        assert self._output_dir is not None
         sub_agent_output_dir = self._output_dir / f"attempt_{self._i_attempt}"
         assert self._problem_statement is not None
+        assert self._env is not None
         self._agent.setup(env=self._env, problem_statement=self._problem_statement, output_dir=sub_agent_output_dir)
         return self._agent
 
     def _next_attempt(self) -> None:
         """Prepare for the next attempt: Reset the environment and setup the next agent."""
+        assert self._env is not None
         self._i_attempt += 1
         self._env.hard_reset()
         self._setup_agent()
@@ -321,6 +327,7 @@ class RetryAgent(AbstractAgent):
         """
         output_dir.mkdir(parents=True, exist_ok=True)
         self.setup(env=env, problem_statement=problem_statement, output_dir=output_dir)
+        assert self._rloop is not None
 
         # Run action/observation loop
         self._chook.on_run_start()
