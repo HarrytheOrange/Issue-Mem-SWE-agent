@@ -311,9 +311,11 @@ class RetryAgent(AbstractAgent):
         if best_attempt_idx is None:
             data = {"info": {}}
         else:
+            # Very important to deepcopy the best attempt data, because we will overwrite
+            # the stats with the total stats below.
             data = {
                 "attempts": self._attempt_data,
-                **self._attempt_data[best_attempt_idx],
+                **copy.deepcopy(self._attempt_data[best_attempt_idx]),
             }
         data["info"]["best_attempt_idx"] = best_attempt_idx
         data["info"]["rloop_model_stats"] = self._rloop._model.stats.model_dump()
