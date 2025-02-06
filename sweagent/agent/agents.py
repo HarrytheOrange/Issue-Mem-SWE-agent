@@ -281,6 +281,13 @@ class RetryAgent(AbstractAgent):
         Attempt autosubmit if an error occurs (though all errors should already be handled by the attempt agent).
         """
         assert self._agent is not None
+        # Failsafe cost check, this should not actually happen, because the sub-agent should have already been
+        # initialized with the correct cost limit to not exceed the total cost limit. Using factor of 1.1, because
+        # sub-agent might only catch the cost limit after attempting.
+        if self._total_instance_stats.instance_cost > 1.1 * self.config.retry_loop.cost_limit > 0:
+            msg = "Total instance cost exceeded cost limit. This should not happen, please report this. Triggering autosubmit."
+            self.logger.critical(msg)
+            return self._agent.attempt_autosubmission_after_error(step=StepOutput())
         try:
             step = self._agent.step()
         except Exception as e:
