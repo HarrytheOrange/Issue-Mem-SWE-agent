@@ -214,13 +214,21 @@ class RetryAgent(AbstractAgent):
         self.logger = get_logger("swea-agent", emoji="🤠")
         self._agent: DefaultAgent | None = None
         self._attempt_data: list[dict[str, Any]] = []
-        self._total_instance_stats = InstanceStats()
+        self._total_instance_attempt_stats = InstanceStats()
+        """Note that total_instance_attempt_stats only accumulates the states of the sub-agent,
+        not the reviewer. Use self._total_instance_stats for the total stats.
+        """
         self._chook = CombinedAgentHook()
         self._traj_path: Path | None = None
         self._problem_statement: ProblemStatement | None = None
         self._env: SWEEnv | None = None
         self._output_dir: Path | None = None
         self._rloop: ScoreRetryLoop | None = None
+
+    @property
+    def _total_instance_stats(self) -> InstanceStats:
+        assert self._rloop is not None
+        return self._total_instance_attempt_stats + self._rloop._model.stats
 
     @classmethod
     def from_config(cls, config: RetryAgentConfig) -> Self:
@@ -236,7 +244,7 @@ class RetryAgent(AbstractAgent):
         """Setup the retry agent for a new problem instance.
         This is mostly a bookkeeping step.
         """
-        self._total_instance_stats = InstanceStats()
+        self._total_instance_attempt_stats = InstanceStats()
         self._problem_statement = problem_statement
         self._traj_path = output_dir / (self._problem_statement.id + ".traj")
         self._env = env
@@ -286,7 +294,7 @@ class RetryAgent(AbstractAgent):
         assert self._agent is not None
         self._agent.save_trajectory()
         self._attempt_data.append(self._agent.get_trajectory_data())
-        self._total_instance_stats += self._agent.model.stats
+        self._total_instance_attempt_stats += self._agent.model.stats
 
     def get_trajectory_data(self) -> dict[str, Any]:
         """Get all data that we save in .traj files."""
@@ -301,9 +309,9 @@ class RetryAgent(AbstractAgent):
                 **self._attempt_data[best_attempt_idx],
             }
         data["info"]["best_attempt_idx"] = best_attempt_idx
-        data["info"]["rloop_model_stats"] = self._rloop.model_stats.model_dump()
+        data["info"]["rloop_model_stats"] = self._rloop._model.stats.model_dump()
         # Overwrite model stats with total stats
-        data["info"]["model_stats"] = (self._total_instance_stats + self._rloop.model_stats).model_dump()
+        data["info"]["model_stats"] = self._total_instance_stats.model_dump()
 
         return data
 

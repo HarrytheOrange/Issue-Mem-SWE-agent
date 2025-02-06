@@ -342,12 +342,8 @@ class ScoreRetryLoop(AbstractRetryLoop):
         return sum(r.accept >= self._config.accept_score for r in self._reviews)
 
     @property
-    def model_stats(self) -> InstanceStats:
-        return self._model.stats
-
-    @property
-    def _total_attempt_stats(self) -> InstanceStats:
-        return sum((s.model_stats for s in self._submissions), start=InstanceStats())
+    def _total_stats(self) -> InstanceStats:
+        return sum((s.model_stats for s in self._submissions), start=InstanceStats()) + self._model.stats
 
     # -------
 
@@ -369,9 +365,9 @@ class ScoreRetryLoop(AbstractRetryLoop):
         max_score = max([r.accept for r in self._reviews], default=-100.0)
         stat_str = f"n_samples={self._n_attempts}, max_score={max_score}, n_accepted={self._n_accepted}"
 
-        if self._total_attempt_stats.instance_cost > self._config.cost_limit > 0:
+        if self._total_stats.instance_cost > self._config.cost_limit > 0:
             self.logger.info(
-                f"Exiting retry loop ({stat_str}): Total attempt cost ({self._total_attempt_stats.instance_cost}) "
+                f"Exiting retry loop ({stat_str}): Total attempt cost ({self._total_stats.instance_cost}) "
                 f"exceeds cost limit ({self._config.cost_limit})"
             )
             return False
@@ -384,7 +380,7 @@ class ScoreRetryLoop(AbstractRetryLoop):
             self.logger.info(f"Exiting retry loop ({stat_str}): max_accepts={self._config.max_accepts} reached")
             return False
 
-        remaining_budget = self._config.cost_limit - self._total_attempt_stats.instance_cost
+        remaining_budget = self._config.cost_limit - self._total_stats.instance_cost
         if self._config.min_budget_for_new_attempt > 0 and remaining_budget < self._config.min_budget_for_new_attempt:
             msg = (
                 f"Exiting retry loop ({stat_str}): Not enough budget left for a new attempt "
