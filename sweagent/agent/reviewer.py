@@ -500,7 +500,7 @@ class ChooserRetryLoop(AbstractRetryLoop):
     def __init__(self, config: ChooserRetryLoopConfig, problem_statement: ProblemStatement):
         self._config = config
         self._problem_statement = problem_statement
-        self._chooser = Chooser(config.chooser_config)
+        self._chooser = Chooser(config.chooser)
         self._submissions: list[ReviewSubmission] = []
         self._n_consec_exit_cost: int = 0
         self.logger = get_logger("chooser_loop", emoji="🔄")
