@@ -142,7 +142,7 @@ class SWEEnv:
             )
 
     def close(self) -> None:
-        """Shoutdown SWE-ReX deployment etc."""
+        """Shutdown SWE-ReX deployment etc."""
         self.logger.info("Beginning environment shutdown...")
         asyncio.run(self.deployment.stop())
         self._chook.on_close()

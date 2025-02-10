@@ -67,10 +67,10 @@ class LastNObservations(BaseModel):
                 new_history.append(entry)
             else:
                 data = entry.copy()
-                assert (
-                    data["message_type"] == "observation"
-                ), f"Expected observation for dropped entry, got: {data['message_type']}"
-                data["content"] = f'Old environment output: ({len(entry["content"].splitlines())} lines omitted)'
+                assert data["message_type"] == "observation", (
+                    f"Expected observation for dropped entry, got: {data['message_type']}"
+                )
+                data["content"] = f"Old environment output: ({len(entry['content'].splitlines())} lines omitted)"
                 new_history.append(data)
         return new_history
 

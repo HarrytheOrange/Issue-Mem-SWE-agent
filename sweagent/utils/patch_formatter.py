@@ -70,7 +70,7 @@ class PatchFormatter:
         out: list[str] = []
         if starts[0] > 1:
             # Count from 1
-            out.append(f"[{starts[0]-1} lines above omitted]")
+            out.append(f"[{starts[0] - 1} lines above omitted]")
         last_stop: int | None = None
         lines = text.splitlines()
         for start, stop in zip(starts, stops):

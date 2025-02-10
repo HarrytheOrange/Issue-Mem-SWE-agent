@@ -418,9 +418,7 @@ class InstantEmptySubmitTestModel(AbstractModel):
             )
         elif self._action_idx == 1:
             self._action_idx = 0
-            action = (
-                "DISCUSSION\n" "The task should be resolved, so let's submit the patch.\n\n" "```\n" "submit\n" "```\n"
-            )
+            action = "DISCUSSION\nThe task should be resolved, so let's submit the patch.\n\n```\nsubmit\n```\n"
         self.stats.api_calls += 1
         return {"message": action}
 
