@@ -24,6 +24,7 @@ Display usage instructions for a specific command:
     This can be useful to fill in environment output when creating demonstrations.
 [bold][green]traj-to-demo[/green][/bold]: Convert a trajectory file to an easy to edit demo file.
 [bold][green]run-api[/green][/bold]: Run swe-agent as a backend for a GUI
+[bold][green]remove-unfinished[/green][/bold] or [bold][green]ru[/green][/bold]: Remove unfinished trajectories
 """
 
 import argparse
@@ -52,6 +53,8 @@ def get_cli():
             "extract-pred",
             "compare-runs",
             "cr",
+            "remove-unfinished",
+            "ru",
         ],
         nargs="?",
     )
@@ -118,6 +121,10 @@ def main(args: list[str] | None = None):
         from sweagent.run.compare_runs import run_from_cli as compare_runs_main
 
         compare_runs_main(remaining_args)
+    elif command in ["remove-unfinished", "ru"]:
+        from sweagent.run.remove_unfinished import run_from_cli as remove_unfinished_main
+
+        remove_unfinished_main(remaining_args)
     else:
         msg = f"Unknown command: {command}"
         raise ValueError(msg)
