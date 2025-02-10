@@ -340,7 +340,7 @@ class Chooser:
             try:
                 preselector_output = preselector.choose(problem_statement, [input[i] for i in selected_indices])
             except Exception as e:
-                self.logger.error(f"Preselector failed: {e}", exc_info=True)
+                self.logger.critical(f"Preselector failed: {e}", exc_info=True)
                 preselector_output = None
             if preselector_output and preselector_output.chosen_idx:
                 try:
@@ -360,7 +360,7 @@ class Chooser:
             response = self.model.query(messages)["message"]  # type: ignore
             chosen_idx = self.interpret(response)
         except Exception as e:
-            self.logger.error(f"Chooser failed: {e}", exc_info=True)
+            self.logger.critical(f"Chooser failed: {e}", exc_info=True)
             chosen_idx = None
         if chosen_idx is None or not (0 <= chosen_idx < len(selected_indices)):
             self.logger.error(f"Invalid chosen index: {chosen_idx}, using first index")

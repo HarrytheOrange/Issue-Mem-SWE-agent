@@ -321,7 +321,7 @@ class RetryAgent(AbstractAgent):
             try:
                 best_attempt_idx = self._rloop.get_best()
             except Exception as e:
-                self.logger.error(f"Error getting best attempt index: {e}. Setting to 0.", exc_info=True)
+                self.logger.critical(f"Error getting best attempt index: {e}. Setting to 0.", exc_info=True)
                 best_attempt_idx = 0
             data |= copy.deepcopy(self._attempt_data[best_attempt_idx])  # type: ignore
             data["info"]["best_attempt_idx"] = best_attempt_idx
