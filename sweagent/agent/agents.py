@@ -328,7 +328,6 @@ class RetryAgent(AbstractAgent):
                 data["info"]["chooser"] = (
                     self._rloop._chooser_output.model_dump() if self._rloop._chooser_output else {}
                 )
-
         return data
 
     def save_trajectory(self, choose: bool) -> None:

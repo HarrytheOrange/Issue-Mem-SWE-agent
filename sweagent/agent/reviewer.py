@@ -5,7 +5,6 @@ solving the issue and to select the best solution.
 from __future__ import annotations
 
 import copy
-import logging
 import re
 from abc import ABC, abstractmethod
 from typing import Any, Literal
@@ -66,11 +65,14 @@ class ReviewerResult(BaseModel):
 class PreselectorOutput(BaseModel):
     chosen_idx: list[int]
     response: str
+    messages: list[dict[str, Any]]
 
 
 class ChooserOutput(BaseModel):
     chosen_idx: int
     response: str
+    preselector_output: PreselectorOutput | None = None
+    messages: list[dict[str, Any]]
 
 
 # --- INTERFACES ---
@@ -241,9 +243,7 @@ class Preselector:
     def __init__(self, config: PreselectorConfig):
         self.config = config
         self.model = get_model(config.model, ToolConfig(parse_function=ActionParser()))
-        self.model.logger.setLevel(logging.WARNING)  # type: ignore
         self.logger = get_logger("chooser", emoji="🧠")
-        self.logger.setLevel(logging.WARNING)
 
     def interpret(self, response: str) -> list[int]:
         if not response:
@@ -286,14 +286,13 @@ class Preselector:
         if not indices:
             self.logger.warning("No indices found in response, using all indices")
             indices = list(range(len(input)))
-        return PreselectorOutput(chosen_idx=indices, response=response)
+        return PreselectorOutput(chosen_idx=indices, response=response, messages=messages)
 
 
 class Chooser:
     def __init__(self, config: ChooserConfig):
         self.config = config
         self.model = get_model(config.model, ToolConfig(parse_function=ActionParser()))
-        self.model.logger.setLevel(logging.WARNING)  # type: ignore
         self.logger = get_logger("chooser", emoji="🧠")
         # self.summarizer = Summarizer(config.summarizer, self.model) if config.summarizer else None
 
@@ -328,10 +327,26 @@ class Chooser:
         ]
 
     def choose(self, problem_statement: str, input: list[ReviewSubmission]) -> ChooserOutput:
-        messages = self.build_messages(problem_statement, input)
+        preselector_output = None
+        selected_indices = list(range(len(input)))
+        if self.config.preselector:
+            preselector = Preselector(self.config.preselector)
+            preselector_output = preselector.choose(problem_statement, input)
+            selected_indices = preselector_output.chosen_idx
+        if not selected_indices:
+            self.logger.error("Preselector must have failed, using all indices")
+            selected_indices = list(range(len(input)))
+        messages = self.build_messages(problem_statement, [input[i] for i in selected_indices])
         response = self.model.query(messages)["message"]  # type: ignore
         chosen_idx = self.interpret(response)
-        return ChooserOutput(chosen_idx=chosen_idx, response=response)
+        if chosen_idx is None or chosen_idx >= len(selected_indices):
+            self.logger.error(f"Invalid chosen index: {chosen_idx}, using first index")
+            chosen_idx = selected_indices[0]
+        else:
+            chosen_idx = selected_indices[chosen_idx]
+        return ChooserOutput(
+            chosen_idx=chosen_idx, response=response, preselector_output=preselector_output, messages=messages
+        )
 
 
 class Reviewer(AbstractReviewer):
@@ -517,6 +532,7 @@ class ChooserRetryLoop(AbstractRetryLoop):
         return self._chooser_output.chosen_idx
 
 
+# todo: The model shouldn't be defined here, it should be defined as part of the scorer
 class ScoreRetryLoop(AbstractRetryLoop):
     def __init__(
         self,
@@ -617,28 +633,6 @@ class ScoreRetryLoop(AbstractRetryLoop):
         chosen_idx = max_indices[0]
         self.logger.info(f"Best submission: {chosen_idx}")
         return chosen_idx
-
-    # def get_best(self) -> int | None:
-    #     if len(self._reviews) == 0:
-    #         return None
-    #     scores = [r.accept for r in self._reviews]
-    #     # IMPORTANT: Do not take s.info.model_stats.api_calls, because this is the cumulative cost over all attempts
-    #     steps = [s.model_stats.api_calls for s in self._submissions]
-    #     self.logger.debug(f"Scores: {scores}, n_steps: {steps}")
-    #     good_submissions = [i for i, s in enumerate(scores) if s >= self._config.accept_score]
-    #     self.logger.debug(f"Good submissions: {good_submissions} with scores: {[scores[i] for i in good_submissions]}")
-    #     if not good_submissions:
-    #         good_submissions = list(range(len(self._reviews)))
-    #         self.logger.debug("No good submissions found.")
-    #     good_submissions = sorted(good_submissions, key=lambda i: scores[i])[: self._config.keep_top_scores]
-    #     if self._config.choice_variable == "n_steps":
-    #         # Lowest number of steps
-    #         chosen_idx = min(good_submissions, key=lambda i: steps[i])
-    #     elif self._config.choice_variable == "score":
-    #         # Highest score
-    #         chosen_idx = max(good_submissions, key=lambda i: scores[i])
-    #     self.logger.info(f"Best submission: {chosen_idx}")
-    #     return chosen_idx
 
 
 def get_retry_loop_from_config(
