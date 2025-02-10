@@ -78,6 +78,10 @@ class RunBatchProgressManager:
         self.render_group = Group(Table(), self._task_progress_bar, self._main_progress_bar)
         self._yaml_report_path = yaml_report_path
 
+    @property
+    def n_completed(self) -> int:
+        return sum(len(instances) for instances in self._instances_by_exit_status.values())
+
     def update_exit_status_table(self):
         # We cannot update the existing table, so we need to create a new one and
         # assign it back to the render group.

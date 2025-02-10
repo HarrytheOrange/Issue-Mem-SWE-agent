@@ -84,7 +84,7 @@ class RunBatchConfig(BaseSettings, cli_implicit_flags=False):
     """Path to a .env file to load environment variables from."""
     num_workers: int = Field(default=1)
     """Number of parallel workers to use."""
-    random_delay_multiplier: float = 1
+    random_delay_multiplier: float = 0.3
     """We will wait for a random amount of time between 0 and `random_delay_multiplier`
     times the number of workers at the start of each instance. This is to avoid any
     potential race conditions.
@@ -140,6 +140,7 @@ class RunBatch:
         redo_existing: bool = False,
         num_workers: int = 1,
         progress_bar: bool = True,
+        random_delay_multiplier: float = 0.3,
     ):
         """Note: When initializing this class, make sure to add the hooks that are required by your actions.
         See `from_config` for an example.
@@ -149,6 +150,9 @@ class RunBatch:
             num_workers: Number of parallel workers to use. Default is 1 (sequential execution).
             progress_bar: Whether to show a progress bar. Progress bar is never shown for human models.
                 Progress bar is always shown for multi-worker runs.
+            random_delay_multiplier: We will wait for a random amount of time between 0 and `random_delay_multiplier`
+                times the number of workers at the start of each instance. This is to avoid any
+                potential race conditions.
         """
         if self._model_id in ["human", "human_thought"] and num_workers > 1:
             msg = "Cannot run with human model in parallel"
@@ -173,6 +177,7 @@ class RunBatch:
             num_instances=len(instances), yaml_report_path=output_dir / "run_batch_exit_statuses.yaml"
         )
         self._show_progress_bar = progress_bar
+        self._random_delay_multiplier = random_delay_multiplier
 
     @property
     def _model_id(self) -> str:
@@ -207,6 +212,7 @@ class RunBatch:
             redo_existing=config.redo_existing,
             num_workers=config.num_workers,
             progress_bar=config.progress_bar,
+            random_delay_multiplier=config.random_delay_multiplier,
         )
         if isinstance(config.instances, SWEBenchInstances) and config.instances.evaluate:
             from sweagent.run.hooks.swe_bench_evaluate import SweBenchEvaluate
@@ -281,7 +287,8 @@ class RunBatch:
         register_thread_name(instance.problem_statement.id)
         self._add_instance_log_file_handlers(instance.problem_statement.id, multi_worker=self._num_workers > 1)
         # Let's add some randomness to avoid any potential race conditions or thundering herd
-        time.sleep(random.random() * 0.3 * (self._num_workers - 1))
+        if self._progress_manager.n_completed < self._num_workers:
+            time.sleep(random.random() * self._random_delay_multiplier * (self._num_workers - 1))
 
         self._progress_manager.on_instance_start(instance.problem_statement.id)
 
