@@ -179,7 +179,7 @@ class ReviewerConfig(BaseModel):
 
 class ChooserRetryLoopConfig(BaseModel):
     type: Literal["chooser"] = "chooser"
-    chooser_config: ChooserConfig
+    chooser: ChooserConfig
 
     max_attempts: int
     min_budget_for_new_attempt: float = 0.0
@@ -234,7 +234,7 @@ class ScoreRetryLoopConfig(BaseModel):
         return ScoreRetryLoop(self, problem_statement)
 
 
-RetryLoopConfig = ScoreRetryLoopConfig
+RetryLoopConfig = ScoreRetryLoopConfig | ChooserRetryLoopConfig
 
 # --- IMPLEMENTATIONS ---
 
