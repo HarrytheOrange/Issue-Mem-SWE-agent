@@ -5,6 +5,7 @@ solving the issue and to select the best solution.
 from __future__ import annotations
 
 import copy
+import logging
 import re
 from abc import ABC, abstractmethod
 from typing import Any, Literal
@@ -21,6 +22,7 @@ from sweagent.agent.models import (
     get_model,
 )
 from sweagent.agent.problem_statement import ProblemStatement
+from sweagent.tools.parsing import ActionParser
 from sweagent.tools.tools import ToolConfig
 from sweagent.types import AgentInfo, Trajectory, TrajectoryStep
 from sweagent.utils.log import get_logger
@@ -59,6 +61,11 @@ class ReviewerResult(BaseModel):
     accept: bool | float
     outputs: list[str]
     messages: list[dict[str, Any]]
+
+
+class ChooserOutput(BaseModel):
+    chosen_idx: int
+    response: str
 
 
 # --- INTERFACES ---
@@ -111,6 +118,15 @@ class AbstractRetryLoop(ABC):
 # --- CONFIGS ---
 
 
+class ChooserConfig(BaseModel):
+    model: ModelConfig
+    system_template: str
+    instance_template: str
+    submission_template: str
+    max_len_submission: int = 5000
+    # summarizer: SummarizerConfig | None = None
+
+
 class TrajFormatterConfig(BaseModel):
     #: Filter the following actions from the trajectory
     filter: list[str] = []
@@ -144,6 +160,26 @@ class ReviewerConfig(BaseModel):
 
     def get_reviewer(self, model: AbstractModel) -> AbstractReviewer:
         return Reviewer(self, model)
+
+
+class ChooserRetryLoopConfig(BaseModel):
+    type: Literal["chooser"] = "chooser"
+    chooser_config: ChooserConfig
+
+    max_attempts: int
+    min_budget_for_new_attempt: float = 0.0
+    """Minimal $ that need to be left in order for us to start a new attempt.
+    If set to 0: Always.
+    """
+
+    cost_limit: float
+    """The maximum cost to spend on all attempts. Does not include cost of choosing.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    def get_retry_loop(self, problem_statement: ProblemStatement) -> ChooserRetryLoop:
+        return ChooserRetryLoop(self, problem_statement)
 
 
 class ScoreRetryLoopConfig(BaseModel):
@@ -186,6 +222,51 @@ class ScoreRetryLoopConfig(BaseModel):
 RetryLoopConfig = ScoreRetryLoopConfig
 
 # --- IMPLEMENTATIONS ---
+
+
+class Chooser:
+    def __init__(self, config: ChooserConfig):
+        self.config = config
+        self.model = get_model(config.model, ToolConfig(parse_function=ActionParser()))
+        self.model.logger.setLevel(logging.WARNING)  # type: ignore
+        self.logger = get_logger("chooser", emoji="🧠")
+        # self.summarizer = Summarizer(config.summarizer, self.model) if config.summarizer else None
+
+    def interpret(self, response: str) -> int:
+        # Use regex to extract the last number of the response
+        try:
+            return int(re.findall(r"\d+", response)[-1])
+        except Exception as e:
+            self.logger.error(f"Error interpreting response: {e}")
+            return 0
+
+    def format_submission(self, problem_statement: str, submission: ReviewSubmission) -> str:
+        if (
+            submission.info.get("submission") is None
+            or len(submission.info.get("submission", "")) > self.config.max_len_submission > 0  # type: ignore
+        ):
+            return "Solution invalid."
+        return Template(self.config.submission_template).render(
+            **submission.to_format_dict(),
+            # summary=self.summarizer.summarize(problem_statement, submission.trajectory) if self.summarizer else "",
+        )
+
+    def build_messages(self, problem_statement: str, input: ReviewSubmission) -> list[dict[str, Any]]:
+        instance_message = Template(self.config.instance_template).render(
+            problem_statement=problem_statement,
+            **input.to_format_dict(),
+        )
+        self.logger.debug(f"MODEL INPUT (user)\n{instance_message}")
+        return [
+            {"role": "system", "content": self.config.system_template},
+            {"role": "user", "content": instance_message},
+        ]
+
+    def choose(self, problem_statement: str, input: ReviewSubmission) -> ChooserOutput:
+        messages = self.build_messages(problem_statement, input)
+        response = self.model.query(messages)["message"]  # type: ignore
+        chosen_idx = self.interpret(response)
+        return ChooserOutput(chosen_idx=chosen_idx, response=response)
 
 
 class Reviewer(AbstractReviewer):
@@ -312,6 +393,67 @@ class TrajectoryFormatter:
         )
 
 
+class ChooserRetryLoop(AbstractRetryLoop):
+    def __init__(self, config: ChooserRetryLoopConfig, problem_statement: ProblemStatement):
+        self._config = config
+        self._problem_statement = problem_statement
+        self._chooser = Chooser(config.chooser_config)
+        self._submissions: list[ReviewSubmission] = []
+        self._n_consec_exit_cost: int = 0
+        self.logger = get_logger("chooser_loop", emoji="🔄")
+        self.chooser_output: ChooserOutput | None = None
+
+    @property
+    def _total_stats(self) -> InstanceStats:
+        return sum((s.model_stats for s in self._submissions), start=InstanceStats())
+
+    @property
+    def review_model_stats(self) -> InstanceStats:
+        return InstanceStats()
+
+    @property
+    def _n_attempts(self) -> int:
+        return len(self._submissions)
+
+    def on_submit(self, submission: ReviewSubmission) -> None:
+        self._submissions.append(submission)
+
+    def retry(self) -> bool:
+        stat_str = f"n_samples={self._n_attempts}"
+        if self._total_stats.instance_cost > self._config.cost_limit > 0:
+            self.logger.info(
+                f"Exiting retry loop ({stat_str}): Total attempt cost ({self._total_stats.instance_cost}) "
+                f"exceeds cost limit ({self._config.cost_limit})"
+            )
+            return False
+
+        if self._n_attempts >= self._config.max_attempts > 0:
+            self.logger.info(f"Exiting retry loop ({stat_str}): max_attempts={self._config.max_attempts} reached")
+            return False
+
+        remaining_budget = self._config.cost_limit - self._total_stats.instance_cost
+        if self._config.min_budget_for_new_attempt > 0 and remaining_budget < self._config.min_budget_for_new_attempt:
+            msg = (
+                f"Exiting retry loop ({stat_str}): Not enough budget left for a new attempt "
+                f"({remaining_budget} remaining, {self._config.min_budget_for_new_attempt} required)"
+            )
+            self.logger.info(msg)
+            return False
+
+        return True
+
+    def get_best(self) -> int | None:
+        """Important note: This is cached. Only call this at the end."""
+        if self.chooser_output is not None:
+            return self.chooser_output.chosen_idx
+        if len(self._submissions) == 0:
+            return None
+        self.chooser_output = self._chooser.choose(
+            self._problem_statement.get_problem_statement(), self._submissions[-1]
+        )
+        return self.chooser_output.chosen_idx
+
+
 class ScoreRetryLoop(AbstractRetryLoop):
     def __init__(
         self,
@@ -333,6 +475,10 @@ class ScoreRetryLoop(AbstractRetryLoop):
 
     # Properties
     # ----------
+
+    @property
+    def review_model_stats(self) -> InstanceStats:
+        return self._model.stats
 
     @property
     def reviews(self) -> list[ReviewerResult]:
@@ -432,5 +578,7 @@ class ScoreRetryLoop(AbstractRetryLoop):
     #     return chosen_idx
 
 
-def get_retry_loop_from_config(config: RetryLoopConfig, problem_statement: ProblemStatement) -> ScoreRetryLoop:
+def get_retry_loop_from_config(
+    config: RetryLoopConfig, problem_statement: ProblemStatement
+) -> ScoreRetryLoop | ChooserRetryLoop:
     return config.get_retry_loop(problem_statement=problem_statement)

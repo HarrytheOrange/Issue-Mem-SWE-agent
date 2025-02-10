@@ -30,7 +30,13 @@ from sweagent.agent.models import (
     get_model,
 )
 from sweagent.agent.problem_statement import ProblemStatement, ProblemStatementConfig
-from sweagent.agent.reviewer import RetryLoopConfig, ReviewSubmission, ScoreRetryLoop, get_retry_loop_from_config
+from sweagent.agent.reviewer import (
+    ChooserRetryLoop,
+    RetryLoopConfig,
+    ReviewSubmission,
+    ScoreRetryLoop,
+    get_retry_loop_from_config,
+)
 from sweagent.environment.swe_env import SWEEnv
 from sweagent.exceptions import (
     ContentPolicyViolationError,
@@ -223,12 +229,12 @@ class RetryAgent(AbstractAgent):
         self._problem_statement: ProblemStatement | None = None
         self._env: SWEEnv | None = None
         self._output_dir: Path | None = None
-        self._rloop: ScoreRetryLoop | None = None
+        self._rloop: ScoreRetryLoop | ChooserRetryLoop | None = None
 
     @property
     def _total_instance_stats(self) -> InstanceStats:
         assert self._rloop is not None
-        return self._total_instance_attempt_stats + self._rloop._model.stats
+        return self._total_instance_attempt_stats + self._rloop.review_model_stats
 
     @classmethod
     def from_config(cls, config: RetryAgentConfig) -> Self:
@@ -303,29 +309,28 @@ class RetryAgent(AbstractAgent):
         self._attempt_data.append(self._agent.get_trajectory_data())
         self._total_instance_attempt_stats += self._agent.model.stats
 
-    def get_trajectory_data(self) -> dict[str, Any]:
+    def get_trajectory_data(self, choose: bool) -> dict[str, Any]:
         """Get all data that we save in .traj files."""
         assert self._rloop is not None
 
-        best_attempt_idx = self._rloop.get_best()
-        if best_attempt_idx is None:
-            data = {"info": {}}
-        else:
-            # Very important to deepcopy the best attempt data, because we will overwrite
-            # the stats with the total stats below.
-            data = {
-                "attempts": self._attempt_data,
-                **copy.deepcopy(self._attempt_data[best_attempt_idx]),
-            }
-        data["info"]["best_attempt_idx"] = best_attempt_idx
-        data["info"]["rloop_model_stats"] = self._rloop._model.stats.model_dump()
-        # Overwrite model stats with total stats
-        data["info"]["model_stats"] = self._total_instance_stats.model_dump()
+        data = {
+            "attempts": self._attempt_data,
+        }
+
+        if choose:
+            best_attempt_idx = self._rloop.get_best()
+            data |= copy.deepcopy(self._attempt_data[best_attempt_idx])  # type: ignore
+            data["info"]["best_attempt_idx"] = best_attempt_idx
+            data["info"]["rloop_model_stats"] = self._rloop.review_model_stats.model_dump()
+            # Overwrite model stats with total stats
+            data["info"]["model_stats"] = self._total_instance_stats.model_dump()
+            if isinstance(self._rloop, ChooserRetryLoop):
+                data["info"]["chooser"] = self._rloop.chooser_output.model_dump() if self._rloop.chooser_output else {}
 
         return data
 
-    def save_trajectory(self) -> None:
-        data = self.get_trajectory_data()
+    def save_trajectory(self, choose: bool) -> None:
+        data = self.get_trajectory_data(choose=choose)
         assert self._traj_path is not None
         self._traj_path.write_text(json.dumps(data, indent=2))
 
@@ -354,7 +359,7 @@ class RetryAgent(AbstractAgent):
         assert self._agent is not None
         while not step_output.done:
             step_output = self.step()
-            self.save_trajectory()
+            self.save_trajectory(choose=False)
             if step_output.done:
                 self._rloop.on_submit(
                     ReviewSubmission(
@@ -363,21 +368,22 @@ class RetryAgent(AbstractAgent):
                         model_stats=self._agent.model.stats,
                     )
                 )
-                self._agent.info["review"] = self._rloop.reviews[-1].model_dump()  # type: ignore
+                if isinstance(self._rloop, ScoreRetryLoop):
+                    self._agent.info["review"] = self._rloop.reviews[-1].model_dump()  # type: ignore
                 self._finalize_agent_run()
-                self.save_trajectory()
+                self.save_trajectory(choose=False)
                 if self._rloop.retry():
                     assert self._env is not None
                     self._next_attempt()
                     step_output.done = False
-        self.save_trajectory()  # call again after we finalized
+        self.save_trajectory(choose=True)  # call again after we finalized
         self._chook.on_run_done(trajectory=self._agent.trajectory, info=self._agent.info)
 
         self.logger.info("Trajectory saved to %s", self._traj_path)
 
         # Here we want to return the "global" information (e.g., submission should
         # be the best submission instead of the last one, etc.), so we get it from the traj file
-        data = self.get_trajectory_data()
+        data = self.get_trajectory_data(choose=True)
         return AgentRunResult(info=data["info"], trajectory=data["trajectory"])
 
 
