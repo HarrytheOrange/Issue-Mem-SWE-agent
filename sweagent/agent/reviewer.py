@@ -329,17 +329,40 @@ class Chooser:
     def choose(self, problem_statement: str, input: list[ReviewSubmission]) -> ChooserOutput:
         preselector_output = None
         selected_indices = list(range(len(input)))
-        if self.config.preselector:
+        n_submitted = sum(s.info.get("exit_status", "") == "submitted" for s in input)
+        if n_submitted >= 2:
+            self.logger.debug(f"Got {n_submitted} submitted submissions, only using them")
+            selected_indices = [i for i, s in enumerate(input) if s.info.get("exit_status", "") == "submitted"]
+        else:
+            self.logger.debug(f"Got only {n_submitted} submitted submissions, disabling exit status filtering")
+        if self.config.preselector and len(selected_indices) > 2:
             preselector = Preselector(self.config.preselector)
-            preselector_output = preselector.choose(problem_statement, input)
-            selected_indices = preselector_output.chosen_idx
-        if not selected_indices:
-            self.logger.error("Preselector must have failed, using all indices")
-            selected_indices = list(range(len(input)))
+            try:
+                preselector_output = preselector.choose(problem_statement, [input[i] for i in selected_indices])
+            except Exception as e:
+                self.logger.error(f"Preselector failed: {e}", exc_info=True)
+                preselector_output = None
+            if preselector_output and preselector_output.chosen_idx:
+                try:
+                    _preselected_indices = [selected_indices[i] for i in preselector_output.chosen_idx]
+                except IndexError:
+                    _preselected_indices = []
+                    self.logger.error("Preselector gave invalid indices, ignoring it.")
+                if not _preselected_indices:
+                    self.logger.error("Preselector gave no valid indices, ignoring it.")
+                else:
+                    selected_indices = _preselected_indices
+            else:
+                self.logger.error("Preselector must have failed, ignoring it.")
         messages = self.build_messages(problem_statement, [input[i] for i in selected_indices])
-        response = self.model.query(messages)["message"]  # type: ignore
-        chosen_idx = self.interpret(response)
-        if chosen_idx is None or chosen_idx >= len(selected_indices):
+        chosen_idx = None
+        try:
+            response = self.model.query(messages)["message"]  # type: ignore
+            chosen_idx = self.interpret(response)
+        except Exception as e:
+            self.logger.error(f"Chooser failed: {e}", exc_info=True)
+            chosen_idx = None
+        if chosen_idx is None or not (0 <= chosen_idx < len(selected_indices)):
             self.logger.error(f"Invalid chosen index: {chosen_idx}, using first index")
             chosen_idx = selected_indices[0]
         else:
