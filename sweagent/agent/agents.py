@@ -325,7 +325,9 @@ class RetryAgent(AbstractAgent):
             # Overwrite model stats with total stats
             data["info"]["model_stats"] = self._total_instance_stats.model_dump()
             if isinstance(self._rloop, ChooserRetryLoop):
-                data["info"]["chooser"] = self._rloop.chooser_output.model_dump() if self._rloop.chooser_output else {}
+                data["info"]["chooser"] = (
+                    self._rloop._chooser_output.model_dump() if self._rloop._chooser_output else {}
+                )
 
         return data
 

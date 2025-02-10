@@ -63,6 +63,11 @@ class ReviewerResult(BaseModel):
     messages: list[dict[str, Any]]
 
 
+class PreselectorOutput(BaseModel):
+    chosen_idx: list[int]
+    response: str
+
+
 class ChooserOutput(BaseModel):
     chosen_idx: int
     response: str
@@ -118,13 +123,21 @@ class AbstractRetryLoop(ABC):
 # --- CONFIGS ---
 
 
+class PreselectorConfig(BaseModel):
+    model: ModelConfig
+    system_template: str
+    instance_template: str
+    submission_template: str
+    max_len_submission: int = 5000
+
+
 class ChooserConfig(BaseModel):
     model: ModelConfig
     system_template: str
     instance_template: str
     submission_template: str
     max_len_submission: int = 5000
-    # summarizer: SummarizerConfig | None = None
+    preselector: PreselectorConfig | None = None
 
 
 class TrajFormatterConfig(BaseModel):
@@ -224,6 +237,58 @@ RetryLoopConfig = ScoreRetryLoopConfig
 # --- IMPLEMENTATIONS ---
 
 
+class Preselector:
+    def __init__(self, config: PreselectorConfig):
+        self.config = config
+        self.model = get_model(config.model, ToolConfig(parse_function=ActionParser()))
+        self.model.logger.setLevel(logging.WARNING)  # type: ignore
+        self.logger = get_logger("chooser", emoji="🧠")
+        self.logger.setLevel(logging.WARNING)
+
+    def interpret(self, response: str) -> list[int]:
+        if not response:
+            self.logger.warning("No response from preselector")
+            return []
+        # Use regex to extract the last number of the response
+        last_line = response.splitlines()[-1]
+        try:
+            return [int(i) for i in re.findall(r"\d+", last_line)]
+        except Exception as e:
+            self.logger.error(f"Error interpreting response: {e}")
+            return []
+
+    def format_submission(self, problem_statement: str, submission: ReviewSubmission) -> str:
+        if (
+            submission.info.get("submission") is None
+            or len(submission.info.get("submission", "")) > self.config.max_len_submission > 0  # type: ignore
+        ):
+            return "Solution invalid."
+        return Template(self.config.submission_template).render(
+            **submission.to_format_dict(),
+            # summary=self.summarizer.summarize(problem_statement, submission.trajectory) if self.summarizer else "",
+        )
+
+    def build_messages(self, problem_statement: str, input: list[ReviewSubmission]) -> list[dict[str, Any]]:
+        instance_message = Template(self.config.instance_template).render(
+            problem_statement=problem_statement,
+            submissions=[self.format_submission(problem_statement, s) for s in input],
+        )
+        self.logger.debug(f"MODEL INPUT (user)\n{instance_message}")
+        return [
+            {"role": "system", "content": self.config.system_template},
+            {"role": "user", "content": instance_message},
+        ]
+
+    def choose(self, problem_statement: str, input: list[ReviewSubmission]) -> PreselectorOutput:
+        messages = self.build_messages(problem_statement, input)
+        response = self.model.query(messages)["message"]  # type: ignore
+        indices = self.interpret(response)
+        if not indices:
+            self.logger.warning("No indices found in response, using all indices")
+            indices = list(range(len(input)))
+        return PreselectorOutput(chosen_idx=indices, response=response)
+
+
 class Chooser:
     def __init__(self, config: ChooserConfig):
         self.config = config
@@ -251,10 +316,10 @@ class Chooser:
             # summary=self.summarizer.summarize(problem_statement, submission.trajectory) if self.summarizer else "",
         )
 
-    def build_messages(self, problem_statement: str, input: ReviewSubmission) -> list[dict[str, Any]]:
+    def build_messages(self, problem_statement: str, input: list[ReviewSubmission]) -> list[dict[str, Any]]:
         instance_message = Template(self.config.instance_template).render(
             problem_statement=problem_statement,
-            **input.to_format_dict(),
+            submissions=[self.format_submission(problem_statement, s) for s in input],
         )
         self.logger.debug(f"MODEL INPUT (user)\n{instance_message}")
         return [
@@ -262,7 +327,7 @@ class Chooser:
             {"role": "user", "content": instance_message},
         ]
 
-    def choose(self, problem_statement: str, input: ReviewSubmission) -> ChooserOutput:
+    def choose(self, problem_statement: str, input: list[ReviewSubmission]) -> ChooserOutput:
         messages = self.build_messages(problem_statement, input)
         response = self.model.query(messages)["message"]  # type: ignore
         chosen_idx = self.interpret(response)
@@ -401,7 +466,7 @@ class ChooserRetryLoop(AbstractRetryLoop):
         self._submissions: list[ReviewSubmission] = []
         self._n_consec_exit_cost: int = 0
         self.logger = get_logger("chooser_loop", emoji="🔄")
-        self.chooser_output: ChooserOutput | None = None
+        self._chooser_output: ChooserOutput | None = None
 
     @property
     def _total_stats(self) -> InstanceStats:
@@ -444,14 +509,12 @@ class ChooserRetryLoop(AbstractRetryLoop):
 
     def get_best(self) -> int | None:
         """Important note: This is cached. Only call this at the end."""
-        if self.chooser_output is not None:
-            return self.chooser_output.chosen_idx
+        if self._chooser_output is not None:
+            return self._chooser_output.chosen_idx
         if len(self._submissions) == 0:
             return None
-        self.chooser_output = self._chooser.choose(
-            self._problem_statement.get_problem_statement(), self._submissions[-1]
-        )
-        return self.chooser_output.chosen_idx
+        self._chooser_output = self._chooser.choose(self._problem_statement.get_problem_statement(), self._submissions)
+        return self._chooser_output.chosen_idx
 
 
 class ScoreRetryLoop(AbstractRetryLoop):
