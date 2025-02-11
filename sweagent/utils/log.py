@@ -12,6 +12,7 @@ from rich.text import Text
 
 _SET_UP_LOGGERS: set[str] = set()
 _ADDITIONAL_HANDLERS: dict[str, logging.Handler] = {}
+_LOG_LOCK = threading.Lock()
 
 logging.TRACE = 5  # type: ignore
 logging.addLevelName(logging.TRACE, "TRACE")  # type: ignore
@@ -112,14 +113,16 @@ def add_file_handler(
     formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(name)s - %(message)s")
     handler.setFormatter(formatter)
     handler.setLevel(_interpret_level(level))
-    for name in _SET_UP_LOGGERS:
-        if filter is not None:
-            if isinstance(filter, str) and filter not in name:
-                continue
-            if callable(filter) and not filter(name):
-                continue
-        logger = logging.getLogger(name)
-        logger.addHandler(handler)
+    with _LOG_LOCK:
+        # Lock because other thread might be modifying the _SET_UP_LOGGERS set
+        for name in _SET_UP_LOGGERS:
+            if filter is not None:
+                if isinstance(filter, str) and filter not in name:
+                    continue
+                if callable(filter) and not filter(name):
+                    continue
+            logger = logging.getLogger(name)
+            logger.addHandler(handler)
     handler.my_filter = filter  # type: ignore
     if not id_:
         id_ = str(uuid.uuid4())
@@ -130,9 +133,11 @@ def add_file_handler(
 def remove_file_handler(id_: str) -> None:
     """Remove a file handler by its id."""
     handler = _ADDITIONAL_HANDLERS.pop(id_)
-    for log_name in _SET_UP_LOGGERS:
-        logger = logging.getLogger(log_name)
-        logger.removeHandler(handler)
+    with _LOG_LOCK:
+        # Lock because other thread might be modifying the _SET_UP_LOGGERS set
+        for log_name in _SET_UP_LOGGERS:
+            logger = logging.getLogger(log_name)
+            logger.removeHandler(handler)
 
 
 def _add_logger_name_to_stream_handler(logger: logging.Logger) -> None:
@@ -146,8 +151,9 @@ def add_logger_names_to_stream_handlers() -> None:
     """Add the logger name to the stream handler for all loggers that we have set up."""
     global _INCLUDE_LOGGER_NAME_IN_STREAM_HANDLER
     _INCLUDE_LOGGER_NAME_IN_STREAM_HANDLER = True
-    for logger in _SET_UP_LOGGERS:
-        _add_logger_name_to_stream_handler(logging.getLogger(logger))
+    with _LOG_LOCK:
+        for logger in _SET_UP_LOGGERS:
+            _add_logger_name_to_stream_handler(logging.getLogger(logger))
 
 
 def set_stream_handler_levels(level: int) -> None:
@@ -158,10 +164,11 @@ def set_stream_handler_levels(level: int) -> None:
     """
     global _STREAM_LEVEL
     _STREAM_LEVEL = level
-    for name in _SET_UP_LOGGERS:
-        logger = logging.getLogger(name)
-        for handler in logger.handlers:
-            if isinstance(handler, _RichHandlerWithEmoji):
-                current_level = handler.level
-                if current_level < level:
-                    handler.setLevel(level)
+    with _LOG_LOCK:
+        for name in _SET_UP_LOGGERS:
+            logger = logging.getLogger(name)
+            for handler in logger.handlers:
+                if isinstance(handler, _RichHandlerWithEmoji):
+                    current_level = handler.level
+                    if current_level < level:
+                        handler.setLevel(level)
