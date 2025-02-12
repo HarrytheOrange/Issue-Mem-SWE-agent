@@ -88,8 +88,6 @@ MIT. Check `LICENSE`.
 <div align="center">
 
 [![Pytest](https://github.com/SWE-agent/SWE-agent/actions/workflows/pytest.yaml/badge.svg)](https://github.com/SWE-agent/SWE-agent/actions/workflows/pytest.yaml)
-[![Release to dockerhub (nightly)](https://github.com/SWE-agent/SWE-agent/actions/workflows/release-dockerhub-nightly.yaml/badge.svg)](https://github.com/SWE-agent/SWE-agent/actions/workflows/release-dockerhub-nightly.yaml)
-[![Release to dockerhub (release)](https://github.com/SWE-agent/SWE-agent/actions/workflows/release-dockerhub-release.yaml/badge.svg)](https://github.com/SWE-agent/SWE-agent/actions/workflows/release-dockerhub-release.yaml)
 [![build-docs](https://github.com/SWE-agent/SWE-agent/actions/workflows/build-docs.yaml/badge.svg)](https://github.com/SWE-agent/SWE-agent/actions/workflows/build-docs.yaml)
 [![codecov](https://codecov.io/gh/SWE-agent/SWE-agent/graph/badge.svg?token=18XAVDK365)](https://codecov.io/gh/SWE-agent/SWE-agent)
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/SWE-agent/SWE-agent/main.svg)](https://results.pre-commit.ci/latest/github/SWE-agent/SWE-agent/main)
