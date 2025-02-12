@@ -144,6 +144,8 @@ plugins:
 repo_url: https://github.com/SWE-agent/SWE-agent
 repo_name: SWE-agent/SWE-agent
 edit_uri: edit/main/docs/
+extra_javascript:
+  - assets/js/sh-annotation.js
 extra_css:
   - assets/custom.css
   - assets/mkdocstrings.css

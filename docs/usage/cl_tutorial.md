@@ -15,7 +15,7 @@ Before we start with a more structured explanation of the command line options, 
 ```bash title="Fix a github issue"
 python run.py \
   --agent.model.name=gpt4 \
-  --agent.model.per_instance_cost_limit=2.00 \  # (1)!
+  --agent.model.per_instance_cost_limit=2.00 \
   --env.repo.github_url=https://github.com/SWE-agent/test-repo \
   --problem_statement.github_url=https://github.com/SWE-agent/test-repo/issues/1
 ```

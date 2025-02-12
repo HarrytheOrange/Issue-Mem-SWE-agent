@@ -20,14 +20,14 @@ Let's start with an absolutely trivial example and solve an issue about a simple
 
 ```bash
 sweagent run \
-  --agent.model.name=claude-3-5-sonnet-20241022 \  # (1)!
-  --agent.model.per_instance_cost_limit=2.00 \  # (2)!
+  --agent.model.name=claude-3-5-sonnet-20241022 \ # (1)!
+  --agent.model.per_instance_cost_limit=2.00 \ # (2)!
   --env.repo.github_url=https://github.com/SWE-agent/test-repo \
   --problem_statement.github_url=https://github.com/SWE-agent/test-repo/issues/1
 ```
 
 1. We recommend either `Claude 3.5 Sonnet` or `GPT-4o` for this tutorial.
-2. This limits the inference cost per instance to $2. The default is $3.
+2. This limits the inference cost per instance (per solved problem) to $2. The default is $3.
 
 !!! tip "Annotations"
     Notice the :material-chevron-right-circle: icon in the right margin in the code snippet? Click on it to display more information
