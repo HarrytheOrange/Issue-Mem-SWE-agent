@@ -46,6 +46,10 @@ Kind of slow, isn't it?
     * See [`RunBatchConfig`](../reference/run_batch_config.md/#sweagent.run.run_batch.RunBatchConfig) for an overview of all options.
     * SWE-bench config: [`SWEBenchInstances`](../reference/batch_instances.md/#sweagent.run.batch_instances.SWEBenchInstances).
 
+!!! tip "Evaluating on SWE-bench"
+    If you are using [`sb-cli`](https://www.swebench.com/sb-cli/), you can automatically evaluate on SWE-bench by adding the `--evaluate=True` flag.
+    This will already submit submissions to `sb-cli` while you are running, so that you should receive results within a minute of finishing your run.
+
 ## Running in parallel
 
 Let's speed things up and run on 5 instances at once. Only a single line to change:

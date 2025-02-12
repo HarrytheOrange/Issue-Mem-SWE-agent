@@ -5,7 +5,7 @@
 
     * Please read our [hello world](hello_world.md) tutorial before proceeding.
     * This tutorial focuses on using SWE-agent as a tool to solve individual issues.
-      Benchmarking SWE-agent is covered [separately](benchmarking.md).
+      Benchmarking SWE-agent is covered [separately](batch_mode.md).
       Finally, we have a different tutorial for using SWE-agent for [coding challenges](coding_challenges.md).
 
 ## A few examples
@@ -128,7 +128,7 @@ in addition to all the other `--config` options for the two examples above.
 
 !!! note "Operating in batch mode: Running on SWE-bench and other benchmark sets"
     If you want to run SWE-agent in batch mode on SWE-bench or another whole evaluation set, see
-    [benchmarking](benchmarking.md). This tutorial focuses on using SWE-agent on
+    [batch mode](batch_mode.md). This tutorial focuses on using SWE-agent on
     individual issues.
 
 We've already seen a few examples of how to specify the problem to solve, namely

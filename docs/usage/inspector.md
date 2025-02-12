@@ -37,7 +37,7 @@ The inspector will then be launched in the browser:
 
 ## Benchmark results
 
-If you are running SWE-agent on a benchmark (see [benchmarking](benchmarking.md)), you will see evaluation results as ✅ or ❌.
+If you are running SWE-agent on a benchmark (see [batch mode](batch_mode.md)), you will see evaluation results as ✅ or ❌.
 Otherwise, you will see ❓.
 
 !!! tip

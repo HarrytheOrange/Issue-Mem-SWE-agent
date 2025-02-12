@@ -85,8 +85,8 @@ Here are a few more files that are generated with `sweagent run-batch`:
 
 
 !!! tip
-    * Evaluation is not completed by `sweagent run-batch`, it is a separate step (see [benchmarking](benchmarking.md))
-    * `preds.json` can be referenced directly into SWE-bench to run evaluation (see [benchmarking](benchmarking.md))
+    * Evaluation is not completed by `sweagent run-batch`, it is a separate step (see [batch mode](batch_mode.md))
+    * `preds.json` can be referenced directly into SWE-bench to run evaluation
     * Trajectories can be turned into custom demonstrations for SWE-agent ([more information](../config/demonstrations.md)).
 
 {% include-markdown "../_footer.md" %}
