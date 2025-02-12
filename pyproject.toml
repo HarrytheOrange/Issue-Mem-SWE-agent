@@ -58,6 +58,7 @@ dependencies = [
     "GitPython",
     "ghapi",
     "swe-rex>=1.0.3"
+    "tabulate",
 ]
 
 [project.scripts]
