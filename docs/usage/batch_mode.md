@@ -139,13 +139,13 @@ where `instances.yaml` could look like this:
     deployment:
       type: docker
       image: python:3.11
-  problem_statement:
+    repo:
+        type: github
+        github_url: "https://github.com/swe-agent/test-repo"
+problem_statement:
     type: text
     text: "A simple test problem"
     id: "simple_test_problem"
-  repo:
-    type: github
-    github_url: "https://github.com/swe-agent/test-repo"
 - env:
     deployment:
       type: docker
