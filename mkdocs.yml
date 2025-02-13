@@ -84,6 +84,7 @@ nav:
       - "index": "config/index.md"
       - "Config files": "config/config.md"
       - "Templates": "config/templates.md"
+      - "Models": "config/models.md"
       - "Demonstrations": "config/demonstrations.md"
       - "Tools": "config/tools.md"
       - "Environments": "config/environments.md"
@@ -105,6 +106,7 @@ nav:
       - "Templates": "reference/template_config.md"
       - "Tools": "reference/tools_config.md"
       - "History processors": "reference/history_processor_config.md"
+      - "Action parsers": "reference/parsers.md"
     - "Environment config": "reference/env_config.md"
     - "Tool bundle config": "reference/bundle_config.md"
     - Classes:
