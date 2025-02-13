@@ -1,5 +1,42 @@
 # Changelog
 
+## 1.0.0 (2025-02-13)
+
+This is a massive release that includes many new features, fixes, and changes.
+You can read more about the changes in the [migration guide](migration.md).
+
+### Added
+
+* Fast, massively parallel code execution with [SWE-ReX](https://github.com/swe-agent/SWE-ReX).
+* Run SWE-agent locally but execute code in the cloud (using modal, AWS, or anything else that runs [SWE-ReX](https://github.com/swe-agent/SWE-ReX)).
+* Configurable retry mechanisms: Try multiple agent configurations, models, parameters, etc., then choose the best one.
+* Flexible tool definitions with [tool bundles](../config/tools.md).
+* All language models supported using `litellm` (see [models](../installation/keys.md)).
+* Override any configuration option from the command line (see [command line basics](../usage/cl_tutorial.md)).
+* New [command line trajectory inspector](../usage/inspector.md) to scroll few hundreds of trajectories with ease.
+* [New command line interface](../usage/cli.md) with subcommands for running over single issues, batches, and various utility commands.
+* Greatly simplified and cleaned up codebase. In particular, the `Agent` class is now much easier to modify.
+
+## Changed
+
+* The code base has been largely rewritten. Lots of things have moved and changed.
+* The biggest change is that we now use [SWE-ReX](https://github.com/swe-agent/SWE-ReX) for code execution. This allowed us to remove a lot of distracting code from the agent.
+* We now use [`pydantic`](https://docs.pydantic.dev/) for all configuration.
+* Templates are now [`jinja2`](https://jinja.palletsprojects.com/) templates, which gives you more flexibility (but you'll have to update your templates)
+* All models are now configured using `litellm` (see [models](../installation/keys.md)).
+
+See the [migration guide](migration.md) for more details.
+
+## New contributors
+
+* [@manya706](https://github.com/manya706) made their first contribution in [#787](https://github.com/SWE-agent/SWE-agent/pull/787)
+* [@Prathamesh010](https://github.com/Prathamesh010) made their first contribution in [#796](https://github.com/SWE-agent/SWE-agent/pull/796)
+* [@magnimusprime](https://github.com/magnimusprime) made their first contribution in [#813](https://github.com/SWE-agent/SWE-agent/pull/813)
+* [@dependabot](https://github.com/dependabot) made their first contribution in [#817](https://github.com/SWE-agent/SWE-agent/pull/817)
+* [@Mefisto04](https://github.com/Mefisto04) made their first contribution in [#824](https://github.com/SWE-agent/SWE-agent/pull/824)
+* [@acheshkov](https://github.com/acheshkov) made their first contribution in [#857](https://github.com/SWE-agent/SWE-agent/pull/857)
+* [@yu-iskw](https://github.com/yu-iskw) made their first contribution in [#881](https://github.com/SWE-agent/SWE-agent/pull/881)
+
 ## 0.7.0 (2024-09-23)
 
 ### Added
@@ -42,16 +79,15 @@ and Summarizers.
 
 🎉 **@talorabr, @udiboy1209, @haoranxi, @NickNameInvalid, @rollingcoconut joined the team to build EnIGMA** 🎉
 
-* @carlosejimenez made their first contribution in [#601](https://github.com/SWE-agent/SWE-agent/pull/601)
-* @samefarrar made their first contribution in [#606](https://github.com/SWE-agent/SWE-agent/pull/606)
-* @hubstrauss made their first contribution in [#625](https://github.com/SWE-agent/SWE-agent/pull/625)
-* @samuela made their first contribution in [#619](https://github.com/SWE-agent/SWE-agent/pull/619)
-* @forresty made their first contribution in [#628](https://github.com/SWE-agent/SWE-agent/pull/628)
-* @jcraftsman made their first contribution in [#638](https://github.com/SWE-agent/SWE-agent/pull/638)
-* @ivan4722 made their first contribution in [#693](https://github.com/SWE-agent/SWE-agent/pull/693)
-* @JoshuaPurtell made their first contribution in [#703](https://github.com/SWE-agent/SWE-agent/pull/703)
-* @MohammedNagdy made their first contribution in [#721](https://github.com/SWE-agent/SWE-agent/pull/721)
-* @pdemro made their first contribution in [#729](https://github.com/SWE-agent/SWE-agent/pull/729)
+* [@samefarrar](https://github.com/samefarrar) made their first contribution in [#606](https://github.com/SWE-agent/SWE-agent/pull/606)
+* [@hubstrauss](https://github.com/hubstrauss) made their first contribution in [#625](https://github.com/SWE-agent/SWE-agent/pull/625)
+* [@samuela](https://github.com/samuela) made their first contribution in [#619](https://github.com/SWE-agent/SWE-agent/pull/619)
+* [@forresty](https://github.com/forresty) made their first contribution in [#628](https://github.com/SWE-agent/SWE-agent/pull/628)
+* [@jcraftsman](https://github.com/jcraftsman) made their first contribution in [#638](https://github.com/SWE-agent/SWE-agent/pull/638)
+* [@ivan4722](https://github.com/ivan4722) made their first contribution in [#693](https://github.com/SWE-agent/SWE-agent/pull/693)
+* [@JoshuaPurtell](https://github.com/JoshuaPurtell) made their first contribution in [#703](https://github.com/SWE-agent/SWE-agent/pull/703)
+* [@MohammedNagdy](https://github.com/MohammedNagdy) made their first contribution in [#721](https://github.com/SWE-agent/SWE-agent/pull/721)
+* [@pdemro](https://github.com/pdemro) made their first contribution in [#729](https://github.com/SWE-agent/SWE-agent/pull/729)
 
 ## 0.6.1 (2024-06-20)
 
