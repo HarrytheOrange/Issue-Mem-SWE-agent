@@ -4,6 +4,13 @@
 
 Probably all of them! There's even a few for testing. See [models](installation/keys.md).
 
+> What can I do if my model doesn't support function calling?
+
+You can configure how to parse the model's response by choosing your `parse_function`.
+The default now is `function_calling`, but you can choose to `thought_action`.
+More information in the [reference](reference/parsers.md).
+There are also some config example in our [config folder](https://github.com/SWE-agent/SWE-agent/tree/main/config).
+
 > What's up with all the output files?
 
 You're probably most interested in the `*.traj` files, which contain complete records of SWE-agent's thought process and actions. See [output files](usage/trajectories.md) for more information.

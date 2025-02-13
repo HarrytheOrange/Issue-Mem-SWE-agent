@@ -34,6 +34,14 @@ Here are a few options for `--agent.model.name`:
 | `gpt-4o` | `OPENAI_API_KEY` | |
 | `o1-preview` | `OPENAI_API_KEY` | You might need to set temperature and sampling to the supported values. |
 
+!!! hint "Parsers"
+
+  The default config uses function calling to retrieve actions from the model response.
+  If your model doesn't support function calling, you can use the `thought_action` parser.
+  See [our API docs](../reference/parsers.md) for more details.
+  Remember to document the tools in your prompt as the model will not be able to see the function signature
+  like with function calling.
+
 ## Model options
 
 See [our API docs](../reference/model_config.md) for more details.
