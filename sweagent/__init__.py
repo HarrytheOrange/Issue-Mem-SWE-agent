@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from functools import partial
 
 from git import Repo
@@ -23,6 +24,14 @@ getLogger("numexpr.utils").setLevel(WARNING)
 getLogger("LiteLLM").setLevel(WARNING)
 
 PACKAGE_DIR = Path(__file__).resolve().parent
+
+if sys.version_info < (3, 11):
+    msg = (
+        f"Python {sys.version_info.major}.{sys.version_info.minor} is not supported. "
+        "SWE-agent requires Python 3.11 or higher."
+    )
+    raise RuntimeError(msg)
+
 assert PACKAGE_DIR.is_dir(), PACKAGE_DIR
 REPO_ROOT = PACKAGE_DIR.parent
 assert REPO_ROOT.is_dir(), REPO_ROOT
