@@ -544,7 +544,11 @@ class LiteLLMModel(AbstractModel):
         self.tools = tools
         if tools.use_function_calling:
             if not litellm.utils.supports_function_calling(model=self.config.name):
-                msg = f"Model {self.config.name} does not support function calling"
+                msg = (
+                    f"Model {self.config.name} does not support function calling. If your model"
+                    " does not support function calling, you can use `parse_function='thought_action'` instead. "
+                    "See https://swe-agent.com/latest/faq/ for more information."
+                )
                 raise ValueError(msg)
         self.model_max_input_tokens = litellm.model_cost.get(self.config.name, {}).get("max_input_tokens")
         self.model_max_output_tokens = litellm.model_cost.get(self.config.name, {}).get("max_output_tokens")
