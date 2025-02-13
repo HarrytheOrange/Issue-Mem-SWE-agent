@@ -13,6 +13,11 @@ It might be easiest to simply look at some of our example configurations in the 
 ```
 </details>
 
-::: sweagent.agent.agents.AgentConfig
+Currently, there are two main agent classes:
+
+* `DefaultAgentConfig`: This is the default agent.
+* `RetryAgentConfig`: A "meta agent" that instantiates multiple agents for multiple attempts and then picks the best solution.
 
 ::: sweagent.agent.agents.RetryAgentConfig
+
+::: sweagent.agent.agents.DefaultAgentConfig
