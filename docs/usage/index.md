@@ -13,6 +13,14 @@ Just want to run it? See [getting started](../index.md) instead!
 
     [:octicons-arrow-right-24: Learn more](../background/index.md)
 
+-   :material-book:{ .lg .middle } __Command line interface__
+
+    ---
+
+    Learn about all the different subcommands of `sweagent`.
+
+    [:octicons-arrow-right-24: Learn more](../usage/cli.md)
+
 -   :material-cog:{ .lg .middle } __Configuration__
 
     ---
