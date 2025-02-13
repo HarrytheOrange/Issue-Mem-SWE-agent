@@ -30,14 +30,14 @@ python run.py \
 ```bash title="Fix a bug in a local repository using a custom docker image" hl_lines="4 5 6"
 git clone https://github.com/SWE-agent/test-repo.git
 python run.py \
-  --agent.model.name=claude-3.5 \  # (1)!
+  --agent.model.name=claude-3.5 \
   --env.repo.path=test-repo \
   --problem_statement.path=test-repo/problem_statements/1.md \
-  --env.deployment.image=python:3.12  # (2)!
+  --env.deployment.image=python:3.12
 ```
 
-1. Make sure to add anthropic keys to the environment for this one!
-2. This points to the [dockerhub image](https://hub.docker.com/_/python) of the same name
+1. Make sure to add anthropic keys (or keys for your model provider) to the environment for this one!
+2. `--env.deployment.image` points to the [dockerhub image](https://hub.docker.com/_/python) of the same name
 
 
 For the next example, we will use a cloud-based execution environment instead of using local docker containers.
@@ -208,11 +208,11 @@ In addition, you can also execute additional commands before starting the agent 
 ```bash
 sweagent run \
     --agent.model.name=claude-3-5-sonnet-20241022 \
-    --env.post_startup_commands='["pip install flake8"]' \  # (1)!
+    --env.post_startup_commands='["pip install flake8"]' \
     ...
 ```
 
-1. Note the list syntax that is passed as a string using single ticks `'`. This is particularly important for `zsh` where `[`, `]` have special meaning.
+Note the list syntax that is passed as a string using single ticks `'`. This is particularly important for `zsh` where `[`, `]` have special meaning.
 
 Here's an example of a custom docker environment (it's also available in the repo as `docker/tiny_test.Dockerfile`):
 
@@ -238,6 +238,8 @@ SHELL ["/bin/bash", "-c"]
 # This is where pipx installs things
 ENV PATH="$PATH:/root/.local/bin/"  # (7)!
 ```
+
+Click on the :material-chevron-right-circle: icon in the right margin of the code snippet to see more information about the lines.
 
 1. This is the base image.
 2. This is to avoid any interactive prompts from the package manager.

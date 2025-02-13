@@ -17,18 +17,20 @@ sweagent run-batch \
     --config config/default.yaml \
     --agent.model.name gpt-4o \
     --agent.model.per_instance_cost_limit 2.00 \
-    --instances.type swe_bench \  # (1)!
-    --instances.subset lite \  # (2)!
-    --instances.split dev  \  # (3)!
-    --instances.slice :3 \  # (4)!
-    --instances.shuffle=True  # (5)!
+    --instances.type swe_bench \
+    --instances.subset lite \
+    --instances.split dev  \
+    --instances.slice :3 \
+    --instances.shuffle=True
 ```
 
-1. There's a couple of built-in ways to configure instances. This option selects the SWE-bench dataset.
-2. There's a few datasets provided by the SWE-bench project. Lite is a subset of GitHub issues with a few heuristic filters that makes them more likely to be solvable.
-3. Most datasets have a `dev` and a `test` split.
-4. The `--slice` option allows you to select a subset of instances from the dataset. It works just the way to pythons `list[...]` slicing, so you can specify `:10` to take the first 10 instances, `10:20` to take the next 10, `-10:` to take the last 10, or `10:20:2` to take every second instance in that range.
-5. Shuffle all instances before slicing.
+Let's look at the options:
+
+1. `--instances.type swe_bench`: There's a couple of built-in ways to configure instances. This option selects the SWE-bench dataset.
+2. `--instances.subset lite`: There's a few datasets provided by the SWE-bench project. Lite is a subset of GitHub issues with a few heuristic filters that makes them more likely to be solvable.
+3. `--instances.split dev`: Most datasets have a `dev` and a `test` split.
+4. `--instances.slice :3`: The `--slice` option allows you to select a subset of instances from the dataset. It works just the way to pythons `list[...]` slicing, so you can specify `:10` to take the first 10 instances, `10:20` to take the next 10, `-10:` to take the last 10, or `10:20:2` to take every second instance in that range.
+5. `--instances.shuffle=True`: Shuffle all instances before slicing. This is a deterministic operation, so the same command will always return the same instances in the same order.
 
 * There's some things that you should recognize: All of the `--agent` options are available and you can still specify `--config` files.
 * However, the `--problem_statement`, `--repo`, and `--env` options obviously need to change, because you now want to populate these settings automatically from a source.
@@ -84,12 +86,12 @@ sweagent run-batch \
     --config config/default.yaml \
     --agent.model.name gpt-4o \
     --instances.type file \
-    --instances.path instances.yaml  # (1)!
+    --instances.path instances.yaml \
     --instances.slice :3 \
     --instances.shuffle=True
 ```
 
-1. We support `.jsonl`, `.json`, and `.yaml` files.
+`--instances.path` supports `.jsonl`, `.json`, and `.yaml` files.
 
 Here'the simplest example of what such a file can look like
 
