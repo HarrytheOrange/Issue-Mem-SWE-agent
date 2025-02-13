@@ -1,8 +1,14 @@
 # Models
 
+!!! hint "Tutorial"
+
+    Please see the [model section in the installation guide](../installation/keys.md) for an overview of the different models and how to configure them.
+
 This page documents the configuration objects used to specify the behavior of a language model (LM).
 
-## Normal LMs
+In most cases, you will want to use the `GenericAPIModelConfig` object.
+
+## API LMs
 
 ::: sweagent.agent.models.GenericAPIModelConfig
     options:

@@ -22,7 +22,7 @@ Here's an example
 
 See the following links for tutorials on obtaining [Anthropic](https://docs.anthropic.com/en/api/getting-started), [OpenAI](https://platform.openai.com/docs/quickstart/step-2-set-up-your-api-key), and [Github](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) tokens.
 
-## Supported models
+## Supported API models
 
 We support all models supported by [litellm](https://github.com/BerriAI/litellm), see their list [here](https://docs.litellm.ai/docs/providers).
 
@@ -34,19 +34,43 @@ Here are a few options for `--agent.model.name`:
 | `gpt-4o` | `OPENAI_API_KEY` | |
 | `o1-preview` | `OPENAI_API_KEY` | You might need to set temperature and sampling to the supported values. |
 
-!!! hint "Parsers"
+!!! warning "Function calling and more: Setting the correct parser"
 
-  The default config uses function calling to retrieve actions from the model response.
-  If your model doesn't support function calling, you can use the `thought_action` parser.
-  See [our API docs](../reference/parsers.md) for more details.
-  Remember to document the tools in your prompt as the model will not be able to see the function signature
-  like with function calling.
+    The default config uses function calling to retrieve actions from the model response, i.e.,
+    the model directly provides the action as a JSON object.
+    If your model doesn't support function calling, you can use the `thought_action` parser by setting
+    `agent.tools.parse_function` to `thought_action`.
+    Then, we extract the last triple-backticks block from the model response as the action.
+    See [our API docs](../reference/parsers.md) for more details on parsers.
+    Remember to document the tools in your prompt as the model will not be able to see the function signature
+    like with function calling.
 
-## Model options
+## Using local models
 
-See [our API docs](../reference/model_config.md) for more details.
+We currently support all models that serve to an endpoint with an OpenAI-compatible API.
 
-### Models for testing
+For example, to use llama, you can folloow the [litellm instructions](https://docs.litellm.ai/docs/providers/ollama) and set
+
+```
+agent:
+  model:
+    name: ollama/llama2
+    api_base: http://localhost:11434
+```
+
+Please see the above note about using a config that uses the `thought_action` parser instead of the function calling parser.
+
+!!! warning "Exit conditions"
+
+    If your local model does not have a cost assigned to, you can use `agent.model.per_instance_call_limit` to limit the runtime per issue.
+
+## Complete model options
+
+!!! hint "Complete model options"
+
+    See [our API docs](../reference/model_config.md) for all available options.
+
+## Models for testing
 
 We also provide models for testing SWE-agent without spending any credits
 
@@ -61,3 +85,5 @@ We also provide models for testing SWE-agent without spending any credits
   line should be deleted or commented out).
   Also see [this issue](https://github.com/SWE-agent/SWE-agent/issues/467)
   for reference.
+
+% include-markdown "../_footer.md" %}
