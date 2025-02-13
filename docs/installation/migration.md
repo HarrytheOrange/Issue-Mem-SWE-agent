@@ -7,6 +7,7 @@ Welcome to SWE-agent 1.0! So much new stuff! Here's a quick rundown of the cool 
 
 * :sparkles: Fast, massively parallel code execution with [SWE-ReX](https://github.com/swe-agent/SWE-ReX).
 * :sparkles: Run SWE-agent locally but execute code in the cloud (using modal, AWS, or anything else that runs [SWE-ReX](https://github.com/swe-agent/SWE-ReX)).
+* :sparkles: Configurable retry mechanisms: Try multiple agent configurations, models, parameters, etc., then choose the best one.
 * :sparkles: Flexible tool definitions with [tool bundles](../config/tools.md).
 * :sparkles: All language models supported using `litellm` (see [models](../installation/keys.md)).
 * :sparkles: Override any configuration option from the command line (see [command line basics](../usage/cl_tutorial.md)).

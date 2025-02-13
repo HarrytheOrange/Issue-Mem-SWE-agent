@@ -71,7 +71,6 @@ nav:
       - "Solving coding challenges": "usage/coding_challenges.md"
       - "Trajectory inspector": "usage/inspector.md"
       - "Batch mode": "usage/batch_mode.md"
-      - "Benchmarking": "usage/benchmarking.md"
     - "FAQ": "faq.md"
   - User Guides:
     - "usage/index.md"
