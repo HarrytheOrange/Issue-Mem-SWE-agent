@@ -44,7 +44,7 @@ def compare_many(paths: list[Path]) -> None:
         row = [id] + [get_emoji(id, path) for path in paths]
         n_success = sum(id in resolved_ids[path] for path in paths)
         n_evaluated = sum(id in evaluated_ids[path] for path in paths)
-        row.append(f"{n_success/n_evaluated:.2f}")
+        row.append(f"{n_success / n_evaluated:.2f}")
         table.append(row)
     successes: list[str | float] = ["Successes"]
     success_rates: list[str | float] = ["Success rates"]
@@ -52,7 +52,7 @@ def compare_many(paths: list[Path]) -> None:
         n_success = sum(id in resolved_ids[path] for id in ids_to_compare)
         n_evaluated = sum(id in evaluated_ids[path] for id in ids_to_compare)
         successes.append(n_success)
-        success_rates.append(f"{n_success/n_evaluated:.2f}")
+        success_rates.append(f"{n_success / n_evaluated:.2f}")
     table.append(successes)
     table.append(success_rates)
     print(tabulate(table, headers=header))
