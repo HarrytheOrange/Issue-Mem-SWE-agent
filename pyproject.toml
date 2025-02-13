@@ -57,7 +57,7 @@ dependencies = [
     "litellm",
     "GitPython",
     "ghapi",
-    "swe-rex>=1.0.3"
+    "swe-rex>=1.0.3",
     "tabulate",
 ]
 
