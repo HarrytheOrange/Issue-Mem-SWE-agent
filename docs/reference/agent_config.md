@@ -15,3 +15,4 @@ It might be easiest to simply look at some of our example configurations in the 
 
 ::: sweagent.agent.agents.AgentConfig
 
+::: sweagent.agent.agents.RetryAgentConfig
