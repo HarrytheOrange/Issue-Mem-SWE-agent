@@ -10,6 +10,7 @@ Welcome to SWE-agent 1.0! So much new stuff! Here's a quick rundown of the cool 
 * :sparkles: Flexible tool definitions with [tool bundles](../config/tools.md).
 * :sparkles: All language models supported using `litellm` (see [models](../installation/keys.md)).
 * :sparkles: Override any configuration option from the command line (see [command line basics](../usage/cl_tutorial.md)).
+* :sparkles: New [command line trajectory inspector](../usage/inspector.md) to scroll few hundreds of trajectories with ease.
 * :sparkles: Greatly simplified and cleaned up codebase. In particular, the `Agent` class is now much easier to modify.
 
 If you're familiar with the old SWE-agent, here are the main changes you need to be aware of.
