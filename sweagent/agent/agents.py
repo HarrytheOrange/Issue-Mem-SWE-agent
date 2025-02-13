@@ -160,7 +160,7 @@ class RetryAgentConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-AgentConfig = Annotated[DefaultAgentConfig | RetryAgentConfig, Field(discriminator="type")]
+AgentConfig = Annotated[DefaultAgentConfig | RetryAgentConfig, Field(union_mode="left_to_right")]
 
 
 class _BlockedActionError(Exception):
