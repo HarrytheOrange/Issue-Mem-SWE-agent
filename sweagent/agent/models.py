@@ -552,7 +552,7 @@ class LiteLLMModel(AbstractModel):
                 raise ValueError(msg)
         self.model_max_input_tokens = litellm.model_cost.get(self.config.name, {}).get("max_input_tokens")
         self.model_max_output_tokens = litellm.model_cost.get(self.config.name, {}).get("max_output_tokens")
-        self.lm_provider = litellm.model_cost[self.config.name]["litellm_provider"]
+        self.lm_provider = litellm.model_cost.get(self.config.name, {}).get("litellm_provider")
         self.logger = get_logger("swea-lm", emoji="🤖")
 
     @property
@@ -649,7 +649,18 @@ class LiteLLMModel(AbstractModel):
                 raise ContextWindowExceededError from e
             raise
         self.logger.info(f"Response: {response}")
-        cost = litellm.cost_calculator.completion_cost(response)
+        try:
+            cost = litellm.cost_calculator.completion_cost(response)
+        except Exception as e:
+            self.logger.debug(f"Error calculating cost: {e}, setting cost to 0.")
+            if self.config.per_instance_cost_limit > 0 or self.config.total_cost_limit > 0:
+                msg = (
+                    f"Error calculating cost: {e} for your model {self.config.name}. If this is ok "
+                    "(local models, etc.), please make sure you set `per_instance_cost_limit` and "
+                    "`total_cost_limit` to 0 to disable this safety check."
+                )
+                raise ValueError(msg)
+            cost = 0
         choices: litellm.types.utils.Choices = response.choices  # type: ignore
         n_choices = n if n is not None else 1
         outputs = []
