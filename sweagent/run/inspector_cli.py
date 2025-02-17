@@ -1,3 +1,5 @@
+"""This is a command line tool to inspect trajectory JSON files."""
+
 import argparse
 import collections
 import copy
@@ -48,7 +50,7 @@ class TrajectoryViewer(Static):
     def __init__(self, path: Path, title: str, overview_stats: dict, *, gold_patch: str | None = None):
         """View a single trajectory."""
         super().__init__()
-        self.current_index = -1
+        self.i_step = -1
         self.trajectory = json.loads(path.read_text())
         self.show_full = False
         self.title = title
@@ -83,7 +85,7 @@ class TrajectoryViewer(Static):
         syntax = Syntax(content_str, "yaml", theme="monokai", word_wrap=True)
         content = self.query_one("#content")
         content.update(syntax)  # type: ignore
-        self.app.sub_title = f"{self.title} - Step {self.current_index + 1}/{self.n_steps} - Full View"
+        self.app.sub_title = f"{self.title} - Step {self.i_step + 1}/{self.n_steps} - Full View"
 
     def _show_step_simple(self, item: dict) -> None:
         # Simplified view - show action and observation as plain text
@@ -95,7 +97,7 @@ class TrajectoryViewer(Static):
         content = self.query_one("#content")
         content.update(content_str)  # type: ignore
 
-        self.app.sub_title = f"{self.title} - Step {self.current_index + 1}/{self.n_steps} - Simple View"
+        self.app.sub_title = f"{self.title} - Step {self.i_step + 1}/{self.n_steps} - Simple View"
 
     def _show_info(self):
         info = copy.deepcopy(self.trajectory["info"])
@@ -105,15 +107,15 @@ class TrajectoryViewer(Static):
         syntax = Syntax(_yaml_serialization_with_linebreaks(info), "yaml", theme="monokai", word_wrap=True)
         content = self.query_one("#content")
         content.update(syntax)  # type: ignore
-        next_help = "Press l to see step 1" if self.current_index < 0 else f"Press h to see step {self.n_steps}"
+        next_help = "Press l to see step 1" if self.i_step < 0 else f"Press h to see step {self.n_steps}"
         self.app.sub_title = f"{self.title} - Info ({next_help})"
 
     def update_content(self) -> None:
-        print(self.current_index)
-        if self.current_index < 0 or self.current_index >= self.n_steps:
+        print(self.i_step)
+        if self.i_step < 0 or self.i_step >= self.n_steps:
             return self._show_info()
 
-        item = self.trajectory["trajectory"][self.current_index]
+        item = self.trajectory["trajectory"][self.i_step]
 
         if self.show_full:
             return self._show_step_yaml(item)
@@ -121,13 +123,13 @@ class TrajectoryViewer(Static):
         return self._show_step_simple(item)
 
     def action_next_item(self) -> None:
-        if self.current_index < self.n_steps:
-            self.current_index += 1
+        if self.i_step < self.n_steps:
+            self.i_step += 1
             self.update_content()
 
     def action_previous_item(self) -> None:
-        if self.current_index > -1:
-            self.current_index -= 1
+        if self.i_step > -1:
+            self.i_step -= 1
             self.update_content()
 
     def action_toggle_view(self) -> None:
@@ -135,11 +137,11 @@ class TrajectoryViewer(Static):
         self.update_content()
 
     def action_first_item(self) -> None:
-        self.current_index = 0
+        self.i_step = 0
         self.update_content()
 
     def action_last_item(self) -> None:
-        self.current_index = self.n_steps - 1
+        self.i_step = self.n_steps - 1
         self.update_content()
 
     def action_scroll_down(self) -> None:
