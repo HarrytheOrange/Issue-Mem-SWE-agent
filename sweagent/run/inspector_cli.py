@@ -64,6 +64,7 @@ class TrajectoryViewer(Static):
         self.title = title
         self.gold_patch = gold_patch
         self.overview_stats = overview_stats
+        self.scroll_top()
         self.i_step = -1
         self.update_content()
 
@@ -126,11 +127,13 @@ class TrajectoryViewer(Static):
     def action_next_item(self) -> None:
         if self.i_step < self.n_steps:
             self.i_step += 1
+            self.scroll_top()
             self.update_content()
 
     def action_previous_item(self) -> None:
         if self.i_step > -1:
             self.i_step -= 1
+            self.scroll_top()
             self.update_content()
 
     def action_toggle_view(self) -> None:
@@ -144,6 +147,11 @@ class TrajectoryViewer(Static):
     def action_last_item(self) -> None:
         self.i_step = self.n_steps - 1
         self.update_content()
+
+    def scroll_top(self) -> None:
+        """Resets scrolling viewport"""
+        vs = self.query_one(VerticalScroll)
+        vs.scroll_home(animate=False)
 
     def action_scroll_down(self) -> None:
         vs = self.query_one(VerticalScroll)
