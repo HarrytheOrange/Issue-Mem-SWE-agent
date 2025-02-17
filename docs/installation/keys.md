@@ -8,11 +8,11 @@ There are two options to do this:
 
 1. Set the corresponding [environment variables](https://www.cherryservers.com/blog/how-to-set-list-and-manage-linux-environment-variables).
 2. Create a `.env` file at the root of this repository. All of the variables defined there will take the place of environment variables.
-
+3. Use `--agent.model.api_key` to set the key
 
 Here's an example
 
-```
+```bash
 # Remove the comment '#' in front of the line for all keys that you have set
 # GITHUB_TOKEN='GitHub Token for access to private repos'
 # OPENAI_API_KEY='OpenAI API Key Here if using OpenAI Model'
@@ -21,6 +21,10 @@ Here's an example
 ```
 
 See the following links for tutorials on obtaining [Anthropic](https://docs.anthropic.com/en/api/getting-started), [OpenAI](https://platform.openai.com/docs/quickstart/step-2-set-up-your-api-key), and [Github](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) tokens.
+
+!!! tip "Advanced settings"
+
+    See [model config](../config/models.md) for more details on advanced settings.
 
 ## Supported API models
 
@@ -45,13 +49,17 @@ Here are a few options for `--agent.model.name`:
     Remember to document the tools in your prompt as the model will not be able to see the function signature
     like with function calling.
 
+!!! tip "Specific models"
+
+    See [model config](../config/models.md) for more details on specific models.
+
 ## Using local models
 
 We currently support all models that serve to an endpoint with an OpenAI-compatible API.
 
 For example, to use llama, you can folloow the [litellm instructions](https://docs.litellm.ai/docs/providers/ollama) and set
 
-```
+```yaml
 agent:
   model:
     name: ollama/llama2
@@ -66,21 +74,14 @@ Please use the `per_instance_call_limit` instead to limit the runtime per issue.
 
 Please see the above note about using a config that uses the `thought_action` parser instead of the function calling parser.
 
-## Complete model options
+## Further reads
 
-!!! hint "Complete model options"
+!!! hint "Further reads"
 
     See [our API docs](../reference/model_config.md) for all available options.
+    Our [model config page](../config/models.md) has more details on specific models and tips and tricks.
 
-## Models for testing
-
-We also provide models for testing SWE-agent without spending any credits
-
-* `HumanModel` and `HumanThoughtModel` will prompt for input from the user that stands in for the output of the LM. This can be used to create new [demonstrations](../config/demonstrations.md#manual).
-* `ReplayModel` takes a trajectory as input and "replays it"
-* `InstantEmptySubmitTestModel` will create an empty `reproduce.py` and then submit
-
-### Debugging
+## Debugging
 
 * If you get `Error code: 404`, please check your configured keys, in particular
   whether you set `OPENAI_API_BASE_URL` correctly (if you're not using it, the
