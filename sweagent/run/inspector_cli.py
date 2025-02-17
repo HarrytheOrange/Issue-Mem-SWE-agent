@@ -64,6 +64,7 @@ class TrajectoryViewer(Static):
         self.title = title
         self.gold_patch = gold_patch
         self.overview_stats = overview_stats
+        self.i_step = -1
         self.update_content()
 
     def compose(self) -> ComposeResult:
