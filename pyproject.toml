@@ -59,6 +59,7 @@ dependencies = [
     "ghapi",
     "swe-rex>=1.0.3",
     "tabulate",
+    "textual>=1.0.0,<2.0.0",
 ]
 
 [project.scripts]
