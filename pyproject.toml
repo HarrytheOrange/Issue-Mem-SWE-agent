@@ -76,7 +76,7 @@ dev = [
     "pipx",
     "pre-commit",
     "pytest-xdist",
-    "griffe-pydantic==1.1.0",
+    "griffe-pydantic",
 ]
 
 [tool.setuptools]
