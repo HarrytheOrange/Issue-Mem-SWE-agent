@@ -98,6 +98,7 @@ class RunSingleConfig(BaseSettings, cli_implicit_flags=False):
         return [
             ACS("model", "agent.model.name"),
             ACS("agent.model", "agent.model.name"),
+            ACS("model.name", "agent.model.name"),
             ACS("per_instance_cost_limit", "agent.model.per_instance_cost_limit"),
             ACS("model.per_instance_cost_limit", "agent.model.per_instance_cost_limit"),
             ACS("config_file", "config"),
