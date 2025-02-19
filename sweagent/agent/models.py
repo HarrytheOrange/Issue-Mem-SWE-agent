@@ -751,8 +751,8 @@ class LiteLLMModel(AbstractModel):
                     # Only one tool call per observations
                     "tool_call_id": history_item["tool_call_ids"][0],  # type: ignore
                 }
-            elif "tool_calls" in history_item:
-                message = {"role": role, "content": history_item["content"], "tool_calls": history_item["tool_calls"]}
+            elif (tool_calls := history_item.get("tool_calls")) is not None:
+                message = {"role": role, "content": history_item["content"], "tool_calls": tool_calls}
             else:
                 message = {"role": role, "content": history_item["content"]}
             if "cache_control" in history_item:
