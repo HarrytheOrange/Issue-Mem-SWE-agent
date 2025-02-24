@@ -34,7 +34,13 @@ class EnvironmentConfig(BaseModel):
     )
     post_startup_commands: list[str] = []
     """Execute these commands before starting to run the agent but after all other setup steps.
-    They will be executed in the same shell as the agent."""
+    They will be executed in the same shell as the agent.
+    Note: Every command is passed as a string, not a list of arguments.
+    """
+    post_startup_command_timeout: int = 500
+    """Timeout for the post-startup commands.
+    NOTE: The timeout applies to every command in `post_startup_commands` separately.
+    """
 
     # pydantic config
     model_config = ConfigDict(extra="forbid")
@@ -49,6 +55,7 @@ class SWEEnv:
         deployment: AbstractDeployment,
         repo: Repo | RepoConfig | None,
         post_startup_commands: list[str],
+        post_startup_command_timeout: int = 500,
         hooks: list[EnvHook] | None = None,
         name: str = "main",
     ):
@@ -66,7 +73,8 @@ class SWEEnv:
         self.deployment = deployment
         self.repo = repo
         self._post_startup_commands = post_startup_commands
-        self.logger = get_logger("swea-env", emoji="🌱")
+        self.post_startup_command_timeout = post_startup_command_timeout
+        self.logger = get_logger("swea-env", emoji="���")
         self.name = name
         self.clean_multi_line_functions = lambda x: x
         self._chook = CombinedEnvHooks()
@@ -85,6 +93,7 @@ class SWEEnv:
             deployment=get_deployment(config.deployment),
             repo=config.repo,
             post_startup_commands=config.post_startup_commands,
+            post_startup_command_timeout=config.post_startup_command_timeout,
             name=config.name,
         )
 
@@ -102,7 +111,7 @@ class SWEEnv:
         self._init_deployment()
         self.reset()
         for command in self._post_startup_commands:
-            self.communicate(command, check="raise")
+            self.communicate(command, check="raise", timeout=self.post_startup_command_timeout)
 
     def _copy_repo(self) -> None:
         """Clone/copy repository/codebase in container"""
