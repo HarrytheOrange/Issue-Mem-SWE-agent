@@ -53,7 +53,7 @@ def get_agent_commit_hash() -> str:
     try:
         repo = Repo(REPO_ROOT, search_parent_directories=False)
     except Exception:
-        return ""
+        return "unavailable"
     return repo.head.object.hexsha
 
 
@@ -63,7 +63,7 @@ def get_rex_commit_hash() -> str:
     try:
         repo = Repo(Path(swerex.__file__).resolve().parent.parent.parent, search_parent_directories=False)
     except Exception:
-        return ""
+        return "unavailable"
     return repo.head.object.hexsha
 
 
@@ -77,12 +77,12 @@ def get_agent_version_info() -> str:
     hash = get_agent_commit_hash()
     rex_hash = get_rex_commit_hash()
     rex_version = get_rex_version()
-    return f"This is SWE-agent version {__version__} ({hash}) with SWE-ReX {rex_version} ({rex_hash})."
+    return f"This is SWE-agent version {__version__} ({hash=}) with SWE-ReX version {rex_version} ({rex_hash=})."
 
 
 def impose_rex_lower_bound() -> None:
     rex_version = get_rex_version()
-    minimal_rex_version = "1.1.0"
+    minimal_rex_version = "1.2.0"
     if version.parse(rex_version) < version.parse(minimal_rex_version):
         msg = (
             f"SWE-ReX version {rex_version} is too old. Please update to at least {minimal_rex_version}. "
