@@ -1,8 +1,5 @@
 # Configuration
 
-!!! warning "Under construction"
-    This section is under construction. SWE-agent 1.0.0 is much more flexible, but that also means that we need to cover more ground here.
-
 This page contains details describing how to write your own configurations to control how agents can interact with the `SWEEnv` environment.
 
 A configuration is represented in one or more `.yaml` files, specified by the `--config` flag in the [command line interface](../usage/cl_tutorial.md), allowing you to...
@@ -16,9 +13,14 @@ A configuration is represented in one or more `.yaml` files, specified by the `-
 !!! tip "Default config files"
     Our default config files are in the [`config/`](https://github.com/SWE-agent/SWE-agent/tree/main/config) directory.
 
-## Example configuration
+To use a config file, you can use the `--config` flag in the command line interface.
 
-This is the current default:
+```bash
+sweagent run --config config/your_config.yaml
+sweagent run-batch --config config/your_config.yaml
+```
+
+This is the current default configuration file which is loaded when no `--config` flag is provided:
 
 <details>
 <summary><code>default_from_url.yaml</code></summary>

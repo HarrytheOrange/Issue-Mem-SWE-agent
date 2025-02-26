@@ -43,7 +43,7 @@ Here are a few options for `--agent.model.name`:
     The default config uses function calling to retrieve actions from the model response, i.e.,
     the model directly provides the action as a JSON object.
     If your model doesn't support function calling, you can use the `thought_action` parser by setting
-    `agent.tools.parse_function` to `thought_action`.
+    `agent.tools.parse_function.type` to `thought_action`.
     Then, we extract the last triple-backticks block from the model response as the action.
     See [our API docs](../reference/parsers.md) for more details on parsers.
     Remember to document the tools in your prompt as the model will not be able to see the function signature
@@ -57,31 +57,51 @@ Here are a few options for `--agent.model.name`:
 
 We currently support all models that serve to an endpoint with an OpenAI-compatible API.
 
-For example, to use llama, you can folloow the [litellm instructions](https://docs.litellm.ai/docs/providers/ollama) and set
+For example, to use llama, you can follow the [litellm instructions](https://docs.litellm.ai/docs/providers/ollama) and set
 
-```yaml
+```yaml title="config/your_config.yaml"
 agent:
   model:
-    name: ollama/llama2
+    name: ollama/llama2  # (1)!
     api_base: http://localhost:11434
-    per_instance_cost_limit: 0
+    per_instance_cost_limit: 0   # (2)!
     total_cost_limit: 0
     per_instance_call_limit: 100
+  tools:
+    # The default for obtaining actions from model outputs is function calling.
+    # If your local model does not support that, you can use the thought_action parser
+    # instead (see below)
+    parse_function:
+      type: "thought_action"
 ```
 
-If you do not disable the default cost limits, you will see an error because the cost calculator will not be able to find the model in the `litellm` model cost dictionary.
-Please use the `per_instance_call_limit` instead to limit the runtime per issue.
+1. Make sure that your model includes a "provider", i.e., follows the form `provider/model_name`. The model name and provider might be arbitrarily chosen.
+2. We cannot track costs, so you must disable this (see below)
 
-Please see the above note about using a config that uses the `thought_action` parser instead of the function calling parser.
+in your [config file](../config/config.md).
 
-## Further reads
+!!! warning "Model providers"
 
-!!! hint "Further reads"
+    Make sure that your model name includes a "provider", i.e., follows the form `provider/model_name`. The model name and provider might be arbitrarily chosen
+    for local models.
 
-    See [our API docs](../reference/model_config.md) for all available options.
-    Our [model config page](../config/models.md) has more details on specific models and tips and tricks.
+!!! warning "Cost limits"
 
-## Debugging
+    If you do not disable the default cost limits, you will see an error because the cost calculator will not be able to find the model in the `litellm` model cost dictionary.
+    Please make sure to the set the `per_instance_cost_limit` to 0 and use the `per_instance_call_limit` instead to limit the runtime per issue.
+
+!!! warning "Parsing functions"
+
+    The default config uses function calling to retrieve actions from the model response, i.e.,
+    the model directly provides the action as a JSON object.
+    If your model doesn't support function calling, you can use the `thought_action` parser by setting
+    `agent.tools.parse_function.type` to `thought_action`.
+    Then, we extract the last triple-backticks block from the model response as the action.
+    See [our API docs](../reference/parsers.md) for more details on parsers.
+    Remember to document the tools in your prompt as the model will not be able to see the function signature
+    like with function calling.
+
+## Something went wrong?
 
 * If you get `Error code: 404`, please check your configured keys, in particular
   whether you set `OPENAI_API_BASE_URL` correctly (if you're not using it, the
@@ -89,4 +109,12 @@ Please see the above note about using a config that uses the `thought_action` pa
   Also see [this issue](https://github.com/SWE-agent/SWE-agent/issues/467)
   for reference.
 
-% include-markdown "../_footer.md" %}
+
+## Further reads & debugging
+
+!!! hint "Further reads"
+
+    See [our API docs](../reference/model_config.md) for all available options.
+    Our [model config page](../config/models.md) has more details on specific models and tips and tricks.
+
+{% include-markdown "../_footer.md" %}

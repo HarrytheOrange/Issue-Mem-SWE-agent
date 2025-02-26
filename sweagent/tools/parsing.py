@@ -4,7 +4,6 @@ For example, our most basic parser is the `ThoughtActionParser`.
 It expects the model response to be a discussion followed by a command wrapped in backticks like so:
 
 ```
-
 Let's look at the files in the current directory.
 
 Action:
@@ -16,10 +15,14 @@ ls -l
 To use a specific parser, set the `parse_function` key in your tool config to the `type` field of the parser.
 
 ```yaml
-tools:
-    ...
-    parse_function: "thought_action"
+agent:
+    tools:
+        ...
+        parse_function:
+            type: "thought_action"
 ```
+
+Or from the command line: `--agent.tools.parse_function.type=thought_action`
 """
 
 import json
