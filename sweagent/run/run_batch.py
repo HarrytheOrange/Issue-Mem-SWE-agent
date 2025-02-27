@@ -51,6 +51,7 @@ from sweagent.agent.agents import AgentConfig, get_agent_from_config
 from sweagent.agent.hooks.status import SetStatusAgentHook
 from sweagent.environment.hooks.status import SetStatusEnvironmentHook
 from sweagent.environment.swe_env import SWEEnv
+from sweagent.exceptions import ModelConfigurationError
 from sweagent.run._progress import RunBatchProgressManager
 from sweagent.run.batch_instances import BatchInstance, BatchInstanceSourceConfig, SWEBenchInstances
 from sweagent.run.common import BasicCLI, ConfigHelper, save_predictions
@@ -303,10 +304,10 @@ class RunBatch:
             result = self._run_instance(instance)
         except KeyboardInterrupt:
             raise _BreakLoop
-        except SystemExit:
+        except (SystemExit, ModelConfigurationError) as e:
             if self._raise_exceptions:
                 raise
-            self.logger.critical("❌ Exiting because SystemExit was called")
+            self.logger.critical(f"❌ Exiting because {e.__class__.__name__} was called")
             raise _BreakLoop
         except Exception as e:
             self.logger.error(traceback.format_exc())

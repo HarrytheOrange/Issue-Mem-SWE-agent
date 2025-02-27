@@ -46,3 +46,9 @@ class InstanceCallLimitExceededError(CostLimitExceededError):
 
 class ContentPolicyViolationError(Exception):
     """Raised when the model response violates a content policy"""
+
+
+class ModelConfigurationError(Exception):
+    """Raised when the model configuration is invalid/no further retries
+    should be made.
+    """
