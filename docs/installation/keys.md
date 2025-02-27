@@ -106,6 +106,15 @@ and set `agent.model.api_key` to the key you've configured for your proxy (or a 
     Remember to document the tools in your prompt as the model will not be able to see the function signature
     like with function calling.
 
+!!! warning "Message types"
+
+    The `cache_control` history processor requires a different message format
+    (e.g., `{'role': 'user', 'content': [{'type': 'text', 'text': 'some text', 'cache_control': {'type': 'ephemeral'}}]}]`).
+    This might not be understood by all language models.
+    Therefore, please remove this history processor if you do not need it
+    (it's currently mostly used for anthropic cache control).
+    See [#957](https://github.com/SWE-agent/SWE-agent/issues/957) for more information.
+
 ## Something went wrong?
 
 * If you get `Error code: 404`, please check your configured keys, in particular
