@@ -43,6 +43,7 @@ from sweagent.exceptions import (
     ContextWindowExceededError,
     CostLimitExceededError,
     FormatError,
+    TotalCostLimitExceededError,
 )
 from sweagent.tools.parsing import (
     ActionOnlyParser,
@@ -296,6 +297,9 @@ class RetryAgent(AbstractAgent):
             return self._agent.attempt_autosubmission_after_error(step=StepOutput())
         try:
             step = self._agent.step()
+        except TotalCostLimitExceededError:
+            # Need to make sure that this error causes everything to stop
+            raise
         except Exception as e:
             msg = "Error in agent step: %s. This really shouldn't happen, please report this. Triggering autosubmit."
             self.logger.critical(msg, e, exc_info=True)
@@ -320,6 +324,8 @@ class RetryAgent(AbstractAgent):
         if choose:
             try:
                 best_attempt_idx = self._rloop.get_best()
+            except TotalCostLimitExceededError:
+                raise
             except Exception as e:
                 self.logger.critical(f"Error getting best attempt index: {e}. Setting to 0.", exc_info=True)
                 best_attempt_idx = 0
@@ -1099,6 +1105,8 @@ class DefaultAgent(AbstractAgent):
                     "exit_context",
                     "Exit due to context window",
                 )
+            except TotalCostLimitExceededError:
+                raise
             except CostLimitExceededError:
                 return handle_error_with_autosubmission(
                     "exit_cost",

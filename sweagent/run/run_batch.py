@@ -51,7 +51,7 @@ from sweagent.agent.agents import AgentConfig, get_agent_from_config
 from sweagent.agent.hooks.status import SetStatusAgentHook
 from sweagent.environment.hooks.status import SetStatusEnvironmentHook
 from sweagent.environment.swe_env import SWEEnv
-from sweagent.exceptions import ModelConfigurationError
+from sweagent.exceptions import ModelConfigurationError, TotalCostLimitExceededError
 from sweagent.run._progress import RunBatchProgressManager
 from sweagent.run.batch_instances import BatchInstance, BatchInstanceSourceConfig, SWEBenchInstances
 from sweagent.run.common import BasicCLI, ConfigHelper, save_predictions
@@ -304,7 +304,7 @@ class RunBatch:
             result = self._run_instance(instance)
         except KeyboardInterrupt:
             raise _BreakLoop
-        except (SystemExit, ModelConfigurationError) as e:
+        except (SystemExit, ModelConfigurationError, TotalCostLimitExceededError) as e:
             if self._raise_exceptions:
                 raise
             self.logger.critical(f"❌ Exiting because {e.__class__.__name__} was called")
@@ -347,9 +347,9 @@ class RunBatch:
         env.deployment.add_hook(
             SetStatusDeploymentHook(instance.problem_statement.id, self._progress_manager.update_instance_status)
         )
-        env.start()
-        self._chooks.on_instance_start(index=0, env=env, problem_statement=instance.problem_statement)
         try:
+            env.start()
+            self._chooks.on_instance_start(index=0, env=env, problem_statement=instance.problem_statement)
             result = agent.run(
                 problem_statement=instance.problem_statement,
                 env=env,
