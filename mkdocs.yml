@@ -158,3 +158,19 @@ extra_css:
 extra:
   version:
     provider: mike
+  analytics:
+    provider: google
+    property: G-1PLNN3BXX7
+  # feedback:
+    # title: Was this page helpful?
+    # ratings:
+      # - icon: material/emoticon-happy-outline
+        # name: This page was helpful
+        # data: 1
+        # note: >-
+          # Thanks for your feedback!
+      # - icon: material/emoticon-sad-outline
+        # name: This page could be improved
+        # data: 0
+        # note: >-
+          # Thanks for your feedback! If anything was missing, please <a href="https://github.com/SWE-agent/SWE-agent/issues/new?template=question.yml">ask a question on github</a>!
