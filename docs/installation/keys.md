@@ -79,6 +79,8 @@ agent:
 2. We cannot track costs, so you must disable this (see below)
 
 in your [config file](../config/config.md).
+If you're using a [litellm proxy](https://docs.litellm.ai/docs/providers/openai_compatible#usage-with-litellm-proxy-server), make sure to set your `agent.model.name` to `openai/...`
+and set `agent.model.api_key` to the key you've configured for your proxy (or a random value; it cannot be empty).
 
 !!! warning "Model providers"
 
