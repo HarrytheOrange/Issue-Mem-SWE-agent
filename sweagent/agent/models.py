@@ -121,6 +121,14 @@ class GenericAPIModelConfig(PydanticBaseModel):
     run-batch, we use the same API key within a single-thread so that prompt caching still works.
     """
 
+    max_input_tokens: int | None = None
+    """If set, this will override the max input tokens for the model that we usually look
+    up from `litellm.model_cost`.
+    Use this for local models or if you want to set a custom max input token limit.
+    If this value is exceeded, a `ContextWindowExceededError` will be raised.
+    Set this to 0 to disable this check.
+    """
+
     # pydantic
     model_config = ConfigDict(extra="forbid")
 
@@ -551,7 +559,9 @@ class LiteLLMModel(AbstractModel):
                     "See https://swe-agent.com/latest/faq/ for more information."
                 )
                 raise ModelConfigurationError(msg)
-        self.model_max_input_tokens = litellm.model_cost.get(self.config.name, {}).get("max_input_tokens")
+        self.model_max_input_tokens = self.config.max_input_tokens or litellm.model_cost.get(self.config.name, {}).get(
+            "max_input_tokens"
+        )
         self.model_max_output_tokens = litellm.model_cost.get(self.config.name, {}).get("max_output_tokens")
         self.lm_provider = litellm.model_cost.get(self.config.name, {}).get("litellm_provider")
         self.logger = get_logger("swea-lm", emoji="🤖")
@@ -614,8 +624,12 @@ class LiteLLMModel(AbstractModel):
         self._sleep()
         input_tokens: int = litellm.utils.token_counter(messages=messages, model=self.config.name)
         if self.model_max_input_tokens is None:
-            self.logger.warning(f"No max input tokens found for model {self.config.name!r}")
-        elif input_tokens > self.model_max_input_tokens:
+            msg = (
+                f"No max input tokens found for model {self.config.name!r}. "
+                "If you are using a local model, you can set `max_input_token` in the model config to override this."
+            )
+            self.logger.warning(msg)
+        elif input_tokens > self.model_max_input_tokens > 0:
             msg = f"Input tokens {input_tokens} exceed max tokens {self.model_max_input_tokens}"
             raise ContextWindowExceededError(msg)
         extra_args = {}

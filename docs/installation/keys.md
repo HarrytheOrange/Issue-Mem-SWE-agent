@@ -67,6 +67,7 @@ agent:
     per_instance_cost_limit: 0   # (2)!
     total_cost_limit: 0
     per_instance_call_limit: 100
+    max_input_tokens: 0  # (3)!
   tools:
     # The default for obtaining actions from model outputs is function calling.
     # If your local model does not support that, you can use the thought_action parser
@@ -77,6 +78,7 @@ agent:
 
 1. Make sure that your model includes a "provider", i.e., follows the form `provider/model_name`. The model name and provider might be arbitrarily chosen.
 2. We cannot track costs, so you must disable this (see below)
+3. Disable max input tokens check
 
 in your [config file](../config/config.md).
 If you're using a [litellm proxy](https://docs.litellm.ai/docs/providers/openai_compatible#usage-with-litellm-proxy-server), make sure to set your `agent.model.name` to `openai/...`
@@ -87,10 +89,11 @@ and set `agent.model.api_key` to the key you've configured for your proxy (or a 
     Make sure that your model name includes a "provider", i.e., follows the form `provider/model_name`. The model name and provider might be arbitrarily chosen
     for local models.
 
-!!! warning "Cost limits"
+!!! warning "Cost/token limits"
 
     If you do not disable the default cost limits, you will see an error because the cost calculator will not be able to find the model in the `litellm` model cost dictionary.
     Please make sure to the set the `per_instance_cost_limit` to 0 and use the `per_instance_call_limit` instead to limit the runtime per issue.
+    Please also make sure to set `max_input_tokens` to a non-`None` value to avoid a lot of warnings.
 
 !!! warning "Parsing functions"
 
