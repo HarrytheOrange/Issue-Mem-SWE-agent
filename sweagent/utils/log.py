@@ -76,14 +76,15 @@ def get_logger(name: str, *, emoji: str = "") -> logging.Logger:
     logger.addHandler(handler)
     logger.propagate = False
     _SET_UP_LOGGERS.add(name)
-    for handler in _ADDITIONAL_HANDLERS.values():
-        my_filter = getattr(handler, "my_filter", None)
-        if my_filter is None:
-            logger.addHandler(handler)
-        elif isinstance(my_filter, str) and my_filter in name:
-            logger.addHandler(handler)
-        elif callable(my_filter) and my_filter(name):
-            logger.addHandler(handler)
+    with _LOG_LOCK:
+        for handler in _ADDITIONAL_HANDLERS.values():
+            my_filter = getattr(handler, "my_filter", None)
+            if my_filter is None:
+                logger.addHandler(handler)
+            elif isinstance(my_filter, str) and my_filter in name:
+                logger.addHandler(handler)
+            elif callable(my_filter) and my_filter(name):
+                logger.addHandler(handler)
     if _INCLUDE_LOGGER_NAME_IN_STREAM_HANDLER:
         _add_logger_name_to_stream_handler(logger)
     return logger
