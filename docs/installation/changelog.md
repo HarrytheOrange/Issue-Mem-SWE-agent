@@ -1,5 +1,43 @@
 # Changelog
 
+## SWE-agent 1.0.1 (2025-02-28)
+
+This fixup release brings fixes mostly to the compatibility with local models. We have also significantly expanded the documentation in that aspect ([models & keys documentation](https://swe-agent.com/latest/installation/keys/)).
+
+### Changed
+
+* Change: Make anthropic_filemap the new default config by [@klieret](https://github.com/klieret) in [#927](https://github.com/princeton-nlp/SWE-agent/pull/927)
+
+### Added
+
+* Enh: Set timeout for post_startup_commands by [@klieret](https://github.com/klieret) in [#973](https://github.com/princeton-nlp/SWE-agent/pull/973)
+* Enh: Allow to override max_input_tokens for local models by [@klieret](https://github.com/klieret) in [#992](https://github.com/princeton-nlp/SWE-agent/pull/992)
+
+### Fixes
+
+* Fix: Handling local models cost lookup issues by [@klieret](https://github.com/klieret) in [#937](https://github.com/princeton-nlp/SWE-agent/pull/937)
+* Fix: Requires-python >= 3.11 by [@klieret](https://github.com/klieret) in [#940](https://github.com/princeton-nlp/SWE-agent/pull/940)
+* traj inspector viewport reset by [@klieret](https://github.com/klieret) in [#946](https://github.com/princeton-nlp/SWE-agent/pull/946)
+* Fix: Reset viewport when next/prev step/traj by [@klieret](https://github.com/klieret) in [#948](https://github.com/princeton-nlp/SWE-agent/pull/948)
+* Fix: Disable highlighting of model outputs by [@klieret](https://github.com/klieret) in [#949](https://github.com/princeton-nlp/SWE-agent/pull/949)
+* Fix: Create PRs by [@klieret](https://github.com/klieret) in [#954](https://github.com/princeton-nlp/SWE-agent/pull/954)
+* Fix: Add __init__,py to agent/hooks by [@RNabel](https://github.com/RNabel) in [#961](https://github.com/princeton-nlp/SWE-agent/pull/961)
+* Fix: Pin textual to version 1.0.0 by [@RNabel](https://github.com/RNabel) in [#960](https://github.com/princeton-nlp/SWE-agent/pull/960)
+* Fix: OpenAI API: Don't pass None tool_calls to the OpenAI API by [@RNabel](https://github.com/RNabel) in [#967](https://github.com/princeton-nlp/SWE-agent/pull/967)
+* Fix: Forces platform to be linux/amd64 for swe-bench batch runs by [@carlosejimenez](https://github.com/carlosejimenez) in [#942](https://github.com/princeton-nlp/SWE-agent/pull/942)
+* Fix "TypeError: Cannot read properties of null (reading 'replace')" in Trajectory viewer by [@0xba1a](https://github.com/0xba1a) in [#989](https://github.com/princeton-nlp/SWE-agent/pull/989)
+* Fix: No retries if costs cannot be calculated by [@klieret](https://github.com/klieret) in [#990](https://github.com/princeton-nlp/SWE-agent/pull/990)
+* Fix: Race condition/size change during iteration by [@klieret](https://github.com/klieret) in [#993](https://github.com/princeton-nlp/SWE-agent/pull/993)
+* Fix: Handle total cost limit exceeded by [@klieret](https://github.com/klieret) in [#994](https://github.com/princeton-nlp/SWE-agent/pull/994)
+
+## New Contributors
+
+* [@RNabel](https://github.com/RNabel) made their first contribution in [#961](https://github.com/princeton-nlp/SWE-agent/pull/961)
+* [@dhruvji](https://github.com/dhruvji) made their first contribution in [#963](https://github.com/princeton-nlp/SWE-agent/pull/963)
+* [@0xba1a](https://github.com/0xba1a) made their first contribution in [#989](https://github.com/princeton-nlp/SWE-agent/pull/989)
+
+**Full Changelog**: https://github.com/SWE-agent/SWE-agent/compare/v1.0.0...v1.0.1
+
 ## 1.0.0 (2025-02-13)
 
 This is a massive release that includes many new features, fixes, and changes.
