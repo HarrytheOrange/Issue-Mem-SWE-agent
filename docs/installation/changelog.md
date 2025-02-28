@@ -55,7 +55,7 @@ You can read more about the changes in the [migration guide](migration.md).
 * [New command line interface](../usage/cli.md) with subcommands for running over single issues, batches, and various utility commands.
 * Greatly simplified and cleaned up codebase. In particular, the `Agent` class is now much easier to modify.
 
-## Changed
+### Changed
 
 * The code base has been largely rewritten. Lots of things have moved and changed.
 * The biggest change is that we now use [SWE-ReX](https://github.com/swe-agent/SWE-ReX) for code execution. This allowed us to remove a lot of distracting code from the agent.
@@ -65,7 +65,7 @@ You can read more about the changes in the [migration guide](migration.md).
 
 See the [migration guide](migration.md) for more details.
 
-## New contributors
+### New contributors
 
 * [@manya706](https://github.com/manya706) made their first contribution in [#787]([#787](https://github.com/princeton-nlp/SWE-agent/pull/787))
 * [@Prathamesh010](https://github.com/Prathamesh010) made their first contribution in [#796]([#796](https://github.com/princeton-nlp/SWE-agent/pull/796))
