@@ -6,7 +6,7 @@ from functools import partial
 from git import Repo
 from packaging import version
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 from logging import WARNING, getLogger
 from pathlib import Path
