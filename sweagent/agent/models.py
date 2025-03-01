@@ -559,9 +559,12 @@ class LiteLLMModel(AbstractModel):
                     "See https://swe-agent.com/latest/faq/ for more information."
                 )
                 raise ModelConfigurationError(msg)
-        self.model_max_input_tokens = self.config.max_input_tokens or litellm.model_cost.get(self.config.name, {}).get(
-            "max_input_tokens"
-        )
+
+        if self.config.max_input_tokens is not None:
+            self.model_max_input_tokens = self.config.max_input_tokens
+        else:
+            self.model_max_input_tokens = litellm.model_cost.get(self.config.name, {}).get("max_input_tokens")
+
         self.model_max_output_tokens = litellm.model_cost.get(self.config.name, {}).get("max_output_tokens")
         self.lm_provider = litellm.model_cost.get(self.config.name, {}).get("litellm_provider")
         self.logger = get_logger("swea-lm", emoji="🤖")
