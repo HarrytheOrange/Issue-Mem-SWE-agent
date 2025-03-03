@@ -160,7 +160,7 @@ extra:
     provider: mike
   analytics:
     provider: google
-    property: G-1PLNN3BXX7
+    property: G-SG2NC1GDRD
   # feedback:
     # title: Was this page helpful?
     # ratings:
