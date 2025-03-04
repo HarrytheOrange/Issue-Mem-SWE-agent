@@ -2,18 +2,19 @@ from __future__ import annotations
 
 import sys
 from functools import partial
-
-from git import Repo
-from packaging import version
-
-__version__ = "1.0.1"
-
 from logging import WARNING, getLogger
 from pathlib import Path
 
 import swerex.utils.log as log_swerex
+from git import Repo
+from packaging import version
 
 from sweagent.utils.log import get_logger
+
+__version__ = "1.0.1"
+PYTHON_MINIMUM_VERSION = (3, 11)
+SWEREX_MINIMUM_VERSION = "1.2.0"
+SWEREX_RECOMMENDED_VERSION = "1.2.1"
 
 # Monkey patch the logger to use our implementation
 log_swerex.get_logger = partial(get_logger, emoji="🦖")
@@ -25,7 +26,7 @@ getLogger("LiteLLM").setLevel(WARNING)
 
 PACKAGE_DIR = Path(__file__).resolve().parent
 
-if sys.version_info < (3, 11):
+if sys.version_info < PYTHON_MINIMUM_VERSION:
     msg = (
         f"Python {sys.version_info.major}.{sys.version_info.minor} is not supported. "
         "SWE-agent requires Python 3.11 or higher."
@@ -85,10 +86,18 @@ def impose_rex_lower_bound() -> None:
     minimal_rex_version = "1.2.0"
     if version.parse(rex_version) < version.parse(minimal_rex_version):
         msg = (
-            f"SWE-ReX version {rex_version} is too old. Please update to at least {minimal_rex_version}. "
+            f"SWE-ReX version {rex_version} is too old. Please update to at least {minimal_rex_version} by "
+            "running `pip install --upgrade swe-rex`."
             "You can also rerun `pip install -e .` in this repository to install the latest version."
         )
         raise RuntimeError(msg)
+    if version.parse(rex_version) < version.parse(SWEREX_RECOMMENDED_VERSION):
+        msg = (
+            f"SWE-ReX version {rex_version} is not recommended. Please update to at least {SWEREX_RECOMMENDED_VERSION} by "
+            "running `pip install --upgrade swe-rex`."
+            "You can also rerun `pip install -e .` in this repository to install the latest version."
+        )
+        get_logger("swe-agent", emoji="👋").warning(msg)
 
 
 impose_rex_lower_bound()
