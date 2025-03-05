@@ -10,9 +10,9 @@
 After installing SWE-agent, you have the `sweagent` command available. Run `sweagent --help` to see the list of subcommands.
 The most important ones are
 
-* `sweagent run`: Run SWE-agent on a single problem statement.
+* `sweagent run`: Run SWE-agent on a single problem statement. This is covered on this page and for slightly more advanced examples in the [command line basics tutorial](cl_tutorial.md).
 * `sweagent run-batch`: Run SWE-agent on a list of problem statements. This is what you would use for benchmarking, or when
-  working with a larger set of historic issues.
+  working with a larger set of historic issues. Covered in the [batch mode tutorial](batch_mode.md).
 
 In this tutorial, we will focus on the `run` subcommand.
 
@@ -26,11 +26,8 @@ sweagent run \
   --problem_statement.github_url=https://github.com/SWE-agent/test-repo/issues/1
 ```
 
-!!! tip "Annotations"
-    Notice the :material-chevron-right-circle: icon in the right margin in the code snippet? Click on it to display more information
-    about the line.
-
-The example above uses the `Claude 3.5 Sonnet` model from Anthropic. Alternatively, you can use `GPT-4o` (from OpenAI).
+The example above uses the `Claude 3.5 Sonnet` model from Anthropic. Alternatively, you can for example use `GPT-4o` (from OpenAI)
+by setting `--angent.model.name=gpt-4o`.
 In order to use it, you need to add your keys to the environment:
 
 ```bash
@@ -45,7 +42,10 @@ ANTHROPIC_API_KEY=<your key>
 OPENAI_API_KEY=<your key>
 ```
 
-We should support all models that you can think of. Read more about configuring them [here](../installation/keys.md).
+We should support all models that you can think of.
+
+!!! tip "Models and keys"
+    Read more about configuring [models and API keys](../installation/keys.md).
 
 <details>
 <summary>Output</summary>
@@ -70,11 +70,12 @@ Watching the output, you can notice several stages:
    in docker containers (default), on modal, AWS fargate, or directly on your computer (not recommended).
    When the deployment starts, you will notice a "starting runtime" message that takes a few seconds. The runtime is
    what is executing the commands within your deployment.
-2. Setting up **tools**: The tools that you specified are copied and installed within the environment.
-3. **System and instance prompts**: The initial instructions are shown to the LM.
+   Deployments are managed by a package called [`SWE-ReX`](https://swe-rex.com/latest/).
+2. Setting up [**tools**](../config/tools.md): The tools that you specified are copied and installed within the environment.
+3. **System and instance prompts**: The initial instructions are shown to the LM. They are fully [configurable](../config/templates.md).
 4. **Main loop**: The LM starts to suggest and execute actions.
 5. **Submission**: The LM calls `submit` and we extract the patch (i.e., the changes to the source code that solve the problem).
 
-The complete details of the run are saved as a "trajectory" file (more about them [here](trajectories.md)). They can also be turned into new [demonstrations](../config/demonstrations.md) together with other log and output files.
+The complete details of the run are saved as a ["trajectory" file](trajectories.md)). They can also be turned into new [demonstrations](../config/demonstrations.md) together with other log and output files.
 
 Wetted your appetite? Head over to the [command line basics tutorial](cl_tutorial.md) to learn more about the options.
