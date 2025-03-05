@@ -15,6 +15,7 @@ SWE-agent lets your language model of choice (e.g. GPT-4o or Claude Sonnet 3.5) 
 * [any custom task](usage/coding_challenges.md).
 
 It does so by using configurable [agent-computer interfaces](https://arxiv.org/abs/2405.15793) (ACIs) to interact with isolated computer environments.
+SWE-agent uses [SWE-ReX](https://swe-rex.com/) for sandboxed code execution.
 
 <div class="grid cards" markdown>
 
