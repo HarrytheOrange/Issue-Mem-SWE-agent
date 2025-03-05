@@ -1,5 +1,11 @@
 # Models and API keys
 
+!!! abstract "Setting up models"
+    This page shows how you can set up your LM with SWE-agent
+
+    * Generally all API models work out of the box by just adding the key and specifying `--agent.model.name`
+    * More care must be taken for local models (see tips below!)
+
 ## Setting API keys
 
 In order to access the LM of your choice (and to access private GitHub repositories), you need to supply the corresponding keys.
@@ -74,6 +80,9 @@ agent:
     # instead (see below)
     parse_function:
       type: "thought_action"
+  # You probably do not need the cache control history processor if you're not
+  # using Claude, so please remove it if it's in your config.
+  history_processors: []
 ```
 
 1. Make sure that your model includes a "provider", i.e., follows the form `provider/model_name`. The model name and provider might be arbitrarily chosen.
@@ -81,6 +90,8 @@ agent:
 3. Disable max input tokens check
 
 in your [config file](../config/config.md).
+Note that you're always ingesting a config file: If you haven't specified it manually with `--config`, we're loading a default config, which might not
+what you want (in particular, it uses function calling and prompt caching)!
 If you're using a [litellm proxy](https://docs.litellm.ai/docs/providers/openai_compatible#usage-with-litellm-proxy-server), make sure to set your `agent.model.name` to `openai/...`
 and set `agent.model.api_key` to the key you've configured for your proxy (or a random value; it cannot be empty).
 
