@@ -41,7 +41,7 @@ python run.py \
 
 
 For the next example, we will use a cloud-based execution environment instead of using local docker containers.
-For this, you first need to set up a modal account, then run:
+For this, you first need to set up a modal account, install the necessary extra dependencies `pip install 'swe-rex[modal]'`, then run:
 
 ```bash title="Deployment on modal (cloud-based execution)" hl_lines="3"
 python run.py \
