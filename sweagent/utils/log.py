@@ -110,7 +110,7 @@ def add_file_handler(
         The id of the handler. This can be used to remove the handler later.
     """
     Path(path).parent.mkdir(parents=True, exist_ok=True)
-    handler = logging.FileHandler(path)
+    handler = logging.FileHandler(path, encoding="utf-8")
     formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(name)s - %(message)s")
     handler.setFormatter(formatter)
     handler.setLevel(_interpret_level(level))
