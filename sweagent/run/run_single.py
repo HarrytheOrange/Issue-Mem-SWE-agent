@@ -33,7 +33,7 @@ from pathlib import Path
 from typing import Self
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from sweagent.agent.agents import AbstractAgent, AgentConfig, get_agent_from_config
@@ -52,7 +52,7 @@ from sweagent.utils.config import load_environment_variables
 from sweagent.utils.log import add_file_handler, get_logger
 
 
-class RunSingleActionConfig(BaseModel, cli_implicit_flags=False):
+class RunSingleActionConfig(BaseModel):
     """Run real-life actions (opening PRs, etc.) if we can solve the issue."""
 
     # Open a PR with the patch if we can solve the issue
@@ -60,6 +60,9 @@ class RunSingleActionConfig(BaseModel, cli_implicit_flags=False):
     pr_config: OpenPRConfig = Field(default_factory=OpenPRConfig)
     # When working with local repository: Apply patch
     apply_patch_locally: bool = False
+
+    # pydantic config
+    model_config = ConfigDict(extra="forbid")
 
 
 class RunSingleConfig(BaseSettings, cli_implicit_flags=False):
