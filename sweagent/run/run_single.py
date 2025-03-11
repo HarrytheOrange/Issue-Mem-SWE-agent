@@ -33,8 +33,8 @@ from pathlib import Path
 from typing import Self
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field
-from pydantic_settings import BaseSettings
+from pydantic import BaseModel, Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from sweagent.agent.agents import AbstractAgent, AgentConfig, get_agent_from_config
 from sweagent.agent.problem_statement import (
@@ -76,7 +76,7 @@ class RunSingleConfig(BaseSettings, cli_implicit_flags=False):
     """Path to a .env file to load environment variables from."""
 
     # pydantic config
-    model_config = ConfigDict(extra="forbid")  # type: ignore
+    model_config = SettingsConfigDict(extra="forbid", env_prefix="SWE_AGENT_")
 
     def set_default_output_dir(self) -> None:
         # Needs to be called explicitly, because self._config_files will be setup

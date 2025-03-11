@@ -43,7 +43,7 @@ from typing import Self
 
 import yaml
 from pydantic import Field, model_validator
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from rich.live import Live
 from swerex.deployment.hooks.status import SetStatusDeploymentHook
 
@@ -94,6 +94,9 @@ class RunBatchConfig(BaseSettings, cli_implicit_flags=False):
     """Whether to show a progress bar. Progress bar is never shown for human models.
     Progress bar is always shown for multi-worker runs.
     """
+
+    # pydantic config
+    model_config = SettingsConfigDict(extra="forbid", env_prefix="SWE_AGENT_")
 
     def set_default_output_dir(self) -> None:
         # Needs to be called explicitly, because self._config_files will be setup

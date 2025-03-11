@@ -29,7 +29,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from swerex.deployment.abstract import AbstractDeployment
 from swerex.deployment.config import DeploymentConfig, get_deployment
 from typing_extensions import Self
@@ -52,6 +52,9 @@ class RunReplayConfig(BaseSettings, cli_implicit_flags=False):
     """Path to a .env file to load environment variables from."""
     update_config: list[Path] = []
     """Additional config files to merge with the replay config."""
+
+    # pydantic config
+    model_config = SettingsConfigDict(extra="forbid", env_prefix="SWE_AGENT_")
 
     def model_post_init(self, __context: Any) -> None:
         if self.output_dir == Path("DEFAULT"):
