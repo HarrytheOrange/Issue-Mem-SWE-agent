@@ -24,9 +24,10 @@ should show an overview over the available top-level commands.
 <details>
 <summary>Command not found?</summary>
 
-You might also try `python -m sweagent`. If this also doesn't work,
-please check with `which python` that you're using the same `python` as
+You might also try <code>python -m sweagent</code>. If this also doesn't work,
+please check with <code>which python</code> that you're using the same python as
 when you installed SWE-agent.
+
 </details>
 
 **Optional installation steps:**
