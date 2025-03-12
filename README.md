@@ -11,7 +11,7 @@
 </p>
 
 
-SWE-agent lets your language model of choice (e.g. GPT-4o or Claude Sonnet 3.5) autonomously use tools to:
+SWE-agent lets your language model of choice (e.g. GPT-4o or Claude Sonnet 3.7) autonomously use tools to:
 
 * [fix issues in real GitHub repositories](https://swe-agent.com/latest/usage/hello_world),
 * perform tasks on the web,
