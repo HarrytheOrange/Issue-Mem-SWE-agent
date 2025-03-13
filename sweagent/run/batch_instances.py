@@ -127,8 +127,12 @@ class SimpleBatchInstance(BaseModel):
             return BatchInstance(
                 env=EnvironmentConfig(deployment=deployment, repo=repo), problem_statement=problem_statement
             )
+
         deployment.image = self.image_name  # type: ignore
-        deployment.python_standalone_dir = "/root"  # type: ignore
+
+        if isinstance(deployment, DockerDeploymentConfig):
+            deployment.python_standalone_dir = "/root"  # type: ignore
+
         return BatchInstance(
             env=EnvironmentConfig(deployment=deployment, repo=repo), problem_statement=problem_statement
         )
@@ -269,7 +273,10 @@ class SWEBenchInstances(BaseModel, AbstractInstanceSource):
         from datasets import load_dataset
 
         ds: list[dict[str, Any]] = load_dataset(self._get_huggingface_name(), split=self.split)  # type: ignore
-        self.deployment.platform = "linux/amd64"
+
+        if isinstance(self.deployment, DockerDeploymentConfig):
+            self.deployment.platform = "linux/amd64"
+
         instances = [
             SimpleBatchInstance.from_swe_bench(instance).to_full_batch_instance(self.deployment) for instance in ds
         ]
