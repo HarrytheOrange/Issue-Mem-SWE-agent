@@ -35,8 +35,8 @@ SWE-agent is built and maintained by researchers from Princeton University and S
 
 Read our [documentation][docs] to learn more:
 
-* [Installation](https://swe-agent.com/latest/installation/)
-* [Command line usage](https://swe-agent.com/latest/usage/cl_tutorial/)
+* [Installation](https://swe-agent.com/latest/installation/source/)
+* [Hello world from the command line](https://swe-agent.com/latest/usage/hello_world/)
 * [Benchmarking on SWE-bench](https://swe-agent.com/latest/usage/batch_mode/)
 * [Frequently Asked Questions](https://swe-agent.com/latest/faq/)
 
