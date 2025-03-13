@@ -176,12 +176,17 @@ class _RetryWithoutOutput(Exception):
     """Used for internal control flow"""
 
 
+class _ExitForfeit(Exception):
+    """Used for internal control flow"""
+
+
 class _TotalExecutionTimeExceeded(Exception):
     """Used for internal control flow"""
 
 
 RETRY_WITH_OUTPUT_TOKEN = "###SWE-AGENT-RETRY-WITH-OUTPUT###"
 RETRY_WITHOUT_OUTPUT_TOKEN = "###SWE-AGENT-RETRY-WITHOUT-OUTPUT###"
+EXIT_FORFEIT_TOKEN = "###SWE-AGENT-EXIT-FORFEIT###"
 
 
 class AbstractAgent:
@@ -940,6 +945,8 @@ class DefaultAgent(AbstractAgent):
         elif RETRY_WITHOUT_OUTPUT_TOKEN in step.observation:
             step.observation = step.observation.replace(RETRY_WITHOUT_OUTPUT_TOKEN, "")
             raise _RetryWithoutOutput()
+        elif EXIT_FORFEIT_TOKEN in step.observation:
+            raise _ExitForfeit()
 
         return self.handle_submission(step)
 
@@ -1086,6 +1093,14 @@ class DefaultAgent(AbstractAgent):
                 # Requery with the same template as the last step
 
             # Errors that cause exit
+
+            except _ExitForfeit:
+                self.logger.info("Exiting due to forfeit")
+                return handle_error_with_autosubmission(
+                    "exit_forfeit",
+                    "Exiting due to forfeit",
+                )
+
             except _TotalExecutionTimeExceeded:
                 self.logger.exception("Exiting due to total execution time exceeded", exc_info=True)
                 return handle_error_with_autosubmission(
