@@ -24,6 +24,17 @@ class Repo(Protocol):
 
     def copy(self, deployment: AbstractDeployment): ...
 
+    def get_reset_commands(self) -> list[str]: ...
+
+
+def _get_git_reset_commands(base_commit: str) -> list[str]:
+    return [
+        "git status",
+        "git restore .",
+        f"git reset --hard {base_commit}",
+        "git clean -fdq",
+    ]
+
 
 class PreExistingRepoConfig(BaseModel):
     """Use this to specify a repository that already exists on the deployment.
@@ -49,6 +60,10 @@ class PreExistingRepoConfig(BaseModel):
     def copy(self, deployment: AbstractDeployment):
         """Does nothing."""
         pass
+
+    def get_reset_commands(self) -> list[str]:
+        """Issued after the copy operation or when the environment is reset."""
+        return _get_git_reset_commands(self.base_commit)
 
 
 class LocalRepoConfig(BaseModel):
@@ -92,6 +107,10 @@ class LocalRepoConfig(BaseModel):
         if r.exit_code != 0:
             msg = f"Failed to change permissions on copied repository (exit code: {r.exit_code}, stdout: {r.stdout}, stderr: {r.stderr})"
             raise RuntimeError(msg)
+
+    def get_reset_commands(self) -> list[str]:
+        """Issued after the copy operation or when the environment is reset."""
+        return _get_git_reset_commands(self.base_commit)
 
 
 class GithubRepoConfig(BaseModel):
@@ -156,6 +175,10 @@ class GithubRepoConfig(BaseModel):
                 )
             ),
         )
+
+    def get_reset_commands(self) -> list[str]:
+        """Issued after the copy operation or when the environment is reset."""
+        return _get_git_reset_commands(self.base_commit)
 
 
 RepoConfig = LocalRepoConfig | GithubRepoConfig | PreExistingRepoConfig
