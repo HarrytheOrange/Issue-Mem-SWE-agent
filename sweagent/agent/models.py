@@ -18,6 +18,7 @@ from pydantic import BaseModel as PydanticBaseModel
 from pydantic import ConfigDict, Field, SecretStr
 from swerex.exceptions import SwerexException
 from tenacity import (
+    RetryCallState,
     Retrying,
     retry_if_not_exception_type,
     stop_after_attempt,
@@ -711,6 +712,19 @@ class LiteLLMModel(AbstractModel):
 
     def query(self, history: History, n: int = 1, temperature: float | None = None) -> list[dict] | dict:
         messages = self._history_to_messages(history)
+
+        def retry_warning(retry_state: RetryCallState):
+            exception_info = ""
+            if attempt.retry_state.outcome is not None and attempt.retry_state.outcome.exception() is not None:
+                exception = attempt.retry_state.outcome.exception()
+                exception_info = f" due to {exception.__class__.__name__}: {str(exception)}"
+
+            self.logger.warning(
+                f"Retrying LM query: attempt {attempt.retry_state.attempt_number} "
+                f"(slept for {attempt.retry_state.idle_for:.2f}s)"
+                f"{exception_info}"
+            )
+
         for attempt in Retrying(
             stop=stop_after_attempt(self.config.retry.retries),
             wait=wait_random_exponential(min=self.config.retry.min_wait, max=self.config.retry.max_wait),
@@ -732,19 +746,9 @@ class LiteLLMModel(AbstractModel):
                     ModelConfigurationError,
                 )
             ),
+            before_sleep=retry_warning,
         ):
             with attempt:
-                if attempt.retry_state.attempt_number > 1:
-                    exception_info = ""
-                    if attempt.retry_state.outcome is not None and attempt.retry_state.outcome.exception() is not None:
-                        exception = attempt.retry_state.outcome.exception()
-                        exception_info = f" due to {exception.__class__.__name__}: {str(exception)}"
-
-                    self.logger.warning(
-                        f"Retrying LM query: attempt {attempt.retry_state.attempt_number} "
-                        f"(slept for {attempt.retry_state.idle_for:.2f}s)"
-                        f"{exception_info}"
-                    )
                 result = self._query(messages, n=n, temperature=temperature)
         if n is None or n == 1:
             return result[0]
