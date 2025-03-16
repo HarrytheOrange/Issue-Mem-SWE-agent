@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from swerex.deployment.config import (
     DeploymentConfig,
     DockerDeploymentConfig,
@@ -87,7 +87,7 @@ class SimpleBatchInstance(BaseModel):
 
     image_name: str
     problem_statement: str
-    id: str
+    instance_id: str
     repo_name: str = ""
     """Specifies the repository to use. If empty, no repository is used.
     If the string does not contain a slash, it is interpreted as an already existing repository at the root
@@ -101,12 +101,15 @@ class SimpleBatchInstance(BaseModel):
     This data will be available when formatting prompt templates.
     """
 
+    # Ignore instead of allow because they should be added as `extra_fields`
+    model_config = ConfigDict(extra="ignore")
+
     def to_full_batch_instance(self, deployment: DeploymentConfig) -> BatchInstance:
         """Merge the deployment options into the `SimpleBatchInstance` object to get a full `BatchInstance`."""
         # Very important: Make a copy of the deployment config because it will be shared among instances!!!
         deployment = deployment.model_copy(deep=True)
         problem_statement = TextProblemStatement(
-            text=self.problem_statement, id=self.id, extra_fields=self.extra_fields
+            text=self.problem_statement, id=self.instance_id, extra_fields=self.extra_fields
         )
         if not self.repo_name:
             repo = None
@@ -137,6 +140,17 @@ class SimpleBatchInstance(BaseModel):
             env=EnvironmentConfig(deployment=deployment, repo=repo), problem_statement=problem_statement
         )
 
+    @model_validator(mode="before")
+    @classmethod
+    def handle_legacy_id(cls, data):
+        # Handling compatibility with swe-agent <= 1.0.1
+        if isinstance(data, dict):
+            if "id" in data and "instance_id" not in data:
+                data["instance_id"] = data["id"]
+                data.pop("id")
+        return data
+
+    # todo: Maybe populate extra fields?
     @classmethod
     def from_swe_bench(cls, instance: dict[str, Any]) -> Self:
         """Convert instances from the classical SWE-bench dataset to the `SimpleBatchInstance` format."""
@@ -149,7 +163,7 @@ class SimpleBatchInstance(BaseModel):
         return cls(
             image_name=image_name,
             problem_statement=instance["problem_statement"],
-            id=iid,
+            instance_id=iid,
             repo_name="testbed",
             base_commit=instance["base_commit"],
         )

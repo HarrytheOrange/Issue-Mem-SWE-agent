@@ -98,13 +98,18 @@ Here'the simplest example of what such a file can look like
 ```yaml title="instances.yaml"
 - image_name: "python:3.11"  # (1)!
   problem_statement: "A simple test problem"
-  id: "simple_test_problem"
+  instance_id: "simple_test_problem"
 - image_name: "python:3.11"
   problem_statement: "Another test problem"
-  id: "simple_test_problem_2"
+  instance_id: "simple_test_problem_2"
 ```
 
 1. Must be available locally or on dockerhub.
+
+!!! warning "Recent changes"
+    The `instance_id` key was named `id` until Mar 16, 2025.
+    This was changed to add compatibility with the standard SWE-bench format.
+    However, we temporarily support both names.
 
 !!! tip "More options"
     * There's a few more fields that you can populate. See [`SimpleBatchInstances`](../reference/batch_instances.md/#sweagent.run.batch_instances.SimpleBatchInstance) for more information.
