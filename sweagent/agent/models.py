@@ -130,6 +130,14 @@ class GenericAPIModelConfig(PydanticBaseModel):
     Set this to 0 to disable this check.
     """
 
+    max_output_tokens: int | None = None
+    """If set, this will override the max output tokens for the model that we usually look
+    up from `litellm.model_cost`.
+    Use this for local models or if you want to set a custom max output token limit.
+    If this value is exceeded, a `ContextWindowExceededError` will be raised.
+    Set this to 0 to disable this check.
+    """
+
     # pydantic
     model_config = ConfigDict(extra="forbid")
 
@@ -566,7 +574,11 @@ class LiteLLMModel(AbstractModel):
         else:
             self.model_max_input_tokens = litellm.model_cost.get(self.config.name, {}).get("max_input_tokens")
 
-        self.model_max_output_tokens = litellm.model_cost.get(self.config.name, {}).get("max_output_tokens")
+        if self.config.max_output_tokens is not None:
+            self.model_max_output_tokens = self.config.max_output_tokens
+        else:
+            self.model_max_output_tokens = litellm.model_cost.get(self.config.name, {}).get("max_output_tokens")
+
         self.lm_provider = litellm.model_cost.get(self.config.name, {}).get("litellm_provider")
         self.logger = get_logger("swea-lm", emoji="🤖")
 
