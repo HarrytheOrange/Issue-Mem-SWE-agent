@@ -172,3 +172,19 @@ where `instances.yaml` could look like this:
 
 ## Output files and next steps
 
+All patches generated (all submissions/predictions of the agent) are saved to a `preds.json` file.
+If you interrupt `sweagent run-batch`, some of these or the file itself might be missing.
+You can use the `sweagent merge-preds` utility to fix this.
+
+The `preds.json` file is very similar to the `.jsonl` format that is used for SWE-bench local runs.
+You can convert between the formats with
+
+```python
+from pathlib import Path
+import json
+
+preds = json.loads(Path("preds.json").read_text())
+data = [{"instance_id": key, **value} for key, value in preds.items()]
+jsonl = [json.dumps(d) for d in data]
+Path("all_preds.jsonl").write_text("\n".join(jsonl))
+```
