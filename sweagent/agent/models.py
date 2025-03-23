@@ -560,6 +560,8 @@ class LiteLLMModel(AbstractModel):
         self.config: GenericAPIModelConfig = args.model_copy(deep=True)
         self.stats = InstanceStats()
         self.tools = tools
+        self.logger = get_logger("swea-lm", emoji="🤖")
+
         if tools.use_function_calling:
             if not litellm.utils.supports_function_calling(model=self.config.name):
                 msg = (
@@ -567,7 +569,7 @@ class LiteLLMModel(AbstractModel):
                     " does not support function calling, you can use `parse_function='thought_action'` instead. "
                     "See https://swe-agent.com/latest/faq/ for more information."
                 )
-                raise ModelConfigurationError(msg)
+                self.logger.warning(msg)
 
         if self.config.max_input_tokens is not None:
             self.model_max_input_tokens = self.config.max_input_tokens
@@ -580,7 +582,6 @@ class LiteLLMModel(AbstractModel):
             self.model_max_output_tokens = litellm.model_cost.get(self.config.name, {}).get("max_output_tokens")
 
         self.lm_provider = litellm.model_cost.get(self.config.name, {}).get("litellm_provider")
-        self.logger = get_logger("swea-lm", emoji="🤖")
 
     @property
     def instance_cost_limit(self) -> float:
