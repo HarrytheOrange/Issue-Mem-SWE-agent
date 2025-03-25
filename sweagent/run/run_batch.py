@@ -47,6 +47,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from rich.live import Live
 from swerex.deployment.hooks.status import SetStatusDeploymentHook
 
+from sweagent import TRAJECTORY_DIR
 from sweagent.agent.agents import AgentConfig, get_agent_from_config
 from sweagent.agent.hooks.status import SetStatusAgentHook
 from sweagent.environment.hooks.status import SetStatusEnvironmentHook
@@ -112,7 +113,7 @@ class RunBatchConfig(BaseSettings, cli_implicit_flags=False):
             if config_file != "no_config":
                 config_file = Path(config_file).stem
             suffix = f"__{self.suffix}" if self.suffix else ""
-            self.output_dir = Path.cwd() / "trajectories" / user_id / f"{config_file}__{model_id}___{source_id}{suffix}"
+            self.output_dir = TRAJECTORY_DIR / user_id / f"{config_file}__{model_id}___{source_id}{suffix}"
 
     @model_validator(mode="after")
     def evaluate_and_redo_existing(self) -> Self:
