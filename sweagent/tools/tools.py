@@ -263,7 +263,7 @@ class ToolHandler:
     def _get_state(self, env: SWEEnv) -> dict[str, str]:
         """Retrieve the state from the environment"""
         try:
-            state_str = env.read_file(Path("/root/state.json"))
+            state_str = env.read_file("/root/state.json")
         except FileNotFoundError:
             self.logger.warning("State file not found, returning empty state")
             return {}
