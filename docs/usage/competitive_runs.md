@@ -19,6 +19,11 @@ We recently used two configurations for SWE-bench submissions
   This is a very expensive configuration.
   If you use it, also make sure to use Claude 3.7 instead of claude 3.5.
 
+!!! warning "Retry configurations and command line arguments"
+    Note that the structure of the configuration with agents that run multiple attempts is different from the one of the
+    default agent. In particular, supplying options like `--agent.model.name` etc. will cause (potentially confusing)
+    error messages. Take a look at the above configuration file to see the structure!
+
 You can find the command with which to run each config at the top of the config file.
 
 In order to run on multiple workers with Claude, you need to use multiple API keys in order to have enough cache break points
