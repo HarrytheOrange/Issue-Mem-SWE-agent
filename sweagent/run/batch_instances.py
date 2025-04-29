@@ -247,7 +247,7 @@ class InstancesFromHuggingFace(BaseModel, AbstractInstanceSource):
 class SWEBenchInstances(BaseModel, AbstractInstanceSource):
     """Load instances from SWE-bench."""
 
-    subset: Literal["lite", "verified", "full", "multimodal"] = "lite"
+    subset: Literal["lite", "verified", "full", "multimodal", "multilingual"] = "lite"
 
     split: Literal["dev", "test"] = "dev"
 
@@ -282,6 +282,8 @@ class SWEBenchInstances(BaseModel, AbstractInstanceSource):
             return "princeton-nlp/SWE-Bench_Lite"
         elif self.subset == "multimodal":
             return "princeton-nlp/SWE-Bench_Multimodal"
+        elif self.subset == "multilingual":
+            return "swe-bench/SWE-Bench_Multilingual"
         msg = f"Unsupported subset: {self.subset}"
         raise ValueError(msg)
 
