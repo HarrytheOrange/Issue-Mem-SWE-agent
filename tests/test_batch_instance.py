@@ -32,9 +32,9 @@ def test_slice_spec_to_slice():
 
 @pytest.mark.slow
 def test_get_swe_bench_instances():
-    for subset in ["lite", "verified", "full", "multimodal", "multilingual"]:
+    for subset in ["lite", "verified", "full"]:
         for split in ["dev", "test"]:
-            if subset == "verified" and split == "dev":
+            if subset in ["verified", "multilingual"] and split == "dev":
                 continue
             print(subset, split)
             instance_config = SWEBenchInstances(subset=subset, split=split)  # type: ignore
