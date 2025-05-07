@@ -54,7 +54,7 @@ dependencies = [
     "pydantic",
     "python-dotenv",
     "pydantic_settings",
-    "litellm<=1.57.4",  # https://github.com/SWE-agent/SWE-agent/issues/1109
+    "litellm",
     "GitPython",
     "ghapi",
     "swe-rex>=1.2.0",
