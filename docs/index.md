@@ -7,13 +7,13 @@ title: "Getting Started"
     <img class="dark-mode-only" src="assets/readme_assets/swe-agent-banner-dark.svg" alt="SWE-agent banner" style="height: 10em;">
 </div>
 
-SWE-agent lets your language model of choice (e.g. GPT-4o or Claude Sonnet 3.7) autonomously use tools to
+SWE-agent enables your language model of choice (e.g. GPT-4o or Claude Sonnet 3.7) to autonomously use tools to
 [fix issues in real GitHub repositories](https://swe-agent.com/latest/usage/hello_world),
 [find cybersecurity vulnerabilities](https://enigma-agent.com/), or
 [perform any custom task](https://swe-agent.com/latest/usage/coding_challenges).
 
-* ✅ **State of the Art** on SWE-bench among open-source projects
-* ✅ **Free-flowing & Generalizable**: Leaves maximal agency to the LM
+* ✅ **State of the art** on SWE-bench among open-source projects
+* ✅ **Free-flowing & generalizable**: Leaves maximal agency to the LM
 * ✅ **Configurable & fully documented**: Governed by a single `yaml` file
 * ✅ **Made for research**: Simple & hackable by design
 
