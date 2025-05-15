@@ -12,6 +12,8 @@ ls -l
  ```
 ```
 
+For models that support function calling, we instead recommend using the `FunctionCallingParser`.
+
 To use a specific parser, set the `parse_function` key in your tool config to the `type` field of the parser.
 
 ```yaml
@@ -22,7 +24,13 @@ agent:
             type: "thought_action"
 ```
 
-Or from the command line: `--agent.tools.parse_function.type=thought_action`
+Or from the command line: `--agent.tools.parse_function.type=thought_action`.
+
+!!! note "Describing available tools"
+    If you do not use the `FunctionCallingParser`, you need to include documentation about the available tools
+    in your system prompt. You can use the `{{command_docs}}` variable to include the automatically generated
+    documentation or explicitly describe the available tools.
+    Also see [#1130](https://github.com/SWE-agent/SWE-agent/issues/1130).
 """
 
 import json
