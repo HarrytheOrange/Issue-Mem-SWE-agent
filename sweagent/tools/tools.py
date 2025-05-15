@@ -58,7 +58,12 @@ class ToolFilterConfig(BaseModel):
 
 class ToolConfig(BaseModel):
     filter: ToolFilterConfig = ToolFilterConfig()
+    """Filter out commands that are blocked by the environment
+    (for example interactive commands like `vim`).
+    """
+
     bundles: list[Bundle] = Field(default_factory=list)
+    """The tool bundles to load."""
 
     env_variables: dict[str, Any] = {}
     """Shorthand to set environment variables for the tools, effectively
@@ -69,15 +74,23 @@ class ToolConfig(BaseModel):
     """Populate the registry with these variables. Will be written out as json in the registry file."""
 
     submit_command: str = "submit"
+    """The command/tool to use to submit the solution."""
 
     parse_function: ParseFunction = Field(default_factory=FunctionCallingParser)
+    """The action parser that is responsible for parsing the model output into a thought and action.
+    """
 
     enable_bash_tool: bool = True
+    """Whether to enable the bash tool in addition to the other tools specified in bundles."""
 
     format_error_template: str = None  # type: ignore
     """Defaults to format_error_template in ParseFunction"""
 
     command_docs: str = None  # type: ignore
+    """Automatically generated documentation generated based on
+    the loaded tool bundles.
+    """
+
     multi_line_command_endings: dict[str, str] = {}
     submit_command_end_name: str | None = None
 
