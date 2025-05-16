@@ -1,3 +1,10 @@
+"""
+This module contains the configuration for the tools that are made available to the agent.
+
+The `ToolConfig` class is used to configure the tools that are available to the agent.
+The `ToolHandler` class is used to handle the tools that are available to the agent.
+"""
+
 import asyncio
 import json
 import re
@@ -19,7 +26,13 @@ from sweagent.utils.log import get_logger
 
 
 class ToolFilterConfig(BaseModel):
+    """Filter out commands that are blocked by the environment
+    (for example interactive commands like `vim`).
+    """
+
     blocklist_error_template: str = "Operation '{{action}}' is not supported by this environment."
+    """The error template to use when a command is blocked."""
+
     blocklist: list[str] = [
         "vim",
         "vi",
@@ -33,6 +46,7 @@ class ToolFilterConfig(BaseModel):
         "make",
     ]
     """Block any command that starts with one of these"""
+
     blocklist_standalone: list[str] = [
         "python",
         "python3",
@@ -49,6 +63,7 @@ class ToolFilterConfig(BaseModel):
         "su",
     ]
     """Block any command that matches one of these exactly"""
+
     block_unless_regex: dict[str, str] = {
         "radare2": r"\b(?:radare2)\b.*\s+-c\s+.*",
         "r2": r"\b(?:radare2)\b.*\s+-c\s+.*",
@@ -57,6 +72,8 @@ class ToolFilterConfig(BaseModel):
 
 
 class ToolConfig(BaseModel):
+    """Configuration for the tools that are made available to the agent."""
+
     filter: ToolFilterConfig = ToolFilterConfig()
     """Filter out commands that are blocked by the environment
     (for example interactive commands like `vim`).
@@ -124,6 +141,10 @@ class ToolConfig(BaseModel):
 
     @cached_property
     def state_commands(self) -> list[str]:
+        """This property returns the state commands from all bundles.
+        State commands are commands that are used to get the state of the environment
+        (e.g., the current working directory).
+        """
         return [bundle.state_command for bundle in self.bundles if bundle.state_command]
 
     # todo: move to ToolHandler?
