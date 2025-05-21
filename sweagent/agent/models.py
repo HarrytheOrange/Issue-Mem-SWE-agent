@@ -775,6 +775,7 @@ class LiteLLMModel(AbstractModel):
                     litellm.exceptions.AuthenticationError,
                     ContentPolicyViolationError,
                     ModelConfigurationError,
+                    KeyboardInterrupt,
                 )
             ),
             before_sleep=retry_warning,
