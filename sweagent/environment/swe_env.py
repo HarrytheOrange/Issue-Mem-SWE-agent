@@ -185,7 +185,7 @@ class SWEEnv:
         self._chook.on_start_deployment()
         asyncio.run(self.deployment.start())
         asyncio.run(self.deployment.runtime.create_session(CreateBashSessionRequest(startup_source=["/root/.bashrc"])))
-        self.set_env_variables({"LANG": "C.UTF-8", "LC_ALL": "C.UTF-8"})
+        self.set_env_variables({"LANG": "C.UTF-8", "LC_ALL": "C.UTF-8", "PAGER": "cat", "PIP_PROGRESS_BAR": "off"})
         self.logger.info("Environment Initialized")
 
     def interrupt_session(self):
