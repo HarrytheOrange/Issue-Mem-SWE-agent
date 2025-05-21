@@ -107,18 +107,18 @@ class Command(BaseModel):
         """
         if self.signature:
             # First validate that all arguments are present in the original signature
-            if not all(
-                f"<{arg.name}>" in self.signature
-                or f"[<{arg.name}>]" in self.signature
-                or f"{{{arg.name}}}" in self.signature
-                for arg in self.arguments
-            ):
-                msg = (
-                    f"Missing arguments in signature: {self.signature}. Did you format the signature correctly? "
-                    "You must include all argument names in the signature with <name>, [<name>], or {name} notation."
-                )
-                raise ValueError(msg)
-
+            for arg in self.arguments:
+                if not (
+                    f"<{arg.name}>" in self.signature
+                    or f"[<{arg.name}>]" in self.signature
+                    or f"{{{arg.name}}}" in self.signature
+                    or f"--{arg.name}" in self.signature
+                ):
+                    msg = (
+                        f"Missing argument {arg.name} in signature: {self.signature}. Did you format the signature correctly? "
+                        f"You must include all argument names in the signature with <{arg.name}>, [<{arg.name}>], {{{arg.name}}}, or --{arg.name} notation."
+                    )
+                    raise ValueError(msg)
             # Then do the replacement
             return re.sub(rf"\[?<({ARGUMENT_NAME_PATTERN})>\]?", r"{\1}", self.signature)
         else:
