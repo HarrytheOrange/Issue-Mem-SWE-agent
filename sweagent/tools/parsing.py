@@ -527,6 +527,72 @@ class JsonParser(AbstractParseFunction, BaseModel):
             raise FormatError(msg)
 
 
+class BashCodeBlockParser(AbstractParseFunction, BaseModel):
+    """Executes all commands in ```bash code blocks."""
+
+    error_message: str = dedent("""\
+    No bash code blocks were detected in your output.
+    You need to include at least one bash code block in your output.
+    
+    It must follow this format exactly to be valid:
+    ```bash
+    cmd arg1 arg2 ...
+    ...
+
+    Other types of code blocks (e.g. python, rust, none, etc.) won't be executed. Only bash.
+    """)
+    
+    type: Literal["all_bash_code_blocks"] = "all_bash_code_blocks"
+
+    def __call__(self, model_response: dict, commands: list[Command], strict=False):
+        """Parses the action from the output of the API call.
+        We assume that model output is a JSON object with the following fields:
+        """
+        pattern = re.compile(r"```bash\n(.*?)\n```", re.DOTALL)
+        matches = pattern.findall(model_response["message"])
+        if not matches:
+            msg = "No bash code blocks were detected in your output."
+            raise FormatError(msg)
+        thouht = pattern.sub("<extracted_code_block>", model_response["message"])
+        action = "\n".join(matches)
+        return thouht, action
+
+
+class SingleBashCodeBlockParser(AbstractParseFunction, BaseModel):
+    """Executes all commands in ```bash code blocks."""
+
+    error_message: str = dedent("""\
+    We did not detect the right number of bash code blocks in your output.
+    You need to include EXACTLY ONE bash code block in your output.
+    
+    It must follow this format exactly to be valid:
+    ```bash
+    cmd arg1 arg2 ...
+    ```
+    """)
+    
+    type: Literal["single_bash_code_block"] = "single_bash_code_block"
+
+    def __call__(self, model_response: dict, commands: list[Command], strict=False):
+        """Parses the action from the output of the API call.
+        We assume that model output is a JSON object with the following fields:
+        """
+        pattern = re.compile(r"```bash\n(.*?)\n```", re.DOTALL)
+        matches = pattern.findall(model_response["message"])
+        if not matches:
+            msg = "No bash code blocks were detected in your output."
+            raise FormatError(msg)
+        if len(matches) > 1:
+            msg = (
+                "We detected multiple bash code blocks in your output. "
+                "You need to include EXACTLY ONE bash code block in your output."
+            )
+            raise FormatError(msg)
+        thouht = pattern.sub("<extracted_code_block>", model_response["message"])
+        action = "\n".join(matches)
+        return thouht, action
+
+
 ParseFunction = (
     ActionParser
     | ThoughtActionParser
@@ -537,4 +603,6 @@ ParseFunction = (
     | EditFormat
     | Identity
     | JsonParser
+    | BashCodeBlockParser
+    | SingleBashCodeBlockParser
 )
