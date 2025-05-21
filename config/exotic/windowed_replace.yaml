@@ -1,3 +1,4 @@
+# This config uses the windowed-replace tools together with a prompt similar to
 agent:
   templates:
     system_template: |-
@@ -68,16 +69,16 @@ agent:
 
       STRATEGY:
 
-      1. Locate relevant files using the find and search commands, then read the code related to the issue.
-
-      2. Try to replicate the bug that the issues discusses.
+      1. Always start by trying to replicate the bug that the issues discusses.
         If the issue includes code for reproducing the bug, we recommend that you re-implement that in your environment, and run it to make sure you can reproduce the bug.
         Then start trying to fix it.
 
         If the bug reproduction script does not print anything when it successfully runs, we recommend adding a print("Script completed successfully, no errors.") command at the end of the file,
         so that you can be sure that the script indeed ran fine all the way through.
 
-      3. Use the `edit` command to perform edits on the files that cause the issue.
+      2. Locate relevant code using the find and search commands. `open` the file you want to edit.
+
+      3. Use the `edit` command to perform edits.
 
       4. When you think you've fixed the bug, re-run the bug reproduction script to make sure that the bug has indeed been fixed.
 
@@ -98,10 +99,9 @@ agent:
       (Current directory: {{working_dir}})
       bash-$
     demonstrations:
-      - trajectories/demonstrations/function_calling_simple.traj
+      - trajectories/demonstrations/replay__marshmallow-code__marshmallow-1867__function_calling_replace__install-1/marshmallow-code__marshmallow-1867.traj
     put_demos_in_history: true
   tools:
-    submit_command: "submit -f"
     env_variables:
       WINDOW: 100
       OVERLAP: 2
