@@ -90,9 +90,9 @@ agent:
       WINDOW: 100
       OVERLAP: 2
     bundles:
-      - path: tools/defaults
+      - path: tools/windowed
       - path: tools/search
-      - path: tools/edit_linting
+      - path: tools/windowed_edit_linting
       - path: tools/submit
     parse_function:
       type: thought_action
