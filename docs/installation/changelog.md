@@ -10,7 +10,9 @@ Apart from that, v1.1.0 is mostly a fix release with minor improvements, in part
 ### Breaking changes
 
 * Changes to trajectory data format. The `messages` field is replaced by `query` by [@klieret](https://github.com/klieret) in [#1107](https://github.com/princeton-nlp/SWE-agent/pull/1107)
-* Change in `default` tools: Don't append \n to new file by [@klieret](https://github.com/klieret) in [#1114](https://github.com/princeton-nlp/SWE-agent/pull/1114)
+* Renamed many tool bundles that used "windowed" file viewer (`defaults` and more) by [@klieret](https://github.com/klieret) in [#1147](https://github.com/princeton-nlp/SWE-agent/pull/1147)
+* Removed `review_on_submit` tool bundle (replaced by `review_on_submit_m`) by [@klieret](https://github.com/klieret) in [#1148](https://github.com/princeton-nlp/SWE-agent/pull/1148)
+* Change in `windowed` tools (formerly `default`): Don't append \n to new file by [@klieret](https://github.com/klieret) in [#1114](https://github.com/princeton-nlp/SWE-agent/pull/1114)
 
 ### Added
 
