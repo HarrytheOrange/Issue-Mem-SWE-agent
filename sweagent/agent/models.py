@@ -589,7 +589,7 @@ class LiteLLMModel(AbstractModel):
             if is_claude_3_7 and not has_128k_beta_header:
                 self.model_max_output_tokens = 64000
                 self.logger.warning(
-                    "Claude 3.7 models do not support 128k context by default. "
+                    "Claude 3.7/4 models do not support 128k context by default. "
                     "Setting max output tokens to 64k. To enable 128k context, please set the "
                     "completion_kwargs to {'extra_headers': {'anthropic-beta': 'output-128k-2025-02-19'}}."
                 )
