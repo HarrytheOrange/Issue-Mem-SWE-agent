@@ -77,7 +77,9 @@ class TemplateConfig(BaseModel):
     """
 
     max_observation_length: int = 100_000
-    """Truncate observation to this length if it exceeds it."""
+    """Truncate observation to this length if it exceeds it.
+    This in measured in characters, i.e., as `len(observation)`.
+    """
 
     next_step_no_output_template: str = None  # type: ignore
     """Template for the next step when the last output was empty. Defaults to next_step_template."""
