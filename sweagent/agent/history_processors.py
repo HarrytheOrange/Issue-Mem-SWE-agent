@@ -75,7 +75,33 @@ class DefaultHistoryProcessor(BaseModel):
 
 
 class LastNObservations(BaseModel):
-    """Keep the last n observations or remove tagged observations."""
+    """Elide all but the last n observations or remove tagged observations.
+
+    This is our most classic history processor, used in the original paper
+    to elide but the last 5 observations.
+    Elided observations are replaced by "Old environment output: (n lines omitted)".
+
+    Typical configuration:
+
+    ```yaml
+    agent:
+      history_processors:
+        - type: last_n_observations
+          n: 5
+    ```
+
+    as for example in use in the SWE-agent 0.7 config at
+    https://github.com/SWE-agent/SWE-agent/blob/main/config/sweagent_0_7/07.yaml
+
+    For most use cases, you only need to set `n`.
+
+    Note that using this history processor will break prompt caching (as the
+    history of every query will change every time due to the elided observations).
+    There are some workarounds possible with the `polling` parameter.
+
+    However, most SotA models can now fit a lot of context, so generally this
+    history processor is not always needed anymore.
+    """
 
     n: int
     """Number of observations to keep."""
