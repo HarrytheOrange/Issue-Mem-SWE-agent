@@ -898,9 +898,9 @@ class DefaultAgent(AbstractAgent):
                 pf = (
                     PatchFormatter(
                         patch,
-                        read_method=lambda path: self._env.read_file(
-                            PurePosixPath("/") / self._env.repo.repo_name / path
-                        ),  # type: ignore[attr-defined]
+                        read_method=lambda path: self._env.read_file(  # type: ignore[attr-defined]
+                            PurePosixPath("/") / self._env.repo.repo_name / path  # type: ignore[attr-defined]
+                        ),
                     )
                     if patch
                     else None
