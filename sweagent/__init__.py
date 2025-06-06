@@ -12,7 +12,7 @@ from packaging import version
 
 from sweagent.utils.log import get_logger
 
-__version__ = "1.0.1"
+__version__ = "1.1.0"
 PYTHON_MINIMUM_VERSION = (3, 11)
 SWEREX_MINIMUM_VERSION = "1.2.0"
 SWEREX_RECOMMENDED_VERSION = "1.2.1"

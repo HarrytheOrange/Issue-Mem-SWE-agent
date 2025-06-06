@@ -7,7 +7,7 @@ import pytest
 from sweagent import TOOLS_DIR
 from tests.utils import make_python_tool_importable
 
-DEFAULT_TOOLS_DIR = TOOLS_DIR / "defaults"
+DEFAULT_TOOLS_DIR = TOOLS_DIR / "windowed"
 DEFAULT_TOOLS_BIN = DEFAULT_TOOLS_DIR / "bin"
 
 make_python_tool_importable(DEFAULT_TOOLS_DIR / "lib/windowed_file.py", "windowed_file")
@@ -72,6 +72,8 @@ def test_windowed_file_goto(windowed_file):
     wfile.goto(50, mode="top")
     # first line is 50 - 10//4 = 47
     assert wfile.line_range[0] == 47
+    wfile.goto(100, mode="top")
+    assert wfile.line_range[1] == 99
 
 
 def test_windowed_file_scroll(windowed_file):
@@ -85,6 +87,8 @@ def test_windowed_file_scroll(windowed_file):
     wfile.scroll(-100)
     # Can't go lower than the middle of the lowest window
     assert wfile.first_line == 0
+    wfile.scroll(100)
+    assert wfile.line_range[1] == 99
 
 
 # def test_goto_command(windowed_file):

@@ -1,5 +1,78 @@
 # Changelog
 
+## SWE-agent 1.1.0 (2025-05-22)
+
+We're very excited to announce our new project [SWE-smith](https://swesmith.com/), generating 10s of thousands of training trajectories for SWE agents.
+Using this training data, our LM SWE-agent-LM-32b achieves open-weights SotA on SWE-bench verified with SWE-agent!
+
+Apart from that, v1.1.0 is mostly a fix release with minor improvements, in particular adding compatibility with SWE-bench multilingual/multimodal, and SWE-smith.
+
+### Breaking changes
+
+* Changes to trajectory data format. The `messages` field is replaced by `query` by [@klieret](https://github.com/klieret) in [#1107](https://github.com/princeton-nlp/SWE-agent/pull/1107)
+* Renamed many tool bundles that used "windowed" file viewer (`defaults` and more) by [@klieret](https://github.com/klieret) in [#1147](https://github.com/princeton-nlp/SWE-agent/pull/1147)
+* Removed `review_on_submit` tool bundle (replaced by `review_on_submit_m`) by [@klieret](https://github.com/klieret) in [#1148](https://github.com/princeton-nlp/SWE-agent/pull/1148)
+* Change in `windowed` tools (formerly `default`): Don't append \n to new file by [@klieret](https://github.com/klieret) in [#1114](https://github.com/princeton-nlp/SWE-agent/pull/1114)
+
+### Added
+
+New dataset support:
+
+* Feat: Support multilingual evaluation by [@kabirgh](https://github.com/kabirgh) in [#1090](https://github.com/princeton-nlp/SWE-agent/pull/1090)
+* Feat: SWE-smith & multimodal base support by [@klieret](https://github.com/klieret) in [#1092](https://github.com/princeton-nlp/SWE-agent/pull/1092)
+
+New utilities:
+
+* Feat: Add quick-stats tool by [@klieret](https://github.com/klieret) in [#1125](https://github.com/princeton-nlp/SWE-agent/pull/1125)
+
+### Enhanced
+
+* Feat: Config/override max_output_tokens by [@klieret](https://github.com/klieret) in [#1036](https://github.com/princeton-nlp/SWE-agent/pull/1036)
+* Enh: [#1042] fix(run_batch): handle JSON parsing errors in trajectory check by [@FRAOTIAC](https://github.com/FRAOTIAC) in [#1043](https://github.com/princeton-nlp/SWE-agent/pull/1043)
+* Enh: Allow to override tools dirs etc. by [@klieret](https://github.com/klieret) in [#1046](https://github.com/princeton-nlp/SWE-agent/pull/1046)
+* Enh: Allow to override path to swe-bench dataset by [@klieret](https://github.com/klieret) in [#1093](https://github.com/princeton-nlp/SWE-agent/pull/1093)
+* Enh: Allow to disable python-standalone for batch by [@klieret](https://github.com/klieret) in [#1115](https://github.com/princeton-nlp/SWE-agent/pull/1115)
+* Enh: More information on skipped exit status by [@klieret](https://github.com/klieret) in [#1117](https://github.com/princeton-nlp/SWE-agent/pull/1117)
+
+### Fixed
+
+* Fix: Setting max_input_tokens to 0 by [@klieret](https://github.com/klieret) in [#999](https://github.com/princeton-nlp/SWE-agent/pull/999)
+* Fix: Explicitly set log file encoding by [@klieret](https://github.com/klieret) in [#1013](https://github.com/princeton-nlp/SWE-agent/pull/1013)
+* Fix: Ensure pydantic-settings env prefix set by [@klieret](https://github.com/klieret) in [#1018](https://github.com/princeton-nlp/SWE-agent/pull/1018)
+* Fix: run batch processing with modal by [@vsee](https://github.com/vsee) in [#1023](https://github.com/princeton-nlp/SWE-agent/pull/1023)
+* Fix: Catch exit forfeit by [@klieret](https://github.com/klieret) in [#1024](https://github.com/princeton-nlp/SWE-agent/pull/1024)
+* Fix: Use 'latest' image tag for SWE-Bench images by [@klieret](https://github.com/klieret) in [#1029](https://github.com/princeton-nlp/SWE-agent/pull/1029)
+* Fix: Show tenacity retry reasons by [@klieret](https://github.com/klieret) in [#1032](https://github.com/princeton-nlp/SWE-agent/pull/1032)
+* Fix: Compatibility with textual 2.0 by [@klieret](https://github.com/klieret) in [#1033](https://github.com/princeton-nlp/SWE-agent/pull/1033)
+* Fix: Use default trajectories dir according to ENV by [@vsee](https://github.com/vsee) in [#1054](https://github.com/princeton-nlp/SWE-agent/pull/1054)
+* Fix: fix Windows path error, replace Path with PurePosixPath or string by [@alwaysgoodtime](https://github.com/alwaysgoodtime) in [#1052](https://github.com/princeton-nlp/SWE-agent/pull/1052)
+* Fix: Ensure tools PATH takes precedence by [@klieret](https://github.com/klieret) in [#1058](https://github.com/princeton-nlp/SWE-agent/pull/1058)
+* Fix: Ensure state exists by [@klieret](https://github.com/klieret) in [#1065](https://github.com/princeton-nlp/SWE-agent/pull/1065)
+* Fix spelling of 'agent' in hello world by [@edspencer](https://github.com/edspencer) in [#1077](https://github.com/princeton-nlp/SWE-agent/pull/1077)
+* Fix: Inspector needs to handle new message format by [@klieret](https://github.com/klieret) in [#1094](https://github.com/princeton-nlp/SWE-agent/pull/1094)
+* Fix: SWEBenchInstances with path and no subset initiated as other instance type by [@klieret](https://github.com/klieret) in [#1096](https://github.com/princeton-nlp/SWE-agent/pull/1096)
+* Fix: Token limit exceeded for PR body issue by [@klieret](https://github.com/klieret) in [#1098](https://github.com/princeton-nlp/SWE-agent/pull/1098)
+* Fix: Work around litellm claude 3.7 tokens to 128k by [@klieret](https://github.com/klieret) in [#1106](https://github.com/princeton-nlp/SWE-agent/pull/1106)
+* Fix(repo): Ensure absolute path for copy repo by [@klieret](https://github.com/klieret) in [#1116](https://github.com/princeton-nlp/SWE-agent/pull/1116)
+* Fix execution time timeouts by [@klieret](https://github.com/klieret) in [#1118](https://github.com/princeton-nlp/SWE-agent/pull/1118)
+* Fix: Hierarchical merge of multiple configs by [@klieret](https://github.com/klieret) in [#1123](https://github.com/princeton-nlp/SWE-agent/pull/1123)
+* fix message type missing by [@klieret](https://github.com/klieret) in [#1127](https://github.com/princeton-nlp/SWE-agent/pull/1127)
+* Fix: Conditional for warning about empty template by [@klieret](https://github.com/klieret) in [#1137](https://github.com/princeton-nlp/SWE-agent/pull/1137)
+
+### New Contributors
+
+* [@vsee](https://github.com/vsee) made their first contribution in [#1023](https://github.com/princeton-nlp/SWE-agent/pull/1023)
+* [@FRAOTIAC](https://github.com/FRAOTIAC) made their first contribution in [#1043](https://github.com/princeton-nlp/SWE-agent/pull/1043)
+* [@jpaodev](https://github.com/jpaodev) made their first contribution in [#1050](https://github.com/princeton-nlp/SWE-agent/pull/1050)
+* [@alwaysgoodtime](https://github.com/alwaysgoodtime) made their first contribution in [#1052](https://github.com/princeton-nlp/SWE-agent/pull/1052)
+* [@alexgshaw](https://github.com/alexgshaw) made their first contribution in [#1056](https://github.com/princeton-nlp/SWE-agent/pull/1056)
+* [@talorabr](https://github.com/talorabr) made their first contribution in [#1026](https://github.com/princeton-nlp/SWE-agent/pull/1026)
+* [@katia](https://github.com/katia)-sentry made their first contribution in [#1070](https://github.com/princeton-nlp/SWE-agent/pull/1070)
+* [@edspencer](https://github.com/edspencer) made their first contribution in [#1077](https://github.com/princeton-nlp/SWE-agent/pull/1077)
+* [@kabirgh](https://github.com/kabirgh) made their first contribution in [#1090](https://github.com/princeton-nlp/SWE-agent/pull/1090)
+
+**Full Changelog**: https://github.com/SWE-agent/SWE-agent/compare/v1.0.1...v1.1.0
+
 ## SWE-agent 1.0.1 (2025-02-28)
 
 This fixup release brings fixes mostly to the compatibility with local models. We have also significantly expanded the documentation in that aspect ([models & keys documentation](https://swe-agent.com/latest/installation/keys/)).

@@ -20,13 +20,17 @@ sweagent run --config config/your_config.yaml
 sweagent run-batch --config config/your_config.yaml
 ```
 
+You can also use more than one config file, e.g., `--config config/default.yaml --config my_config.yaml`
+(note that you need to repeat `--config`).
+Config options are merged in a nested way.
+
 This is the current default configuration file which is loaded when no `--config` flag is provided:
 
 <details>
-<summary><code>default_from_url.yaml</code></summary>
+<summary><code>default.yaml</code></summary>
 
-```yaml title="config/default_from_url.yaml"
---8<-- "config/default_from_url.yaml"
+```yaml title="config/default.yaml"
+--8<-- "config/default.yaml"
 ```
 </details>
 

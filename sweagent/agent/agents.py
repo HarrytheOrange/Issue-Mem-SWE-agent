@@ -77,7 +77,9 @@ class TemplateConfig(BaseModel):
     """
 
     max_observation_length: int = 100_000
-    """Truncate observation to this length if it exceeds it."""
+    """Truncate observation to this length if it exceeds it.
+    This in measured in characters, i.e., as `len(observation)`.
+    """
 
     next_step_no_output_template: str = None  # type: ignore
     """Template for the next step when the last output was empty. Defaults to next_step_template."""
@@ -159,6 +161,24 @@ class DefaultAgentConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+class ShellAgentConfig(BaseModel):
+    name: str = "main"
+    templates: TemplateConfig = Field(default_factory=TemplateConfig)
+    tools: ToolConfig = Field(default_factory=ToolConfig)
+    history_processors: list[HistoryProcessor] = Field(default_factory=lambda: [DefaultHistoryProcessor()])
+    model: ModelConfig = Field(description="Model options.")
+
+    max_requeries: int = 3
+    """Maximum number of times to requery the model after an error, such as a
+    formatting error, a blocked action, or a bash syntax error.
+    """
+
+    type: Literal["shell"] = "shell"
+
+    # pydantic config
+    model_config = ConfigDict(extra="forbid")
+
+
 class RetryAgentConfig(BaseModel):
     name: str = "retry_main"
     agent_configs: list[DefaultAgentConfig]
@@ -167,7 +187,7 @@ class RetryAgentConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-AgentConfig = Annotated[DefaultAgentConfig | RetryAgentConfig, Field(union_mode="left_to_right")]
+AgentConfig = Annotated[DefaultAgentConfig | RetryAgentConfig | ShellAgentConfig, Field(union_mode="left_to_right")]
 
 
 class _BlockedActionError(Exception):
@@ -218,6 +238,11 @@ def get_agent_from_config(config: AgentConfig) -> AbstractAgent:
         return DefaultAgent.from_config(config)
     elif config.type == "retry":
         return RetryAgent.from_config(config)
+    elif config.type == "shell":
+        # Need to defer import to avoid circular dependency
+        from sweagent.agent.extra.shell_agent import ShellAgent
+
+        return ShellAgent.from_config(config)
     else:
         msg = f"Unknown agent type: {config.type}"
         raise ValueError(msg)
@@ -872,9 +897,9 @@ class DefaultAgent(AbstractAgent):
                 pf = (
                     PatchFormatter(
                         patch,
-                        read_method=lambda path: self._env.read_file(
-                            PurePosixPath("/") / self._env.repo.repo_name / path
-                        ),  # type: ignore[attr-defined]
+                        read_method=lambda path: self._env.read_file(  # type: ignore[attr-defined]
+                            PurePosixPath("/") / self._env.repo.repo_name / path  # type: ignore[attr-defined]
+                        ),
                     )
                     if patch
                     else None
@@ -1068,6 +1093,8 @@ class DefaultAgent(AbstractAgent):
             # Errors that are raised
 
             except KeyboardInterrupt:
+                raise
+            except EOFError:
                 raise
 
             # Errors that cause requery
