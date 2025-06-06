@@ -185,7 +185,15 @@ class GenericAPIModelConfig(PydanticBaseModel):
 
     @property
     def id(self) -> str:
-        return f"{self.name}__t-{self.temperature:.2f}__p-{self.top_p:.2f}__c-{self.per_instance_cost_limit:.2f}"
+        if self.top_p is None:
+            top_p = "None"
+        else:
+            top_p = f"{self.top_p:.2f}"
+        if self.temperature is None:
+            temperature = "None"
+        else:
+            temperature = f"{self.temperature:.2f}"
+        return f"{self.name}__t-{temperature}__p-{top_p}__c-{self.per_instance_cost_limit:.2f}"
 
 
 class ReplayModelConfig(GenericAPIModelConfig):
