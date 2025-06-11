@@ -193,7 +193,8 @@ class GenericAPIModelConfig(PydanticBaseModel):
             temperature = "None"
         else:
             temperature = f"{self.temperature:.2f}"
-        return f"{self.name}__t-{temperature}__p-{top_p}__c-{self.per_instance_cost_limit:.2f}"
+        name = self.name.replace("/", "--")
+        return f"{name}__t-{temperature}__p-{top_p}__c-{self.per_instance_cost_limit:.2f}"
 
 
 class ReplayModelConfig(GenericAPIModelConfig):
