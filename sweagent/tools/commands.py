@@ -26,7 +26,7 @@ from pydantic import BaseModel, field_validator, model_validator
 
 from sweagent.utils.jinja_warnings import _warn_probably_wrong_jinja_syntax
 
-ARGUMENT_NAME_PATTERN = r"[a-zA-Z_][a-zA-Z0-9_-]+"
+ARGUMENT_NAME_PATTERN = r"[a-zA-Z_][a-zA-Z0-9_-]*"
 
 
 def _extract_keys(format_string: str) -> set[str]:
@@ -107,17 +107,18 @@ class Command(BaseModel):
         """
         if self.signature:
             # First validate that all arguments are present in the original signature
-            if not all(
-                f"<{arg.name}>" in self.signature
-                or f"[<{arg.name}>]" in self.signature
-                or f"{{{arg.name}}}" in self.signature
-                for arg in self.arguments
-            ):
-                msg = (
-                    f"Missing arguments in signature: {self.signature}. Did you format the signature correctly? "
-                    "You must include all argument names in the signature with <name>, [<name>], or {name} notation."
-                )
-                raise ValueError(msg)
+            for arg in self.arguments:
+                if not (
+                    f"<{arg.name}>" in self.signature
+                    or f"[<{arg.name}>]" in self.signature
+                    or f"{{{arg.name}}}" in self.signature
+                    or f"--{arg.name}" in self.signature
+                ):
+                    msg = (
+                        f"Missing argument {arg.name} in signature: {self.signature}. Did you format the signature correctly? "
+                        f"You must include all argument names in the signature with <{arg.name}>, [<{arg.name}>], {{{arg.name}}}, or --{arg.name} notation."
+                    )
+                    raise ValueError(msg)
 
             # Then do the replacement
             return re.sub(rf"\[?<({ARGUMENT_NAME_PATTERN})>\]?", r"{\1}", self.signature)
@@ -184,7 +185,7 @@ class Command(BaseModel):
                 raise ValueError(msg)
             if not arg.required:
                 found_optional = True
-        duplicates = {arg.name for arg in self.arguments if self.arguments.count(arg) > 1}
+        duplicates = {name for name in {arg.name for arg in self.arguments} if [arg.name for arg in self.arguments].count(name) > 1}
         if duplicates:
             msg = f"Command '{self.name}': Duplicate argument names: {duplicates}"
             raise ValueError(msg)
