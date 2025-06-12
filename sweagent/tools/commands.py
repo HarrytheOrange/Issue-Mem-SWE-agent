@@ -185,11 +185,9 @@ class Command(BaseModel):
                 raise ValueError(msg)
             if not arg.required:
                 found_optional = True
-        duplicates = {
-            name
-            for name in {arg.name for arg in self.arguments}
-            if [arg.name for arg in self.arguments].count(name) > 1
-        }
+        from collections import Counter
+        name_counts = Counter(arg.name for arg in self.arguments)
+        duplicates = {name for name, count in name_counts.items() if count > 1}
         if duplicates:
             msg = f"Command '{self.name}': Duplicate argument names: {duplicates}"
             raise ValueError(msg)
