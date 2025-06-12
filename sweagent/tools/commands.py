@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import re
 import string
+from collections import Counter
 from functools import cached_property
 
 from pydantic import BaseModel, field_validator, model_validator
@@ -185,7 +186,6 @@ class Command(BaseModel):
                 raise ValueError(msg)
             if not arg.required:
                 found_optional = True
-        from collections import Counter
 
         name_counts = Counter(arg.name for arg in self.arguments)
         duplicates = {name for name, count in name_counts.items() if count > 1}
