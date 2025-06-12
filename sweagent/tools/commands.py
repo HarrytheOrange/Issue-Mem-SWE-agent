@@ -186,6 +186,7 @@ class Command(BaseModel):
             if not arg.required:
                 found_optional = True
         from collections import Counter
+
         name_counts = Counter(arg.name for arg in self.arguments)
         duplicates = {name for name, count in name_counts.items() if count > 1}
         if duplicates:
