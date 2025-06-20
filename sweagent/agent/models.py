@@ -139,8 +139,8 @@ class GenericAPIModelConfig(PydanticBaseModel):
     """
 
     litellm_model_registry: str | None = None
-    """If set, this will update the model registry for use by litellm.
-    Use this for local models or models not in the default litellm model registry.
+    """If set, this will override the default model registry for litellm.
+    Use this for local models or models not (yet) in the default litellm model registry for tracking costs.
     """
 
     # pydantic
@@ -185,16 +185,14 @@ class GenericAPIModelConfig(PydanticBaseModel):
 
     @property
     def id(self) -> str:
-        if self.top_p is None:
-            top_p = "None"
-        else:
-            top_p = f"{self.top_p:.2f}"
-        if self.temperature is None:
-            temperature = "None"
-        else:
-            temperature = f"{self.temperature:.2f}"
         name = self.name.replace("/", "--")
-        return f"{name}__t-{temperature}__p-{top_p}__c-{self.per_instance_cost_limit:.2f}"
+        if self.top_p is not None:
+            top_p = f"{self.top_p:.2f}"
+        else:
+            top_p = "None"
+        temperature = f"{self.temperature:.2f}"
+        per_instance_cost_limit = f"{self.per_instance_cost_limit:.2f}"
+        return f"{name}__t-{temperature}__p-{top_p}__c-{per_instance_cost_limit}"
 
 
 class ReplayModelConfig(GenericAPIModelConfig):
@@ -588,12 +586,10 @@ class LiteLLMModel(AbstractModel):
                     "See https://swe-agent.com/latest/faq/ for more information."
                 )
                 self.logger.warning(msg)
-        
-        if self.config.litellm_model_registry:
-            with open(self.config.litellm_model_registry, "r") as f:
-                model_cost = json.load(f)
-                litellm.register_model(model_cost)
-
+        if self.config.litellm_model_registry is not None:
+            with open(self.config.litellm_model_registry) as f:
+                model_costs = json.load(f)
+                litellm.register_model(model_costs)
         if self.config.max_input_tokens is not None:
             self.model_max_input_tokens = self.config.max_input_tokens
         else:

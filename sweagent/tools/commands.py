@@ -20,13 +20,14 @@ from __future__ import annotations
 
 import re
 import string
+from collections import Counter
 from functools import cached_property
 
 from pydantic import BaseModel, field_validator, model_validator
 
 from sweagent.utils.jinja_warnings import _warn_probably_wrong_jinja_syntax
 
-ARGUMENT_NAME_PATTERN = r"[a-zA-Z_][a-zA-Z0-9_-]+"
+ARGUMENT_NAME_PATTERN = r"[a-zA-Z_][a-zA-Z0-9_-]*"
 
 
 def _extract_keys(format_string: str) -> set[str]:
@@ -119,6 +120,7 @@ class Command(BaseModel):
                         f"You must include all argument names in the signature with <{arg.name}>, [<{arg.name}>], {{{arg.name}}}, or --{arg.name} notation."
                     )
                     raise ValueError(msg)
+
             # Then do the replacement
             return re.sub(rf"\[?<({ARGUMENT_NAME_PATTERN})>\]?", r"{\1}", self.signature)
         else:
@@ -184,7 +186,9 @@ class Command(BaseModel):
                 raise ValueError(msg)
             if not arg.required:
                 found_optional = True
-        duplicates = {arg.name for arg in self.arguments if self.arguments.count(arg) > 1}
+
+        name_counts = Counter(arg.name for arg in self.arguments)
+        duplicates = {name for name, count in name_counts.items() if count > 1}
         if duplicates:
             msg = f"Command '{self.name}': Duplicate argument names: {duplicates}"
             raise ValueError(msg)
