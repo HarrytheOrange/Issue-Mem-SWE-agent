@@ -1,6 +1,4 @@
 # This config is a super basic, stripped down config that should be compatible with any instruction following LM
-# For running on verified:
-# sweagent run-batch --config config/basic.yaml --config model_configs/gemini-2.0-flash.yaml --config run_configs/verified-mini.yaml
 agent:
   type: default
   templates:
@@ -219,3 +217,6 @@ agent:
     total_cost_limit: 1500.0
     temperature: 0.0
     delay: 0.0
+    retry:
+      retries: 6
+      max_wait: 30
