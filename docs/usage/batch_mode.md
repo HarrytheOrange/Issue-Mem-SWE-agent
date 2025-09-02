@@ -222,7 +222,7 @@ import json
 preds = json.loads(Path("preds.json").read_text())
 data = [{"instance_id": key, **value} for key, value in preds.items()]
 jsonl = [json.dumps(d) for d in data]
-Path("all_preds.jsonl").write_text("\n".join(jsonl))
+Path("all_preds.jsonl").write_text("\\n".join(jsonl))
 ```
 
 !!! tip "Next up"
