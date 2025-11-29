@@ -11,15 +11,21 @@ Features:
 
 import argparse
 import json
+import os
 import sys
 import urllib.error
 import urllib.request
 from typing import Optional, Dict, Any
 
+DEFAULT_SERVICE_URL = "http://127.0.0.1:9012/search"
+SERVICE_URL_ENV = "ISSUE_SEARCH_RAG_URL"
+TOPK_ENV = "ISSUE_SEARCH_RAG_DEFAULT_TOPK"
+TOPK_MIN, TOPK_MAX = 1, 10
+
 
 def search_service(query: str, topk: int = 3) -> Optional[Dict[str, Any]]:
     """Send search request to the local ChromaDB service（纯原生库实现）."""
-    service_url = "http://127.0.0.1:9012/search"
+    service_url = os.environ.get(SERVICE_URL_ENV, DEFAULT_SERVICE_URL)
     payload = json.dumps({"query": query, "topk": topk}).encode("utf-8")
     req = urllib.request.Request(
         service_url,
@@ -74,6 +80,16 @@ def print_patch_preview(patch_content: str, max_lines: int = 8):
 
 
 def main() -> int:
+    env_topk = os.environ.get(TOPK_ENV)
+    topk_default = 3
+    if env_topk:
+        try:
+            parsed = int(env_topk)
+            if TOPK_MIN <= parsed <= TOPK_MAX:
+                topk_default = parsed
+        except ValueError:
+            pass
+
     parser = argparse.ArgumentParser(
         prog="issue_search_rag",
         description="Search for relevant patches/issues using the local ChromaDB service."
@@ -85,9 +101,9 @@ def main() -> int:
     parser.add_argument(
         "--topk",
         type=int,
-        default=3,
-        choices=range(1, 11),
-        help="Number of results to return (1-10, default: 3)"
+        default=topk_default,
+        choices=range(TOPK_MIN, TOPK_MAX + 1),
+        help=f"Number of results to return ({TOPK_MIN}-{TOPK_MAX}, default: {topk_default})"
     )
 
     args = parser.parse_args()

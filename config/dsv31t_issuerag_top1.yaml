@@ -24,7 +24,7 @@ agent:
       3. Edit the sourcecode of the repo to resolve the issue
       4. Rerun your reproduce script and confirm that the error is fixed!
       5. Think about edgecases and make sure your fix handles them as well
-      Before starting, use `issue_search_rag "<query>" --topk <n>` to fetch similar patches from the local dataset in /home/harry/Issue-Mem-SWE-agent/data. This provides grounding examples and relevant code changes to guide your approach. Make sure the host-side search service is running and reachable via the URL defined by the `ISSUE_SEARCH_RAG_URL` environment variable.
+      Before starting, use `issue_search_rag "<query>" --topk 1` to fetch the most similar patch from the local dataset in /home/harry/Issue-Mem-SWE-agent/data. You can only use topk=1. This provides grounding examples and relevant code changes to guide your approach. Make sure the host-side search service is running and reachable via the URL defined by the `ISSUE_SEARCH_RAG_URL` environment variable.
       Your thinking should be thorough and so it's fine if it's very long.
     next_step_template: |-
       OBSERVATION:
@@ -40,6 +40,7 @@ agent:
       TQDM_DISABLE: '1'
       GIT_PAGER: cat
       ISSUE_SEARCH_RAG_URL: http://host.docker.internal:9012/search
+      ISSUE_SEARCH_RAG_DEFAULT_TOPK: '1'
     bundles:
       - path: tools/registry
       - path: tools/edit_anthropic
@@ -66,7 +67,7 @@ agent:
           </diff>
     enable_bash_tool: true
     parse_function:
-      type: function_calling
+      type: thought_action
   history_processors:
     - type: cache_control
       last_n_messages: 2

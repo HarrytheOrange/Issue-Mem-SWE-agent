@@ -11,6 +11,10 @@ tools:
       - issue_search_rag "null pointer exception in login handler" --topk 5
 
       Notes:
+      - Set ISSUE_SEARCH_RAG_URL if the service runs outside the current container (defaults to http://127.0.0.1:9012/search).
+      - Set ISSUE_SEARCH_RAG_DEFAULT_TOPK to override the default top-k value (range 1-10, defaults to 3).
+
+      Notes:
       - Requires the local search service running on port 9012.
       - Returns repo name, file path, PR number, and a preview of the patch diff.
     arguments:
