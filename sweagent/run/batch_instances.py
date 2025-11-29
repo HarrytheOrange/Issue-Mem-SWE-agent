@@ -311,6 +311,7 @@ class SWEBenchInstances(BaseModel, AbstractInstanceSource):
             "lite": "princeton-nlp/SWE-Bench_Lite",
             "multimodal": "princeton-nlp/SWE-Bench_Multimodal",
             "multilingual": "swe-bench/SWE-Bench_Multilingual",
+            "swe-bench-verified-mini": "MariusHobbhahn/swe-bench-verified-mini",
         }
 
         if self.subset not in dataset_mapping:

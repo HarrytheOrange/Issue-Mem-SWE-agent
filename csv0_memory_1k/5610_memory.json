@@ -1,0 +1,31 @@
+{
+    "search_index": {
+        "description_for_embedding": "Bug in Telegram /caught command where CP and IV values were swapped due to incorrect column indexing and reliance on SELECT * order. Fix explicitly selects pokemon, cp, iv columns in the desired order and uses the correct indices when formatting the message.",
+        "keywords": [
+            "Telegram bot",
+            "/caught command",
+            "CP IV swapped",
+            "wrong column index",
+            "SELECT * bug",
+            "database column ordering",
+            "chat_handler.py",
+            "PokemonGo-Bot"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In the PokemonGo-Bot Telegram integration, the /caught command displayed incorrect CP and IV values. Users observed that CP was always 0 (or 1 for perfect IV) and the IV field actually showed the CP. The root cause was that the code performed a `SELECT * FROM catch_log` query and then assumed a specific column order when reading from the result tuple: it used `x[2]` as CP and `x[1]` as IV. At some point, the table schema or column order did not match this assumption. As a result, the values appeared swapped or nonsensical. The fix changed the SQL query to explicitly select `pokemon, cp, iv` from `catch_log`, ensuring a stable, known column order, and updated the output formatting to map indices correctly: `x[0]` as the Pokémon name, `x[1]` as CP, and `x[2]` as IV. This both corrected the displayed values and reduced dependence on implicit column ordering.",
+        "semantic_memory": "Relying on `SELECT *` and positional indices in database results is fragile and can easily lead to subtle bugs when schemas change or when assumptions about column order are wrong. A common pattern is that UI or API output appears swapped, zeroed, or nonsensical because code is reading the wrong indices from a result set. To make code robust and clear, explicitly select only the required columns in a defined order and then use those positions consistently, or leverage named fields/ORM models. This improves performance (less data transferred) and reduces the risk of bugs introduced by table schema changes. Additionally, when constructing user-facing strings, always verify that each displayed value corresponds to the right logical field in the data source.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Reproduce the issue by running the command or endpoint that shows incorrect data (e.g., run the /caught command and note mismatched CP/IV values).",
+            "Step 2: Inspect the raw data source (database table, API response) to confirm what the correct values should be for a given record.",
+            "Step 3: Examine the query or data access layer. Look for `SELECT *` or any logic that relies on the implicit order of columns rather than explicit selection.",
+            "Step 4: Compare the assumed column indices in the code (e.g., x[1], x[2]) with the actual column order in the table schema or result set. Identify any mismatches or swaps.",
+            "Step 5: Update the query to explicitly select only the needed columns in a known order (e.g., `SELECT pokemon, cp, iv FROM catch_log ...`).",
+            "Step 6: Adjust the code that reads the query result to match the explicit column order (e.g., name = x[0], cp = x[1], iv = x[2]) and ensure the formatted output labels match those fields.",
+            "Step 7: Re-run tests or manually trigger the command to verify that displayed values now match the underlying data correctly.",
+            "Step 8: As a preventive measure, adopt a project-wide guideline to avoid `SELECT *` in production code, and consider using named tuples, dict cursors, or ORM models to avoid position-dependent bugs.",
+            "Step 9: Optionally add tests (unit/integration) that assert the correct mapping of fields to their displayed labels, especially for user-facing commands or APIs."
+        ]
+    }
+}

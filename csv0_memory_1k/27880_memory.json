@@ -1,0 +1,32 @@
+{
+    "search_index": {
+        "description_for_embedding": "Refactor of Home Assistant Clementine media_player component: moved clementineremote.ClementineRemote import from inside setup_platform function to top-level and normalized import order with isort. This aligns with project style guidelines, avoids repeated in-function imports, and slightly improves clarity and performance.",
+        "keywords": [
+            "Home Assistant",
+            "clementine component",
+            "clementineremote",
+            "media_player",
+            "setup_platform",
+            "import location",
+            "top-level imports",
+            "in-function import",
+            "isort",
+            "code style refactor"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In the Home Assistant Clementine media_player component, the import of ClementineRemote from the clementineremote library was originally placed inside the setup_platform function. This went against the project's style guidelines, which prefer imports at the module (top) level unless there is a specific reason (e.g., optional dependencies or heavy imports). The pull request moved `from clementineremote import ClementineRemote` from inside `setup_platform` to the module's top-level import section. At the same time, the imports from `homeassistant.components.media_player` were reordered to `PLATFORM_SCHEMA, MediaPlayerDevice` to comply with isort sorting rules. Functionality did not change, but the codebase became cleaner, more consistent, and avoids repeated imports when `setup_platform` is called.",
+        "semantic_memory": "Imports should, by default, live at the top level of a module rather than inside functions. Top-level imports improve readability, conform to common Python and project style guidelines, and avoid repeated import overhead or subtle side effects when functions are called multiple times. In-function imports are typically reserved for cases such as optional or heavyweight dependencies that might not always be needed or are expensive to import at startup. Automated tools like isort help maintain a consistent and correct import order, which reduces noise in diffs and prevents style-related churn. Even when there is no direct functional bug, cleaning up import placement and order improves maintainability and aligns with established conventions in large codebases.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Inspect the module for imports placed inside functions (e.g., within setup or handler functions) without a strong justification such as optional dependencies or performance constraints.",
+            "Step 2: Confirm project style guidelines (or PEP 8) regarding import placement and ordering. Many projects require imports to be at the top of the file and sorted in a specific order.",
+            "Step 3: If there is no valid reason for an in-function import, move the import statement to the module-level import section at the top of the file.",
+            "Step 4: Ensure the import order follows the project's conventions (often: standard library, third-party, then local; each group alphabetically). Use tools like isort to automatically sort and group imports.",
+            "Step 5: After moving the import, remove the original in-function import to avoid duplication and potential confusion.",
+            "Step 6: Run the project’s test suite (e.g., `tox` or equivalent) to confirm no functional regressions, especially looking for import errors or changed initialization behavior.",
+            "Step 7: If the module is part of a plugin or integration system (like a Home Assistant component), manually exercise the integration if feasible to ensure the moved import does not break lazy-loading or optional dependency behavior.",
+            "Step 8: In the pull request description, clearly state that the change is a refactor/style fix (import relocation and sorting), note that it is non-breaking, and reference any relevant style or tooling (e.g., isort) used."
+        ]
+    }
+}

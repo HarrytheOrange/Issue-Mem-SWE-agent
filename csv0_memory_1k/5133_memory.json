@@ -1,0 +1,30 @@
+{
+    "search_index": {
+        "description_for_embedding": "Telegram event handler in PokemonGo bot was not sending any notification when an egg hatched. The fix adds a new 'egg_hatched' event branch in the TelegramHandler.handle_event method that formats and sends a message with the hatched Pokémon, its CP, and IV.",
+        "keywords": [
+            "telegram handler",
+            "egg_hatched event",
+            "event handling",
+            "notification not sent",
+            "PokemonGo-Bot",
+            "TelegramHandler.handle_event",
+            "bot messaging",
+            "feature addition"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, users wanted the Telegram integration of the PokemonGo-Bot to notify them when an egg hatched, similar to how it reports caught Pokémon and other events. The existing TelegramHandler handled several events (e.g., pokemon_caught, catch_limit) but had no logic for an 'egg_hatched' event, so no message was ever sent to Telegram on egg hatching. The pull request added a new 'elif event == \"egg_hatched\"' branch inside TelegramHandler.handle_event. This branch constructs a message using fields from the event data—'pokemon', 'cp', and 'iv'—and sets 'msg' to 'Egg hatched with a {pokemon} CP: {cp}, IV: {iv}'. An initial attempt also called 'self.tbot.send_player_stats_to_chat(master)' for this event, but that call was removed in a follow-up patch, leaving only the concise hatched-egg message. A minor cleanup of stray blank lines around the handler reconfiguration logic was also included. After this change, egg hatch events are surfaced correctly to users via Telegram.",
+        "semantic_memory": "Event-driven integrations must explicitly handle each event type that should trigger user-facing notifications. If a new event (like 'egg_hatched') is introduced in the core system but no corresponding branch is added in downstream handlers (logging, UI, chat bots), the event will appear to be 'ignored' from the user's perspective. A robust design ensures the event handler has a clear mapping from event names to message templates or actions, and new events are added in a consistent way. When adding such handlers, it's good practice to reuse existing data fields (like 'pokemon', 'cp', 'iv') and message formats for consistency with other notifications. Also, avoid unnecessary side effects (like sending full player stats) unless they are clearly desired by the feature, to keep notifications focused and less noisy.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Identify missing user-facing behavior: Confirm that a particular event (e.g., egg hatched) occurs in the system but does not result in any visible notification or action in the integration layer (e.g., Telegram, Slack, logs).",
+            "Step 2: Trace the event pipeline: Locate where events are emitted in the core application and what event name and payload structure they use (e.g., 'egg_hatched' with fields 'pokemon', 'cp', 'iv').",
+            "Step 3: Inspect the event handler: Open the relevant handler (e.g., TelegramHandler.handle_event) and examine the conditional branches that dispatch behavior based on the event name. Look for an absent or incomplete branch for the new event.",
+            "Step 4: Add a new event branch: Implement an 'elif event == \"<event_name>\"' (or equivalent dispatch mapping) that consumes the event payload and constructs the desired output (e.g., a formatted message containing key fields from 'data').",
+            "Step 5: Reuse consistent formatting: Model the new message format after existing, similar notifications (e.g., use the same CP/IV formatting as 'pokemon_caught' events) to maintain a consistent user experience.",
+            "Step 6: Minimize extraneous side effects: Only call additional functions (like sending full player stats) if explicitly required by the feature; otherwise, keep the handler focused on the primary notification to avoid noise.",
+            "Step 7: Test end-to-end: Trigger the event in a controlled environment (e.g., simulate or force an egg hatch) and verify that the integration (Telegram chat) receives the message with correct content and no errors.",
+            "Step 8: Clean up and refactor if needed: Remove unused code or stray whitespace introduced during editing, and consider refactoring repetitive message-building logic into helper functions if multiple event handlers share patterns."
+        ]
+    }
+}

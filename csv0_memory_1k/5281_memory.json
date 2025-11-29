@@ -1,0 +1,32 @@
+{
+    "search_index": {
+        "description_for_embedding": "High-availability StackStorm configuration sample was missing the coordination section describing the required coordination backend (Redis or ZooKeeper). The fix adds a [coordination] section with example URLs for Redis and ZooKeeper so HA deployments correctly configure the coordination service.",
+        "keywords": [
+            "StackStorm",
+            "HA configuration",
+            "high availability",
+            "coordination backend",
+            "Redis",
+            "ZooKeeper",
+            "kazoo",
+            "st2.conf.sample",
+            "configuration docs",
+            "missing config section"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this change, the HA sample configuration file `conf/HA/st2.conf.sample` for StackStorm was incomplete: it lacked a configuration section for the coordination service, which is required in HA deployments to manage distributed coordination tasks. This omission could cause confusion when setting up HA, especially after documentation changes that introduced Redis/ZooKeeper as required coordination backends. The patch adds a new `[coordination]` section at the end of the sample file. Inside it, the author shows two options: a commented-out ZooKeeper example URL (`# url = kazoo://st2-multi-node-controller`) and an active Redis URL (`url = redis://st2-multi-node-controller`). This aligns the configuration sample with the docs and makes the coordination dependency explicit for operators.",
+        "semantic_memory": "When an application introduces or relies on new infrastructure components (such as a coordination backend for HA, e.g., Redis or ZooKeeper), all user-facing configuration samples and documentation must be updated to reflect those requirements. HA setups often depend on a coordination service for leader election, distributed locks, and cluster state. If sample configuration files omit these sections, users may deploy incomplete configurations, leading to subtle runtime issues or failures that are hard to diagnose. Providing explicit, working examples in sample config files, including commented alternatives (like Redis vs ZooKeeper), helps guide users toward correct setups and reduces misconfiguration risk. Maintaining consistency between docs, sample configs, and actual runtime requirements is a key best practice.",
+        "procedural_memory": [
+            "When a new required service or configuration (e.g., coordination backend for HA) is introduced, verify that all sample configuration files and docs are updated.",
+            "Step 1: Identify the new or previously undocumented dependency (e.g., coordination backend for HA: Redis or ZooKeeper). Confirm how it should be configured in the main application config.",
+            "Step 2: Locate relevant sample configuration files (e.g., `conf/HA/st2.conf.sample`) and existing documentation pages that describe deployment or HA setup.",
+            "Step 3: Add a dedicated configuration section that matches the actual runtime configuration structure (e.g., add `[coordination]` when the application expects that section).",
+            "Step 4: Provide a clear, concrete example of the configuration key/value(s), including the default or recommended backend (e.g., `url = redis://hostname`) and, if applicable, a commented-out alternative (e.g., `# url = kazoo://hostname` for ZooKeeper).",
+            "Step 5: Ensure hostnames and example values are consistent with the rest of the sample (e.g., reuse `st2-multi-node-controller` or whatever the controller node is called).",
+            "Step 6: Cross-check that documentation (release notes, HA deployment guides) references the same configuration keys and backends as the sample file.",
+            "Step 7: If there is already a changelog or docs entry, confirm whether this is a minor follow-up and link or reference accordingly; avoid duplicate or conflicting instructions.",
+            "Step 8: After updating, run any available configuration validation or a minimal HA deployment test to confirm that the new section is recognized and correctly applied by the application."
+        ]
+    }
+}

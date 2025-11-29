@@ -1,0 +1,32 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fixes a KeyError in pokemon_catch_worker when accessing missing 'individual_attack' (and related IV fields) by using dict.get with a default value instead of direct indexing.",
+        "keywords": [
+            "KeyError",
+            "individual_attack",
+            "individual_stamina",
+            "IV calculation",
+            "pokemon_catch_worker",
+            "PokemonGo-Bot",
+            "dict.get",
+            "optional API fields",
+            "pokemon_data",
+            "Python exception"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In the PokemonGo-Bot project, users intermittently saw a crash with `KeyError: 'individual_attack'` in `pokemon_catch_worker.py`. The bot assumed that every encountered Pokemon's `pokemon_data` dictionary always contained IV-related fields, and accessed them directly: `pokemon['pokemon_data']['individual_attack']`, `individual_stamina`, etc. Some API responses, however, omitted these keys, causing a KeyError when building the IV display string. The fix changed the code to use `pokemon['pokemon_data'].get('individual_attack', 0)` and `pokemon['pokemon_data'].get('individual_stamina', 0)` to safely read those fields, defaulting to 0 when absent. The IV display string is now built from these safe values, preventing the crash. The issue was already addressed in the development branch, and this patch aligns the affected code with that safer access pattern. There were also minor unrelated .gitignore adjustments, but the core functional change is the safe handling of missing IV keys.",
+        "semantic_memory": "When consuming external or unstable data sources (e.g., game APIs, web APIs), dictionary fields that represent optional or version-dependent attributes must not be assumed to always exist. Direct indexing like `data['field']` will raise KeyError if the key is missing. For non-critical or optional values, it is safer to use `data.get('field', default)` or to check the key with `'field' in data` before accessing. This pattern is especially important when computing derived values or logging informational strings (like IV displays) where missing data should degrade gracefully rather than crash the application. Choosing an appropriate default (0, None, or a sentinel) and making sure downstream calculations can handle that default is part of robust error handling. In user-facing bots or long-running services, defensive access to nested response structures prevents intermittent crashes caused by incomplete or evolving API responses.",
+        "procedural_memory": [
+            "When encountering a KeyError in production code that processes API or external data, first reproduce or capture the failing payload that triggered the error.",
+            "Step 1: Inspect the stack trace to identify the exact line and key causing the KeyError (e.g., `pokemon['pokemon_data']['individual_attack']`).",
+            "Step 2: Log or print the surrounding data structure during failure (e.g., the full `pokemon` or `pokemon['pokemon_data']`) to confirm whether the key is truly missing or has a different name.",
+            "Step 3: Determine if the missing field is optional or required. Check API docs or other successful responses to understand when it may be absent.",
+            "Step 4: For optional fields, replace direct dictionary indexing with safer access, such as `value = dict_obj.get('key', default_value)` or guard with `if 'key' in dict_obj:` before use.",
+            "Step 5: Choose a sensible default value (0, None, or a domain-specific fallback). Ensure any calculations or formatting using this value can handle the default without raising new errors or producing misleading results.",
+            "Step 6: Update any formatting/printing logic (like IV display strings) to use the safely retrieved values, and consider marking missing data explicitly if accuracy is critical.",
+            "Step 7: Add tests (or at least manual checks) for both cases: when the key is present and when it is missing, to confirm the system continues operating without crashing.",
+            "Step 8: Deploy the fix and monitor logs to verify that the KeyError no longer occurs and that the application behavior remains acceptable when data fields are missing."
+        ]
+    }
+}

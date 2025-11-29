@@ -1,0 +1,36 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant webostv media_player: custom sources were restricted by a schema that only allowed a hardcoded set of short strings (e.g., livetv, youtube). This prevented users from configuring new/unknown apps as sources. The fix relaxes the schema to accept any string and changes the selection logic to match custom sources against app IDs and titles, removing the need for the hardcoded short-name mapping.",
+        "keywords": [
+            "homeassistant",
+            "webostv",
+            "media_player",
+            "custom sources",
+            "validation schema",
+            "voluptuous",
+            "configuration bug",
+            "hardcoded values",
+            "dynamic app list",
+            "app id",
+            "app title",
+            "backwards compatibility"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In the Home Assistant webostv media_player component, users could define custom sources in configuration. The validation schema for these sources only allowed a predefined set of short names (e.g., 'livetv', 'youtube', 'makotv'), which were then mapped to specific app IDs. As new apps appeared or existing app IDs changed, users could not configure them as custom sources because validation would reject unknown strings. The fix removed the hardcoded short-name-to-app-ID mapping and relaxed the schema to allow any string as a custom source. In the update() method, instead of translating short names through WEBOS_APPS_SHORT, the code now directly uses the provided strings and considers an app a custom source if (a) its ID is exactly in the custom_sources list, or (b) any of the custom source strings appears in the app's title or ID. This retains compatibility with existing configurations because old short names will still match the app by ID or title while allowing arbitrary new app names/IDs to be configured without code changes.",
+        "semantic_memory": "Overly strict configuration schemas that refer to hardcoded value sets can make integrations brittle and unable to adapt to evolving external systems (e.g., new app IDs or titles from a TV app store). A more robust design uses flexible validation (e.g., 'any string') coupled with runtime matching logic that can interpret user-provided identifiers against dynamic data (like app lists from a device). This separates 'is the configuration structurally valid?' from 'how do we resolve this configuration against live data?', reducing the need to modify code for each new supported value. Maintaining backward compatibility while generalizing behavior often involves replacing fixed mappings with more generic matching rules (e.g., exact ID match plus fuzzy matching on titles/IDs), so existing configurations still resolve correctly while allowing new ones. In general, schema constraints should validate shape and type, not encode domain enumerations that are expected to change over time.",
+        "procedural_memory": [
+            "When a configuration option only accepts a limited set of values and users report they cannot configure new or changed external resources (e.g., new apps, endpoints, or device features), suspect that the validation schema or hardcoded enums are too restrictive.",
+            "Step 1: Reproduce the issue by trying to configure a value that users say should be supported (e.g., a new app name or ID) and observe whether validation fails or the configuration is silently ignored.",
+            "Step 2: Inspect the configuration schema (e.g., voluptuous Schema in Home Assistant) for that option. Look for constructs like vol.In([...]) or hardcoded enums that restrict allowed values to a fixed list.",
+            "Step 3: Check how the configuration values are consumed at runtime. Look for mappings from user-facing shortcuts to internal IDs and see if these mappings are static and incomplete (e.g., a dict mapping 'livetv' to a specific app ID).",
+            "Step 4: Decide what should be validated at schema level: often it should only ensure type/shape (string, list of strings) rather than specific allowed values when the domain is dynamic.",
+            "Step 5: Relax the schema to a more general type where appropriate (e.g., replace vol.All(cv.ensure_list, [vol.In(HARDCODED_SET)]) with vol.All(cv.ensure_list, [cv.string]) so any string is accepted).",
+            "Step 6: Adjust the runtime logic to interpret the more flexible configuration. For dynamic resources, use matching against live data: exact ID matches, and when helpful, substring or fuzzy matching on names/titles and IDs.",
+            "Step 7: Ensure backward compatibility by preserving the behavior for existing configurations. For example, if old configs used short names mapped to IDs, keep those short names working by matching them against app IDs or titles rather than removing support outright.",
+            "Step 8: Add tests (or at least manual checks) for both old and new configuration patterns: existing short names, explicit app IDs, and new app names. Verify that they appear correctly in the resulting source list.",
+            "Step 9: Remove now-redundant hardcoded mappings/enums if they are no longer needed, to avoid confusion and future maintenance burden.",
+            "Step 10: Document the new behavior clearly so users know they can supply arbitrary strings and how those strings are matched (e.g., 'matches by app ID or if the string appears in the app's title or ID')."
+        ]
+    }
+}

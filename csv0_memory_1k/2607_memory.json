@@ -1,0 +1,34 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant input_slider component previously coerced selected values to integers, preventing use of fractional steps (e.g., 0.5) for things like thermostat control. The fix changes validation and internal handling from int to float, and updates tests to verify float behavior.",
+        "keywords": [
+            "Home Assistant",
+            "input_slider",
+            "float step",
+            "non-integer slider value",
+            "schema validation",
+            "vol.Coerce",
+            "thermostat control",
+            "service schema",
+            "range validation",
+            "component test update"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, a user needed to control a thermostat using Home Assistant’s input_slider with a 0.5 step. While the slider UI could be configured with fractional steps, the backend select_value service only accepted integers. This was enforced in two places: the service schema used vol.Coerce(int) for ATTR_VALUE, and the select_value method explicitly cast the input to int. As a result, attempts to set values like 20.5 or 30.4 were coerced to 20 or 30 respectively, preventing precise thermostat control.\n\nThe fix updated the input_slider component so that values are treated as floats end-to-end. Specifically, SERVICE_SELECT_VALUE_SCHEMA now uses vol.Coerce(float) and the select_value implementation converts the input to float instead of int. The existing range checks (minimum/maximum) continue to work with float values. Unit tests for input_slider were also updated: instead of asserting on string equality ('50', '70'), they now parse state.state as float and assert numeric equality, and an explicit test case for a float value ('30.4') was added to ensure the component correctly stores and returns fractional values. The change was reviewed and accepted as enabling float slider values for thermostat-like use cases.",
+        "semantic_memory": "This fix illustrates a common pattern where the data type enforced at the API or schema level is too restrictive for real-world use cases. Although the UI configuration allowed fractional steps for a slider, the backend logic and validation coerced incoming values to integers, silently discarding precision. This mismatch between UI capabilities and backend constraints can lead to subtle bugs and user frustration.\n\nKey takeaways:\n- Service schemas and validation (e.g., with vol.Schema and vol.Coerce) must reflect the intended capabilities of a feature. If a component is designed to work with fractional values, the schema should accept floats, not just ints.\n- Internal component logic should use types consistent with the domain model (e.g., temperature and slider positions often require float precision). Hard-casting to int is a red flag when dealing with physical quantities or precise configuration values.\n- Tests should assert on the correct semantic type. When component state represents numeric values, tests should treat state.state as numeric (converting to float or int as intended) rather than rely on string equality, which can mask type and precision issues.\n- Range and bounds checking generally works the same for floats and integers; once the type is broadened to float, existing min/max checks can typically remain unchanged.\n- Adding explicit test cases for the newly supported data type (e.g., a non-integer value) is essential to prevent regression, especially when changing schema coercion or type handling.",
+        "procedural_memory": [
+            "When diagnosing slider or numeric input issues where fractional values are not respected:",
+            "Step 1: Reproduce the issue by configuring the component (e.g., a slider) with a fractional step and attempting to set a non-integer value via the UI or service call. Observe whether the stored or reported value is truncated/rounded to an integer.",
+            "Step 2: Inspect the service or API schema definitions (e.g., vol.Schema in Home Assistant) for the relevant service (such as SERVICE_SELECT_VALUE_SCHEMA). Check if incoming numeric parameters are coerced to int instead of float.",
+            "Step 3: Examine the component’s internal setter or handler methods (e.g., select_value) to see how incoming values are cast or processed. Look specifically for explicit int() conversions that could be discarding fractional parts.",
+            "Step 4: Decide on the correct domain type (int vs float) based on the component’s intended use. For quantities that naturally support fractions (temperatures, percentages, positions), prefer float.",
+            "Step 5: Update the service schema to accept floats, for example by changing vol.Coerce(int) to vol.Coerce(float) for the relevant attribute. Ensure this is consistent wherever the value is validated.",
+            "Step 6: Update the component logic to use float consistently. Replace int(value) with float(value) in setters or handlers, and verify that range checks still make sense with fractional values.",
+            "Step 7: Adjust existing tests to assert on numeric types rather than raw strings where appropriate. Convert the state representation to float (or int) in tests before comparing, and update expectations accordingly.",
+            "Step 8: Add at least one test that sets a non-integer value (e.g., '30.4') and verifies that the stored state remains that float value and that range/boundary behavior is correct.",
+            "Step 9: Run the full test suite (e.g., tox) to ensure there are no regressions, especially in other code paths that might rely on the previous integer behavior.",
+            "Step 10: Review for any downstream consumers or integrations that assume integer values, and either update them to handle floats or document the change clearly in release notes or migration guides."
+        ]
+    }
+}

@@ -1,0 +1,30 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fix numpy 1.18 compatibility by ensuring np.linspace 'num' argument is an integer in label interpolation code, preventing runtime errors from deprecated float usage.",
+        "keywords": [
+            "numpy 1.18",
+            "np.linspace",
+            "num must be integer",
+            "labels_utils",
+            "interpolate_coordinates",
+            "type error",
+            "deprecation",
+            "compatibility fix"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the project started failing with numpy 1.18 due to a change in np.linspace: the 'num' parameter can no longer be a non-integer (this had been deprecated since numpy 1.12). The affected code was in napari/layers/labels/labels_utils.py within the interpolate_coordinates function. There, num_step was computed using math.ceil on a float expression and then used as np.linspace(..., num=num_step + 1). Although num_step was conceptually integral, the expression produced a float (e.g., numpy scalar or Python float), which numpy 1.18 rejects. The fix was to explicitly cast the parameter to an int: np.linspace(old_coord[i], new_coord[i], num=int(num_step + 1)) for each interpolated coordinate. This restored compatibility with numpy 1.18 and passed all tests.",
+        "semantic_memory": "When libraries tighten type requirements around long-deprecated behaviors, code that relied on permissive coercions can start failing. In numpy 1.18, np.linspace enforces that 'num' be an integer, so passing a float—even if it represents an integer value—raises an error. Code that computes counts or lengths via floating-point arithmetic (ceil, round, division) must explicitly convert those results to int before using them in APIs that expect integer counts (e.g., np.linspace, np.arange, indexing, shape definitions). As a general best practice, any variable representing a count, index, or number of steps should be stored and used as an integer, not a float, especially when interfacing with numerical libraries that may tighten type checks over time.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Reproduce the error with the newer dependency version (e.g., numpy 1.18) and capture the full traceback. Identify functions (such as np.linspace) and parameters mentioned in the error message, especially where deprecations are referenced.",
+            "Step 2: Check the dependency's release notes and deprecation warnings (e.g., numpy 1.18 release notes) for behavior changes related to the failing API. Confirm whether parameters now require stricter types or different semantics.",
+            "Step 3: Locate all calls to the affected API in the codebase (e.g., search for 'np.linspace('). For each call, inspect the type and origin of the problematic argument (here, the 'num' parameter). Determine whether it is guaranteed an integer or might be a float.",
+            "Step 4: If the argument conceptually represents a count or number of steps, ensure it is an integer. Add explicit conversion where needed, such as wrapping expressions with int(...), or using integer math earlier in the computation so that the variable is typed as int throughout.",
+            "Step 5: Update the code accordingly. For this case, change np.linspace(old_coord[i], new_coord[i], num=num_step + 1) to np.linspace(old_coord[i], new_coord[i], num=int(num_step + 1)) inside the interpolation loop.",
+            "Step 6: Rerun the test suite against both older and newer versions of the dependency if possible, to ensure the fix is backward compatible and does not change behavior aside from eliminating the error.",
+            "Step 7: Search for similar patterns in the codebase (other uses of np.linspace, np.arange, range, indexing, or shape-setting using computed floats) and proactively apply the same integer-casting pattern, to avoid future breakage from similar deprecation enforcement.",
+            "Step 8: Document the change in release notes and/or code comments, referencing the dependency version and deprecation that motivated the fix. This helps future maintainers understand why explicit int conversion is necessary."
+        ]
+    }
+}

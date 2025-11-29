@@ -1,0 +1,44 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fix for Home Assistant Alexa smart_home integration: climate devices in MANUAL mode were not represented correctly to Alexa because Alexa doesn't understand the MANUAL HVAC state. The fix maps climate.STATE_MANUAL to the Alexa 'AUTO' mode, similar to how other unsupported states are mapped to supported Alexa equivalents.",
+        "keywords": [
+            "Alexa",
+            "smart_home",
+            "Home Assistant",
+            "climate",
+            "thermostat",
+            "manual mode",
+            "STATE_MANUAL",
+            "HVAC mode mapping",
+            "enum mapping",
+            "integration compatibility",
+            "voice assistant",
+            "state translation"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, Home Assistant's Alexa smart_home integration did not properly support climate devices that were set to the MANUAL HVAC mode. The Alexa API does not recognize a 'MANUAL' mode for thermostats, so when a climate entity in Home Assistant reported STATE_MANUAL, Alexa either failed to show the correct mode or could not handle it as expected. Other non-native states like IDLE, FAN_ONLY, and DRY were already being mapped to 'OFF' for Alexa compatibility. The discussion raised the concern that changing behavior for all climate devices could be risky, but the maintainer accepted that preserving Alexa functionality was more important than preserving an exact 1:1 state name mapping.\n\nThe concrete fix was a one-line change in homeassistant/components/alexa/smart_home.py: extending the CLIMATE_MODE_MAP to include (climate.STATE_MANUAL, 'AUTO'). This means that whenever a Home Assistant climate entity is in MANUAL mode, Alexa will see it as 'AUTO'. While this is not a perfect semantic match (manual could be heating or cooling), it is a reasonable compromise within Alexa's supported mode set and only affects the label reported to Alexa, not Home Assistant's internal behavior. This resolved issue #19990 and allowed climate devices in manual mode to work correctly with Alexa, including the proper badge display, without breaking other climate modes.",
+        "semantic_memory": "When integrating Home Assistant (or any system) with external platforms like Alexa, state and mode enumerations rarely align perfectly. External APIs may support fewer or differently named states than the internal domain model. To maintain functionality, it's often necessary to implement a mapping layer that translates internal states into the closest supported external states. In this case, Home Assistant has more detailed HVAC modes (e.g., MANUAL, IDLE, FAN_ONLY, DRY, ECO) than Alexa's thermostat interface, so several internal states are mapped to broader Alexa categories like 'AUTO' or 'OFF.\n\nThe generalizable pattern is:\n- Identify states that are not recognized by the external API but are part of your internal model.\n- Decide on the least-bad, semantically closest supported external state to map to, accepting that some nuance may be lost.\n- Ensure mappings are centralized and explicit (e.g., a dictionary or table) so they can be audited and updated easily.\n- Favor integration usability (things work reasonably well for users) over strict literal fidelity of internal state names when the external system cannot represent them exactly.\n- Document these mappings and be explicit about any compromises (e.g., mapping MANUAL to AUTO) so future maintainers and users understand the behavior.\n\nThis approach applies broadly to any cross-system integration where enums differ: UI front-ends, APIs, third-party services, or protocol bridges. The key best practice is to keep a clear translation layer and to choose mappings that preserve behavior and user expectations as much as possible, even if labels are not perfect.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Reproduce and characterize the integration issue",
+            "Confirm that a specific internal state or mode (e.g., a thermostat in MANUAL mode) causes incorrect behavior or missing functionality in the external integration (e.g., Alexa not displaying or controlling the climate entity correctly). Use logs, device state views, and the external platform’s diagnostics (Alexa app, API responses) to see what the external system is receiving.",
+            "Step 2: Inspect the integration’s state/mode mapping",
+            "Locate the mapping logic between your system’s internal states and the external platform’s supported states. This is often a dictionary or function (e.g., CLIMATE_MODE_MAP in homeassistant/components/alexa/smart_home.py) that translates internal enums into external enums or strings.",
+            "Step 3: Compare internal and external enum sets",
+            "List all internal states for the affected domain (e.g., all climate HVAC modes) and all states supported by the external API (e.g., Alexa thermostat modes). Identify which internal states have no explicit mapping or are mapped in a way that causes issues.",
+            "Step 4: Choose appropriate fallback mappings",
+            "For each unsupported or unmapped internal state, choose the closest semantically reasonable external state. Consider behavior and user expectations over exact naming. For example, map MANUAL to AUTO if there is no manual concept in the external API but both represent a mode where the system is actively managing temperature.",
+            "Step 5: Implement or adjust the mapping",
+            "Modify the mapping table or translation function to include the missing internal state. In this case, add a line like (climate.STATE_MANUAL, 'AUTO') to the mapping that Alexa uses. Ensure the change is localized to the translation layer and does not change core internal behavior.",
+            "Step 6: Run tests and add/adjust test coverage",
+            "Run existing unit/integration tests (e.g., tox) to ensure nothing breaks. If possible, add or update tests that verify the new mapping: given a climate entity in MANUAL mode, the integration should output the expected external state.",
+            "Step 7: Validate behavior end-to-end",
+            "Deploy the change in a test environment, configure a device in the problematic state, and verify on the external platform (e.g., Alexa app) that the label and behavior are now correct and that other states still work as before.",
+            "Step 8: Document the mapping decision and trade-offs",
+            "Document that certain internal states are mapped to approximate external states and why (e.g., MANUAL → AUTO). This helps future maintainers understand the compromise and prevents regressions where someone might remove or alter the mapping without realizing its impact.",
+            "Step 9: Revisit when external API evolves",
+            "Monitor changes to the external platform’s API. If it later adds native support for the previously unsupported state (e.g., a MANUAL mode), update the mapping to reflect the new capability and potentially remove the compromise mapping."
+        ]
+    }
+}

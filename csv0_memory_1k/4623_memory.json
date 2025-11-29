@@ -1,0 +1,56 @@
+{
+    "search_index": {
+        "description_for_embedding": "Introduced randomized evolve speed in the PokemonGo bot by replacing a fixed evolve_speed configuration with min_evolve_speed and max_evolve_speed, using a random sleep interval between evolutions and deprecating the old config key with a warning and docs/config updates.",
+        "keywords": [
+            "PokemonGo-Bot",
+            "EvolvePokemon",
+            "evolve_speed deprecated",
+            "min_evolve_speed",
+            "max_evolve_speed",
+            "randomized delay",
+            "human_behaviour.sleep",
+            "configuration change",
+            "backwards compatibility",
+            "deprecation warning"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this pull request, the fixed evolution delay configuration `evolve_speed` in the PokemonGo-Bot was replaced with a randomized delay to better mimic human behavior and to support configuration flexibility.\n\nOriginally, evolution timing was controlled by a single config key `evolve_speed` used as a constant sleep duration between evolutions in `EvolvePokemon` (in `pokemongo_bot/cell_workers/evolve_pokemon.py`). The change introduced two new configuration options in all example config files (`configs/config.json.example`, `configs/config.json.cluster.example`, `configs/config.json.map.example`, `configs/config.json.path.example`): `min_evolve_speed` and `max_evolve_speed`, with sample values of 25 and 30 seconds respectively, replacing `evolve_speed: 20`.\n\nIn the worker implementation, the initialization now reads:\n- `self.min_evolve_speed = self.config.get('min_evolve_speed', 25)`\n- `self.max_evolve_speed = self.config.get('max_evolve_speed', 30)`\n\nThe old `self.evolve_speed` attribute was removed. In `_execute_pokemon_evolve`, after a successful evolve, the fixed `sleep(self.evolve_speed)` call was replaced with `sleep(uniform(self.min_evolve_speed, self.max_evolve_speed))`, using `random.uniform` to draw a random delay in seconds between the configured bounds.\n\nTo maintain backward compatibility and signal the change to users, `_validate_config` now checks if `evolve_speed` is present in the config, and if so, logs a warning: `\"evolve_speed is deprecated, please use instead 'min_evolve_speed' and 'max_evolved_speed'.\"` (note that the message contains a small typo: `max_evolved_speed` instead of `max_evolve_speed`). The documentation in `docs/configuration_files.md` was updated to document the new keys, although there is a minor copy-paste error where both lines use `min_evolve_speed` instead of `min_evolve_speed` / `max_evolve_speed`.\n\nCI initially failed for unrelated reasons (test API wrapper issues), but subsequent runs passed, indicating the change itself was sound. Reviewers requested explicit deprecation notice and documentation updates, which were implemented in later commits within the PR.",
+        "semantic_memory": "This change illustrates several generalizable practices:\n\n1. **Replacing a single numeric config value with a randomized range**: Instead of a fixed `evolve_speed` delay, the system now uses `min_evolve_speed` and `max_evolve_speed` and randomly sleeps between them. This is useful when modeling human-like behavior, rate limiting, or avoiding predictable timing patterns.\n\n2. **Backward-compatible configuration evolution**: When deprecating a configuration key:\n   - Keep the code resilient by providing default values for the new options.\n   - Detect presence of the deprecated option and emit a clear warning rather than breaking immediately.\n   - Update example config files and documentation so new users adopt the new keys by default.\n\n3. **Using continuous random intervals for timing**: Switching from `randint` to `uniform` allows non-integer, continuous delays that more closely resemble natural timing patterns, which can be important in anti-detection / human-simulation contexts, or whenever smooth randomization is needed.\n\n4. **Centralized config validation hook**: Implementing a `_validate_config` method (or equivalent) that normalizes configuration (e.g., turning comma-separated strings into lists) and performs deprecation checks is a good general pattern. It keeps initialization logic clean and encapsulates configuration sanity checks in one place.\n\n5. **Documentation and example config alignment**: When configuration schema changes, all user-facing artifacts (docs, example configs) must be updated alongside code to reduce misconfiguration. Even small typos in docs (e.g., repeated key name, wrong key in warning message) can mislead users, so they should be reviewed carefully during such changes.\n\nOverall, the pattern is: introduce more expressive configuration (range instead of scalar), wire it into behavior with randomized logic, preserve backwards compatibility via warnings, and reflect changes in docs and example configs.",
+        "procedural_memory": [
+            "To diagnose and implement similar timing-randomization and configuration-evolution changes, follow these steps:",
+            "Step 1: Identify the fixed-timing behavior",
+            "Locate where fixed sleeps or rate limits are used (e.g., `sleep(self.evolve_speed)`) and identify which configuration key controls them.",
+            "Confirm whether the current behavior is too rigid (e.g., always the same delay) or detectable, and define the desired behavior (e.g., random delay within a range).",
+            "Step 2: Design the new configuration schema",
+            "Replace the single scalar value with a range: introduce two new keys such as `min_delay` and `max_delay` or, in this case, `min_evolve_speed` and `max_evolve_speed`.",
+            "Decide on sensible default values for both keys so existing configs that omit them still yield safe behavior.",
+            "Step 3: Update configuration loading",
+            "In the initialization of the relevant component/worker, load the new keys from config with defaults, for example:",
+            "  self.min_evolve_speed = config.get('min_evolve_speed', 25)",
+            "  self.max_evolve_speed = config.get('max_evolve_speed', 30)",
+            "If you previously used `self.evolve_speed`, remove it and migrate all usages to the new attributes.",
+            "Step 4: Implement randomized behavior",
+            "Replace the fixed sleep call with a randomized delay between the min and max values.",
+            "For continuous delays, use `random.uniform(min_value, max_value)`; for integer delays, use `random.randint`.",
+            "Example: `sleep(uniform(self.min_evolve_speed, self.max_evolve_speed))`.",
+            "Ensure the values are validated (e.g., min <= max, positive numbers) if there is any chance of misconfiguration.",
+            "Step 5: Add configuration validation and deprecation warnings",
+            "Create or extend a config validation method (e.g., `_validate_config`) to:",
+            "- Normalize config formats (e.g., split comma-separated strings into lists).",
+            "- Detect deprecated keys (like `evolve_speed`) and log warnings that clearly explain what users should use instead.",
+            "Example: if 'evolve_speed' in config: log a warning that it is deprecated and that `min_evolve_speed` and `max_evolve_speed` should be used.",
+            "Optionally, you may auto-map the old key into the new ones (e.g., setting both min and max equal to the old value) if stronger backward compatibility is desired.",
+            "Step 6: Update example configs and documentation",
+            "Modify all example config files to use the new keys and remove or comment out the deprecated ones.",
+            "Update documentation (e.g., `configuration_files.md`) to describe the new keys, default values, and their semantics (min vs max).",
+            "Carefully proofread key names in docs and log messages to avoid typos that could confuse users (e.g., `max_evolve_speed` vs `max_evolved_speed`).",
+            "Step 7: Run tests and monitor CI",
+            "Run unit and integration tests to ensure the new configuration and randomized behavior do not break existing flows.",
+            "If CI fails, verify whether failures are related to your change or due to pre-existing issues in the base branch.",
+            "Once tests pass, ensure reviewers are aware of the deprecation and doc changes as part of the review summary.",
+            "Step 8: Communicate migration path",
+            "In the PR description or changelog, clearly state that the old key is deprecated, describe the new keys, and provide an example migration (e.g., how to set min/max if you previously used a single evolve_speed value)."
+        ]
+    }
+}

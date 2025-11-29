@@ -1,0 +1,32 @@
+{
+    "search_index": {
+        "description_for_embedding": "Pack view file contents were being opened in read-write binary mode (`r+b`) instead of read-only (`rb`). This could cause permission issues when reading files from installed packs, especially when the process lacks write access. The fix changes the file open mode to read-only binary, since only reading content and metadata is needed.",
+        "keywords": [
+            "file open mode",
+            "read-only",
+            "r+b vs rb",
+            "packviews",
+            "StackStorm",
+            "permissions",
+            "read file content",
+            "metadata access",
+            "Python codecs.open",
+            "st2api"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In the StackStorm st2api service, the pack views controller had a helper method `_get_file_content` that read pack files using `codecs.open(file_path, 'r+b')`. This opened the files in read-write binary mode. There had previously been some concern that opening in read-only might prevent reading file metadata (e.g., modification times), but metadata access was actually handled separately via `os.stat` in `_get_file_stats`. Opening files with write permissions was unnecessary and risky: when packs are installed with restrictive permissions, the API process might not have write access, leading to permission errors when simply trying to read pack files for viewing. To address this, the patch changed the open mode from `'r+b'` to `'rb'`, making the operation purely read-only while keeping binary mode for raw content and leaving metadata retrieval unaffected.",
+        "semantic_memory": "When only reading file contents in an API or service, the file should be opened in the narrowest mode that satisfies the requirement, usually read-only (`'r'` or `'rb'`). Using read-write modes (`'r+'`, `'r+b'`) when write access is not required can introduce unnecessary permission failures, especially in production deployments where files are installed as read-only or under different ownership (e.g., system packages). File metadata (such as size, modification time, permissions) should typically be obtained via filesystem APIs like `os.stat` instead of coupling it to the file open mode. This separation of concerns (stat for metadata, read-only open for content) makes the system safer and more portable. Additionally, using binary mode (`'rb'`) is appropriate when the service wants to avoid implicit decoding and preserve raw bytes for transport, especially over HTTP APIs.",
+        "procedural_memory": [
+            "When encountering permission issues while reading files in an API or service, check the file open mode.",
+            "Step 1: Identify the code path that reads the file (e.g., helper like `_get_file_content`). Look for `open` or `codecs.open` calls.",
+            "Step 2: Inspect the mode string. If the code is using read-write modes such as `'r+'`, `'r+b'`, or `'w+'` but only needs to read the data, recognize this as a potential source of permission errors.",
+            "Step 3: Verify how metadata is obtained. Check whether file stats (size, modification time, etc.) are retrieved via `os.stat` or similar, rather than relying on the file being opened in a particular mode.",
+            "Step 4: Confirm the actual requirements: do you need to modify the file or only read it? If only reading is required, change the mode to read-only (`'r'` for text, `'rb'` for binary).",
+            "Step 5: If you need raw bytes or want to avoid encoding/decoding issues (especially in web APIs), use binary mode (`'rb'`) and handle encoding at the API boundary if necessary.",
+            "Step 6: Run tests in environments that mimic production permissions (e.g., files owned by root, read-only to the service user) to ensure the service can still read the necessary files.",
+            "Step 7: Re-deploy and verify that the functionality (e.g., pack views or file previews) works as expected and that file metadata is still accessible via `os.stat` or equivalent.",
+            "Step 8: Document the choice of open mode in the code comments if there was previous debate or non-obvious reasoning (e.g., explaining why binary read-only is used and why write mode is intentionally avoided)."
+        ]
+    }
+}

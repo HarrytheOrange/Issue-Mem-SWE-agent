@@ -1,0 +1,50 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant 1-Wire sensor platform extended to support additional DS18x temperature sensors and bus masters that expose the device tree via FUSE. Discovery is now dynamic per mount_dir and temperature is read either from w1_slave or temperature files depending on the mount path.",
+        "keywords": [
+            "homeassistant",
+            "onewire",
+            "1-wire",
+            "DS18S20",
+            "DS1822",
+            "DS1825",
+            "DS28EA00",
+            "FUSE",
+            "bus master",
+            "w1_slave",
+            "temperature file",
+            "mount_dir",
+            "sensor platform",
+            "device discovery",
+            "Raspberry Pi",
+            "sysfs"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this pull request, the Home Assistant 1-Wire (onewire) sensor platform was enhanced to support more temperature sensor variants and a broader set of bus masters. Originally, the component was hard-coded to read devices from '/sys/bus/w1/devices/' and only matched folders with a '28*' prefix, corresponding primarily to DS18B20 sensors. This limited the platform to a subset of available 1-Wire temperature sensors and to bus masters that expose sensors via the kernel w1 subsystem in sysfs.\n\nThe change introduced a configurable mount directory 'mount_dir' (defaulting to '/sys/bus/w1/devices/'), and updated discovery to look for device folders matching '[10,22,28,3B,42]*', covering additional sensor families: DS18S20, DS1822, DS1825, and DS28EA00. The discovery logic was moved into 'setup_platform' instead of relying on module-level globals so that it respects the configured mount directory at runtime.\n\nBecause different 1-Wire bus masters expose sensor data differently, the code now branches depending on the mount path. If 'mount_dir' starts with '/sys/bus/w1/devices', it assumes the kernel w1 interface and reads from the 'w1_slave' file, performing the usual CRC check (waiting until the first line ends with 'YES') and extracting the 't=' value, then converting it to Celsius. If 'mount_dir' does not start with that path (typically FUSE-mounted device trees), the component instead reads a 'temperature' file directly, expecting a single line numeric value, and safely handles malformed values with a logged warning.\n\nIn both cases, the temperature is validated to be within the plausible DS18x range of -55 to 125 °C before updating the sensor state. If no devices are found under the resolved mount directory, the component logs detailed error messages instructing the user to check the Raspberry Pi overlay configuration and ensure the 'w1-gpio' kernel module is loaded.\n\nA minor lint issue was also fixed by splitting a long log message across two lines to satisfy style checks.",
+        "semantic_memory": "Several general lessons emerge from this change:\n\n1. **Avoid hard-coded hardware paths**: Hardware integration code should not assume a single filesystem layout (e.g., '/sys/bus/w1/devices/'). Providing a configurable mount point ('mount_dir') allows support for different bus masters and deployment environments (kernel sysfs vs. FUSE-mounted device tree) without code forks.\n\n2. **Perform runtime discovery inside setup functions, not at import time**: The original code discovered device folders and built global lists at module import. This makes configuration-dependent discovery impossible and can break in testing or environments without hardware present. Moving discovery into 'setup_platform' ensures it runs with the actual configuration and after the application is initialized.\n\n3. **Support multiple device families via pattern-based discovery**: Instead of restricting discovery to one family prefix ('28*'), using a pattern that matches multiple family codes ('[10,22,28,3B,42]*') enables the same logic to handle several sensor types without needing per-device hardcoding.\n\n4. **Abstract over different data formats from similar devices**: Even when devices are logically equivalent (temperature sensors), different bus masters or drivers may expose their readings in different file formats (multi-line 'w1_slave' with CRC vs. single-line 'temperature' value). Good design detects the environment (e.g., by path prefix or capability) and selects the appropriate parsing strategy while keeping a unified high-level interface.\n\n5. **Validate sensor readings and fail gracefully**: The code uses a realistic temperature range check (-55 to 125 °C) to filter out bad data and wraps parsing of external data in try/except to prevent crashes, logging warnings on malformed input. This pattern is generally useful for robust device integrations.\n\n6. **Log actionable error messages when hardware is missing or misconfigured**: When no sensors are found, the component logs specific instructions (check dtoverlay in /boot/config.txt, ensure 'w1-gpio' is loaded), which shortens the feedback loop for users diagnosing hardware issues.\n\nThese patterns are broadly applicable for any hardware integration or filesystem-based device interface: allow configurable paths, discover devices at runtime, abstract per-backend differences, validate inputs, and provide clear, actionable logs.",
+        "procedural_memory": [
+            "Step-by-step approach to extending a hardware integration to support more devices and mount types:",
+            "Step 1: Identify current limitations.",
+            "Review the existing integration to see which device families and mount mechanisms it supports (e.g., only '28*' family under '/sys/bus/w1/devices/'). Determine which additional device families and bus masters need support and how they expose their data.",
+            "Step 2: Make the mount path configurable.",
+            "Introduce a configuration option (e.g., 'mount_dir') with a sensible default matching the current behavior. Use this configuration value instead of hard-coded paths when discovering devices and reading data.",
+            "Step 3: Move device discovery into the setup/initialization function.",
+            "If device lists are currently built as module-level globals at import time, relocate that logic into the platform setup function (or equivalent initialization hook). This ensures discovery runs with the final configuration and avoids import-time side effects.",
+            "Step 4: Expand discovery patterns to include new device families.",
+            "Determine the family codes or naming patterns for the new devices (e.g., '10', '22', '28', '3B', '42' for various DS18x sensors). Update glob or matching logic to include all relevant prefixes in a single pass (e.g., '[10,22,28,3B,42]*').",
+            "Step 5: Detect the backend type and select parsing strategy.",
+            "Decide how to distinguish between different mount types (e.g., sysfs vs. FUSE). A simple approach is checking the mount path prefix (starts with '/sys/bus/w1/devices'). Use this condition to branch between reading 'w1_slave' and reading a 'temperature' file (or other backend-specific formats).",
+            "Step 6: Implement data parsing for each backend.",
+            "For sysfs 'w1_slave' files: read both lines, loop until a line ends with 'YES' to ensure CRC success, then extract the value after 't=' and convert from millidegrees to degrees. For FUSE 'temperature' files: read the single line and parse it directly as a float. In both cases, round and normalize units as needed.",
+            "Step 7: Guard against invalid and out-of-range readings.",
+            "Wrap float parsing in try/except to catch ValueError and log a clear warning without crashing. After parsing, verify that the value lies within the expected physical range for the sensor (e.g., -55 to 125 °C). If it is outside this range, skip updating the state to avoid propagating bad data.",
+            "Step 8: Preserve and adapt naming/configuration behavior.",
+            "If the integration allows mapping names to sensor IDs, ensure that ID discovery and name mapping are updated to use the new dynamic 'sensor_ids' and 'device_files' lists rather than old global variables.",
+            "Step 9: Add detailed and actionable logging.",
+            "When no devices are found, log errors that include concrete troubleshooting steps (e.g., check specific overlay settings, ensure kernel modules are loaded). When parsing fails or values are invalid, log warnings pinpointing the affected file or device ID.",
+            "Step 10: Run tests and fix lint/style issues.",
+            "Execute the project's test suite (e.g., 'tox') to verify that changes don't break existing behavior. Fix any lint issues such as overly long lines by reformating log messages or splitting them across lines. Confirm that both old and new configuration paths behave correctly."
+        ]
+    }
+}

@@ -1,0 +1,41 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant Monoprice integration: custom snapshot/restore services were incorrectly exposed under the generic media_player domain (media_player.snapshot, media_player.restore). The fix moved these services to the monoprice domain (monoprice.snapshot, monoprice.restore), centralized service constants in a new const.py, updated services.yaml definitions, and adjusted tests and imports accordingly.",
+        "keywords": [
+            "Home Assistant",
+            "monoprice",
+            "media_player",
+            "service domain",
+            "custom services",
+            "snapshot",
+            "restore",
+            "breaking change",
+            "services.yaml",
+            "const.py",
+            "integration-specific services"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Monoprice 6-Zone Amplifier integration in Home Assistant exposed two custom services, snapshot and restore, under the generic media_player domain as media_player.snapshot and media_player.restore. This was misleading because these services are not part of the core media_player platform; they are specific to the Monoprice integration. The issue raised that they should be moved into the monoprice domain to correctly reflect ownership and avoid polluting the global media_player service namespace.\n\nThe fix involved several coordinated changes:\n- The monoprice-specific services (monoprice_snapshot, monoprice_restore entries) were removed from homeassistant/components/media_player/services.yaml.\n- A new module homeassistant/components/monoprice/const.py was created, defining DOMAIN = \"monoprice\" and constants for SERVICE_SNAPSHOT = \"snapshot\" and SERVICE_RESTORE = \"restore\".\n- homeassistant/components/monoprice/media_player.py was updated to import DOMAIN, SERVICE_SNAPSHOT, and SERVICE_RESTORE from the new const.py instead of using the media_player domain and locally defined literals. The local definitions of SERVICE_SNAPSHOT and SERVICE_RESTORE were removed.\n- A new services.yaml specific to the Monoprice integration (homeassistant/components/monoprice/services.yaml) was added, defining the snapshot and restore services under the monoprice domain with their entity_id fields and descriptions.\n- Tests in tests/components/monoprice/test_media_player.py were updated to stop importing DOMAIN from homeassistant.components.media_player.const and service constants from media_player.py. Instead, they now import DOMAIN, SERVICE_SNAPSHOT, and SERVICE_RESTORE from homeassistant.components.monoprice.const.\n\nAs a result, users now call monoprice.snapshot and monoprice.restore instead of media_player.snapshot and media_player.restore. This is a breaking change for existing configurations, but it aligns the services with the correct domain and clarifies that these services are integration-specific rather than generic media_player functionality.",
+        "semantic_memory": "When building modular integrations in a large system like Home Assistant, domain ownership of services is important. Integration-specific operations should live under the integration's own domain rather than under a shared or core domain, to avoid namespace pollution, confusion about what is generic vs. integration-specific, and potential conflicts.\n\nUsing a dedicated const.py per integration to centralize DOMAIN and service name constants helps maintain consistency across the integration (component code, platforms, tests, services.yaml). This reduces duplication of string literals, makes refactoring easier, and ensures tests and code share the same source of truth.\n\nService definitions should reside in the integration’s own services.yaml whenever they are not truly generic platform services. This separation clarifies the API surface: users can see which services belong to which integration, and core platform services remain stable and well-defined.\n\nAny change in service domain or service name is a breaking change: automations, scripts, and external callers must update their service calls. Such changes should be well-documented and accompanied by test updates to guard against regressions.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Identify misplaced or misleading services",
+            "Review the service definitions (e.g., services.yaml files) for integrations and core platforms. Look for services that are defined under a generic/core domain (like media_player) but whose implementation or semantics are clearly specific to a particular integration (e.g., monoprice). Confirm by checking where the service handlers are registered and which integration code they live in.",
+            "Step 2: Decide the correct domain ownership",
+            "Determine whether the service is truly generic (usable by multiple integrations/platforms) or specific to a single integration. If only one integration implements it and it expresses integration-specific behavior, the service should be moved to that integration’s domain.",
+            "Step 3: Centralize constants in a const module",
+            "Create or update a const.py file in the integration package to define DOMAIN and integration-specific service names (e.g., SERVICE_SNAPSHOT = \"snapshot\", SERVICE_RESTORE = \"restore\"). Replace hardcoded string literals and cross-domain imports with these constants in both integration code and tests.",
+            "Step 4: Move service definitions to the correct services.yaml",
+            "Remove the integration-specific service entries from the generic platform’s services.yaml (e.g., components/media_player/services.yaml). Add a new services.yaml in the integration’s directory (e.g., components/monoprice/services.yaml) with the same service names and field schemas, now implicitly under the integration’s DOMAIN.",
+            "Step 5: Update service registration and imports in code",
+            "Ensure that the integration’s setup code registers the services under its own DOMAIN, using the constants from const.py. Update any imports that previously used DOMAIN or service names from a generic platform to use the integration’s const module instead.",
+            "Step 6: Adjust and extend tests",
+            "Update tests to import DOMAIN and service constants from the integration’s const module rather than from the generic platform or from platform modules. Verify tests still correctly call the services using the new domain (e.g., monoprice.snapshot, monoprice.restore) and that all relevant behavior is covered.",
+            "Step 7: Run the full test suite",
+            "Run the project’s tests (e.g., tox in Home Assistant) to ensure that no other code paths relied on the old domain/service names and that the new structure behaves as expected.",
+            "Step 8: Communicate breaking changes and update documentation",
+            "If service names or domains change, document it clearly as a breaking change. Update user documentation, examples, and migration notes to show the new service calls (e.g., from media_player.snapshot to monoprice.snapshot). This ensures users can update their configurations and automations without confusion."
+        ]
+    }
+}

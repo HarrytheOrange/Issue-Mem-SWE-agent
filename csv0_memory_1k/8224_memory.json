@@ -1,0 +1,34 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant PR adding a new sensor platform `sensor.version` that exposes the running Home Assistant (hass) version as a sensor entity by combining MAJOR_VERSION, MINOR_VERSION, and PATCH_VERSION constants into a string state.",
+        "keywords": [
+            "home-assistant",
+            "sensor.version",
+            "hass version sensor",
+            "MAJOR_VERSION",
+            "MINOR_VERSION",
+            "PATCH_VERSION",
+            "Entity.update",
+            "feature addition",
+            "internal version exposure",
+            "configuration.yaml sensor platform"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "A contributor attempted to add a new Home Assistant sensor platform `version` to expose the running Home Assistant version as a sensor. The issue requested 'A badge showing the version of hass'. The implementation created `homeassistant/components/sensor/version.py` with a `setup_platform` function that registers a single `HAversion` entity. The entity reads the constants `MAJOR_VERSION`, `MINOR_VERSION`, and `PATCH_VERSION` from `homeassistant.const` and concatenates them into a `major.minor.patch` string in its `update` method, storing that in `_state`. The sensor is meant to be configured via:\n\nsensor:\n  - platform: version\n\nThe PR did not proceed to merge because the author did not sign the Contributor License Agreement (CLA) and indicated they didn't have time to fix the issues, so the maintainers closed it with the suggestion to reopen later. The code itself also had minor style issues (tabs for indentation, a name typo 'HA Verssion', no tests or docs), but the core behavior was to make the Home Assistant core version available as a sensor state.",
+        "semantic_memory": "This case demonstrates how to expose internal application metadata (such as the running version) as a first-class metric in a home automation system via a sensor entity. In Home Assistant, a sensor platform is implemented by defining `setup_platform` and an `Entity` subclass whose `state` property reflects the desired value and whose `update` method retrieves or computes it. For version information, it is best to use canonical constants or a single version source rather than hardcoding strings, to keep the sensor aligned with the actual running version.\n\nIt also illustrates non-code aspects of contributing: even a simple feature cannot be merged without process requirements being fulfilled (such as signing the CLA and adding documentation and tests). Stylistically, platform implementations should follow the project conventions (spaces instead of tabs, correct naming, accurate `name` strings, tests, and docs). The pattern is broadly applicable: any internal status (build number, API version, uptime) can be exposed as a sensor by reading the relevant constants or APIs and updating the entity state.",
+        "procedural_memory": [
+            "To add a Home Assistant sensor that exposes internal version or status information:",
+            "Step 1: Identify the authoritative source of the version or status information (e.g., constants like MAJOR_VERSION/MINOR_VERSION/PATCH_VERSION, a __version__ attribute, or a system API endpoint). Avoid hardcoding the version string.",
+            "Step 2: Create a new sensor platform file under `homeassistant/components/sensor/`, e.g. `version.py`, following the naming and style conventions (PEP8, spaces for indentation, proper docstrings).",
+            "Step 3: Implement `setup_platform(hass, config, add_entities, discovery_info=None)` (or `add_devices` for older code) to instantiate and register one or more entity objects with `add_entities([...])`.",
+            "Step 4: Create an `Entity` subclass (e.g. `HAVersion`) that defines at least the `name` and `state` properties. The `name` should be human-readable and correctly spelled, and you may also define `unique_id` and relevant attributes if needed.",
+            "Step 5: Implement the `update(self)` method so that it reads the version/status from the chosen source and sets `self._state` (or equivalent) to the correct string or numeric value. For version, concatenate the major, minor, and patch components into 'major.minor.patch' if they are split out as constants.",
+            "Step 6: Add example configuration to the documentation (e.g. `sensor: - platform: version`) and, if required by the project, create or update docs in the corresponding documentation repo.",
+            "Step 7: Add tests to verify that the sensor initializes correctly and that `update()` produces the expected state, mocking the version constants or providers as necessary.",
+            "Step 8: Run the project's test suite (e.g. `tox`) to ensure tests pass and linters/styling checks succeed.",
+            "Step 9: Ensure all contribution process requirements are met (e.g. sign the CLA, link related issues, and follow PR templates). Address maintainer feedback on naming, style, or architecture before expecting the PR to be merged.",
+            "Step 10: For similar future features (e.g., uptime sensor, build number sensor, API version sensor), reuse this pattern: implement a simple `Entity` that reads from a single, authoritative internal source, exposes a clean `state`, and is configurable via a small snippet in `configuration.yaml`."
+        ]
+    }
+}

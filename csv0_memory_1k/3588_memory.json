@@ -1,0 +1,31 @@
+{
+    "search_index": {
+        "description_for_embedding": "Unit test for st2 CLI config file path was failing when run as root because it hard-coded /home/<user> as the home directory. The fix uses os.path.expanduser and os.path.join to resolve the user home directory correctly instead of assuming /home/<user>.",
+        "keywords": [
+            "st2client",
+            "CLI config file path",
+            "unit test failure",
+            "root user",
+            "home directory assumption",
+            "os.path.expanduser",
+            "os.path.join",
+            "path handling",
+            "test_app.py",
+            "AssertionError"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In the StackStorm st2client test suite, the unit test test_cli_config_file_path assumed that a user's home directory would always be /home/<username>/. This worked for normal users but failed when the tests were run as root, whose home directory is typically /root rather than /home/root. The failing assertion was: '/root/.st2/config.ini' != '/home/root/.st2/config.ini'. The expected path was hard-coded as '/home/%s/.st2/config.ini' % (USER). The fix updated the test to derive the expected path using Python's standard library: expected = os.path.join(os.path.expanduser('~' + USER), '.st2/config.ini'). This change makes the test agnostic to the actual home directory location for the given user and resolves the failure when run under root or other non-standard home layouts.",
+        "semantic_memory": "Hard-coding filesystem paths, especially user home directories, makes tests and code brittle across different environments (e.g., root vs normal users, different OSes, or custom home directory layouts). Instead, path resolution should use appropriate standard library utilities like os.path.expanduser, os.path.join, and environment variables (HOME, USERPROFILE, etc.). Tests that verify path behavior should construct their expectations using the same abstract path resolution mechanisms that the application uses, not assumed directory structures like /home/<user>. This ensures both portability and consistency. Additionally, when testing behavior that depends on user context (e.g., home directory), tests should either simulate/override that context in a controlled way or derive expectations dynamically based on the current environment.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Reproduce the failure in different environments (e.g., run tests as root, different users, or in a CI environment) and capture the exact AssertionError or mismatch in expected vs actual paths.",
+            "Step 2: Inspect the test code to see how expected paths are being constructed. Look for hard-coded directory structures like '/home/<user>', absolute paths, or OS-specific assumptions.",
+            "Step 3: Compare how the application code computes the path versus how the test computes the expected path. If the application uses utilities like os.path.expanduser or os.path.join, ensure the test uses the same approach.",
+            "Step 4: Replace hard-coded home directory assumptions with os.path.expanduser('~username') or os.path.expanduser('~') for the current user, and combine components with os.path.join to avoid manual string concatenation.",
+            "Step 5: Rerun the tests as different users (including root if relevant) and in CI to verify that the path expectations now match across environments.",
+            "Step 6: Consider adding comments or additional tests that document the expectation that home directory resolution should be environment-agnostic, and avoid future regressions by centralizing path construction logic in helper functions reused by both code and tests.",
+            "Step 7: When applicable, avoid assumptions about OS or filesystem layout (e.g., /home on Linux) and favor standard library abstractions that work across platforms."
+        ]
+    }
+}

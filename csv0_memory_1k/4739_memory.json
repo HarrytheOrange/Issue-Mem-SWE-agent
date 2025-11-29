@@ -1,0 +1,32 @@
+{
+    "search_index": {
+        "description_for_embedding": "Nickname generation bug for Pokémon Nidoran M/F: the system produced names with spaces ('Nidoran M' and 'Nidoran F') which caused issues or did not match expected formatting. The fix normalizes these specific names by removing the space during nickname generation, converting them to 'NidoranM' and 'NidoranF' after localization.",
+        "keywords": [
+            "nickname generation",
+            "string normalization",
+            "Nidoran M",
+            "Nidoran F",
+            "NidoranM",
+            "NidoranF",
+            "pokemon.name",
+            "localization",
+            "text formatting",
+            "pokemongo_bot/cell_workers/nickname_pokemon.py"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the nickname generation logic for Pokémon in the file `pokemongo_bot/cell_workers/nickname_pokemon.py` had an inconsistency for the Nidoran species. The game distinguishes them as 'Nidoran M' and 'Nidoran F', but the desired nickname format in this project was to remove the space and use 'NidoranM' and 'NidoranF' when generating new nicknames. Existing behavior left the space intact, leading to mismatches with expected naming conventions and possibly with templates or downstream logic assuming no space. The fix was implemented in the `_generate_new_nickname` method: after localizing the Pokémon name (`pokemon.name = self._localize(pokemon.name)`), two explicit string replacements were added to normalize these special cases: replacing 'Nidoran M' with 'NidoranM' and 'Nidoran F' with 'NidoranF'. This made nickname generation consistent with the requested formatting. There was a transient CI failure on Travis, but it was traced to another commit; once that was fixed and CI rerun, this PR passed and was accepted.",
+        "semantic_memory": "This fix illustrates a common pattern in software dealing with names, identifiers, or localized strings: certain domain-specific values require normalization to conform to project-wide conventions or downstream constraints. In this case, specific Pokémon names contained spaces that were undesirable in nicknames or identifiers. Rather than changing global naming, the code introduces a normalization step during nickname generation. Key concepts: (1) normalization of human-readable names to machine-friendly or convention-compliant forms; (2) handling special cases that deviate from general rules (here, the two Nidoran variants); (3) applying normalization after localization so that the transformation operates on the actual display string used in the current locale; and (4) using targeted string replacement when only a few known exceptions exist. More generally, when generating derived text (nicknames, slugs, IDs, URLs) from user-facing names, it is important to define and implement deterministic normalization rules, including known exceptions, to avoid subtle bugs, inconsistencies, or mismatches in other parts of the system.",
+        "procedural_memory": [
+            "When nickname or identifier generation produces inconsistent formats (e.g., spaces or special characters where they are not expected), investigate and introduce a normalization step in the generation pipeline.",
+            "Step 1: Identify the symptom: find where generated nicknames or IDs differ from expected patterns (for example, compare actual vs. documented nickname formats, or check failing tests related to specific names).",
+            "Step 2: Locate the generation logic: find the function or module responsible for deriving nicknames or identifiers (here, `_generate_new_nickname` in `nickname_pokemon.py`).",
+            "Step 3: Inspect the inputs: determine what the base name/value looks like at the point of generation, including after localization or other transformations. Confirm that problematic values (e.g., 'Nidoran M', 'Nidoran F') appear there.",
+            "Step 4: Decide on a normalization strategy: choose whether to handle the issue via generic rules (e.g., remove all spaces) or via specific exceptions (e.g., only normalize certain names). Consider domain constraints and potential side effects.",
+            "Step 5: Implement normalization in a single, well-defined place: add transformation logic directly before or within the nickname/ID generation, so downstream code always receives normalized values. In this case, after localizing `pokemon.name`, apply `replace` calls for the special cases.",
+            "Step 6: Add or update tests: create unit tests that explicitly cover the edge cases (e.g., ensure 'Nidoran M' results in a nickname containing 'NidoranM' without spaces), and ensure they fail without the fix and pass with it.",
+            "Step 7: Run the full test suite and CI: verify no unintended regressions were introduced, and confirm that failures (if any) are not caused by unrelated commits.",
+            "Step 8: Document the special-case behavior: add comments in code explaining why specific replacements or normalizations exist so future maintainers understand the rationale and can extend or refactor when general rules change."
+        ]
+    }
+}

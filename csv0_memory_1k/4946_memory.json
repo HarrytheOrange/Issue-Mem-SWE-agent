@@ -1,0 +1,32 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fix for Home Assistant async service handlers where asyncio.wait() was called with an empty tasks list when no target entities were matched. The change adds a guard to only call asyncio.wait() if there are tasks, preventing runtime errors due to asyncio.wait() not supporting empty iterables.",
+        "keywords": [
+            "asyncio.wait",
+            "empty tasks list",
+            "ValueError",
+            "async services",
+            "Home Assistant",
+            "input_boolean",
+            "input_select",
+            "input_slider",
+            "coroutines",
+            "task scheduling",
+            "async bugfix"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, several Home Assistant components (`input_boolean`, `input_select`, and `input_slider`) implemented async service handlers that collected coroutine tasks into a list and then passed that list directly to `asyncio.wait(tasks, loop=hass.loop)`. When no matching entities existed (for example, when the service call targeted entities that weren't present or resolved to an empty `target_inputs`), the `tasks` list was empty. Python's `asyncio.wait()` does not support being called with an empty iterable and raises a `ValueError` in that situation. As a result, certain service calls could crash the handler instead of failing gracefully or simply doing nothing. The fix was to introduce a simple guard in each component: after building the `tasks` list, check `if tasks:` and only then call `yield from asyncio.wait(tasks, loop=hass.loop)`. If `tasks` is empty, the function now returns without calling `asyncio.wait`, avoiding the runtime error while preserving behavior for valid, non-empty task sets.",
+        "semantic_memory": "When using `asyncio.wait()` or similar coordination primitives, they often assume at least one task or future is provided. Passing an empty iterable can raise exceptions (e.g., `ValueError` in `asyncio.wait`) or otherwise lead to undefined behavior. In async service or event handlers that dynamically build a list of coroutines based on runtime conditions (such as matching entities, filters, or user selections), it is essential to account for the case where no items match, resulting in an empty list of tasks. A robust pattern is: (1) build the tasks list, (2) check if it is non-empty, and (3) only then invoke `asyncio.wait`, `asyncio.gather`, or equivalent coordination functions. If empty, the handler should either return immediately or explicitly handle the 'no work to do' condition. This avoids unnecessary errors and makes async code more resilient to edge cases. This pattern generalizes to any framework using asyncio and dynamic task collections, not just Home Assistant.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Reproduce the error by invoking the async function or service with conditions that yield no targets (e.g., a filter that matches no entities or an empty input list). Observe whether a `ValueError` or similar exception is thrown from `asyncio.wait()` or another async coordination function.",
+            "Step 2: Locate the code where `asyncio.wait()`, `asyncio.gather()`, or similar functions are called. Check how the iterable of tasks/futures is constructed. Look for patterns like `tasks = [...]` followed by `asyncio.wait(tasks, ...)` without a guard.",
+            "Step 3: Confirm whether the tasks list (or iterable) can legitimately be empty at runtime. Check upstream filtering logic, service call parameters, or entity resolution to see if an empty result set is expected in some scenarios.",
+            "Step 4: Add a defensive check before the coordination call. For example:\n- `tasks = [ ... ]`\n- `if tasks:`\n- `    yield from asyncio.wait(tasks, loop=loop)`\nThis ensures that `asyncio.wait()` (or `gather`) is only invoked with a non-empty iterable.",
+            "Step 5: Decide how to handle the empty case. Often, doing nothing and returning early is sufficient. If appropriate, log a debug message indicating that no targets were found or no work was scheduled, to help future debugging.",
+            "Step 6: Run tests (or add new ones) that explicitly cover the empty-target scenario. Ensure that the function/service returns cleanly without raising errors when the tasks list is empty, and still behaves correctly when there are one or more tasks.",
+            "Step 7: Review other similar async handlers or modules in the codebase that follow the same pattern (building a list of coroutines and passing them to `asyncio.wait`/`gather`) and apply the same guard where necessary to prevent similar bugs elsewhere."
+        ]
+    }
+}

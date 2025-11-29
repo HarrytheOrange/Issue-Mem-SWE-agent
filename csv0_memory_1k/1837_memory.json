@@ -1,0 +1,47 @@
+{
+    "search_index": {
+        "description_for_embedding": "Improved StackStorm troubleshooting documentation by adding a clear support/‘Ask for help’ section, listing support channels (Slack, IRC, email), specifying what diagnostic information users should gather (versions, logs, etc.), referencing the st2-submit-debug-info tool, and reordering the self-verification section before the support section. Language was softened to be more user-friendly.",
+        "keywords": [
+            "StackStorm",
+            "documentation",
+            "troubleshooting.rst",
+            "support section",
+            "ask for help",
+            "st2-submit-debug-info",
+            "self-verification",
+            "Slack support",
+            "IRC support",
+            "email support",
+            "bug reporting guidelines",
+            "user experience",
+            "docs reorganization"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this change set, the maintainer updated the StackStorm troubleshooting documentation to make support and debugging workflows clearer and more user-friendly. The previous docs had a self-verification section located after the debugging information submission section and only a minimal, somewhat strict support paragraph. The PR did three main things:\n\n1. It moved and reinserted the 'Running Self-Verification' section earlier in the troubleshooting document, right after general troubleshooting guidance. This section explains the st2-self-check script, what it verifies (basic st2 commands, example packs, Quick Start commands, packs actions, workflows), and how to run it on Ubuntu/Debian and RedHat/Fedora.\n\n2. It replaced a terse 'Support' section with a friendlier 'Ask for help!' section that clearly lists support channels: Slack (with a registration link via Typeform), IRC on Freenode, and email support@stackstorm.com. The tone was deliberately mellowed and made more conversational.\n\n3. It detailed what information users should provide when they ask for help or file a bug: st2 version, st2client version, OS version, Python version, a brief problem description, and relevant logs (shared via Pastebin or GitHub Gist). It also explicitly points users to the st2-submit-debug-info tool described earlier in the doc. Finally, it clarifies what constitutes a good bug report and changes the closing sentence to emphasize faster resolution: 'More information you provide us, faster we can resolve your issue!' instead of a more generic phrasing.\n\nThese changes address feedback from a user (dzimine) requesting that the 'Send the debug info' section precede the support section and that the Slack community link be properly integrated. The net result is better-structured troubleshooting docs, an improved flow (diagnose → collect debug info → ask for help/file issue), and more actionable instructions for users seeking support.",
+        "semantic_memory": "This PR illustrates several general best practices for technical documentation and support workflows:\n\n1. **Support information should be explicit and easy to find.** Users troubleshooting issues need a clear 'Ask for help' or 'Support' section that lists official support channels (chat, email, issue tracker) and how to access them. Hiding or omitting this information creates friction and increases frustration.\n\n2. **Order the troubleshooting flow logically.** The docs are structured to guide the user through: (a) self-verification / diagnostics (st2-self-check), (b) collecting debug data (st2-submit-debug-info, logs), then (c) asking for help or filing an issue. This mirrors an effective support pipeline and avoids support requests that lack basic diagnostic steps.\n\n3. **Tell users exactly what information to provide.** A checklist of versions, environment details, and logs drastically improves the quality of support requests and bug reports. Making this list explicit reduces back-and-forth and speeds up resolution.\n\n4. **Reference automated tools that gather diagnostics.** When a project has a built-in tool like st2-submit-debug-info, documentation should clearly connect that tool to the support process, so users know when and why to use it.\n\n5. **Use welcoming, non-intimidating language in support docs.** The language was softened (e.g., 'Ask for help!' and 'We stand behind |st2| and make the best effort to support you.') to encourage users to seek help rather than feel judged for not solving issues alone. Friendly tone improves community engagement and lowers the barrier to asking questions.\n\n6. **Keep links current and precise.** Explicit URLs for Slack registration, IRC, email, issue tracker, Pastebin, and GitHub Gist ensure users can quickly access the right channels and tools. This is especially important when community platforms (like Slack) require an invite or registration form.\n\nThese patterns apply broadly to any open-source or product documentation: structure troubleshooting sections around a clear workflow, explicitly list support channels and required diagnostic info, and use inclusive, encouraging language.",
+        "procedural_memory": [
+            "When improving troubleshooting or support documentation for a project, follow these steps:",
+            "Step 1: Map the ideal support workflow.",
+            "Identify the logical sequence that users should follow when they encounter an issue: basic checks, running any self-test tools, gathering logs and environment info, then reaching out via support channels or filing an issue. Write this down as a high-level flow.",
+            "Step 2: Reorder existing documentation to match the workflow.",
+            "Locate existing sections (e.g., self-verification, debug info submission, support/contact info) and reorder them to flow from diagnose → collect data → ask for help/file bug. Ensure transitions between sections mention the next logical step.",
+            "Step 3: Document any built-in diagnostic tools.",
+            "If the project has self-check or debug tools (like st2-self-check or st2-submit-debug-info), add or refine a dedicated section that explains what they test, how to run them across supported platforms, and how their outputs should be used when asking for help.",
+            "Step 4: Create or refine a clear support/‘Ask for help’ section.",
+            "Add a prominent heading (e.g., 'Ask for help!' or 'Getting support') and under it list all official support channels: chat (Slack/Discord), IRC, forums, email, and issue tracker. For each channel, provide direct links and a one-line description of when/why to use it.",
+            "Step 5: Define a checklist of information users should provide.",
+            "In the support section, add a numbered list of required diagnostic information: software version(s), client version(s), OS and runtime versions, short problem description, and relevant logs or configuration snippets. Instruct users to use code paste services (Pastebin, Gist) for longer logs.",
+            "Step 6: Link diagnostic tools to support requests.",
+            "Explicitly reference any debug-info submission tools in the support section (e.g., 'You may also use st2-submit-debug-info; see the previous section') so users understand that running these tools and sharing the results is part of the support process.",
+            "Step 7: Adjust tone to be friendly and encouraging.",
+            "Review the wording for harsh or demanding language and replace it with supportive phrasing. Emphasize that maintainers want to help and that providing more information will help resolve issues faster. Avoid blaming language.",
+            "Step 8: Verify and correct all external links.",
+            "Check Slack invite/registration links, IRC channels, email addresses, and URLs for bug trackers and paste tools. Fix broken or outdated links and ensure formatting is correct in the documentation markup (e.g., reStructuredText or Markdown).",
+            "Step 9: Add a note about what makes a good bug report.",
+            "At the end of the support section, clearly state that issues should be filed once the user believes it’s a bug, and reiterate that a good report contains the earlier checklist plus steps to reproduce and any debug bundle output.",
+            "Step 10: Run documentation build and review in context.",
+            "Build the docs (e.g., Sphinx for .rst files), review the rendered page to ensure headings, lists, and links appear correctly, and confirm that the flow from troubleshooting to support is intuitive and easy to follow."
+        ]
+    }
+}

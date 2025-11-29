@@ -1,0 +1,32 @@
+{
+    "search_index": {
+        "description_for_embedding": "Netatmo CO2 sensor in Home Assistant was using an inconsistent generic icon (mdi:cloud). The fix updates the icon to mdi:periodic-table-co2 to match other CO2 sensors and provide a more semantically accurate UI representation.",
+        "keywords": [
+            "Home Assistant",
+            "Netatmo",
+            "CO2 sensor",
+            "icon mismatch",
+            "mdi:cloud",
+            "mdi:periodic-table-co2",
+            "sensor UI consistency",
+            "frontend icon",
+            "integration metadata",
+            "sensor.py"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Netatmo CO2 sensor integration in Home Assistant was using the generic 'mdi:cloud' icon for its CO2 sensor entity. Other platforms within Home Assistant already used a more specific and appropriate icon, 'mdi:periodic-table-co2', for CO2 measurements. This created an inconsistency in the UI and made it less clear that the sensor represented CO2 concentration. The patch modified the Netatmo sensor configuration in homeassistant/components/netatmo/sensor.py by changing the icon value in the 'co2' sensor definition from 'mdi:cloud' to 'mdi:periodic-table-co2'. No logic, units, or device class were changed—only the icon string was updated to improve consistency and clarity across the UI.",
+        "semantic_memory": "UI and UX consistency across integrations is important in large home automation systems. Even when there is no functional bug, mismatched or generic icons can confuse users and degrade the experience. For sensor entities, it is best practice to: (1) use specific icons that clearly communicate the measured quantity, (2) align icons across different integrations that represent the same physical concept (e.g., CO2 levels), and (3) keep the entity metadata—name, unit, icon, and device class—synchronized with the conventions used in the rest of the system. Small, targeted changes in configuration or metadata (like icon identifiers) often resolve such inconsistencies without touching core logic. This also highlights the importance of having a shared icon vocabulary (such as Material Design Icons) and reusing standard icons for the same data type across components.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Identify the inconsistency: Notice or receive a report that a sensor/entity in the UI is using a generic or incorrect icon compared to similar entities in other integrations.",
+            "Step 2: Verify the expected convention: Check other integrations or the project’s UI/UX guidelines to see which icon is commonly used for the same type of measurement (e.g., CO2, temperature, humidity).",
+            "Step 3: Locate the entity definition: Find the integration’s code where the sensor/entity metadata is defined (often in a sensor.py or similar module). Look for dictionaries or classes that specify name, unit, icon, and device class.",
+            "Step 4: Update the icon metadata: Change the icon string from the generic or incorrect value to the agreed standard icon identifier (e.g., from 'mdi:cloud' to 'mdi:periodic-table-co2') without altering the logical behavior, units, or device class unless needed.",
+            "Step 5: Run tests and local verification: Execute the integration’s test suite and start the system locally. Confirm that the entity now displays the new icon correctly in the UI.",
+            "Step 6: Check for side effects: Ensure no other entities unintentionally share or rely on the old icon value, and that the icon change aligns with accessibility and clarity requirements.",
+            "Step 7: Document the change: In the PR description or changelog, clearly state that this is a UI/metadata change for consistency (e.g., replacing a generic icon with a standardized one) so reviewers understand the scope.",
+            "Step 8: Align future additions: When adding new sensors or entities, reuse the same icon conventions and review existing entities to maintain a consistent visual language across the system."
+        ]
+    }
+}

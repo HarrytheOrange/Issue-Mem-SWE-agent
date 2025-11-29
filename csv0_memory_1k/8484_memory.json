@@ -1,0 +1,32 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant YAML config enhancement: the !env_var tag now supports an inline default value when an environment variable is missing. Implementation splits the node value into arguments, uses the first token as the env var name, and falls back to the remaining tokens (joined by spaces) as a default. If no default is provided and the env var is missing, it still logs an error and raises HomeAssistantError.",
+        "keywords": [
+            "Home Assistant",
+            "YAML config",
+            "!env_var tag",
+            "environment variable default",
+            "YAML loader",
+            "homeassistant.util.yaml",
+            "HomeAssistantError",
+            "configuration fallback",
+            "os.getenv",
+            "missing environment variable handling"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "This change enhanced Home Assistant's custom YAML tag !env_var used in configuration files. Previously, _env_var_yaml in homeassistant/util/yaml.py simply looked up node.value in os.environ: if present, it returned the environment variable; if missing, it logged an error and raised HomeAssistantError, forcing users to set the env var. The feature request asked for a way to specify a default directly in YAML, e.g., `password: !env_var PASSWORD default_password`. The PR modified _env_var_yaml to parse the node value by splitting on whitespace into args. If more than one argument is present, the first token is treated as the environment variable name, and the rest are joined with spaces to form the default value. It then calls os.getenv(args[0], ' '.join(args[1:])) to return either the env var or the default. If only one argument is provided, it preserves the existing behavior: return os.environ[args[0]] if present, otherwise log an error and raise HomeAssistantError. A new unit test, test_environment_variable_default, verifies that when `PASSWORD` is not set, `password: !env_var PASSWORD secret_password` results in `doc['password'] == 'secret_password'`. A minor follow-up patch replaced an inappropriate docstring with a comment for the 'Check for a default value' note.",
+        "semantic_memory": "This change illustrates a general pattern for configuration systems that interpolate environment variables: it's often useful to support inline defaults for missing variables, rather than failing hard. Implementing this cleanly requires: (1) a clear parsing strategy for arguments passed to the interpolation directive (in this case, splitting on whitespace, with the first token as the key and the remaining tokens as the default string); (2) maintaining backward-compatible behavior when no default is provided (still erroring when a required env var is missing); and (3) adding tests that cover both the successful fallback path and the error path. It also highlights the value of using os.getenv with a default instead of manual if-in-environ checks when providing fallbacks. When designing such features, you should consider how to support defaults with spaces, how to log helpful error messages, and how to avoid silently hiding configuration mistakes when a default is not intended.",
+        "procedural_memory": [
+            "When enhancing a configuration directive that reads environment variables to support default values, follow these steps:",
+            "Step 1: Identify the existing resolution logic. Determine how the configuration system currently looks up environment variables (e.g., using os.environ[...] and raising when missing) and where in the code those lookups occur.",
+            "Step 2: Define the desired syntax for defaults. Decide how users will specify defaults in configuration (e.g., a custom YAML tag like `!env_var VAR DEFAULT`, where the first token is the variable name and the rest form the default value). Clarify how to handle spaces in defaults (e.g., join all tokens after the first with spaces).",
+            "Step 3: Parse directive arguments robustly. In the handler for the directive (here, _env_var_yaml), parse the raw node value into structured arguments, such as splitting on whitespace. Validate that there is at least one argument and treat the first as the environment variable name.",
+            "Step 4: Implement fallback resolution. Use a single call like os.getenv(var_name, default_value) when a default is provided, so the code naturally returns the environment variable value if set or the default otherwise. When no default is given, preserve the existing error behavior: check if the env var is present, return it if so, otherwise log an explicit error and raise the appropriate exception.",
+            "Step 5: Preserve backward compatibility. Ensure that configurations without defaults behave exactly as before (both successful lookups and failure modes), so existing users are not surprised by the change.",
+            "Step 6: Add focused tests. Create tests for: (a) env var present with no default; (b) env var missing with a default specified; (c) env var missing with no default, verifying that an error is logged and the expected exception is raised. Consider tests for defaults containing spaces if allowed by your syntax.",
+            "Step 7: Clean up comments and documentation. Replace misplaced docstrings with proper comments where needed, and update user-facing documentation to describe the new default-value syntax and its behavior.",
+            "Step 8: Review edge cases. Think through potential pitfalls: what if extra whitespace is present; what if the environment variable name or default is empty; how to handle quoting if the configuration format supports it; and whether silently using defaults could hide configuration errors."
+        ]
+    }
+}

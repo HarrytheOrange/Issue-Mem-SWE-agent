@@ -1,0 +1,31 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant Docker image change to include the pymssql Python module so the container can use Microsoft SQL Server as a database backend, done by adding a pip install in the Dockerfile and discussing whether such optional DB drivers should live in the base image or in derived images.",
+        "keywords": [
+            "Home Assistant",
+            "Dockerfile",
+            "pymssql",
+            "MSSQL",
+            "SQL Server",
+            "database backend",
+            "optional dependency",
+            "docker image size",
+            "requirements_all",
+            "Python package installation"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "A user wanted to use Microsoft SQL Server as the database backend for Home Assistant when running it via the official Docker image. The stock image did not include the pymssql Python module, so Home Assistant could not talk to MSSQL out of the box. The PR author modified the Dockerfile, which already installed optional database drivers like mysqlclient and psycopg2, to also install pymssql via pip. Initially, another contributor noted that pymssql historically required freetds system packages, but after testing they discovered that newer versions of pymssql worked with just the pip module and no extra system binaries. There was a follow-up discussion about whether the base image should include this extra module at all, given image size and the fact that MSSQL is not a common default. One maintainer linked to a different PR, implying this proposal might be superseded or closed. The actual patch added an extra pip3 install command to the Dockerfile to install pymssql, although the written RUN line was slightly malformed (missing an '&&' before the final pip3 install). Conceptually, though, the intent was: when building the Home Assistant Docker image, also install pymssql so MSSQL can be used without building a custom derivative image.",
+        "semantic_memory": "This case illustrates a recurring pattern in containerized applications: deciding whether to include optional, niche, or heavyweight dependencies in a base image or leave them to custom derivative images. For database clients, projects often ship minimal support (e.g., SQLite or popular DB engines like MySQL/Postgres) while allowing users with more specialized needs (e.g., MSSQL) to extend the base image with additional Python modules or system packages. It also shows that external binary dependencies of Python modules can change over time; what once required apt-installed libraries may later be satisfied by wheels or bundled components. Therefore, assumptions about necessary system packages must be periodically revalidated. Finally, this illuminates a best practice: if adding an optional feature that is not widely used, consider a separate image flavor or document how users can build on top of the base image, instead of bloating the core distribution.",
+        "procedural_memory": [
+            "When a containerized Python application needs support for an additional database backend (e.g., MSSQL) that is not available in the stock image, first confirm whether a pure pip install of the relevant driver (e.g., pymssql) is sufficient or whether system-level libraries (e.g., freetds) are required.",
+            "Step 1: Reproduce the need.\n- Run the base Docker image and attempt to configure the application to use the desired database backend.\n- Observe import errors or missing driver errors (e.g., ImportError: No module named 'pymssql').",
+            "Step 2: Verify module and system dependencies.\n- In a throwaway container shell, manually run `pip install <driver>` (e.g., `pip install pymssql`).\n- Test connecting to the target database from a simple Python script inside the container.\n- If it fails due to missing system libraries, identify and install the necessary packages with the container’s package manager (e.g., `apt-get install freetds-dev`).",
+            "Step 3: Decide where the dependency should live.\n- Evaluate how common the backend is for your user base.\n- If it is niche, prefer documenting a derived image (FROM base-image, then install driver) rather than bloating the main image.\n- If it is broadly useful and lightweight, consider adding it to the base Dockerfile.",
+            "Step 4: Implement the change in the Dockerfile.\n- Open the Dockerfile used to build the image.\n- Find the section that installs Python dependencies, often something like:\n  `RUN pip3 install --no-cache-dir -r requirements_all.txt && \\\n       pip3 install --no-cache-dir mysqlclient psycopg2 uvloop cchardet cython`\n- Extend this RUN command to also install the new driver, keeping proper shell syntax, for example:\n  `RUN pip3 install --no-cache-dir -r requirements_all.txt && \\\n       pip3 install --no-cache-dir mysqlclient psycopg2 uvloop cchardet cython pymssql`\n- Avoid chaining multiple `pip3 install` commands without `&&` or proper line continuation; use a single pip invocation when possible.",
+            "Step 5: Build and test the image.\n- Build the modified image locally: `docker build -t my-app-with-mssql .`.\n- Run the container and configure the app to use MSSQL.\n- Confirm that connections work and there are no import or runtime errors.",
+            "Step 6: Consider cross-platform impact.\n- If the project supports multiple install methods (pip, venv, OS packages, Docker), ensure that adding a dependency in the Dockerfile does not unintentionally change expectations for other platforms.\n- Prefer keeping such additions Docker-specific when they are only relevant for the containerized distribution.",
+            "Step 7: Follow project contribution requirements.\n- Ensure any contributor license agreement (CLA) is signed if required.\n- Run the project’s test suite (e.g., `tox`) to ensure no regressions.\n- In the PR description, clearly explain that the change only affects the Docker image and why the new dependency is needed."
+        ]
+    }
+}

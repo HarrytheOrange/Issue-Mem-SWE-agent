@@ -1,0 +1,44 @@
+{
+    "search_index": {
+        "description_for_embedding": "Introduced a Viewer._get_state() method in napari to serialize the full viewer state (dims, camera, layers, theme, etc.) into a dict, including 2D/3D camera parameters and version metadata. Later superseded by using a Pydantic-based ViewerModel for serialization.",
+        "keywords": [
+            "napari",
+            "viewer serialization",
+            "_get_state",
+            "ViewerModel",
+            "Pydantic",
+            "camera state",
+            "2D 3D viewer",
+            "UI state snapshot",
+            "versioned state",
+            "layers serialization"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "This change added a _get_state() method to the napari Viewer class to serialize the current viewer state into a Python dictionary. The implementation lives in napari/viewer.py. It first wired in the napari version by importing get_versions from ._version and storing __version__ so the state dict could include 'version' and a 'napari': True marker.\n\nThe _get_state() method captures:\n- Camera state: If dims.ndisplay == 3, it fetches the 3D camera from self.window.qt_viewer.view.camera and serializes center, scale_factor, and camera._quaternion.get_axis_angle(). If in 2D, it retrieves the camera.rect and stores [left, bottom, width, height].\n- Layer state: It iterates over self.layers and calls layer._get_state() on each, building a list of layer dicts.\n- Dimensional state: It records ndim, ndisplay, order (cast to int), axis_labels, and dims_point (cast to int) from self.dims.\n- Viewer attributes: It includes title, theme, metadata (currently an empty dict), and the previously computed camera and layers.\n\nThe resulting state dict looks roughly like:\n{\n  'napari': True,\n  'version': __version__,\n  'ndim': ..., 'ndisplay': ..., 'order': [...], 'axis_labels': [...], 'dims_point': [...],\n  'title': ..., 'theme': ..., 'metadata': {},\n  'camera': camera_dict,\n  'layers': [layer_state_1, layer_state_2, ...]\n}\n\nThis was part of an effort to make viewer sessions reproducible and sharable: one could in principle do state = viewer._get_state() and reconstruct a new Viewer with the same state. The discussion raised questions about how much of this should be part of the public Viewer API and whether dims and layers should be passable as keyword arguments to Viewer.__init__.\n\nSubsequently, the project adopted Pydantic for the ViewerModel, which provides structured, model-based serialization. As noted in the discussion, this manual _get_state approach became less necessary because serialization would be handled by the Pydantic model, making this PR effectively a transitional or superseded solution.",
+        "semantic_memory": "Generalizable lessons from this change:\n\n1. **Serialize UI state via a clear model boundary**: For complex visualization tools, it's useful to have a method (or model) that captures the full state of the UI (dims, camera, layers, metadata) in a single serializable structure. This enables reproducibility, sharing, and testing.\n\n2. **Separate model from view, but still capture view-critical parameters**: Even with a model–view separation, some view-specific parameters (like camera center, scale factor, quaternion, or 2D rect) are essential to reproducing what the user sees. A serialization strategy must decide which view parameters are promoted into the model (or model-like state) so that two users can see the same thing.\n\n3. **Handle mode-dependent serialization**: The viewer behaves differently in 2D vs 3D. The serialization logic reflected this by producing different camera structures depending on the mode (3D camera properties vs 2D rect). When serializing, always account for mode-dependent or configuration-dependent differences.\n\n4. **Include version and provenance in serialized state**: Adding 'version' and a 'napari' flag to the state provides a minimal form of provenance. When the format changes across versions, this information helps in migration and debugging.\n\n5. **Leverage schema/validation frameworks instead of custom dict builders**: While a handwritten _get_state() works, using a schema/validation library (like Pydantic) to define the viewer model yields more robust, maintainable, and discoverable serialization. It also reduces duplication between constructor arguments, internal state, and serialized output.\n\n6. **Consistency between init signature and serialized schema**: A good guiding principle is that the serialized state should map 1:1 to constructor arguments where feasible. This enables round-tripping: state = obj.get_state(); obj2 = Class(**state); assert obj2.get_state() == state. That informs API design and improves testability.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to design and implement viewer/state serialization for a complex UI component:",
+            "Step 1: Identify the state you must reproduce",
+            "List all aspects of the UI that must be identical between sessions or between users: dimensionality (ndim, ndisplay), axis ordering and labels, current slice indices or points, camera parameters (for each display mode), layer properties, and any global viewer metadata (title, theme).",
+            "Step 2: Decide on a serialization boundary",
+            "Determine whether serialization should be handled by a dedicated model (e.g., a ViewerModel) or by ad-hoc methods (e.g., viewer._get_state). Prefer a model-based approach (with a schema library like Pydantic) to avoid duplicating logic and to keep serialization in sync with the core data structures.",
+            "Step 3: Capture mode-dependent state explicitly",
+            "If the viewer has different modes (e.g., 2D vs 3D), define clearly how each mode's state is represented. For example, in 3D store camera center, scale_factor, and orientation (quaternion or equivalent). In 2D, store a rectangle [x, y, width, height]. Implement conditional logic in serialization based on current mode (ndisplay) and ensure that deserialization can reverse this logic.",
+            "Step 4: Serialize composite objects (like layers) by delegation",
+            "For collections such as layers, have each element provide its own _get_state or equivalent model serialization. The higher-level viewer simply iterates over the collection and aggregates the results. This keeps concerns separated and reduces coupling between the viewer and layer internals.",
+            "Step 5: Include version and provenance in the state",
+            "Expose the application/library version in the serialized state (e.g., 'version': __version__) and consider adding a sentinel key (e.g., 'napari': True) so consumers can recognize the format. This is crucial for future migrations and debugging version-specific issues.",
+            "Step 6: Align serialized keys with constructor arguments",
+            "When designing the serialized dict or model, aim for a mapping that can be passed directly to the viewer's constructor (or a dedicated restore_factory), e.g. Viewer(**state). This enables round-trip tests and makes the API intuitive. If some pieces cannot be constructor args, document and test how they are restored.",
+            "Step 7: Implement round-trip tests",
+            "Create tests that: (1) build a viewer with some layers and configuration; (2) call get_state/serialize; (3) reconstruct a new viewer from that state; and (4) assert equivalence of key fields (dims, camera, layers, theme, etc.). For strict scenarios, assert equality of the entire state dict.",
+            "Step 8: Migrate to a schema-based approach when available",
+            "If the project later adopts a schema/validation library (e.g., Pydantic), refactor manual serialization to rely on the model’s .dict() or .model_dump() methods. Move serialization-relevant attributes into the model and deprecate custom _get_state methods, keeping thin wrappers only when necessary for backwards compatibility.",
+            "Step 9: Guard against backend-specific details leaking into the model",
+            "When accessing camera or view data from a backend (e.g., vispy), translate those objects into backend-agnostic primitives (lists, dicts, numbers) before storing them in the model/state. Avoid storing raw backend objects so that the serialized state remains portable and not tightly coupled to a specific rendering library.",
+            "Step 10: Document and stabilize the state format",
+            "Once the serialization schema is stable, document it (keys, types, meaning) and treat it as part of the public API. This allows external tools and plugins to programmatically modify or generate viewer states, and it establishes expectations for future evolution of the format."
+        ]
+    }
+}

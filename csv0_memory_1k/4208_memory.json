@@ -1,0 +1,35 @@
+{
+    "search_index": {
+        "description_for_embedding": "OpenAPI spec for the ActionExecution model was missing newly introduced optional fields `workflow_execution` and `task_execution` that were added as part of Orchestra changes. The fix updates both the generated OpenAPI file and its Jinja template to include these string fields as optional properties, keeping the API definition in sync with the backend model.",
+        "keywords": [
+            "OpenAPI",
+            "Swagger",
+            "ActionExecution",
+            "workflow_execution",
+            "task_execution",
+            "Orchestra",
+            "spec mismatch",
+            "API documentation",
+            "StackStorm",
+            "openapi.yaml",
+            "model-sync"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the StackStorm project introduced Orchestra-related changes that added two new attributes, `workflow_execution` and `task_execution`, to the `ActionExecution` model. However, these fields were not reflected in the OpenAPI specification (`openapi.yaml`) or its Jinja template (`openapi.yaml.j2`). As a result, clients relying on the OpenAPI/Swagger spec would not be aware of these fields and could not reliably serialize or deserialize them, leading to an inconsistency between the backend model and the documented API. The pull request fixed this by updating both `st2common/st2common/openapi.yaml` and `st2common/st2common/openapi.yaml.j2`. In the `ActionExecution` definition, it added two optional string properties: `workflow_execution` and `task_execution`, each declared as `type: string` with `required: False`. This aligned the API specification with the actual model behavior. A related PR later ensured the changes were properly merged into master and the v2.8 branch.",
+        "semantic_memory": "When backend models evolve (e.g., adding new fields to an execution or resource model), the API specification (OpenAPI/Swagger) must be updated in lockstep. Failing to propagate new fields into the spec leads to discrepancies between the actual API responses and the documented contract. This can break code generation, client libraries, validation, and user expectations. In systems where the OpenAPI file is generated from a template (like a Jinja template), both the template and the generated artifact may need changes, or the generation workflow must be re-run. Optional fields should be clearly marked as non-required in the spec to avoid backward-compatibility issues. Keeping the spec and server implementation synchronized is a critical best practice for API-driven systems, especially across branches and releases, since missing merges can mean fixes appear in one version but not another.",
+        "procedural_memory": [
+            "When diagnosing API inconsistencies, first compare the actual JSON payloads returned by the service with the fields described in the OpenAPI/Swagger spec.",
+            "Step 1: Identify a discrepancy: capture a real API response (e.g., via curl or a client) and check if there are fields present that are not documented, or missing fields that the client expects.",
+            "Step 2: Locate the model definition in the codebase (e.g., the ActionExecution or similar domain model) and confirm what fields the backend actually exposes.",
+            "Step 3: Open the API specification files (e.g., openapi.yaml and any associated templates like openapi.yaml.j2) and navigate to the corresponding model definition.",
+            "Step 4: For each new or changed field in the backend model, add a corresponding property to the OpenAPI definition, specifying the correct type, format, and whether it is required or optional. For optional fields, ensure they are not listed in a `required` array, or explicitly mark them as non-required according to the spec style used.",
+            "Step 5: If the spec is generated from templates, modify the template (e.g., openapi.yaml.j2) rather than only the generated file, then regenerate the final OpenAPI document to keep them synchronized.",
+            "Step 6: Run any available validation or build steps (e.g., Swagger/OpenAPI validators, tests that parse the spec) to confirm that the updated spec is syntactically and semantically valid.",
+            "Step 7: Test the updated spec with common consumers: regenerate API clients if applicable, and ensure they now expose the new fields correctly without breaking existing clients.",
+            "Step 8: Check all active branches (e.g., master, release branches like v2.8) to ensure the spec changes are merged consistently across versions; cherry-pick or backport as needed.",
+            "Step 9: Document the change in release notes or API change logs so downstream users know that new optional fields are available and that the spec now reflects them.",
+            "Step 10: As a preventive measure, establish a process or tests that detect drift between model definitions and the OpenAPI spec (e.g., unit tests that compare model schemas to spec definitions) to catch similar issues early."
+        ]
+    }
+}

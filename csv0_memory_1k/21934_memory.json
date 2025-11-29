@@ -1,0 +1,36 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fix in Home Assistant EntityPlatform so that _async_add_entity only calls async_update_ha_state for polling entities, preventing push-based integrations from publishing uninitialized or default state values to the state machine when an entity is first added.",
+        "keywords": [
+            "Home Assistant",
+            "EntityPlatform",
+            "_async_add_entity",
+            "async_update_ha_state",
+            "should_poll",
+            "polling entity",
+            "push platform",
+            "state machine",
+            "incorrect initial state",
+            "entity lifecycle",
+            "homeassistant.helpers.entity_platform",
+            "integration bug",
+            "race condition",
+            "sensor initialization"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, Home Assistant’s EntityPlatform was always calling entity.async_update_ha_state() when a new entity was added via _async_add_entity, regardless of whether the entity was a polling or push-based integration. For push platforms, which receive updates from the device and then explicitly push state to Home Assistant, this caused a problem: at entity-add time, the entity’s internal state often had not yet been updated from the device. As a result, the system wrote an arbitrary or default value (whatever the platform initialized its state variable with) into the state machine, leading to incorrect initial state for those entities (see issue #21893). The fix was to gate the initial async_update_ha_state() call on entity.should_poll: only polling entities, which need to actively fetch their state, have their state updated immediately on add. Push entities no longer perform this initial forced update and instead rely on their normal push update mechanism, avoiding the random/incorrect state on startup.",
+        "semantic_memory": "When integrating entities into a reactive system like Home Assistant, it is critical to respect the entity’s update model: polling versus push. Polling entities are responsible for fetching their current state from external devices or APIs and then writing it to the state machine, whereas push entities are updated by incoming events or callbacks and then push the new state into the system. Treating both the same at creation-time—forcing an immediate state update for all entities—can result in uninitialized or stale values being written into the central state store, particularly for push entities that haven’t yet received data from their device. A robust design ensures that initial state publication is conditional on the entity’s capabilities (e.g., should_poll) and lifecycle, and avoids making assumptions that the entity’s internal state is valid at construction or registration time. More generally, any framework that mixes pull and push data flows must carefully avoid generic initialization logic that reads from entities before the integration-specific setup and first data fetch/push has completed.",
+        "procedural_memory": [
+            "When diagnosing incorrect or random initial state in an entity-based framework, first identify whether the affected entities are polling-based or push-based integrations.",
+            "Step 1: Reproduce the issue and log the entity’s state values at creation and just after registration with the platform. Check if the state written to the central store (e.g., Home Assistant’s state machine) matches any default or placeholder values used in the entity’s constructor or initialization code.",
+            "Step 2: Inspect the entity registration and lifecycle hooks (e.g., _async_add_entity, async_added_to_hass) to see if there is any unconditional call that reads state from the entity and writes it to the global state (such as async_update_ha_state()) immediately after adding the entity.",
+            "Step 3: Determine how each integration is supposed to update its state. For polling entities, confirm that they implement a proper update mechanism (sync or async) and that calling an initial state update is appropriate. For push entities, confirm that they rely on callbacks, subscriptions, or device events to set their state and should not be polled at add time.",
+            "Step 4: Introduce a capability flag or use an existing one (e.g., entity.should_poll) to differentiate between polling and push entities. Use this flag to conditionally perform the initial state update: only call async_update_ha_state (or equivalent) for entities that truly require polling.",
+            "Step 5: Review the semantics of any update method (e.g., async_update, async_update_ha_state). Ensure you clearly distinguish between methods that fetch data from the device and methods that write data into the central state store. Avoid conflating these responsibilities when designing lifecycle hooks.",
+            "Step 6: Add or adjust tests to cover both polling and push entities, verifying that: (a) polling entities have a valid state immediately after being added, and (b) push entities do not publish default or uninitialized states before receiving real data from the device.",
+            "Step 7: After making the change, run the full test suite and, if possible, test with real or simulated devices to confirm that no entities regress (e.g., no polling entities remain in an unknown state due to the new conditional logic).",
+            "Step 8: Document the intended lifecycle and update behavior for entities (including when initial state should be written) so future contributors do not reintroduce unconditional state writes that ignore polling vs push distinctions."
+        ]
+    }
+}

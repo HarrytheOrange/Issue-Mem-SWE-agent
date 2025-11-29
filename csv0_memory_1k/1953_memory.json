@@ -1,0 +1,31 @@
+{
+    "search_index": {
+        "description_for_embedding": "GitHub Actions cron-based app bundling workflow was running on forked repositories because the job-level repository filter was commented out. The fix re-enabled the 'if: github.repository == \"napari/napari\"' condition on the bundle job so the scheduled workflow only runs on the main repository and not on forks.",
+        "keywords": [
+            "GitHub Actions",
+            "cron workflow",
+            "scheduled workflow",
+            "forked repos",
+            "CI configuration",
+            "workflow condition",
+            "github.repository",
+            "job-level if",
+            "make_bundle.yml",
+            "napari"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In the napari repository, contributors noticed that the app bundling GitHub Actions workflow was running on user forks whenever the cron schedule triggered. This led to unwanted notifications and unnecessary CI usage on forked repositories. Investigation revealed that the job-level conditional gate `if: github.repository == 'napari/napari'` in `.github/workflows/make_bundle.yml` had been commented out earlier. As a result, the scheduled workflow ran in any repository that inherited the workflow, including all forks. The fix was to uncomment and reinstate this condition so that the `bundle` job now includes `if: github.repository == 'napari/napari'`, ensuring the bundling job only runs in the main `napari/napari` repo and not in forks. There was some discussion noting that this PR itself triggered a full test suite because it came from a branch on the main repo rather than a fork, which was expected behavior and unrelated to the bug.",
+        "semantic_memory": "When using GitHub Actions with scheduled (cron) workflows, those workflows will also run on forks unless explicitly constrained. Forks inherit workflow definitions, and cron triggers do not respect the typical 'pull_request from fork' security boundary. To prevent heavy or privileged jobs (like app bundling, deployment, or publishing) from running on forks, you must add repository-scoped conditions, typically using `if: github.repository == 'owner/repo'` at the job (or workflow) level. Commenting out or omitting such conditions causes scheduled workflows to run in every fork that has the workflow file. A general best practice is to guard deployment- or bundling-related jobs with repository checks and/or event checks, especially for cron and `push` workflows, so they only execute in the canonical repository or on specific branches.",
+        "procedural_memory": [
+            "When a scheduled GitHub Actions workflow unexpectedly runs on forks or in unintended repositories, the cause is often missing or disabled repository-level conditions in the workflow YAML.",
+            "Step 1: Confirm the symptom. Check Actions runs in forked repos to see if cron or other workflows are being triggered unexpectedly (e.g., deployment or bundling jobs running on forks).",
+            "Step 2: Inspect the workflow file (e.g., `.github/workflows/<workflow>.yml`) in the main repo and in a fork. Look at the `on:` section (e.g. `schedule:`) and each `jobs:` entry, especially heavy tasks like bundling or deployment.",
+            "Step 3: Check for an `if:` condition on those jobs that should only run in the main repository. Look for conditions like `if: github.repository == 'owner/repo'`. If they are missing or commented out, that is likely the cause.",
+            "Step 4: Add or re-enable the repository condition. For example, at the job level:\n    bundle:\n      runs-on: ...\n      if: github.repository == 'owner/repo'\nThis ensures the job only runs when the workflow is executing in the canonical repository.",
+            "Step 5: Commit and merge the change to the main branch of the canonical repository. Note that you may not be able to test cron behavior immediately, but you can trigger the workflow manually (if enabled) to verify that the job is skipped in forks (by using a test fork) and runs in the main repo.",
+            "Step 6: Optionally, document this behavior in CONTRIBUTING or CI docs so future maintainers understand why certain jobs are guarded by `github.repository` checks, and avoid accidentally commenting them out.",
+            "Step 7: For new workflows that perform bundling, publishing, or deployment, always include a repository and/or branch guard to prevent them from running on forks or unintended branches."
+        ]
+    }
+}

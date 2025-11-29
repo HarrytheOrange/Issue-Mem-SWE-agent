@@ -1,0 +1,34 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant Vallox integration had a dependency conflict due to an outdated vallox-websocket-api (2.2.0) pin, which depended on a conflicting websockets version. The fix was to bump vallox-websocket-api to 2.4.0 in the integration manifest and global requirements, resolving the websocket dependency conflict.",
+        "keywords": [
+            "Home Assistant",
+            "vallox",
+            "vallox-websocket-api",
+            "websocket dependency conflict",
+            "websockets version mismatch",
+            "Python dependency pin",
+            "integration manifest",
+            "requirements_all.txt",
+            "dependency upgrade",
+            "import error",
+            "package version conflict"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Home Assistant Vallox integration was pinned to vallox-websocket-api==2.2.0 in both its integration manifest (homeassistant/components/vallox/manifest.json) and the global requirements file (requirements_all.txt). That version of vallox-websocket-api depended on a version of the websockets library that conflicted with the websockets version required by the rest of Home Assistant, leading to dependency resolution issues (e.g., pip conflicts or runtime import problems). Upstream, vallox-websocket-api released version 2.4.0, which updated its own websocket-related dependencies to be compatible with Home Assistant's environment. The fix in this PR simply bumped the Vallox integration requirement from 2.2.0 to 2.4.0 in both the manifest.json and requirements_all.txt. No functional code changes were required; once the dependency was updated and tests passed, the websocket conflict was resolved, closing the linked issues (#31213 and #31316).",
+        "semantic_memory": "When an integration or module pins a third-party dependency, that pin can become incompatible with the rest of the application's dependency graph as other components move forward. A common manifestation is a conflict around shared core libraries (like websockets) where two packages require mutually incompatible versions. The general pattern to resolve this is to: (1) identify the dependency responsible for pulling in the incompatible version, (2) check its upstream changelog or releases for a newer version that relaxes or updates its own dependencies, and (3) bump the pinned version in all relevant configuration/manifest files in the host application. In ecosystems like Home Assistant, this usually means updating both the integration-specific manifest and the global requirements file, then regenerating derived requirement files and running the test suite. This approach avoids ad hoc overrides of transitive dependencies and keeps the integration aligned with upstream maintenance of the library. It also emphasizes that pinning third-party libraries too strictly can create fragility; where possible, pins should be kept up to date and reviewed whenever core dependency versions change.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar dependency conflict issues.",
+            "Step 1: Observe symptoms. Look for pip/installation errors, ImportError, or runtime failures indicating version conflicts (e.g., two packages requiring different versions of websockets or another shared library). Check CI logs and user-reported tracebacks.",
+            "Step 2: Identify the conflicting dependency. Use pip's error messages, dependency resolution tools (pipdeptree, poetry lock output, etc.), or the project's dependency metadata to find which integration/package is pinning the incompatible version.",
+            "Step 3: Inspect the upstream library. For the problematic package (here, vallox-websocket-api), review its changelog, release notes, and GitHub tags to see if newer versions exist that update or relax the conflicting dependency (e.g., update the websockets requirement). Verify that the new version does not introduce known breaking changes for your use case.",
+            "Step 4: Update version pins in all relevant places. In a modular project like Home Assistant, bump the library version in both the component's manifest (e.g., homeassistant/components/<integration>/manifest.json) and any central requirements files (e.g., requirements_all.txt). Ensure all references to the old version are updated consistently.",
+            "Step 5: Regenerate derived artifacts. If the project uses generated requirements files or manifest validation tools (e.g., python3 -m script.gen_requirements_all, python3 -m script.hassfest in Home Assistant), run them to update and validate the dependency metadata.",
+            "Step 6: Run the test suite. Execute the project's tests (unit, integration, and any static checks) to confirm that the new dependency version does not break existing functionality and that the dependency conflict is resolved.",
+            "Step 7: Verify runtime behavior. When possible, run the application or integration in a local environment using the new dependency version, specifically exercising the code paths that use the updated library (e.g., connecting via websockets in the Vallox integration).",
+            "Step 8: Document and link issues. In the PR description, link to the upstream changelog, the specific issues being fixed, and note that the change is a dependency upgrade to resolve a conflict. This helps reviewers quickly understand the rationale and risk profile.",
+            "Step 9: Monitor after merge. After deployment, watch for new issue reports related to the updated dependency (e.g., regressions due to API changes). If necessary, iterate by either pinning to a different version or adapting integration code to the new library API."
+        ]
+    }
+}

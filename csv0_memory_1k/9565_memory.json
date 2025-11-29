@@ -1,0 +1,35 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant Arlo camera integration updated to use pyarlo 0.0.6 and expose additional camera state attributes (battery level, brightness, flip/mirror state, motion sensitivity, power save mode, signal strength, unseen videos) via device_state_attributes, including a mapping from numeric power save modes to human-readable strings.",
+        "keywords": [
+            "Home Assistant",
+            "Arlo",
+            "camera",
+            "pyarlo",
+            "pyarlo 0.0.6",
+            "integration update",
+            "device_state_attributes",
+            "battery_level",
+            "motion_sensitivity",
+            "power_save_mode",
+            "signal_strength",
+            "unseen_videos",
+            "dependency version bump"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "This change reintroduces and finalizes functionality from a previously closed Home Assistant PR, adding richer state reporting for Arlo cameras. The Arlo integration was previously pinned to pyarlo==0.0.4 and did not expose several useful runtime attributes. The patch bumps the dependency to pyarlo==0.0.6 in both the Arlo component and the global requirements file, enabling access to new methods on the underlying camera objects. The Arlo camera platform then defines a set of new constants for attributes (brightness, flipped, mirrored, motion_detection_sensitivity, power_save_mode, signal_strength, unseen_videos) and implements the device_state_attributes property to return a dictionary of these values, along with the standard battery_level attribute. Numeric power save modes returned by pyarlo are translated to human-readable strings via a POWERSAVE_MODE_MAPPING dictionary (1: best_battery_life, 2: optimized, 3: best_video). There was a follow-up concern (issue #9737) that this update may have caused an issue, possibly related to how the underlying pyarlo library exposes these values or how they are mapped, prompting discussion of whether further fixes are needed or if a revert would be required. The core of this PR, however, is about synchronizing the integration with the newer library and surfacing additional camera state to Home Assistant users.",
+        "semantic_memory": "When an integration depends on a third-party library, new features or attributes in that library often require a coordinated update: bumping the dependency version and adjusting the integration to expose the new capabilities in a consistent, user-friendly way. For a Home Assistant platform, this commonly means:\n- Updating the component's REQUIREMENTS and the global requirements file to align with a specific library version known to support the desired API surface.\n- Using device_state_attributes (or its modern equivalent) to expose richer telemetry like battery level, brightness, orientation, motion sensitivity, power profiles, and connectivity metrics.\n- Translating internal or numeric codes from the underlying library into stable, human-readable strings so that automations and UI are clearer and less brittle.\n- Recognizing that such enhancements can introduce regressions if the dependency's API does not behave as expected across all devices or environments, and handling unexpected values defensively (e.g., safe mappings, defaults, and error handling).\nBroadly, this illustrates the importance of version pinning, explicit attribute mapping, and defensive integration design when bridging between Home Assistant and device-specific Python libraries.",
+        "procedural_memory": [
+            "When updating an integration to use new attributes from an underlying library, ensure dependency versions and exposed attributes are updated in lockstep.",
+            "Step 1: Identify the new capabilities in the underlying library (e.g., new getters like get_battery_level, get_brightness, get_powersave_mode) and confirm the minimum version that supports them.",
+            "Step 2: Bump the integration's pinned dependency in its component file (e.g., REQUIREMENTS = ['pyarlo==0.0.6']) and also update any global or shared requirements files to the same version.",
+            "Step 3: In the platform entity class (e.g., Camera subclass), define clear, stable attribute constants (e.g., ATTR_BRIGHTNESS, ATTR_POWER_SAVE_MODE) that will be used both internally and by external automations.",
+            "Step 4: Implement or extend the device_state_attributes (or equivalent) property to return a dictionary of attribute names to their values, reading from the underlying library object (e.g., self._camera.get_battery_level, self._camera.get_signal_strength). Ensure you are actually calling methods if they are callables, or using properties correctly.",
+            "Step 5: For any attributes that use numeric or opaque codes from the library (e.g., power-save modes 1/2/3), create a mapping from those internal codes to human-readable strings and use that mapping in the returned attributes. Handle unknown or missing codes gracefully (e.g., via dict.get with a default) to avoid KeyErrors.",
+            "Step 6: Add or update tests (or at least manual validation) to cover common device states, verifying that all new attributes appear in the entity's state, are correctly typed, and that automations or UI can consume them without errors.",
+            "Step 7: Monitor real-world usage and issues after deployment. If users report errors after such an update (e.g., missing attributes, KeyErrors, or unexpected None values), cross-check library behavior across device types and consider adding additional guards, defaults, or rollback the version bump if necessary.",
+            "Step 8: Document new attributes in the integration's documentation so users know what telemetry is now available for automations and dashboards."
+        ]
+    }
+}

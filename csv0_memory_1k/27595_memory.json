@@ -1,0 +1,53 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant MQTT device_tracker entities always exposed source_type as GPS and could not be overridden from configuration. This change adds a configurable source_type option to the MQTT device_tracker platform schema, validates it against all known device_tracker source types, and passes it through to async_see so the entity reports the correct source_type (e.g., router).",
+        "keywords": [
+            "Home Assistant",
+            "mqtt",
+            "device_tracker",
+            "source_type",
+            "configuration option",
+            "PLATFORM_SCHEMA",
+            "vol.Optional",
+            "async_see",
+            "GPS",
+            "router",
+            "bluetooth",
+            "entity attribute",
+            "integration config validation"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, users wanted to use the MQTT device_tracker integration in Home Assistant but needed to override the tracker’s source_type (e.g., to mark it as a router-based tracker rather than GPS). Previously, MQTT device_tracker implicitly behaved like GPS and did not expose a configurable source_type; the async_see call was invoked without specifying source_type, so the default GPS source type was always used.\n\nTo fix this, a new CONF_SOURCE_TYPE constant was added to the MQTT component, and the MQTT device_tracker PLATFORM_SCHEMA was extended to accept an optional source_type configuration key. The allowed values were constrained using voluptuous to a shared list of all valid device_tracker source types (SOURCE_TYPE_ALL = [gps, router, bluetooth, bluetooth_le]) defined centrally in homeassistant.components.device_tracker.const. The default value for source_type remained SOURCE_TYPE_GPS to preserve existing behavior.\n\nIn async_setup_scanner for the MQTT device_tracker, the configured source_type is read from the config and passed through to async_see(...) as source_type=source_type whenever a message is received. Tests were added to ensure that: (1) the default source_type is 'gps' when source_type is not provided, and (2) providing 'router' in the configuration sets the resulting entity’s source_type attribute to 'router'. A minor style/cleanup change also reordered imports and removed an unnecessary blank line in the message handler. Ultimately, a similar implementation was merged via another PR, but this change clearly demonstrates how the feature was introduced.",
+        "semantic_memory": "This fix illustrates several generalizable practices for extending configuration-driven behavior in a large codebase:\n\n1. **Expose configuration knobs for behavior that was previously hardcoded.** The MQTT device_tracker always acted like a GPS tracker because it never forwarded a configurable source_type. Allowing users to define source_type in configuration (with a sensible default) aligns the integration with real-world usage while preserving backward compatibility.\n\n2. **Centralize and reuse domain-specific constants.** Instead of locally re-listing valid source types in the MQTT integration, a shared SOURCE_TYPE_ALL list was introduced in the device_tracker domain. This improves consistency, reduces duplication, and prevents drift if new source types are added later.\n\n3. **Use configuration validation (voluptuous) to enforce allowed values.** Validation was done via vol.Optional(CONF_SOURCE_TYPE, default=SOURCE_TYPE_GPS): vol.In(SOURCE_TYPE_ALL), which ensures configuration errors are caught early and reported clearly to the user.\n\n4. **Propagate configuration through to runtime behavior.** Adding a configuration field is not enough; it must be read in the setup function and passed into the relevant service call (async_see in this case) so the runtime entity state reflects the configuration.\n\n5. **Write tests that lock in both default and custom behavior.** Tests were added to verify that: (a) the default source_type remains 'gps' when the option is omitted, ensuring backward compatibility, and (b) a custom configured source_type ('router') appears on the entity attributes, confirming that the new configuration is effective.\n\n6. **Maintain consistent discovery/expansion metadata.** The new CONF_SOURCE_TYPE key was added to a list used for discovery expansion, ensuring that config/UI/discovery tooling is aware of the new option.\n\nCollectively, these practices are broadly applicable whenever introducing new configuration options or extending the behavior of an integration or module in a configuration-driven system.",
+        "procedural_memory": [
+            "When adding or fixing a configuration-driven behavior (like setting a device attribute based on config), ensure you (1) define a config key, (2) validate it centrally using shared constants, (3) wire it through to the runtime logic, and (4) cover both default and custom cases with tests.",
+            "Step 1: Confirm the current behavior and limitation.",
+            "  - Inspect the integration’s setup code (e.g., async_setup_scanner) and the service/entity creation calls it makes (e.g., async_see).",
+            "  - Check if the desired behavior (e.g., custom source_type) is supported by the underlying API but never configured or passed through.",
+            "  - Inspect the entity’s attributes in a running instance to verify that the attribute is missing or stuck at a default value.",
+            "Step 2: Identify or introduce shared constants for valid values.",
+            "  - Find where the domain defines its key concepts (e.g., device_tracker.const for source types).",
+            "  - If multiple modules need the same set of valid values, introduce a shared list or collection (e.g., SOURCE_TYPE_ALL = [gps, router, bluetooth, bluetooth_le]) in the domain’s const module rather than re-defining local lists.",
+            "Step 3: Extend the configuration schema to support the new option.",
+            "  - Add a new CONF_* constant in the relevant component namespace (e.g., CONF_SOURCE_TYPE in homeassistant.components.mqtt.__init__).",
+            "  - Extend the PLATFORM_SCHEMA (or equivalent) with the new key:\n    - Use vol.Optional(CONF_SOURCE_TYPE, default=<old behavior>) to maintain backward compatibility.\n    - Use vol.In(SOURCE_TYPE_ALL) or a similar validator to restrict acceptable values and catch errors early.",
+            "Step 4: Read the configuration option and propagate it to runtime logic.",
+            "  - In the setup function (e.g., async_setup_scanner), read the configuration value (source_type = config[CONF_SOURCE_TYPE]).",
+            "  - Update any callbacks or handlers that create/update entities or call services (e.g., async_see) to include the new parameter: async_see(..., source_type=source_type).",
+            "  - Ensure the new parameter aligns with the expected signature and semantics of the API being called.",
+            "Step 5: Update discovery/metadata lists if applicable.",
+            "  - If your project has discovery, expansion, or UI metadata lists (e.g., CONF_* lists used for auto-generated docs or config flows), add your new CONF_* key there so auxiliary tooling recognizes it.",
+            "Step 6: Write tests for default and custom configuration behaviors.",
+            "  - Add tests that set up the integration without the new option and assert that the behavior/attribute remains the default (e.g., source_type == 'gps').",
+            "  - Add tests that configure the new option (e.g., source_type: 'router') and assert that the resulting entity state or attributes reflect this (source_type == 'router').",
+            "  - Use existing test helpers (e.g., async_setup_component, async_fire_mqtt_message) to simulate runtime events and validate behavior.",
+            "Step 7: Run the full test suite and adjust for style/consistency.",
+            "  - Run the prescribed test command (e.g., tox) and ensure tests pass.",
+            "  - Fix any style or import-order issues, and keep imports logically grouped (e.g., group and deduplicate homeassistant.const imports).",
+            "Step 8: Document the new configuration option.",
+            "  - Update user-facing documentation to include examples (e.g., specifying source_type: router in device_tracker: - platform: mqtt).",
+            "  - Clarify allowed values and defaults to prevent misconfiguration in the future."
+        ]
+    }
+}

@@ -1,0 +1,33 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant OpenALPR cloud image_processing integration failed due to using the deprecated v1 /recognize endpoint and incompatible request parameters. The fix updates the API URL to the v2 /recognize_bytes endpoint and removes the obsolete 'tasks' parameter to match the new OpenALPR v2 API.",
+        "keywords": [
+            "OpenALPR",
+            "image_processing",
+            "cloud",
+            "API version upgrade",
+            "endpoint change",
+            "deprecated endpoint",
+            "v1 recognize",
+            "v2 recognize_bytes",
+            "Home Assistant",
+            "integration fix",
+            "HTTP API compatibility"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Home Assistant `image_processing.openalpr_cloud` integration was still targeting the older OpenALPR cloud API. The code used the URL `https://api.openalpr.com/v1/recognize` and included a `tasks=plate` parameter in the request. OpenALPR had moved to a v2 API where the correct endpoint for raw image bytes is `https://api.openalpr.com/v2/recognize_bytes`, and the `tasks` parameter was no longer required or valid. As a result, API calls could fail, return errors, or behave unexpectedly due to the mismatch between the integration and the live API. The fix changed the constant `OPENALPR_API_URL` from the v1 `/recognize` endpoint to the v2 `/recognize_bytes` endpoint and removed the outdated `tasks` parameter from the request parameters in `async_setup_platform`. After this change, the integration is aligned with the OpenALPR v2 API expectations, allowing license plate recognition to function correctly again.",
+        "semantic_memory": "When integrating with third-party web APIs, especially cloud services, it is crucial to keep client code synchronized with the provider’s current API version. Providers often deprecate old endpoints, rename routes, change required parameters, or alter how data is submitted (e.g., JSON vs. multipart vs. raw bytes). Continuing to use outdated URLs or parameters frequently leads to silent failures, HTTP errors, or incorrect responses. Therefore, integrations should encapsulate API endpoints and parameters in well-defined constants or configuration sections so they can be easily updated when the external service evolves. Removing obsolete parameters and targeting the correct endpoint (e.g., `recognize_bytes` for raw image data) is necessary to maintain compatibility and reduce runtime errors.",
+        "procedural_memory": [
+            "When an integration that calls an external HTTP API begins failing or behaving unexpectedly, verify whether the external service has changed its API version, endpoints, or parameters.",
+            "Step 1: Check logs and error messages for HTTP status codes (e.g., 400, 404, 410) or provider-specific error messages indicating deprecated endpoints or invalid parameters.",
+            "Step 2: Review the external service’s latest API documentation and changelog, focusing on versioned endpoints (e.g., /v1 vs /v2) and any migration notes.",
+            "Step 3: Identify all hard-coded API URLs in your integration (constants like `OPENALPR_API_URL`) and compare them against the current recommended endpoints (e.g., change `/v1/recognize` to `/v2/recognize_bytes` if the service now requires that).",
+            "Step 4: Audit request parameters and payload format. Remove parameters that are no longer supported (e.g., `tasks=plate`) and adjust request bodies or query parameters to match the new API schema (e.g., using a *_bytes endpoint when sending raw image bytes).",
+            "Step 5: Update the code: modify the API URL constants, clean up or rename parameters, and ensure the request method (GET/POST) and content type align with the new API specification.",
+            "Step 6: Add or update unit/integration tests that exercise calls to the external API, mocking the new endpoint and validating that the correct URL and parameters are used.",
+            "Step 7: Run the full test suite (e.g., `tox`) and perform a manual end-to-end test against the real service (if possible) to confirm that responses are successful and that the integration behaves as expected.",
+            "Step 8: Document the dependency on the specific API version and any configuration nuances so that future maintainers can more easily adapt to future API changes."
+        ]
+    }
+}

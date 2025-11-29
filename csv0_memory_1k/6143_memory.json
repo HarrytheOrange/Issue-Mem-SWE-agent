@@ -1,0 +1,34 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant dovado sensor had incorrect units labeled as GiB for upload/download traffic while the router reports data in decimal gigabytes (GB). The fix updates the sensor unit strings from GiB to GB to match the device UI and actual values.",
+        "keywords": [
+            "home-assistant",
+            "dovado",
+            "sensor",
+            "data usage",
+            "traffic modem",
+            "upload",
+            "download",
+            "unit mismatch",
+            "GiB vs GB",
+            "measurement units",
+            "UI consistency"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In the Home Assistant dovado sensor integration, the upload and download traffic sensors were labeled with the unit 'GiB'. The underlying router reported values in metric kilobytes (KB) and the Home Assistant integration converted these values to gigabytes to match the router’s web UI, which displays decimal GB, not binary GiB. This caused a unit-label inconsistency: the numeric values matched the router, but the unit suggested binary gibibytes. After discussion, developers confirmed that the router’s UI and the integration both effectively use decimal units and round to 0.1 GB, making the binary notation misleading. The fix was to change the unit_of_measurement strings for SENSOR_UPLOAD and SENSOR_DOWNLOAD from 'GiB' to 'GB' in homeassistant/components/sensor/dovado.py so that the displayed units correctly reflect the data and match the router UI.",
+        "semantic_memory": "When integrating with external devices or services, unit consistency between the source system, internal calculations, and the user-visible UI is critical. Mislabeling units (e.g., using GiB for binary gibibytes vs GB for decimal gigabytes) can be a subtle but important bug, especially for data usage, storage, or bandwidth metrics. Even when the numeric difference is small, misleading unit labels can erode user trust and cause confusion. A good practice is to (1) verify the original unit semantics from the device or API (metric vs binary, base-10 vs base-2), (2) keep internal conversions consistent, and (3) ensure that the unit string presented to the user matches both the actual calculation and the external system’s representation. When exact semantics are unclear or the device itself is ambiguous, align with the device’s own UI so that users see matching numbers and labels across systems, and document any assumptions.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Identify user-visible inconsistency: Look for reports that values in Home Assistant (or any client) do not match the device’s UI or that unit labels (e.g., GB vs GiB, MB vs MiB) seem incorrect or confusing.",
+            "Step 2: Trace the data origin: Find where the raw value is obtained from the device or API. Check documentation or vendor specs to determine the original unit (e.g., bytes, KB, KiB, MB, MiB).",
+            "Step 3: Inspect conversion logic: Review the code where the raw value is converted into the displayed unit. Confirm whether conversions are base-10 (×1000) or base-2 (×1024) and ensure that this matches the source data’s semantics.",
+            "Step 4: Compare against device UI: Open the device’s native UI (router admin page, cloud console, etc.) and compare values. Verify if the device uses metric (GB) or binary (GiB) units and whether rounding/precision (e.g., 0.1 increments) matches your integration.",
+            "Step 5: Align unit labels: If the numeric conversion and the device UI use decimal units, make sure the user-facing unit string is the corresponding metric label (GB, MB). If using binary conversion, use the binary label (GiB, MiB). Update constants such as unit_of_measurement or display templates accordingly.",
+            "Step 6: Keep internal representation consistent: Ensure that all sensors or fields representing related metrics (e.g., upload and download, used and total storage) use the same unit conventions and compatible conversions.",
+            "Step 7: Add or update tests: If possible, add tests that assert both the numeric value and the unit string for representative sample inputs so future changes don’t reintroduce inconsistencies.",
+            "Step 8: Document assumptions: In code comments or documentation, note any assumptions about units (e.g., 'router reports KB in decimal; values converted to GB (base-10) to match router UI'). This helps avoid confusion in future maintenance.",
+            "Step 9: Validate with users or reviewers: If there is ambiguity (e.g., unclear device documentation), confirm behavior with multiple observations (different data amounts) and, if possible, with other developers or users familiar with the device."
+        ]
+    }
+}

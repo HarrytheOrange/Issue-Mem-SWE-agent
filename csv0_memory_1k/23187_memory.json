@@ -1,0 +1,34 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fixes a bug in Home Assistant's automation template listener where the `to_state` could be `None` (e.g., when an entity is removed), causing an AttributeError when accessing `to_state.context`. The fix adds a None-check and passes `None` as context when no target state exists.",
+        "keywords": [
+            "Home Assistant",
+            "automation",
+            "template automation",
+            "template_listener",
+            "state change listener",
+            "to_state None",
+            "NoneType has no attribute context",
+            "context parameter",
+            "entity removed",
+            "AttributeError",
+            "async_track_template"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In the Home Assistant automation `template` component, a listener function `template_listener(entity_id, from_s, to_s)` was using `to_s.context` unconditionally when firing an automation trigger event. Under some conditions, notably when an entity's state is being deleted or removed, `to_s` can be `None`. In that case, accessing `to_s.context` raised an `AttributeError` (`'NoneType' object has no attribute 'context'`), potentially breaking automation processing for that event. The fix was to guard the context access by changing the call from `context=to_s.context` to `context=(to_s.context if to_s else None)`. This way, when there is no target state, the event is still fired but with a `None` context, which is acceptable because these are system-driven events. The bug was minor but could surface whenever template automations observed entity removal or similar transitions where the new state is absent.",
+        "semantic_memory": "When dealing with state change or event callbacks, it is common that either the previous state (`from_state`) or the new state (`to_state`) can be `None`, especially for creation, deletion, or removal events. Any code that assumes these objects are always non-null and immediately dereferences attributes (such as `.context`, `.id`, `.name`, etc.) is prone to `NoneType` attribute errors. A robust pattern is to treat these state objects as optional and either:\n- Check for None explicitly before accessing attributes, or\n- Use a safe default (e.g., passing `None` or an empty structure) when the state is missing.\n\nThe context object associated with a state (e.g., metadata about what triggered the change) may not always exist or be meaningful for system-generated events. API surfaces that accept a `context` argument should therefore be designed to accept `None` and behave gracefully. Logic that forwards or propagates context should mirror this by only forwarding context when available, rather than assuming it always exists.\n\nIn event-driven frameworks, this pattern generalizes to: assume incoming objects may be absent in edge transitions (create/delete) and design handlers accordingly. This prevents sporadic runtime exceptions and improves the resilience of automation or rule engines.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Reproduce or inspect the error: Look for stack traces mentioning `AttributeError: 'NoneType' object has no attribute 'X'` in event or automation callbacks, especially where `from_state` or `to_state` are used.",
+            "Step 2: Locate the handler: Identify the callback or listener function referenced in the traceback (e.g., an automation listener such as `template_listener`). Open the code around the indicated line.",
+            "Step 3: Inspect state parameters: Check the function signature for parameters representing states or entities (commonly `from_state`, `to_state`, or similar). Confirm via framework docs or existing code comments whether these are allowed to be `None` (e.g., on creation/deletion).",
+            "Step 4: Find unsafe attribute access: Search within the handler for direct attribute access on these potentially optional parameters (e.g., `to_state.context`, `from_state.entity_id`) without any preceding None-check.",
+            "Step 5: Apply a safe access pattern: Replace direct attribute access with guarded logic. For example:\n- `context=to_state.context` → `context=(to_state.context if to_state is not None else None)`\n- or use short-circuiting: `context = to_state and to_state.context` if the style is acceptable.\nEnsure the downstream API can accept `None` for that parameter.",
+            "Step 6: Consider semantics of None: Decide what behavior is correct when the state is missing. For many system or deletion events, passing `None` for context or other metadata is acceptable. If not, define and use an appropriate default or handle the case explicitly (e.g., skip firing the event).",
+            "Step 7: Add tests or reproduce scenarios: Create or update tests that simulate the edge case (e.g., removing an entity or transitioning to a nonexistent state) to ensure the handler is invoked with `to_state=None` and no exceptions are thrown.",
+            "Step 8: Run the test suite: Execute the relevant test suite (e.g., `tox` in this project) to confirm that the fix does not break existing behavior and that the new edge case is covered.",
+            "Step 9: Review similar patterns: Search the codebase for other uses of `from_state` and `to_state` (or equivalent) where `.context` or other attributes are accessed without checks, and apply the same guarding strategy if those parameters can be `None`."
+        ]
+    }
+}

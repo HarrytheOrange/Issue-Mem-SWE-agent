@@ -1,0 +1,32 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant USPS sensor was experiencing issues due to bugs in the myusps library. The fix was to bump the myusps dependency from version 1.1.1 to 1.1.2 in both the component’s REQUIREMENTS and the global requirements_all.txt, ensuring the integration uses the patched library.",
+        "keywords": [
+            "Home Assistant",
+            "USPS sensor",
+            "myusps",
+            "dependency bump",
+            "library bugfix",
+            "integration issues",
+            "requirements_all.txt",
+            "REQUIREMENTS",
+            "version mismatch",
+            "third-party API client"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Home Assistant USPS sensor integration suffered from various issues that were traced back to bugs in its underlying Python client library, myusps. The component was pinned to myusps==1.1.1, which contained problems impacting USPS data retrieval and behavior (referenced by issue #8002). The resolution was not to modify the integration code itself, but to update the dependency to a newer bugfix release of the library. The pull request changed the REQUIREMENTS constant in homeassistant/components/sensor/usps.py from ['myusps==1.1.1'] to ['myusps==1.1.2'], and also updated the global requirements_all.txt entry from myusps==1.1.1 to myusps==1.1.2. This ensured the USPS sensor pulls in the corrected client library and resolved the reported issues. The change was straightforward and was cherry-picked into the 0.47 release.",
+        "semantic_memory": "When an integration or component misbehaves but its own code has not changed significantly, the root cause is often in a pinned third-party dependency. Many bugs—API changes, protocol fixes, parsing errors, or authentication issues—are corrected in newer versions of the underlying client libraries rather than the host application. Updating to a newer, compatible version of the dependency can fix multiple issues at once, especially when the library is dedicated to a specific external service (such as USPS). For projects that manage dependencies in multiple places (e.g., per-component REQUIREMENTS and a consolidated requirements_all.txt), it is important to update all relevant references to avoid version drift, installation inconsistencies, and hard-to-debug environment mismatches. Dependency pinning should balance stability with the ability to receive upstream bugfixes; when upstream publishes a patch release addressing known issues, bumping the pinned version is often the simplest and safest resolution.",
+        "procedural_memory": [
+            "When an integration relying on a third-party service shows persistent bugs, first check for known issues and updates in the underlying client library.",
+            "Step 1: Reproduce and characterize the issue in the integration (logs, stack traces, behavior) and determine whether the failure originates from the third-party client library (e.g., API errors, parsing failures, authentication problems).",
+            "Step 2: Inspect the integration’s dependency declarations (e.g., REQUIREMENTS in the component, setup.py, pyproject.toml, or equivalent) to identify the current pinned version of the library.",
+            "Step 3: Check the third-party library’s changelog, release notes, or issue tracker for newer versions that mention fixes related to the observed issues.",
+            "Step 4: Verify compatibility of the newer library version with the host application (e.g., same major version, no breaking API changes, or adjust code if there are breaking changes).",
+            "Step 5: Update the pinned version in all relevant locations, such as the component-specific REQUIREMENTS and any global requirements files (e.g., requirements_all.txt), and regenerate any auto-generated requirement files if the project uses scripts for that.",
+            "Step 6: Install the updated dependencies in a clean environment and run the relevant tests (unit tests, integration tests) plus manual verification against the real external service when possible.",
+            "Step 7: Monitor logs and runtime behavior to confirm that the issues are resolved and that no new regressions were introduced by the dependency bump.",
+            "Step 8: Reference the fixed issue(s) in the pull request (e.g., \"fixes #<issue_number>\") and, if applicable, backport or cherry-pick the change into maintenance or release branches where users are affected."
+        ]
+    }
+}

@@ -1,0 +1,36 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant Verisure integration updated to use the standard scan_interval configuration option (time period) instead of a custom integer polling_rate. Validation uses CONF_SCAN_INTERVAL with a minimum of 1 minute, and the Throttle decorator now respects this time-based interval for polling the Verisure API.",
+        "keywords": [
+            "Home Assistant",
+            "Verisure",
+            "scan_interval",
+            "CONF_SCAN_INTERVAL",
+            "polling_rate",
+            "Throttle",
+            "time_period",
+            "voluptuous",
+            "configuration.yaml",
+            "integration polling interval",
+            "standard configuration parameter",
+            "rate limiting"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this change, the Home Assistant Verisure component was updated to use the platform-standard scan_interval configuration parameter instead of a custom polling_rate field. Previously, the integration exposed CONF_POLLING_RATE, an integer representing minutes, which was then converted into a timedelta and passed into the Throttle decorator wrapping HUB.update_overview. This was non-standard compared to other integrations, which conventionally use CONF_SCAN_INTERVAL as a time period type.\n\nThe fix imported CONF_SCAN_INTERVAL from homeassistant.const and removed the custom CONF_POLLING_RATE constant entirely. The configuration schema for the 'verisure' domain was updated so that scan_interval is an optional parameter with a default value of DEFAULT_SCAN_INTERVAL (1 minute), and validated as a time period with a minimum of MIN_SCAN_INTERVAL (also 1 minute), using voluptuous and Home Assistant's cv.time_period and vol.Clamp. In setup(), the Throttle decorator is now applied as Throttle(config[DOMAIN][CONF_SCAN_INTERVAL])(HUB.update_overview), directly using the time period object from the config instead of constructing a timedelta from an integer minutes value. A minor follow-up patch corrected the indentation around the Throttle call for style consistency.\n\nDocumentation was updated in a separate PR to show the new configuration syntax in configuration.yaml, allowing users to specify scan_interval: 00:30:00, for example, to poll Verisure every 30 minutes. The overall effect is that Verisure now aligns with the rest of Home Assistant's configuration conventions, providing a more flexible and standardized way to control polling frequency.",
+        "semantic_memory": "This change illustrates a general best practice in configuration design for integrations and services: reuse platform-standard configuration keys and data types instead of inventing custom options that solve the same problem. Using a standardized scan_interval parameter (with a time period type) improves consistency across integrations, makes documentation and user understanding easier, and reduces code complexity.\n\nFrom an architectural standpoint, the fix demonstrates proper separation between configuration validation and runtime behavior. Voluptuous schemas should coerce user input into strongly-typed objects (here, a datetime.timedelta via cv.time_period) and enforce constraints (e.g., minimum polling intervals to avoid overloading remote APIs). Runtime functions, such as the Throttle decorator in Home Assistant, should then consume these already-validated, correctly-typed values without additional parsing logic.\n\nIt also highlights the importance of rate limiting and throttling in integrations that query external services. Polling intervals should be configurable, but must be clamped to sane minimums to protect both the external service and the host application. Wrapping I/O-heavy methods with a generic throttling utility (like homeassistant.util.Throttle) while feeding it configuration-derived intervals is a reusable pattern for any integration that needs adjustable polling.\n\nIn general, when refactoring configuration options: (1) prefer shared constants (e.g., CONF_SCAN_INTERVAL) and helpers from the core framework, (2) validate and normalize configuration as close to the boundaries as possible (schema level), and (3) keep runtime logic simple by assuming validated, typed config data.",
+        "procedural_memory": [
+            "When an integration needs configurable polling, prefer the platform-standard scan_interval configuration key and time period type instead of custom keys.",
+            "Step 1: Identify any custom polling configuration fields (e.g., polling_rate, refresh_interval) and how they are used in the code, especially where they are converted into time deltas or passed to throttling utilities.",
+            "Step 2: Import and use the standard configuration constant for scan interval from the core framework (for Home Assistant, import CONF_SCAN_INTERVAL from homeassistant.const).",
+            "Step 3: Define sensible defaults and bounds for the interval. For example, choose a DEFAULT_SCAN_INTERVAL and MIN_SCAN_INTERVAL as datetime.timedelta values to avoid overly frequent polling.",
+            "Step 4: Update the configuration schema to use the standard key and type. In Home Assistant, this means replacing custom integer fields with something like: vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): vol.All(cv.time_period, vol.Clamp(min=MIN_SCAN_INTERVAL)). This ensures user input is coerced into a timedelta and is not below the minimum.",
+            "Step 5: Refactor the runtime code to consume the new configuration value directly. For Home Assistant's Throttle, pass the validated time period from config to Throttle instead of constructing a timedelta from a raw integer (e.g., HUB.update_overview = Throttle(config[DOMAIN][CONF_SCAN_INTERVAL])(HUB.update_overview)).",
+            "Step 6: Remove now-unused custom constants and parsing code (e.g., delete CONF_POLLING_RATE and any logic that built timedelta(minutes=config[DOMAIN][CONF_POLLING_RATE])).",
+            "Step 7: Run and update tests to reflect the new configuration semantics. Ensure that both default behavior (no scan_interval supplied) and custom intervals (e.g., 00:30:00) work and respect the minimum interval.",
+            "Step 8: Update user-facing documentation and sample configuration snippets to show the new standard parameter name and its expected format (e.g., scan_interval: 00:30:00).",
+            "Step 9: Verify that the integration still logs in and polls correctly and that the throttling interval actually changes when scan_interval is modified in configuration.yaml.",
+            "Step 10: Pay attention to style and indentation when wrapping functions with decorators programmatically (as with Throttle) to keep the codebase consistent and readable."
+        ]
+    }
+}

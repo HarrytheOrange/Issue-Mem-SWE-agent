@@ -1,0 +1,34 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fix for StackStorm core.smtp / send_mail action where emails were always sent as text/html, causing plain text messages to lose line breaks. The action was updated to accept a content_type parameter (text/plain or text/html), adjust line breaks accordingly, and validate the presence of the sendmail binary.",
+        "keywords": [
+            "StackStorm",
+            "core.smtp",
+            "send_mail",
+            "sendmail.yaml",
+            "Content-Type",
+            "text/plain",
+            "text/html",
+            "email line breaks",
+            "SMTP action",
+            "shell script",
+            "missing sendmail binary"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the StackStorm core SMTP action (send_mail) always sent emails with a hard-coded Content-Type: text/html header. Users trying to send plain text emails observed that line breaks were not respected, because the message was interpreted as HTML and newlines were not rendered as expected.\n\nTo fix this, the send_mail shell script was modified to accept a new CONTENT_TYPE argument. The script now:\n- Parses an additional positional parameter for content_type.\n- Sets the Content-Type header to the provided value instead of always text/html.\n- Chooses the appropriate line break sequence based on content type: \"<br><br>\" for text/html and \"\\n\\n\" for text/plain, so the footer is formatted correctly in both modes.\n- Verifies that the sendmail binary exists in PATH; if not found, it prints an error to stderr and exits with status code 2.\n\nThe corresponding sendmail.yaml action definition was updated to:\n- Add a new parameter content_type with an enum of [\"text/plain\", \"text/html\"].\n- Set a default of \"text/html\" (after cleanup feedback; initially was text/plain).\n- Assign the correct positional index so that the shell script receives the parameter in the proper order.\n\nThis change restores proper rendering of plain text emails and makes the SMTP action more flexible by allowing callers to choose between HTML and plain text content types.",
+        "semantic_memory": "Email-sending utilities often need to distinguish between HTML and plain text content types. Hard-coding a single Content-Type header (e.g., text/html) can break formatting for plain text messages (e.g., losing line breaks) and confuse downstream clients. A better design is to parameterize the content type and ensure that formatting decisions (line breaks, markup) are conditional on that parameter.\n\nIn shell-based integrations, robustness also requires checking that external dependencies (like sendmail) are available and gracefully failing with a clear error when they are not. Additionally, when exposing such scripts through higher-level action definitions (YAML, JSON, etc.), parameters must be correctly wired with positions, defaults, and type/enum validations so that runtime behavior matches user expectations.\n\nKey generalizable ideas:\n- Parameterize protocol-related headers (Content-Type, charset, etc.) instead of hard-coding them.\n- Align output formatting (e.g., HTML tags vs. plain newlines) with the chosen content type.\n- Use enums and defaults in configuration schemas to constrain and document valid values.\n- Validate external tool availability early and fail fast with meaningful error messages.\n- Carefully maintain positional argument mapping between orchestration-level definitions and underlying scripts.",
+        "procedural_memory": [
+            "When email messages are misformatted (e.g., plain text emails losing line breaks), systematically verify the Content-Type header and how the body is constructed.",
+            "Step 1: Reproduce the issue by sending both HTML and plain text emails through the action or script, inspecting the resulting raw email (headers and body) in a mail client or via mail logs.",
+            "Step 2: Check the email-sending script or library for hard-coded Content-Type headers (e.g., always text/html) and identify whether callers can specify the desired type.",
+            "Step 3: If the content type is hard-coded, introduce a configurable parameter (e.g., content_type) in the higher-level action or API definition (YAML/JSON/schema), with clear allowed values (enum like text/plain, text/html) and a sensible default.",
+            "Step 4: Ensure that the parameter is wired correctly to the underlying script or function: in shell scripts, confirm positional argument ordering; in higher-level languages, confirm function parameter mapping.",
+            "Step 5: Adjust message body formatting based on content type. For HTML emails, use HTML tags such as <br> for line breaks; for plain text, use newline characters (\\n). Make sure any footer or templated content also respects this distinction.",
+            "Step 6: Add validation for external dependencies such as sendmail or other mail transport binaries. Check for their presence (e.g., using which sendmail), and if missing, emit a clear error message to stderr and exit with a non-zero status.",
+            "Step 7: Update tests or create new ones to cover both content types (HTML and plain text), including verifying line break behavior and headers in the resulting message.",
+            "Step 8: Document the new parameter (content_type), its default, accepted values, and its impact on formatting, so users know how to control the behavior.",
+            "Step 9: After deployment, monitor for user feedback on email rendering. Validate that plain text messages now preserve line breaks and that HTML emails still render as expected."
+        ]
+    }
+}

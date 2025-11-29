@@ -1,0 +1,31 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant sun component dependency upgrade: bump astral from 1.3 to 1.3.2 in both the component REQUIREMENTS and requirements_all.txt to pick up upstream metadata fixes (URL and license) and keep dependency pins consistent.",
+        "keywords": [
+            "astral",
+            "homeassistant.components.sun",
+            "sun component",
+            "dependency upgrade",
+            "version pinning",
+            "requirements_all.txt",
+            "library metadata",
+            "license update",
+            "Python requirements"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Home Assistant project needed to upgrade the astral library used by the sun component. The upstream astral package released version 1.3.2, which mainly updated the project URL to point to github.com and added proper Apache 2.0 boilerplate to the source file and LICENSE file in the sdist. To align with this release and keep dependency metadata current and consistent, the developer updated the pinned astral version from 1.3 to 1.3.2 in two places: the REQUIREMENTS list inside homeassistant/components/sun.py and the global requirements_all.txt file. No functional changes were made to Home Assistant’s own code; the fix was purely a dependency bump and consistency update between component-level and global requirements.",
+        "semantic_memory": "This case illustrates general best practices around dependency management in Python applications. When an upstream library releases a new version with important metadata changes (like corrected project URLs or license information), it can be advantageous to upgrade even if there are no runtime behavior changes. For projects that pin exact versions, it is critical to keep all references to a given dependency synchronized across the codebase (e.g., per-component REQUIREMENTS declarations and central requirements files). Inconsistent version pins can lead to subtle issues: different environments installing different versions, difficulty reproducing bugs, or CI environments running against a different library version than developers expect. Consistently pinning and updating dependencies improves reproducibility, legal/license clarity, and maintainability. This case also shows that small version bumps should still be treated systematically: identify every place the dependency is referenced, update all of them, and run tests to confirm compatibility.",
+        "procedural_memory": [
+            "When upgrading a pinned dependency used by a component-based Python application, ensure all references to that dependency are updated consistently and verified.",
+            "Step 1: Identify the dependency and new target version.",
+            "Step 2: Search the codebase for all occurrences of the dependency name (e.g., 'astral') in requirements declarations: component REQUIREMENTS constants, requirements.txt/requirements_all.txt, setup.py/pyproject.toml, and any CI configuration.",
+            "Step 3: Update all pinned versions for that dependency to the new desired version (e.g., change 'astral==1.3' to 'astral==1.3.2' everywhere).",
+            "Step 4: Review the upstream changelog/release notes to ensure there are no breaking behavior changes; if changes are non-functional (e.g., license, URLs, packaging), confirm that no code changes are needed.",
+            "Step 5: Rebuild or reinstall dependencies in a clean environment to ensure the new version resolves correctly (e.g., pip install -r requirements_all.txt).",
+            "Step 6: Run the test suite, with special focus on components that depend on the upgraded library (here, the sun component) to verify that behavior has not regressed.",
+            "Step 7: If the project has a central dependency lock or documentation, update it to reflect the new version and the reason for the upgrade (e.g., metadata/license update, bug fix, security fix).",
+            "Step 8: For future maintenance, consider adding checks or tooling to detect mismatched versions of the same dependency across different requirement declarations to prevent divergence."
+        ]
+    }
+}

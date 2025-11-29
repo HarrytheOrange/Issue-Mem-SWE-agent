@@ -1,0 +1,30 @@
+{
+    "search_index": {
+        "description_for_embedding": "Optuna visualization raised a non-user-friendly error when an unsupported Plotly version was installed. The fix updates the exception construction to include the dependency name so users see a clearer, guided message about upgrading Plotly (>=4.0.0) and where to find installation instructions.",
+        "keywords": [
+            "Optuna",
+            "visualization",
+            "plotly_imports",
+            "plotly version",
+            "unsupported dependency",
+            "dependency error message",
+            "user-friendly error",
+            "exception name parameter"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, Optuna's visualization module needed Plotly version 4.0.0 or higher. When a user had an older Plotly installed, the code raised an exception with a descriptive string, but it did not pass the dependency name into the exception constructor. This likely meant that the library's higher-level error handling could not correctly label or format the error as a Plotly-related dependency issue, making the message less friendly or less consistent with other dependency errors. The change was minimal: in `optuna/visualization/plotly_imports.py`, the call to raise the error now passes `name=\"plotly\"` along with the existing error message. The result is a clearer error that explicitly identifies Plotly as the missing/unsupported dependency and includes instructions to install or upgrade Plotly (`pip install -U plotly>=4.0.0`) and to refer to Plotly's installation guide.",
+        "semantic_memory": "When designing dependency checks and version constraints in a library, it is not enough to just raise an error with a text message. Many codebases have standardized exception types or helper constructors that accept metadata such as the dependency name and possibly version requirements. Providing this structured information allows centralized error-handling code to generate clearer, more user-friendly messages, and sometimes to offer remediation hints. A common pattern is to wrap ImportError or version mismatches with a custom exception that includes: (1) the package name, (2) the required version/spec, and (3) explicit installation or upgrade instructions. This improves usability, especially for non-expert users who might not immediately understand a generic ImportError or version mismatch. Another general lesson is that even small signature mismatches (omitting the `name` argument to an exception factory) can degrade the user experience without breaking functionality, so dependency-error paths should be tested and reviewed for clarity, not just correctness.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Reproduce the scenario by installing an older or missing version of the dependency (e.g., `plotly<4.0.0`) and running the feature that depends on it (such as a visualization function). Observe the exact error message and stack trace.",
+            "Step 2: Identify where in the code the dependency check or import occurs. Look for modules like `*_imports.py`, helper functions that wrap imports, or centralized dependency utilities.",
+            "Step 3: Inspect how the project typically represents dependency-related errors. Look for custom exceptions or helper functions (e.g., `DependencyError`, `OptionalDependencyNotAvailable`, or similar) and check their signatures (often they accept parameters like `name`, `version`, or `extra_message`).",
+            "Step 4: Compare the problematic call site with other correct uses of the same helper/exception. If the other call sites pass a `name` or other metadata arguments and the problematic one does not, adjust the call to include those arguments.",
+            "Step 5: Improve the error message content itself: ensure it (a) names the dependency, (b) states the required version range, (c) provides a concrete installation or upgrade command (e.g., `pip install -U package>=x.y.z`), and (d) optionally links to the dependency’s official installation guide.",
+            "Step 6: Update the code to construct the exception with both the detailed message and the dependency metadata, for example: `raise SomeDependencyError(\"...message...\", name=\"plotly\")`.",
+            "Step 7: Add or run tests that simulate an unsupported or missing dependency version. Verify that the final error message and type are clear, consistent with other dependency errors, and visible to end users without leaking confusing internal details.",
+            "Step 8: Review documentation or release notes, if necessary, to ensure that users are aware of the minimum supported versions and the improved error behavior."
+        ]
+    }
+}

@@ -1,0 +1,36 @@
+{
+    "search_index": {
+        "description_for_embedding": "Changed Optuna's default hyperparameter importance evaluator from MeanDecreaseImpurityImportanceEvaluator to FanovaImportanceEvaluator, and fixed flake8/black formatting conflicts on multi-line imports using NOQA pragmas.",
+        "keywords": [
+            "Optuna",
+            "FanovaImportanceEvaluator",
+            "MeanDecreaseImpurityImportanceEvaluator",
+            "hyperparameter importance",
+            "default evaluator change",
+            "get_param_importances",
+            "flake8",
+            "black",
+            "NOQA",
+            "E126",
+            "H301",
+            "multi-line import formatting"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this change set, the project updated the default hyperparameter importance evaluator used by Optuna's get_param_importances function. Previously, when no evaluator was provided, the code instantiated MeanDecreaseImpurityImportanceEvaluator(). Since FanovaImportanceEvaluator now shares the same dependency set and is more sophisticated, the default was changed to evaluator = FanovaImportanceEvaluator().\n\nTo support this change, the importance package's __init__.py was updated. Both FanovaImportanceEvaluator and MeanDecreaseImpurityImportanceEvaluator are still imported and exposed, but the import of MeanDecreaseImpurityImportanceEvaluator caused tooling conflicts. The black code formatter introduced a trailing comma in the multi-line import, which in turn triggered flake8 version-dependent errors: E126 (continuation line over-indented for hanging indent) and H301 (one import per line). These errors appeared in flake8 3.8.3 but not 3.7.9.\n\nThe maintainer first tried using # fmt: off / # fmt: on around the import to prevent black from reformatting, but ultimately switched to a parenthesized multi-line import style and added NOQA pragmas directly on the import line to silence flake8's E126 and H301 in a tool-compatible way:\n\nfrom optuna.importance._mean_decrease_impurity import (  # NOQA\n    MeanDecreaseImpurityImportanceEvaluator,  # NOQA\n)\n\nA redundant blank line was removed to satisfy style checks. The end result is that FanovaImportanceEvaluator is the new default evaluator, all imports are cleanly formatted, and the code passes both black formatting and flake8 linting across versions.",
+        "semantic_memory": "When two implementation strategies share the same dependencies, it's often beneficial to default to the more capable or sophisticated option, as long as behavior is stable and performance is acceptable. In hyperparameter importance evaluation, this means choosing an algorithm like fANOVA as a default when it offers better signal than simpler heuristics, and when no additional installation burden is imposed on users.\n\nMore broadly, this incident illustrates a pattern of managing tooling friction in Python projects, especially around the interaction of black and flake8. Black may introduce formatting (such as trailing commas or specific line breaks) that cause flake8 to emit errors, and those errors can vary across flake8 versions. When you need to preserve a particular import structure for readability or API exposure, and formatter or linter configuration cannot be fully aligned, it is acceptable to use NOQA pragmas on specific lines to selectively opt out of linting rules (like E126 or H301) while keeping the rest of the file linted. Parenthesized imports often help reduce style errors while staying compatible with black.\n\nUsing # fmt: off / # fmt: on is another tool to manage black, but it should be applied sparingly and localized. When adjusting imports, it is good practice to keep API surface consistent (still importing the old evaluator) even if the default behavior changes, to maintain backward compatibility and minimize user-facing breakage.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Identify the default behavior you want to change.\nReview the code path where default objects are created (e.g., a function parameter evaluator: Optional[BaseImportanceEvaluator] = None). Locate the conditional branch that instantiates the default implementation, such as evaluator = MeanDecreaseImpurityImportanceEvaluator().",
+            "Step 2: Verify dependency and behavior equivalence.\nConfirm that your new desired default (e.g., FanovaImportanceEvaluator) has the same or compatible dependencies as the old default, and that switching will not introduce extra installation requirements or obvious regressions. Run relevant tests or small experiments to ensure comparable or better behavior.",
+            "Step 3: Change the default instantiation.\nUpdate the conditional to instantiate the new implementation when no explicit value is provided:\n- Before: evaluator = MeanDecreaseImpurityImportanceEvaluator()\n- After:  evaluator = FanovaImportanceEvaluator()",
+            "Step 4: Preserve imports and public API.\nMake sure both the old and new implementations remain importable from the package if they are part of the public API. Keep the existing import of the old class, but add or adjust the import of the new class as needed.",
+            "Step 5: Resolve black vs flake8 conflicts on imports.\nIf black reformats your imports into a style that triggers flake8 errors (e.g., E126 or H301), do the following:\n- Convert the import to a parenthesized multi-line style that black handles predictably:\n  from package.module import (\n      SomeClass,\n  )\n- If flake8 still complains (one-import-per-line or indentation issues), attach NOQA to the offending lines only:\n  from package.module import (  # NOQA\n      SomeClass,  # NOQA\n  )\nThis keeps the file formatted by black while silencing specific flake8 rules on that line.",
+            "Step 6: Avoid broad disabling of linters/formatters.\nUse # fmt: off / # fmt: on only for tightly scoped sections if absolutely necessary. Prefer reshaping the code (e.g., using parentheses) and targeted NOQA comments over disabling tools for large blocks.",
+            "Step 7: Run checks with multiple tool versions if relevant.\nIf your CI or contributors may be using different versions of flake8 (or other tools), run the linter locally with those versions or replicate CI configurations. Ensure your import style and NOQA usage satisfy all relevant versions.",
+            "Step 8: Clean up formatting and style.\nRemove redundant blank lines or other minor style issues that may cause CI failures. Re-run black and flake8 to confirm the file passes both formatting and linting.",
+            "Step 9: Add or update tests/documentation.\nIf changing a default behavior (like the importance evaluator), add or update tests to assert the new default. Update documentation and release notes to inform users of the behavior change, especially when it affects results (e.g., different importance scores).",
+            "Step 10: Monitor post-merge behavior.\nAfter merging, watch for user reports or CI failures that might indicate hidden assumptions about the old default or environment-dependent tooling issues. Be prepared to refine NOQA usage or configuration if new tool versions introduce additional checks."
+        ]
+    }
+}

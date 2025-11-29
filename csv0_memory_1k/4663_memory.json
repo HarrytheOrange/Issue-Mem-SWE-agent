@@ -1,0 +1,30 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant sensor component migrated from synchronous setup() to asynchronous async_setup() using asyncio.coroutine and EntityComponent.async_setup, aligning with the async architecture and non-blocking initialization.",
+        "keywords": [
+            "Home Assistant",
+            "sensor component",
+            "async_setup",
+            "asyncio.coroutine",
+            "EntityComponent.async_setup",
+            "migrate to async",
+            "non-blocking initialization",
+            "component setup refactor"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this change, the Home Assistant sensor platform was migrated from a synchronous setup pattern to the newer asynchronous initialization pattern. Previously, the module exposed a setup(hass, config) function that created an EntityComponent and called component.setup(config). To align with Home Assistant's async architecture and avoid blocking the event loop, the developer introduced an async_setup(hass, config) function decorated with @asyncio.coroutine. Within this coroutine, the EntityComponent is still created with the same parameters (logger, DOMAIN, hass, SCAN_INTERVAL), but now component.async_setup(config) is awaited using `yield from`. The function returns True to signal successful initialization. No device-specific or blocking logic was involved; the change is purely an API and control-flow migration to the async version.",
+        "semantic_memory": "When a framework transitions from synchronous to asynchronous initialization, components that previously used a sync setup() function often need to be migrated to async_setup() to integrate correctly with the event loop and non-blocking execution model. In Home Assistant, EntityComponent exposes both sync (setup) and async (async_setup) APIs, and components are expected to use the async versions once they adopt async_setup. The pattern is: import asyncio, define async_setup(hass, config) as an asyncio coroutine, create or reuse the component instance as before, then call and await the corresponding async methods (e.g., component.async_setup(config)) instead of their synchronous counterparts. Returning a boolean success indicator remains consistent, but execution is now cooperative with the event loop. Broadly, this exemplifies best practices in async migrations: maintain behavior and configuration, but switch to non-blocking calls and asynchronous entry points, avoiding any direct blocking I/O in async functions.",
+        "procedural_memory": [
+            "When migrating a synchronous component setup to an asynchronous model (e.g., in Home Assistant or similar frameworks), follow these steps:",
+            "Step 1: Identify the synchronous entry point. Locate the existing setup(hass, config) or equivalent synchronous initialization function and all the synchronous component setup calls it makes (e.g., component.setup(config)).",
+            "Step 2: Introduce an async entry point. Replace the sync setup function with an async/await-compatible one (e.g., async_setup(hass, config)) and ensure it is registered in whatever places the framework expects (config, manifest, or module conventions). In older asyncio style, use @asyncio.coroutine and yield from; in modern code, use async def and await.",
+            "Step 3: Switch to async APIs. For any framework helper objects (like EntityComponent in Home Assistant), replace calls to their synchronous methods (setup, add_entities, etc.) with their asynchronous counterparts (async_setup, async_add_entities, etc.), and await them appropriately.",
+            "Step 4: Maintain existing configuration and behavior. Preserve parameters and initialization logic (e.g., DOMAIN, SCAN_INTERVAL, logger usage) so behavior remains the same; only the invocation pattern changes from blocking to non-blocking.",
+            "Step 5: Avoid blocking operations in async functions. Ensure that any I/O or long-running operations inside async_setup are either already async or offloaded to a thread pool or background task. Do not perform blocking calls directly in async_setup.",
+            "Step 6: Return the expected result. Keep the return contract (often a boolean indicating success) unchanged so that the rest of the system continues to work as before.",
+            "Step 7: Run and extend tests. Update or add tests to verify that the async setup path is exercised and that the component still initializes correctly, then run the test suite (e.g., tox) to confirm nothing regresses.",
+            "Step 8: Verify framework integration. Confirm the framework is actually calling async_setup instead of setup, and that startup timing and logging behave as expected in the new async flow."
+        ]
+    }
+}

@@ -1,0 +1,33 @@
+{
+    "search_index": {
+        "description_for_embedding": "Emulated Hue UPnP discovery thread crashed when receiving M-SEARCH SSDP packets containing non-UTF-8 bytes from other devices. The fix makes the code robust by decoding incoming UDP data with UTF-8 while ignoring decoding errors (errors='ignore') before searching for the 'M-SEARCH' string.",
+        "keywords": [
+            "Emulated Hue",
+            "UPnP",
+            "SSDP",
+            "M-SEARCH",
+            "UnicodeDecodeError",
+            "non-utf-8 bytes",
+            "UDP socket",
+            "homeassistant.components.emulated_hue.upnp",
+            "decode errors ignore",
+            "network robustness",
+            "Alexa discovery",
+            "Google Home discovery"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In Home Assistant’s Emulated Hue component, the UPnP/SSDP discovery thread sometimes crashed before Alexa or Google Home could finish discovering devices. The crash occurred when the UDP listener received packets from other devices on the network that contained non-UTF-8 characters. The code attempted to do `data.decode('utf-8')` and then check whether the string contained `\"M-SEARCH\"`. When the payload included invalid UTF-8 sequences, the decode call raised a UnicodeDecodeError, killing the UPnP thread and preventing discovery. The fix changed the decoding call to `data.decode('utf-8', errors='ignore')`, causing invalid byte sequences to be silently skipped rather than triggering an exception. With this change, the UPnP listener continues running and correctly responds to valid `M-SEARCH` requests, restoring reliable discovery for Alexa and other clients even in the presence of malformed SSDP traffic on the network.",
+        "semantic_memory": "Network services that parse text-based protocols (like SSDP/UPnP over UDP) often receive data from a variety of devices, some of which can send malformed, non-UTF-8, or otherwise unexpected payloads. If the code unconditionally decodes incoming bytes with a strict UTF-8 decoder, any invalid byte sequence can raise an exception and crash the handler thread or process. To build robust network listeners, decoding should be done defensively: either use `errors='ignore'` or `errors='replace'` when the content is only being scanned for ASCII markers, or wrap decoding in try/except blocks and handle failures gracefully. For protocols where only ASCII tokens are relevant (e.g., checking for `\"M-SEARCH\"` in SSDP headers), ignoring invalid bytes is often acceptable and far safer than crashing. This pattern generalizes to any I/O boundary (network, file, serial) where input is not strictly controlled: defensive decoding and error handling prevent small data anomalies from causing system-wide failures.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Reproduce and capture the crash\n- Run the service with logging enabled and attempt discovery (e.g., from Alexa/Google Home).\n- Observe if the discovery fails intermittently or consistently.\n- Check logs or console output for exceptions like UnicodeDecodeError or other decoding-related errors in the network listener thread.",
+            "Step 2: Identify the decoding point\n- Locate the code that receives raw bytes from the network (e.g., `socket.recvfrom()` or similar calls).\n- Search for `.decode('utf-8')` or other decoding calls applied directly to the received `data` buffer.\n- Confirm whether the crash stack trace points to this decode operation.",
+            "Step 3: Analyze required content vs. encoding strictness\n- Determine what you actually need from the decoded data (e.g., scanning for ASCII protocol markers like `\"M-SEARCH\"`, `\"GET\"`, `\"POST\"`).\n- If only ASCII tokens are needed, note that strict UTF-8 is unnecessary and overly brittle.\n- If full text is needed, plan to handle decoding errors with appropriate fallback behavior.",
+            "Step 4: Harden the decoding logic\n- Option A (sufficient for ASCII markers): Change `data.decode('utf-8')` to `data.decode('utf-8', errors='ignore')` or `errors='replace'` so invalid bytes do not raise.\n  - Example: `if 'M-SEARCH' in data.decode('utf-8', errors='ignore'):`\n- Option B (if exact content is critical): Wrap decoding in a try/except block:\n  - `try: text = data.decode('utf-8')\n     except UnicodeDecodeError: handle_bad_packet(); continue`\n- Ensure that a malformed packet never crashes the main loop or thread; instead, log and discard it.",
+            "Step 5: Add logging and safeguards\n- Log when malformed or undecodable packets are received, ideally at debug level to avoid log spam.\n- Keep the main listening loop robust by catching broad exceptions around packet handling so that a single bad packet does not kill the listener thread.",
+            "Step 6: Test under noisy network conditions\n- Re-run discovery with Alexa/Google Home or other clients.\n- Simulate or capture traffic from devices that previously caused problems (e.g., devices emitting non-UTF-8 SSDP packets).\n- Confirm that the service no longer crashes and that valid discovery requests (M-SEARCH) are still correctly processed.",
+            "Step 7: Generalize the fix\n- Review other network listeners in the codebase for similar strict decoding patterns.\n- Apply the same defensive decoding strategy wherever input origin is untrusted or heterogeneous.\n- Consider adding utility functions/wrappers for safe decoding to enforce consistency across the project."
+        ]
+    }
+}

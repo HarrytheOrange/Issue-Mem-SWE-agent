@@ -1,0 +1,38 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fixed copy-paste errors in Home Assistant Google Assistant trait tests where multiple OnOffTrait tests were incorrectly using media_player.DOMAIN instead of their respective domains (group, input_boolean, switch, fan, light, cover), and added the missing group import. This ensures each test validates the correct domain-specific support logic.",
+        "keywords": [
+            "google_assistant",
+            "OnOffTrait",
+            "trait.supported",
+            "homeassistant",
+            "tests",
+            "copy-paste error",
+            "wrong domain constant",
+            "media_player.DOMAIN",
+            "group.DOMAIN",
+            "input_boolean.DOMAIN",
+            "switch.DOMAIN",
+            "fan.DOMAIN",
+            "light.DOMAIN",
+            "cover.DOMAIN",
+            "unit test correction",
+            "test coverage accuracy"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, several unit tests for the Home Assistant Google Assistant integration (specifically the OnOffTrait tests) contained copy-paste errors. The purpose of these tests was to verify that trait.OnOffTrait.supported(...) correctly reports support for various domains: group, input_boolean, switch, fan, light, and cover. However, due to copy-paste mistakes, all those tests called trait.OnOffTrait.supported(media_player.DOMAIN, 0) instead of using the appropriate domain constant for each test. As a result, the tests were not actually validating the trait support logic for those domains and could give a false sense of coverage. The fix updated each test to use the correct domain constant: group.DOMAIN, input_boolean.DOMAIN, switch.DOMAIN, fan.DOMAIN, light.DOMAIN, and cover.DOMAIN. Additionally, the group module was imported at the top of the test file to support the new reference. After these corrections, each test now genuinely checks the intended domain-specific behavior of OnOffTrait.supported().",
+        "semantic_memory": "Copy-paste errors in unit tests are a subtle but common source of false confidence. When tests reuse boilerplate and only partially update copied code, they may assert conditions for the wrong inputs or modules, leading to tests that always pass but do not actually verify the intended behavior. In systems with many similar domains or feature flags (e.g., Home Assistant domains, feature traits, capability flags), it is particularly easy to accidentally leave a reused constant (like media_player.DOMAIN) in place instead of the target domain. This results in misleading test coverage and can hide real bugs in domain-specific logic.\n\nA best practice is to ensure that each test's input parameters (domains, entity ids, flags) match its name and description, and to avoid hardcoding repeated constants when a parameterized or table-driven test structure would better enforce consistency. Code review should specifically check that the 'subject under test' (function arguments, domain constants) matches both the test name and the comments. Static analysis or simple greps can help detect repeated patterns like the same DOMAIN constant used across many supposedly different domain tests.",
+        "procedural_memory": [
+            "When you suspect tests may have copy-paste errors or are not truly exercising the intended behavior, verify the inputs and constants used in each test.",
+            "Step 1: Identify the intent of each test by its name and docstring (e.g., `test_onoff_switch` should test the switch domain).",
+            "Step 2: Inspect the call to the function under test (e.g., `trait.OnOffTrait.supported(...)`) and confirm that its arguments (such as domain constants) match the test's intended domain.",
+            "Step 3: Check for repeated constants or arguments across many tests; if multiple tests for different domains all use the same DOMAIN constant, that is a red flag for copy-paste mistakes.",
+            "Step 4: Correct the arguments to use the appropriate domain or configuration for each specific test (e.g., replace `media_player.DOMAIN` with `switch.DOMAIN`, `fan.DOMAIN`, etc., as appropriate).",
+            "Step 5: Ensure all newly referenced modules/constants are properly imported at the top of the test file (e.g., import `group` if using `group.DOMAIN`).",
+            "Step 6: Run the test suite (e.g., via `tox` or the project's preferred test runner) to confirm that tests still pass and that no import errors or unexpected failures are introduced.",
+            "Step 7: Optionally, refactor highly repetitive tests into parameterized tests (table-driven tests) to reduce the risk of future copy-paste errors by centralizing the varying parameters (domains, entity ids, states) in a data structure.",
+            "Step 8: During code review, explicitly cross-check that the test name, docstring, and the function arguments under test are consistent and aligned with the intended behavior being validated."
+        ]
+    }
+}

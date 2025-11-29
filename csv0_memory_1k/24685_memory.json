@@ -1,0 +1,62 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant UPnP/IGD discovery was unreliable due to issues in an older async_upnp_client version and possibly too short discovery time. The fix upgrades async_upnp_client from 0.14.7 to 0.14.10 across UPnP-related integrations (upnp, dlna_dmr) and explicitly increases the UPnP IGD search timeout to 10 seconds when calling IgdDevice.async_search, improving router/device detection (e.g., Netgear routers) in Home Assistant.",
+        "keywords": [
+            "Home Assistant",
+            "UPnP",
+            "IGD",
+            "async_upnp_client",
+            "0.14.10",
+            "device discovery timeout",
+            "SSDP search",
+            "router detection",
+            "Netgear",
+            "dependency upgrade",
+            "integration manifest",
+            "dlna_dmr",
+            "upnp component"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, Home Assistant users experienced problems with UPnP/IGD data retrieval and device discovery, particularly with some routers (e.g., a Netgear R6 X8000). The UPnP integration and the dlna_dmr integration depended on async_upnp_client==0.14.7, and the discovery search used the default timeout. This combination led to unreliable or failed discovery of UPnP/IGD devices.\n\nThe maintainer addressed the issue by upgrading the async_upnp_client dependency across the relevant integrations and the global requirements file from 0.14.7 to 0.14.10. The newer library version included upstream fixes that improved UPnP behavior. Additionally, in the UPnP device discovery code (homeassistant/components/upnp/device.py), the call\n\n    discovery_infos = await IgdDevice.async_search(source_ip=local_ip)\n\nwas changed to explicitly specify a longer timeout:\n\n    discovery_infos = await IgdDevice.async_search(source_ip=local_ip, timeout=10)\n\nThis increases the SSDP/UPnP search window to 10 seconds, giving slower or more latent network environments time to respond. Corresponding manifest.json files for the upnp and dlna_dmr components were updated to reflect the new async_upnp_client version, and requirements_all.txt was regenerated accordingly. An experimental, unrelated change had initially slipped into the PR but was removed after CI caught it. Users were informed that the fix would ship in the next Home Assistant release, requiring only an update of the Home Assistant container/image rather than any manual patching of their docker hass.io installation.",
+        "semantic_memory": "This fix illustrates two generalizable patterns for dealing with network-discovery-related bugs in an application that depends on a third-party library:\n\n1. **Dependency upgrades can be critical for protocol correctness**: When an integration relies on an external client library for protocol handling (e.g., UPnP/IGD, SSDP), bugs may originate in that library rather than in the host application. Upgrading to a newer, stable version that contains protocol or timing fixes is often a necessary part of resolving discovery or communication issues.\n\n2. **Explicit and appropriate timeouts improve network reliability**: Network discovery operations (like UPnP/SSDP searches) can fail intermittently if default timeouts are tuned too aggressively for real-world networks and devices. Explicitly configuring a longer timeout helps ensure slow or busy devices still respond within the allotted time. This is especially relevant for broadcast/multicast discovery protocols, where response timing can vary widely.\n\n3. **Consistency across manifests and global requirements**: For frameworks like Home Assistant, dependencies are defined in multiple places (integration manifest.json, global requirements_all.txt). Keeping these synchronized is crucial to avoid version skew, inconsistent environments, or CI failures.\n\n4. **CI as a guard against accidental experimental changes**: Automated tests and CI checks can catch unintended experimental modifications that slipped into a PR. Cleaning these out before merge helps ensure that only the intended fix (in this case, the library upgrade and timeout change) is shipped.\n\nThese lessons apply broadly to any system that performs network-based discovery through a shared client library: keep the library up-to-date with bugfix releases, tune timeouts based on observed behavior, and ensure dependency declarations are consistent and validated by CI.",
+        "procedural_memory": [
+            "When facing unreliable network device discovery (e.g., UPnP/SSDP/IGD) in an application using a third-party client library:",
+            "Step 1: Reproduce or characterize the issue",
+            "• Confirm that device discovery is failing or intermittent (e.g., certain routers not appearing, frequent timeouts).",
+            "• Capture logs around the discovery process, noting any timeout or error messages.",
+            "",
+            "Step 2: Check the third-party library version and changelog",
+            "• Identify which library handles the protocol (e.g., async_upnp_client for UPnP/IGD).",
+            "• Check the currently pinned version in all relevant locations (integration manifests, global requirements, lockfiles).",
+            "• Review the library's changelog or release notes for more recent versions to see if there are fixes related to discovery, timeouts, or protocol handling.",
+            "",
+            "Step 3: Upgrade the dependency to a fixed/stable version",
+            "• Update the dependency version in all declarations (e.g., manifest.json, requirements_all.txt, requirements.txt).",
+            "• Ensure the new version is consistent across the application and integrations that share it.",
+            "• Regenerate any derived requirements files or lockfiles (e.g., `python3 -m script.gen_requirements_all`).",
+            "",
+            "Step 4: Tune discovery timeouts explicitly",
+            "• Locate the call site where the discovery/search is performed (e.g., `IgdDevice.async_search`).",
+            "• If it relies on default timeouts, modify the call to pass an explicit, higher timeout value appropriate for your environment (e.g., `timeout=10`).",
+            "• Use a reasonable balance: long enough to accommodate slow devices and networks, but not so long that failed discovery massively delays startup.",
+            "",
+            "Step 5: Run tests and validate behavior",
+            "• Run the existing unit/integration tests and any CI pipelines to ensure the upgraded dependency does not break other parts of the system.",
+            "• Add or update tests to cover the discovery behavior if possible (e.g., mocking the library to simulate timeouts and responses).",
+            "",
+            "Step 6: Clean up accidental changes",
+            "• Review the diff for any experimental or unrelated changes that may have slipped into the branch.",
+            "• Remove them so the PR remains focused on the dependency upgrade and timeout adjustment.",
+            "",
+            "Step 7: Deploy and monitor in real environments",
+            "• After the fix is merged and released, update the application or container image in the target environment (e.g., update Home Assistant docker image).",
+            "• Verify that previously problematic devices (e.g., specific routers) are now discovered consistently.",
+            "• Monitor logs for remaining timeouts or anomalies and adjust timeout values further if needed.",
+            "",
+            "Step 8: Document the change and guidance for users",
+            "• Note in release notes that the library was upgraded and discovery timeouts were increased, especially if it fixes known device compatibility issues.",
+            "• Provide users with a simple instruction: update to at least the version that includes the dependency bump to benefit from the fix."
+        ]
+    }
+}

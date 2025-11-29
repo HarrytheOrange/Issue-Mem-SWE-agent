@@ -1,0 +1,45 @@
+{
+    "search_index": {
+        "description_for_embedding": "Added a `targets` callback to Optuna's Plotly `plot_pareto_front` to mirror the Matplotlib API, allowing custom target values and multi-objective visualization beyond 3 dimensions via multiple 2D projections, with added validation for `axis_order` and incompatible argument combinations.",
+        "keywords": [
+            "optuna",
+            "plot_pareto_front",
+            "plotly",
+            "pareto front",
+            "multi-objective optimization",
+            "visualization",
+            "targets callback",
+            "axis_order validation",
+            "constraints_func",
+            "ValueError",
+            "FrozenTrial"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this PR, the developer extended Optuna's Plotly-based `plot_pareto_front` visualization to support a `targets` callable, similar to an existing Matplotlib implementation. Previously, the Plotly version only supported plotting the raw `FrozenTrial.values` for 2- or 3-objective studies and would raise a `ValueError` for higher dimensions. The changes introduced a new `targets: Optional[Callable[[FrozenTrial], Sequence[float]]]` argument to `plot_pareto_front`, allowing users to define arbitrary target values derived from each trial. The function now constructs multiple 2D plots (first objective vs. each other objective) by iterating over `axis_order` and building separate Plotly scatter traces and layouts for each pair. Internally, `_make_scatter_object_base` was updated to optionally use `targets(trial)` instead of `trial.values`, and to enforce that `axis_order` is provided when needed. Additional validation was added for `axis_order` (checking indices are within bounds and non-negative) and to prevent using `axis_order` and `targets` simultaneously, raising a `ValueError` if both are specified. Documentation was updated to describe `targets`, and some mypy-related type adjustments were made (e.g., annotating `axis_order` as `Optional[List[int]]`). The original hard check that `plot_pareto_front` only supports 2 or 3 objectives was effectively removed (asserts commented out and docs updated). However, the implementation changed the return type from a single `go.Figure` to a list of dicts holding `data` and `layout`, and the logic for deriving `target_names` from `targets` ended up being inconsistent, which is likely one reason why maintainers decided not to merge this PR and instead fold the functionality into another integration effort.",
+        "semantic_memory": "This case illustrates several reusable concepts for evolving visualization APIs in scientific/ML libraries:\n\n1. **API parity across backends**: When a library provides multiple visualization backends (e.g., Matplotlib and Plotly), users expect consistent features and argument semantics. Adding a `targets` callable to the Plotly `plot_pareto_front` to mirror Matplotlib is an example of keeping APIs aligned to reduce user confusion.\n\n2. **Using a `targets` function for flexible plotting**: Rather than hard-coding the plotted values to a specific field (`FrozenTrial.values`), exposing a `targets(trial)` callback allows users to transform or select what is plotted (e.g., scaling, aggregating, or reordering objectives). This is a general pattern for making plotting functions more flexible and extensible.\n\n3. **Handling high-dimensional plots by generating multiple projections**: Multi-objective plots beyond 3 dimensions cannot be directly visualized in standard 2D/3D scatter plots. One common approach is to generate multiple 2D projections (e.g., first objective vs each of the others) and return a set of plots. This pattern can be generalized for any visualization function that has to handle more dimensions than the underlying plotting primitive supports.\n\n4. **Argument compatibility and validation**: Introducing new arguments (`targets`) requires careful validation and explicit rules about compatibility with existing parameters (`axis_order`). In this PR, the code enforces that `axis_order` and `targets` cannot be specified together, and validates that `axis_order` indices are in range and non-negative. This pattern prevents silent misuse and leads to clearer error messages.\n\n5. **Type safety and interface consistency**: Changes to function signatures and internal logic must be reconciled with type checkers (mypy) and public documentation. Adding `Optional` types, checking for `None`, and avoiding unreachable branches are important for long-term maintainability. Similarly, changing the return type (e.g., from a single `go.Figure` to a list of plot configurations) must be reflected clearly in the public API contract; otherwise, client code may break.\n\n6. **Separating visualization concerns from data selection**: The split between selecting/transforming data (`targets`) and configuring layout/axis ordering (`axis_order`, `target_names`) is a good pattern: the plotting function should be responsible for rendering, while allowing the caller to control which data are shown and how they are labeled.",
+        "procedural_memory": [
+            "When extending or fixing a plotting utility in a multi-backend visualization library, follow a structured approach:",
+            "Step 1: Identify the feature gap or limitation.",
+            "Compare behavior between backends (e.g., Matplotlib vs. Plotly) and document any missing features or diverging signatures. In this case, note that Matplotlib's `plot_pareto_front` supports a `targets` callable and higher-dimensional objectives, while Plotly's version did not.",
+            "Step 2: Design the extended API.",
+            "Define any new arguments (e.g., `targets: Callable[[FrozenTrial], Sequence[float]]`) and how they interact with existing ones (`axis_order`, `target_names`, `constraints_func`). Decide on clear rules: which combinations are allowed, which are mutually exclusive, and how dimensions are handled.",
+            "Step 3: Add argument validation early in the function.",
+            "Validate dimensions (e.g., that indices in `axis_order` are within `[0, n_dim)` and non-negative). Enforce constraints between arguments (e.g., raise `ValueError` if `axis_order` and `targets` are both provided when that combination is ambiguous). Fail fast with informative messages to prevent confusing downstream errors.",
+            "Step 4: Refactor internal helpers to use the new abstraction.",
+            "Update helper functions that construct plotting primitives (like `_make_scatter_object_base`) to optionally take the new `targets` callable. Implement logic such that, when `targets` is `None`, the code falls back to existing behavior (e.g., using `trial.values`), and when `targets` is provided, it uses `targets(trial)` to get data to plot.",
+            "Step 5: Handle higher-dimensional data via projections.",
+            "For multi-objective problems with more dimensions than the plotting backend supports directly (e.g., >3 objectives in a 2D/3D scatter plot), design a strategy: iterate over combinations of axes to create multiple 2D plots or subplots. Ensure that axis labels (`target_names`) and ordering (`axis_order`) remain consistent and intuitive.",
+            "Step 6: Keep return types and documentation consistent.",
+            "If the function's return type changes (e.g., from a single `Figure` to multiple plots or a different structure), update the docstring and any external references. If possible, maintain backward compatibility or provide a migration path.",
+            "Step 7: Resolve static type issues and unreachable branches.",
+            "Run mypy or your static type checker and fix type mismatches (e.g., `Optional[List[int]]` handling, avoiding use of possibly-None variables). Check for logically unreachable code paths (such as checking `if target_names is None` immediately after assigning a non-None value) and simplify or remove them.",
+            "Step 8: Test with representative scenarios.",
+            "Create tests or manual examples for: (a) 2- and 3-objective studies without `targets`, (b) multi-objective studies with `targets`, (c) invalid `axis_order`, and (d) invalid `targets`/`axis_order` combinations. Ensure error messages are accurate and that plots visually match expectations.",
+            "Step 9: Align with other backends' behavior.",
+            "After implementing the change, cross-check behavior against the other backend (e.g., Matplotlib) to confirm API parity: same parameter names, argument order, semantics, and similar visual output where feasible.",
+            "Step 10: Communicate in PR and coordinate integration.",
+            "Document the behavioral changes, especially constraints and any breaking changes, in the PR description. Coordinate with maintainers if the work overlaps with larger refactors (e.g., a backend integration PR) to avoid duplicated or conflicting implementations."
+        ]
+    }
+}

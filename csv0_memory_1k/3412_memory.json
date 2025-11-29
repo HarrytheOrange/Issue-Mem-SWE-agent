@@ -1,0 +1,49 @@
+{
+    "search_index": {
+        "description_for_embedding": "CI integration tests for Optuna failed on Python 3.6 due to fastai no longer supporting that version. The fix skipped the fastai integration test when running under Python 3.6 and added a python_version constraint to the fastai extra dependency in setup.py so fastai is only installed on Python > 3.6.",
+        "keywords": [
+            "CI failure",
+            "integration tests",
+            "Python 3.6",
+            "fastai",
+            "Optuna",
+            "setup.py extras_require",
+            "environment markers",
+            "GitHub Actions workflow",
+            "pytest ignore",
+            "dependency version support",
+            "torch/fastai incompatibility"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Optuna project experienced issues running its integration tests on Python 3.6, specifically related to the fastai integration. fastai (and/or its dependency stack, including PyTorch) had moved away from Python 3.6 support, causing installation or runtime problems in the Python 3.6 CI jobs.\n\nTo mitigate this, the contributor modified the GitHub Actions integration test workflow (.github/workflows/tests-integration.yml). The workflow already had logic to run a limited subset of integration tests for Python 3.6 by selectively ignoring some test files. The fix added tests/integration_tests/test_fastaiv2.py to the list of ignored tests when python-version is 3.6, effectively skipping fastai-related integration tests on that interpreter.\n\nAdditionally, they updated setup.py to ensure that fastai is not even attempted to be installed on Python 3.6. In the extras_require definitions (e.g., for the 'all' and 'optional' groups), the entry\n\n  \"fastai\",\n\nwas changed to\n\n  \"fastai ; python_version>'3.6'\",\n\nso that pip will only install fastai when the Python version is greater than 3.6. Other related extras like allennlp and botorch already had similar python_version constraints. After this change, the CI no longer tried to install fastai on Python 3.6, and the fastai-specific integration test was skipped on that environment, stabilizing the 3.6 job.\n\nThere was some follow-up discussion about flaky tests and PyTorch CPU wheel distribution, but those were determined to be likely unrelated to this specific PR. The core resolution was: 1) skip fastai v2 integration tests on Python 3.6, and 2) constrain the fastai extra dependency to Python > 3.6.",
+        "semantic_memory": "This case illustrates a common pattern when upstream libraries drop support for older Python versions: CI and installation pipelines break unless dependencies are appropriately constrained and tests are scoped per environment.\n\nKey generalizable points:\n\n1. **Use environment markers for version-specific dependencies**: When a dependency does not support certain Python versions (e.g., fastai dropping Python 3.6), use environment markers in setup.py / pyproject.toml extras_require (e.g., `\"fastai ; python_version>'3.6'\"`) so that pip will not attempt to install incompatible packages.\n\n2. **Align test matrix with supported environments**: Integration tests that rely on optional or version-sensitive dependencies should be conditionally executed based on the Python version or installed extras. This can be done at the CI level (e.g., GitHub Actions workflows with version-specific pytest ignore lists) or in test code using markers and skips.\n\n3. **Separate core vs. optional integrations**: Projects with many integrations (e.g., with deep learning frameworks) should treat those as optional features, both in dependencies and testing. That means not hard-coupling CI success for legacy Python versions to integrations that no longer support those versions.\n\n4. **Prefer targeted skipping over global disabling**: Instead of disabling all tests on a problematic environment, selectively ignoring only the failing integration tests (like test_fastaiv2.py) keeps most of the coverage intact while avoiding known incompatibilities.\n\n5. **Monitor upstream compatibility changes**: When large frameworks (fastai, PyTorch, TensorFlow, etc.) change supported Python versions or distribution mechanisms (like CPU wheels), downstream projects must adjust their dependency constraints and CI configuration to match.\n\nOverall best practice: clearly encode dependency support constraints in your packaging configuration and mirror that in your CI/test matrix so that unsupported combinations are neither installed nor tested.",
+        "procedural_memory": [
+            "When CI integration tests fail due to a dependency dropping support for an older Python version, handle it by constraining installation and selectively skipping tests.",
+            "Step 1: Identify the failing environment and dependency.",
+            "  - Look at CI logs to see which Python version and which job fails (e.g., Python 3.6 integration tests).",
+            "  - Inspect the error messages to determine which package (fastai, torch, etc.) is causing installation or runtime failures.",
+            "Step 2: Confirm upstream support policy.",
+            "  - Check the dependency's documentation or release notes to verify supported Python versions.",
+            "  - If the dependency dropped support for that Python version (e.g., fastai no longer supports 3.6), plan to gate that dependency by Python version.",
+            "Step 3: Add environment markers to dependency declarations.",
+            "  - In setup.py or pyproject.toml, locate extras_require or dependencies that include the problematic package.",
+            "  - Replace unguarded entries like `\"fastai\"` with a version-aware marker such as `\"fastai ; python_version>'3.6'\"`.",
+            "  - Ensure consistency across all extras (e.g., 'all', 'optional', 'integration') that reference that package.",
+            "Step 4: Align CI tests with supported environments.",
+            "  - In your CI configuration (e.g., GitHub Actions workflow YAML), find the job(s) targeting the affected Python version.",
+            "  - If tests are invoked with pytest, add `--ignore` flags for integration tests that require the unsupported dependency (e.g., `--ignore tests/integration_tests/test_fastaiv2.py` when running under Python 3.6).",
+            "  - Alternatively, use pytest markers to conditionally skip tests based on Python version or availability of the dependency.",
+            "Step 5: Re-run CI and validate behavior.",
+            "  - Trigger CI after making these changes.",
+            "  - Confirm that on the unsupported Python version: the problematic package is not installed (thanks to environment markers), and the dependent tests are skipped or ignored.",
+            "  - Verify that other environments (e.g., Python 3.7+) still install the dependency and execute the integration tests as expected.",
+            "Step 6: Document supported Python and integration matrix.",
+            "  - Update project documentation or CONTRIBUTING guidelines to clarify which integrations are supported on which Python versions.",
+            "  - This reduces future confusion when upstream libraries change their support windows again.",
+            "Step 7: Monitor for unrelated flakiness.",
+            "  - If CI still fails, inspect whether there are unrelated flaky tests or separate dependency distribution issues (e.g., PyTorch CPU wheels) before attributing failures to the same root cause.",
+            "  - Address those separately from the version-compatibility fix."
+        ]
+    }
+}

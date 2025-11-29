@@ -1,0 +1,57 @@
+{
+    "search_index": {
+        "description_for_embedding": "Refactor StackStorm end-to-end self-tests into a dedicated 'tests' pack under contrib/tests, move quickstart action chain into that pack, and update Debian/RPM packaging so core packs are auto-registered while tests are shipped as non-auto-registered samples.",
+        "keywords": [
+            "StackStorm",
+            "st2",
+            "end-to-end tests",
+            "self-test pack",
+            "contrib/tests",
+            "contrib/examples",
+            "action chain",
+            "quickstart.yaml",
+            "pack.yaml",
+            "Debian packaging",
+            "RPM spec",
+            "install paths",
+            "usr/share/stackstorm",
+            "usr/share/doc/st2"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this change, the StackStorm team reorganized their built-in end-to-end (E2E) self-tests. Previously, an E2E \"QuickStart\" action chain used for smoke testing lived under `contrib/examples/actions/...`, which conceptually conflated example content with actual test content. The issue requested moving these tests into a dedicated `tests` pack. The fix introduced a new `contrib/tests` pack containing E2E tests used to validate StackStorm using StackStorm itself. The files `contrib/examples/actions/chains/test_quickstart.yaml` and `contrib/examples/actions/test_quickstart.meta.yaml` were renamed and moved to `contrib/tests/actions/chains/quickstart.yaml` and `contrib/tests/actions/quickstart.meta.yaml` respectively. A new `contrib/tests/pack.yaml` defines the 'tests' pack metadata (name, description, keywords, version, author, email), and a new `contrib/tests/README.md` documents that this pack is for self-testing (smoke tests), assuming an all-in-one installation via `st2_deploy` and using ActionChains to simulate usage scenarios and documentation flows.\n\nTo reflect the new structure, `contrib/README.md` was rewritten to clarify two categories of content: (1) content shipped and auto-registered as packs (`contrib/core`, `contrib/packs`, `contrib/linux`) and (2) samples that are shipped but not auto-registered (`contrib/examples`, `contrib/tests`, `contrib/hello-st2`). The README now points to `st2common/packaging` for details on installation paths. The packaging configuration was updated for both Debian and RPM builds. In the Debian `st2common/packaging/debian/install`, the new `contrib/tests` directory is installed under `usr/share/stackstorm/` (contrasting with `contrib/examples`, which go under `usr/share/doc/st2/`). In the RPM specs (`st2common-rhel6.spec` and `st2common.spec`), a new `usr/share/stackstorm` directory is created, and `contrib/tests` is copied there. The `%files` section was updated to include an additional share directory (notably `/usr/share/doc/stackstorm/*`, though the code copies tests into `/usr/share/stackstorm/`, indicating that the tests are treated as shareable assets but not part of the auto-registered pack directories under `/opt/stackstorm/packs/`). Overall, this PR separated internal E2E tests from user-facing examples, documented the distinction, and ensured packaging installs the new tests pack in a non-auto-registered location.",
+        "semantic_memory": "This change illustrates several general best practices around managing built-in tests and example content in a distributed application:\n\n1. **Separate test artifacts from user-facing examples or production content.** End-to-end or smoke tests that validate your platform should not live in the same logical namespace as examples that users may copy, modify, or treat as templates. Creating a dedicated 'tests' module/pack avoids confusion about what is meant for testing vs. learning or production use.\n\n2. **Use a formal packaging strategy for test packs.** When shipping tests as part of an installable product, it is useful to treat them as first-class artifacts with explicit metadata (e.g., `pack.yaml` for StackStorm). This allows consistent discovery, versioning, and execution of tests using the same mechanisms used for normal functionality.\n\n3. **Distinguish between auto-registered content and shipped samples.** The system's runtime should auto-register only those packs that are meant to be active on a typical install (e.g., `core`, `linux`, standard packs). Sample packs and internal tests are often better shipped but left unregistered, requiring explicit user opt-in to avoid clutter, unintended side effects, or security risk.\n\n4. **Align documentation with packaging layout.** The `contrib/README.md` was updated to describe the new structure and to clarify where each type of content is installed. Keeping documentation in sync with packaging scripts is critical to avoid confusion among developers, operators, and contributors.\n\n5. **Centralize end-to-end tests around realistic scenarios.** The tests pack uses ActionChains to mimic real usage: following documentation flows, touching API and UI, installing and running examples, and executing out-of-the-box actions. Structuring E2E tests around user workflows rather than low-level unit behavior yields more meaningful regression coverage.\n\n6. **Use standard system paths for non-core assets.** Shipping tests under `usr/share/...` (rather than `opt/stackstorm/packs/`) indicates they are supplemental assets rather than active runtime configuration. This pattern generalizes to any product where you want to distribute reference or auxiliary materials without automatically enabling them.\n\nThese practices generalize beyond StackStorm: in any complex system, keep internal test fixtures separate, package them clearly, and document how they should be used and where they live.",
+        "procedural_memory": [
+            "When you need to separate built-in end-to-end tests from user-facing examples or production packs, follow a structured approach:",
+            "Step 1: Identify test-specific artifacts that are mixed with examples or production code.",
+            "  - Scan the repository for actions, workflows, scripts, or config used purely for E2E or smoke testing but located under example or main code directories.",
+            "  - Confirm with maintainers which pieces are tests vs. examples to avoid moving something users rely on.",
+            "Step 2: Create a dedicated logical container for tests (e.g., a 'tests' pack, module, or directory).",
+            "  - For StackStorm, create `contrib/tests/` with a `pack.yaml` that defines the pack name, description (clearly stating it is for self-testing), keywords, version, and contact info.",
+            "  - Add a `README` explaining the purpose of the tests pack, assumptions (e.g., all-in-one install, deployment method), and high-level scenarios covered by the tests.",
+            "Step 3: Move test actions/workflows into the new container and adjust naming.",
+            "  - Relocate files from their old path (e.g., `contrib/examples/actions/chains/test_quickstart.yaml`) into the new tests pack (e.g., `contrib/tests/actions/chains/quickstart.yaml`).",
+            "  - Move any associated metadata (e.g., `*.meta.yaml`) alongside the actions, adjusting names if necessary to match conventions.",
+            "  - Verify that references, entry points, and relative imports (if any) remain valid after the move.",
+            "Step 4: Update high-level documentation describing repository layout and content categories.",
+            "  - Modify top-level READMEs (e.g., `contrib/README.md`) to clearly distinguish between runtime packs (auto-registered) and shipped-but-not-auto-registered samples/tests.",
+            "  - List the exact directories under each category (e.g., `contrib/core`, `contrib/packs`, `contrib/tests`, etc.) and explain their purposes and install behavior.",
+            "  - Link to packaging or deployment docs that specify installation paths and registration behavior.",
+            "Step 5: Adjust packaging scripts and specifications to install the new tests container correctly.",
+            "  - For Debian packaging: update the `.install` file to include the new tests directory (e.g., `contrib/tests usr/share/stackstorm/`).",
+            "  - For RPM packaging: in the `%install` section, create any required directories (e.g., `mkdir -p %{buildroot}/usr/share/stackstorm`) and copy the tests directory there (e.g., `cp -R contrib/tests %{buildroot}/usr/share/stackstorm/`).",
+            "  - Ensure the `%files` section includes the new path(s), so the test assets are actually present in the installed package.",
+            "  - Decide deliberately whether tests should be installed under runtime pack directories (e.g., `/opt/yourapp/packs`) or as shared non-auto-registered resources (e.g., `/usr/share/yourapp`).",
+            "Step 6: Verify registration and behavior after install.",
+            "  - Install the built package on a test system and confirm that core packs are auto-registered while the tests pack is present but not auto-registered (if that is the intended behavior).",
+            "  - Manually register the tests pack (for StackStorm, via `st2 pack install` or `st2ctl` equivalents) and run the E2E workflows to ensure they execute successfully.",
+            "  - Confirm that any documentation or quickstart flows referencing these tests use the new pack name and location.",
+            "Step 7: Guard against regressions in CI.",
+            "  - Add or update CI jobs to optionally run the tests pack as part of smoke tests, using the same deployment assumptions documented in the tests pack README.",
+            "  - Ensure CI uses the same file paths and packaging layout as production to catch path or registration issues early.",
+            "Step 8: Communicate the change to contributors and users.",
+            "  - Note in release notes or contributor docs that E2E tests have moved to a new pack and may require explicit registration.",
+            "  - Explain how to invoke these self-tests and where they now reside on disk after installation."
+        ]
+    }
+}

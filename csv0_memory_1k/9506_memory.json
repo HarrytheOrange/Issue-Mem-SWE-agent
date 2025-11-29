@@ -1,0 +1,39 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant Homematic integration: upgraded the pyhomematic dependency to v0.1.32 to add support for new Homematic IP devices. Updated Homematic discovery lists and sensor state mappings (e.g., for IPSmoke and IPThermostatWall) so the new device types are correctly detected and their states rendered. This addresses missing device support and relies on upstream bug fixes in pyhomematic.",
+        "keywords": [
+            "homematic",
+            "pyhomematic",
+            "homeassistant.components.homematic",
+            "homeassistant.components.sensor.homematic",
+            "dependency upgrade",
+            "device discovery",
+            "sensor state mapping",
+            "IPSmoke",
+            "IPThermostatWall",
+            "HMIP-WRC2",
+            "HmIP-PSM-CH",
+            "HmIP-eTRV-2",
+            "HmIP-STHD",
+            "HmIP-SWSD"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Home Assistant Homematic integration needed to support several new Homematic IP devices (e.g., HMIP-WRC2, HmIP-PSM-CH, HmIP-eTRV-2, HmIP-STHD, HmIP-SWSD). The underlying library, pyhomematic, had added support for these devices in newer versions, but Home Assistant was still pinned to pyhomematic==0.1.30. As a result, the new devices were not recognized or properly handled, and some related hub/entity behavior depended on upstream fixes. The fix consisted of:\n\n1. Bumping the pyhomematic version from 0.1.30 to 0.1.32 in both the Homematic component's REQUIREMENTS constant (homeassistant/components/homematic.py) and in requirements_all.txt.\n2. Extending the Homematic discovery configuration so Home Assistant knows how to classify new device types. Specifically, 'IPThermostatWall' and 'IPSmoke' were added to the DISCOVER_SENSORS list in homematic.py so these devices are discovered as sensors.\n3. Adding a state-mapping dictionary entry for the new IP smoke detector device type in sensor/homematic.py: 'IPSmoke': {0: 'off', 1: 'primary', 2: 'intrusion', 3: 'secondary'}. This ensures that the integer states reported by the device are translated into meaningful textual states in Home Assistant.\n\nThere was related discussion about a hub entity not being added and a separate GitHub issue (#9360), which appears to be addressed by the updated pyhomematic version. Additionally, a user requested support for another dimmer device, but the maintainer emphasized not adding device definitions blindly without verification. The final PR is a coordinated dependency upgrade plus configuration changes to fully expose newly supported devices.",
+        "semantic_memory": "Generalizable lessons from this fix:\n\n1. **Dependency upgrades often require integration-side configuration changes.** When a lower-level integration library (like pyhomematic) adds support for new devices or features, simply bumping the version may not be enough; the host application must also update its discovery logic, entity mappings, and state translations to expose those devices correctly.\n\n2. **Centralized requirement/version management must stay in sync.** In projects like Home Assistant, dependencies can be declared both per-component (REQUIREMENTS) and globally (requirements_all.txt). Forgetting to update one of these can cause inconsistent environments and unexpected behavior. Always ensure all relevant requirement declarations are aligned.\n\n3. **Device discovery relies on explicit type lists.** Many home automation integrations rely on lists of known device types (e.g., DISCOVER_SENSORS, DISCOVER_CLIMATE). If a new device type is supported by the backend library but not added to these lists, the device will not appear in the UI, even though the underlying communication is functional.\n\n4. **State mapping is critical for usability.** Devices often report numeric or cryptic codes. Mapping these to human-readable states (e.g., IPSmoke: 0 -> 'off', 1 -> 'primary', etc.) is necessary for meaningful dashboards, automations, and user understanding. Adding a new device type usually means also adding or updating these mappings.\n\n5. **Avoid unverified device definitions.** Adding support for hardware types without access to or verification against real devices can introduce subtle bugs. Prefer to add device definitions only when they can be tested or at least validated by a user with the hardware.\n\n6. **Bug fixes may reside upstream.** When there are symptoms like missing hub entities or devices not appearing, the root cause can be in the upstream library. Tracking related issues and release notes helps decide when a dependency bump is the appropriate fix.",
+        "procedural_memory": [
+            "Diagnosing and fixing missing device support in an integration that uses an external library:",
+            "Step 1: Confirm the symptom. Verify that the target device (e.g., a new Homematic IP device) is correctly paired with the hub but does not appear in the application (no entity created, no state updates).",
+            "Step 2: Check upstream library capabilities. Look at the external integration library's (e.g., pyhomematic) repository, documentation, or changelog to see if the device type is supported in a newer version than the one currently pinned.",
+            "Step 3: Identify current pinned version. Locate where the dependency is defined in the host application (e.g., a per-component REQUIREMENTS constant and a global requirements file). Note the current version and compare it with the upstream library's latest compatible version.",
+            "Step 4: Review upstream changes. Confirm that the newer library version includes support for the device and/or fixes related issues (device class additions, bug fixes for hub discovery, etc.). Ensure there are no breaking changes that would affect your integration.",
+            "Step 5: Bump the dependency version in all relevant places. Update the component-specific requirement (e.g., REQUIREMENTS = ['pyhomematic==0.1.32']) and any global requirements files (e.g., requirements_all.txt) so the environment uses the same updated version.",
+            "Step 6: Update device discovery configuration. If the integration uses explicit device-type lists (e.g., DISCOVER_SENSORS, DISCOVER_CLIMATE), add the new device types introduced by the library (e.g., 'IPThermostatWall', 'IPSmoke') to the appropriate lists so they are discovered as the correct entity platforms.",
+            "Step 7: Add or adjust state mappings. For any new device types that report states as codes or integers, extend the mapping dictionaries (e.g., HM_DEVICE_TYPES in sensor/homematic.py) to translate raw values into human-readable strings (e.g., 'IPSmoke': {0: 'off', 1: 'primary', 2: 'intrusion', 3: 'secondary'}).",
+            "Step 8: Regenerate and verify requirements files. If the project uses a generator script (such as script/gen_requirements_all.py), run it to update derived requirement files and ensure consistency.",
+            "Step 9: Run the test suite. Execute the full local test suite (e.g., tox) to ensure that the dependency bump and configuration changes do not break other parts of the system.",
+            "Step 10: Manually test with real devices. Where possible, test with the actual hardware to confirm that the new device types appear as expected, entity states are meaningful, and any related features (like hub entities) behave correctly.",
+            "Step 11: Document and cross-reference issues. In the PR or commit message, reference related issues (e.g., hub entity not being added) and explain that the resolution is via an upstream library upgrade plus configuration updates. This aids future debugging and maintenance."
+        ]
+    }
+}

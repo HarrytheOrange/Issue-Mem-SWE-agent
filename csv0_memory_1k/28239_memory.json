@@ -1,0 +1,32 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant Environment Canada integration was failing due to HTTPS certificate errors in the underlying env_canada Python library. The fix was to bump the env_canada dependency from 0.0.25 to 0.0.27 in the integration manifest and global requirements, which resolves the TLS/SSL certificate issue.",
+        "keywords": [
+            "Environment Canada",
+            "env_canada",
+            "HTTPS certificate failure",
+            "SSL error",
+            "dependency bump",
+            "Home Assistant integration",
+            "manifest.json",
+            "requirements_all.txt",
+            "third-party API",
+            "TLS"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "The Environment Canada integration in Home Assistant was experiencing HTTPS certificate failures when communicating with the Environment Canada API. These failures originated in the third-party Python library env_canada, which handled the HTTP requests and TLS/SSL negotiations. A newer version of the library (0.0.27) included fixes for the certificate handling issues. The pull request updated the integration manifest at homeassistant/components/environment_canada/manifest.json to require env_canada==0.0.27 instead of 0.0.25, and synchronized the global dependency pin in requirements_all.txt to the same version. This resolved the certificate errors reported by users in the community forum. During the process, it was also noted in the discussion that the PR had been mistakenly targeted at the release-candidate (rc) branch instead of the dev branch, prompting a change in labeling to make target-branch requirements more visible to contributors.",
+        "semantic_memory": "When an integration depends on a third-party library to communicate with external services, runtime failures such as HTTPS certificate errors are often caused by bugs or outdated behavior in that dependency rather than in the integration glue code itself. In such cases, the appropriate fix is to upgrade the underlying library to a version that includes the required bug fix, and to ensure all dependency declarations in the project are updated consistently (e.g., component manifests and consolidated requirements files). Additionally, for large projects with structured release flows (dev vs rc vs stable), pull requests that change dependencies and behavior should generally target the main development branch unless they are explicitly considered for a patch or hotfix release. Clear labeling and process guidance help prevent mis-targeted PRs.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Reproduce and characterize the error.\n- Capture logs from the integration showing the exact HTTPS/TLS error (e.g., certificate verify failed, SSL handshake error).\n- Confirm that the failure occurs consistently when the integration calls a specific external service (such as an API endpoint).",
+            "Step 2: Isolate whether the issue is in your code or a dependency.\n- Create a minimal script that uses the underlying third-party library directly (e.g., env_canada) to call the same endpoint.\n- If the same HTTPS/certificate error occurs in the minimal script, the problem is likely in the library or its dependency chain, not in your integration logic.",
+            "Step 3: Investigate the third-party library.\n- Check the library's issue tracker, release notes, and changelog for mentions of SSL/TLS, certificate handling, or related bug fixes.\n- Identify the version that includes the fix (e.g., env_canada 0.0.27).",
+            "Step 4: Update dependency versions in all relevant locations.\n- In component-specific configuration (e.g., an integration manifest), update the requirements entry from the old version to the new one (e.g., env_canada==0.0.25 → env_canada==0.0.27).\n- In any centralized or aggregated requirements files (e.g., requirements_all.txt), update the same dependency to the exact same version to keep pins consistent.",
+            "Step 5: Regenerate derived files and run project-specific tools.\n- Run any helper scripts required by the project to validate manifests and regenerate requirements (e.g., python3 -m script.hassfest, python3 -m script.gen_requirements_all in Home Assistant).\n- Ensure there are no missing fields or inconsistencies reported by these tools.",
+            "Step 6: Run the test suite and local verification.\n- Execute the full relevant test suite (e.g., tox) to confirm that the new dependency does not break existing functionality.\n- Test the integration manually in a development environment to verify that HTTPS calls now succeed and that certificate errors are resolved.",
+            "Step 7: Target the correct branch and document the fix.\n- Ensure your PR targets the appropriate branch according to the project’s release process (usually the main development branch, not a release-candidate, unless explicitly requested).\n- In the PR description, clearly state that the change bumps a dependency to resolve a specific runtime error (e.g., HTTPS certificate failures) and, if available, link to user reports or upstream issues.",
+            "Step 8: Monitor after deployment.\n- After the fix is merged and released, monitor user reports and logs for any recurrence of the issue or regressions.\n- If additional issues appear, coordinate with the upstream library maintainers or consider pinning to a known-good version."
+        ]
+    }
+}

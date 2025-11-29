@@ -1,0 +1,34 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fixes Home Assistant VoiceRSS TTS integration by sending correct POST form fields (including 'src' text) instead of query params/raw body, and handling VoiceRSS API error responses that return HTTP 200 with error text in the body. Also documents a 'cache' option for the TTS say service and bumps version to 0.35.3.",
+        "keywords": [
+            "voicerss",
+            "TTS",
+            "text-to-speech",
+            "Home Assistant",
+            "POST form data",
+            "query params vs form body",
+            "HTTP 200 with error message body",
+            "API error handling",
+            "tts.voicerss",
+            "services.yaml",
+            "cache parameter",
+            "aiohttp",
+            "async_timeout"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In Home Assistant 0.35.x, the VoiceRSS TTS platform had a couple of issues. The integration was sending the TTS request incorrectly: it used `params=self.params` with `websession.post()` and put the raw message bytes in the body, while VoiceRSS expects a standard form-encoded POST where the text to speak is passed in the `src` field alongside other parameters. As a result, the VoiceRSS API could fail to generate audio. Additionally, the VoiceRSS API sometimes returns HTTP 200 even when there's an error, placing an error string in the response body (e.g., 'The subscription does not support SSML!'). The previous code only checked HTTP status, treated any 200 as success, and would proceed even when the body contained an error message instead of audio. This could cause silent failures or invalid audio data. The fix renamed the static request options to `form_data`, added `src` per request, and changed the call to `websession.post(VOICERSS_API_URL, data=form_data)` so all parameters (key, language, codec, format, and text) are sent as form fields, matching the VoiceRSS API expectations. After reading the response, the code now checks the body against a list of known error messages (`ERROR_MSG`), logs a descriptive error, and returns `(None, None)` when an error is detected. Tests were updated to assert that the correct form data is sent (including `src`) and that error message responses do not trigger playback. The TTS service description in `services.yaml` was also extended to document a `cache` field, and the overall Home Assistant patch version was bumped to 0.35.3.",
+        "semantic_memory": "This fix illustrates several generalizable lessons about HTTP API integrations and TTS services. First, APIs often have strict expectations about how parameters are delivered: some expect query parameters, others expect form-encoded POST bodies, and some require particular parameter names (like VoiceRSS's `src` for the text to speak). Assuming the wrong parameter placement can cause subtle failures that may not be immediately obvious. Second, relying solely on HTTP status codes is not always sufficient for error detection. Some APIs return HTTP 200 even for logical or business errors and encode those errors as specific strings in the response body. Proper integration should parse the response body, recognize known error patterns, and surface them as failures instead of treating them as valid data. Third, tests for integration code should assert both the shape of outgoing requests (URL, method, params vs data, payload fields) and the handling of various types of responses (error status, timeout, and 'successful' status with error content) to prevent regressions. Finally, keeping service schemas (like `services.yaml`) in sync with actual options (e.g., `cache`) improves discoverability and reduces misconfiguration by users.",
+        "procedural_memory": [
+            "When diagnosing issues with an external HTTP API (like a TTS provider) where requests appear to succeed but the output is invalid or missing, verify how you send parameters and how you detect errors.",
+            "Step 1: Re-read the external API documentation and confirm the required HTTP method, parameter names, and where each parameter should live (query string vs form data vs JSON body). Pay special attention to the field that carries the main payload (e.g., text in a TTS API).",
+            "Step 2: Inspect the actual outgoing requests from your code (via logs, debug proxies, or test mocks) to ensure you're using the API's expected format. For a form-based POST, use `data=form_data` (application/x-www-form-urlencoded) rather than `params=` or raw bytes for the main payload.",
+            "Step 3: Centralize static request parameters (e.g., API key, language, codec, format) into a template structure (like `form_data`), and copy and update it for each request with dynamic fields (such as the text message in `src`). Avoid mutating a shared dict in-place across requests to prevent cross-request contamination.",
+            "Step 4: After receiving a response, do not rely only on HTTP status codes. Check the response body for known error markers documented by the API (for example, specific error strings). Maintain a list of known error patterns and treat those responses as failures, logging a clear message and returning a consistent error indicator.",
+            "Step 5: Add or update unit tests to: (a) assert the outgoing request uses the correct HTTP method and payload placement (e.g., `data=form_data` rather than `params`), (b) validate that dynamic fields like the message text are sent under the right key, (c) cover error status codes (e.g., 400) and timeouts, and (d) cover successful HTTP 200 responses that contain logical error messages in the body.",
+            "Step 6: Ensure that any user-facing service schemas or API descriptions (like `services.yaml` in Home Assistant) are updated to include new or existing parameters (such as a `cache` flag) so that documentation and behavior stay in sync.",
+            "Step 7: Once fixed, run the full test suite and, if possible, perform a real integration test against the external API to confirm that valid audio (or other expected data) is returned and that error conditions are properly handled and logged."
+        ]
+    }
+}

@@ -1,0 +1,32 @@
+{
+    "search_index": {
+        "description_for_embedding": "CI was artificially pinning pip to <20 due to earlier incompatibilities with lightgbm and mxnet. After confirming that these libraries now work with pip 20.0.2, the CircleCI config was updated to install the latest pip instead of the old pinned version.",
+        "keywords": [
+            "pip version",
+            "pip<20",
+            "pip 20.0.2",
+            "CircleCI",
+            "CI configuration",
+            "dependency compatibility",
+            "lightgbm",
+            "mxnet",
+            "virtualenv",
+            "python packaging",
+            "version pinning",
+            "build environment"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the project’s CI configuration (.circleci/config.yml) was still pinning pip to versions less than 20 due to historic incompatibility issues with lightgbm and mxnet when pip>=20 was first released. The job setup steps created a virtual environment and then ran `pip install -U 'pip<20'` before installing the project with extra dependencies (e.g., [checking], [document], [doctest,document]). Later, it was verified (via a Docker-based reproduction using python:3.7 and `pip install -e .[checking,example]`) that the latest pip (20.0.2 at the time), lightgbm, and mxnet install and work correctly together. Based on this verification, the fix was to remove the version constraint and simply run `pip install -U pip` in all relevant CircleCI jobs. This keeps CI in sync with current tooling and removes an unnecessary restriction tied to outdated third-party issues.",
+        "semantic_memory": "CI and build environments often pin versions of core tools like pip, setuptools, and wheel to work around temporary incompatibilities with specific libraries (e.g., lightgbm, mxnet). These pins can become technical debt once upstream libraries catch up and support newer tooling. Keeping such pins indefinitely can prevent the project from benefiting from bug fixes, security patches, and new features in packaging tools and may cause divergence from real user environments. A good practice is: (1) document why a version pin exists; (2) periodically re-test with the latest versions of build tools in a clean environment; and (3) remove or relax version constraints once the original incompatibility is resolved. Using containerized environments (like Docker images) to reproduce CI setup is a reliable way to validate that updating pip or other core tooling will not break installation of dependencies or project extras. Updating CI to use `pip install -U pip` instead of a strict upper-bounded version returns the environment to a more standard, future-compatible state as long as dependencies are known to work.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Identify the constraint and its rationale.\n- Inspect CI/build scripts (e.g., .circleci/config.yml, GitHub Actions workflows, Dockerfiles) for explicit version pins of pip, setuptools, or other build tools.\n- Look for comments explaining why the pin exists (e.g., known incompatibility with a library).",
+            "Step 2: Verify current compatibility in a clean environment.\n- Reproduce the CI environment locally using a clean container image (e.g., `docker run -it --rm -v $(pwd):/opt python:3.7 bash`).\n- Inside the container, create a virtual environment and upgrade pip to the latest version: `python -m venv venv && . venv/bin/activate && pip install -U pip`.\n- Install the project and problematic dependencies (including extras) exactly as CI does, e.g., `pip install -e .[checking,example]`.\n- Confirm that installations complete successfully and basic import/use of the affected libraries works.",
+            "Step 3: Update CI configuration.\n- Replace the pinned pip command (e.g., `pip install -U 'pip<20'`) with a non-pinned upgrade such as `pip install -U pip` in all CI job steps that create environments.\n- Keep or update related upgrade commands (e.g., `pip install --progress-bar off -U setuptools`) as needed.",
+            "Step 4: Run the full CI pipeline.\n- Push the changes and run the CI pipeline.\n- Check that all jobs (linting, testing, docs, packaging) succeed with the updated pip version.\n- Pay special attention to steps that install heavy or previously-problematic libraries (e.g., lightgbm, mxnet).",
+            "Step 5: Remove stale comments and document the change.\n- Remove TODO comments about reverting the pin, or update them to reflect the new state.\n- Optionally add a note in the changelog or internal docs that CI now uses the latest pip and that affected libraries have been confirmed compatible.",
+            "Step 6: Plan for future monitoring.\n- Periodically re-run minimal installation checks in a clean container with the latest pip and dependencies.\n- If new incompatibilities arise, reintroduce version constraints with clear documentation and a plan to revisit them."
+        ]
+    }
+}

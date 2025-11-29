@@ -1,0 +1,31 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fix for Home Assistant ISY994 binary_sensor integration where subnode IDs were incorrectly parsed as decimal instead of hexadecimal, causing failures with devices like the Insteon 2844-222 motion sensor II whose subnode ID is 'D'. The fix changes parsing to int(node.nid[-1], 16).",
+        "keywords": [
+            "Home Assistant",
+            "ISY994",
+            "binary_sensor",
+            "subnode id",
+            "hex parsing",
+            "Insteon 2844-222",
+            "motion sensor II",
+            "ValueError",
+            "node.nid",
+            "int(base 16)"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Home Assistant ISY994 binary_sensor platform failed to handle certain ISY node subnode IDs correctly. Specifically, the Insteon 2844-222 motion sensor II exposes a motion enable subnode whose ID on the ISY is the hexadecimal character 'D'. The existing code in homeassistant/components/binary_sensor/isy994.py assumed that the subnode ID was always a decimal digit, using subnode_id = int(node.nid[-1]). When presented with 'D', this raised a ValueError and prevented the sensor from being set up properly. The fix was to treat the last character of node.nid as a hexadecimal digit instead of decimal: subnode_id = int(node.nid[-1], 16). This change allows both purely numeric and alphanumeric hex subnode IDs to be parsed correctly and restores proper operation of the motion sensor's subnode in Home Assistant.",
+        "semantic_memory": "When interfacing with external device APIs or controllers (like an ISY994), identifiers and subnode IDs may be represented in hexadecimal, not just decimal. Assuming numeric IDs are always base-10 can cause parsing failures when IDs include letters (e.g., 'A'–'F') or when the external system explicitly uses hex notation. A robust integration should respect the external system's documented ID format and parse values using the correct base (e.g., int(value, 16) for hex). Additionally, when extracting a sub-identifier from a larger ID string (like node.nid[-1]), it is important to understand the encoding scheme and ensure that all valid characters are supported. This helps avoid runtime exceptions and improves compatibility with a broader range of devices and subnodes.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Reproduce and capture the error.\n- Attempt to set up or use the problematic device (e.g., a specific sensor) through the integration.\n- Check logs for exceptions such as ValueError when parsing IDs or node identifiers.\n- Note the value of the identifier that caused the failure (e.g., node.nid or its subparts).",
+            "Step 2: Inspect the external system’s ID format.\n- Consult the device/controller documentation (e.g., ISY994, Insteon device docs) to understand how node IDs and subnode IDs are encoded (decimal, hexadecimal, or another scheme).\n- Verify whether IDs can contain non-decimal characters (A–F for hex, etc.).",
+            "Step 3: Locate the parsing code.\n- Search the codebase for where the identifier is parsed or converted (e.g., grep for node.nid or similar fields).\n- Identify lines where int() or similar conversion functions are used without specifying a base (e.g., int(node.nid[-1])).",
+            "Step 4: Adjust parsing to the correct base.\n- If documentation or observed values indicate hexadecimal IDs, update the parsing to use base 16: int(value, 16).\n- In this case, change subnode_id = int(node.nid[-1]) to subnode_id = int(node.nid[-1], 16).\n- Ensure the slice or substring you’re parsing matches the intended sub-identifier (e.g., last character vs. last two characters).",
+            "Step 5: Add defensive checks and comments.\n- Optionally, add validation or try/except around parsing to log clearer errors if IDs are malformed.\n- Add a code comment explaining that the external system uses hexadecimal subnode IDs so future maintainers don’t regress the behavior.",
+            "Step 6: Test with multiple devices.\n- Test with the original failing device (e.g., Insteon 2844-222 motion sensor II with subnode 'D') to confirm the fix.\n- Test with other devices that use numeric-only subnode IDs to ensure backward compatibility.\n- Run the project’s test suite (e.g., tox) and, if feasible, add unit tests that simulate hex subnode IDs.",
+            "Step 7: Document the behavior.\n- Update any relevant integration documentation or developer notes to mention that subnode IDs are treated as hexadecimal.\n- Reference the specific devices that required this behavior so future issues can be recognized quickly."
+        ]
+    }
+}

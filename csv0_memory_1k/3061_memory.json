@@ -1,0 +1,33 @@
+{
+    "search_index": {
+        "description_for_embedding": "Documentation update adding a concrete usage example for optuna.logging.set_verbosity, including Sphinx doctest sections that demonstrate changing logging level to suppress INFO logs and restoring the original verbosity.",
+        "keywords": [
+            "Optuna",
+            "logging.set_verbosity",
+            "logging level",
+            "INFO",
+            "WARNING",
+            "suppress logs",
+            "Sphinx",
+            "doctest",
+            "testsetup",
+            "testcleanup",
+            "documentation example"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this pull request, the Optuna project improved the documentation of the function optuna.logging.set_verbosity. Previously, the docstring only described the argument but did not show a concrete usage scenario. The contributor added a full Sphinx doctest example to the set_verbosity docstring.\n\nThe example now:\n- Defines a simple objective(trial) function in a .. testsetup:: block.\n- Imports optuna and creates a study in a .. testcode:: block.\n- First runs study.optimize(objective, n_trials=10) with the default logging level, which produces INFO-level logs like `[I 2021-10-31 ...] Trial 0 finished with value ...`.\n- Then calls optuna.logging.set_verbosity(optuna.logging.WARNING) and runs study.optimize again, demonstrating via comments that INFO logs are now suppressed at the WARNING level (`# Setting the logging level WARNING, the INFO logs are suppressed.`).\n- Finally, uses a .. testcleanup:: block to restore logging to optuna.logging.INFO so that the doctest does not leave global logging state modified for other tests.\n\nDuring review, minor fixes were applied: adding blank lines required by Sphinx formatting, explicitly importing optuna in the doctest, changing the scenario to contrast INFO vs WARNING, and adding cleanup for the logging level. There were no functional code changes, only documentation and examples, and the PR was approved and merged after ensuring the blackdoc formatting check passed.",
+        "semantic_memory": "General insights from this change:\n\n1. **API documentation is more useful with realistic, executable examples.** Describing a logging API (e.g., a function that sets verbosity) is clearer when you show before/after behavior—such as how INFO logs are visible by default and then suppressed when the level is raised to WARNING.\n\n2. **Use Sphinx doctest directives for reliable examples.** When you want examples to be tested as part of the documentation build, use Sphinx directives like `.. testsetup::`, `.. testcode::`, and `.. testcleanup::`. `testsetup` prepares shared context (e.g., helper functions), `testcode` contains the actual example, and `testcleanup` resets any global state that could affect subsequent doctests.\n\n3. **Always restore global or process-wide state in doctests.** Logging configuration, random seeds, global flags, and similar process-wide settings must be reset in `.. testcleanup::` (or equivalent) to keep doctests isolated and avoid flaky failures or surprising side effects in other examples.\n\n4. **Include necessary imports inside examples.** Documentation examples should be self-contained. Even if a package is obvious from context, explicitly including `import optuna` (or similar) inside the example prevents confusion and ensures doctests can run from a clean environment.\n\n5. **Explain behavior with concise comments instead of hard-coded output.** For logging and time-dependent output, it's often better to describe behavior (`# INFO logs are suppressed at WARNING level`) and show elided log lines with `...` rather than exact timestamps or full log text, which can be brittle and noisy.",
+        "procedural_memory": [
+            "When enhancing an API docstring with a usage example, especially for configuration functions like logging level setters, follow these steps:",
+            "Step 1: Identify the key behavior to show. For a logging-verbosity function, show both the default logging behavior and the behavior after changing the level (e.g., that INFO logs disappear when level is set to WARNING).",
+            "Step 2: Add a clear narrative sentence under an 'Example:' heading that states what the example demonstrates (e.g., 'Set the logging level optuna.logging.WARNING.').",
+            "Step 3: Use `.. testsetup::` to define shared objects and helper functions needed by the example, such as an objective(trial) function used in optimization. Keep this code minimal and deterministic.",
+            "Step 4: Use `.. testcode::` for the main code snippet. Ensure it is self-contained: include required imports (e.g., `import optuna`), create any necessary objects (studies, models, etc.), and call the function being documented.",
+            "Step 5: For output that is non-deterministic or time-dependent (like logging timestamps), show representative lines in comments with ellipses (e.g., `# [I 2021-10-31 ...] Trial 0 finished with value: ...`) and/or describe the behavior in prose comments (e.g., `# Setting the logging level WARNING, the INFO logs are suppressed.`) instead of asserting exact output.",
+            "Step 6: If the example modifies global or process-wide state (logging levels, random seeds, environment variables), add a `.. testcleanup::` block that restores the original state (e.g., `optuna.logging.set_verbosity(optuna.logging.INFO)`). This prevents doctests from interfering with each other.",
+            "Step 7: Run the documentation/doctest tooling (e.g., Sphinx doctest, blackdoc, or similar) to ensure the example is syntactically correct, passes tests, and conforms to style/formatting requirements.",
+            "Step 8: During review, refine wording and comments to be concise and informative, and ensure the example focuses on the behavior being documented rather than extraneous details."
+        ]
+    }
+}

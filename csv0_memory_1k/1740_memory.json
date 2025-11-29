@@ -1,0 +1,40 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fix for incorrect world coordinate origin in napari 3D rendering: a pixel-center offset meant for 2D array-like data was being applied in 3D, causing misalignment between data pixels and world coordinates. The fix restricts the pixel offset to 2D rendering only.",
+        "keywords": [
+            "napari",
+            "vispy",
+            "world coordinates",
+            "origin misalignment",
+            "3D rendering",
+            "2D rendering",
+            "pixel center offset",
+            "array_like",
+            "dims.ndisplay",
+            "data2world transform",
+            "affine matrix",
+            "visual alignment bug"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, napari exhibited an alignment bug when rendering 3D volumes: the world coordinates origin did not match the actual pixel centers of the data. Visually, this caused the volume to appear shifted relative to the expected coordinate system, especially noticeable when changing between 2D and 3D views or when using nearest-neighbor interpolation so that individual pixels/voxels were clearly visible.\n\nThe root cause was in `napari/_vispy/vispy_base_layer.py` within the `_on_matrix_change` method. The code always applied a pixel offset for array-like data (`self._array_like`), shifting the origin from the top-left corner of a pixel to the pixel center. This behavior matches vispy's convention for 2D, where coordinates are defined at pixel corners, but vispy uses a different convention in 3D, where coordinates already correspond to pixel/voxel centers. Applying the same offset in 3D effectively double-shifted the data in world coordinates.\n\nThe fix was to gate this offset so it only runs for 2D rendering. Specifically, the condition was changed from `if self._array_like:` to `if self._array_like and self.layer.dims.ndisplay == 2:`. The comment was updated to clarify that the pixel offset is required only for array-like data in 2D. This ensures that 3D rendering uses the correct origin without the extra offset, restoring a proper match between the data grid and world coordinates.",
+        "semantic_memory": "Rendering pipelines often must reconcile different coordinate conventions between libraries, especially around pixel/voxel origins (corner vs center) and dimensionality (2D vs 3D). A common pattern is to apply a fixed offset (e.g., 0.5 pixels) so that the conceptual data index (i, j, k) aligns with visual coordinates. However, these corrections must be conditional on the rendering mode and the underlying library's conventions.\n\nA generalized principle from this fix is: do not blindly reuse 2D coordinate adjustments in 3D. Many visualization backends treat 2D images as residing on a grid with origins at pixel corners, but treat 3D volumes as voxel centers. Applying a 2D-style pixel-center correction in 3D can cause world-to-data misalignment, subtle shifts, or off-by-half-pixel/voxel errors. Instead, coordinate transforms (such as data-to-world matrices) should be explicitly aware of display dimensionality and data type (array-like vs non-array-like).\n\nThis case also reinforces the value of: (1) clearly documenting when and why coordinate offsets are applied; (2) using interpolation modes like nearest neighbor to visually debug alignment issues; and (3) structuring transform code so that dimension-dependent logic (e.g., `ndisplay == 2` vs `ndisplay == 3`) is explicit and testable.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Reproduce and visually inspect the misalignment",
+            "Switch between 2D and 3D rendering modes using the same dataset and camera viewpoint. Use nearest-neighbor interpolation where possible so pixel/voxel boundaries are clearly visible. Check whether objects appear shifted relative to the world coordinate axes, grid, or overlays (e.g., crosshairs, annotations).",
+            "Step 2: Compare coordinate conventions between modes and libraries",
+            "Consult the rendering backend's documentation (e.g., vispy, OpenGL, VTK) to understand how it defines pixel/voxel coordinates in 2D vs 3D. Determine if coordinates refer to pixel corners or centers and whether the convention changes with dimensionality.",
+            "Step 3: Inspect transformation code for unconditional offsets",
+            "Locate the data-to-world (or world-to-view) transform code (e.g., affine matrices, transform pipelines). Look for unconditional constant offsets, such as translations by 0.5, 1.0, or a pixel/voxel size, which are used to shift from corner to center coordinates. Check whether these offsets are always applied, regardless of `ndisplay`, data dimensionality, or data type.",
+            "Step 4: Add dimensionality-aware conditions",
+            "If you identify a pixel/voxel origin correction that should only be applied in 2D (or only in 3D), gate it with explicit conditions. For example, change `if array_like:` to `if array_like and dims.ndisplay == 2:`. Ensure that your condition clearly encodes the intended use case (2D vs 3D, image vs non-image).",
+            "Step 5: Update comments and documentation",
+            "Clarify in code comments why the offset is applied and under what conditions. For example, note that the offset compensates for a top-left corner pixel origin in 2D only, and that in 3D the backend already uses pixel centers so the offset must not be applied.",
+            "Step 6: Test visually across modes and datasets",
+            "Re-run the visual checks in both 2D and 3D. Verify that pixel/voxel centers align with world coordinates and overlays. Use multiple interpolation modes (nearest vs linear) to confirm there are no remaining half-pixel or half-voxel shifts.",
+            "Step 7: Add regression tests if possible",
+            "Create automated tests that check the resulting data-to-world transform matrices for specific test cases (2D vs 3D, array-like vs non-array-like). Assert that the expected translation components are present only in the relevant modes (e.g., that the pixel offset is applied in 2D but not in 3D), preventing future regressions."
+        ]
+    }
+}

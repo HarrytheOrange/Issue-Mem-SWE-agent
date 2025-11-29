@@ -1,0 +1,33 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant ambiclimate integration updated to sort and group imports according to PEP8 using isort, affecting component and test modules. This is a non-functional, style-only change to keep import order consistent and satisfy tooling/linting.",
+        "keywords": [
+            "ambiclimate",
+            "Home Assistant",
+            "isort",
+            "PEP8",
+            "import order",
+            "code style",
+            "linting",
+            "config_flow",
+            "climate integration",
+            "test_config_flow"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this pull request, the ambiclimate integration in Home Assistant had its imports reordered to comply with PEP8 standards using isort. The affected files were the main integration module (__init__.py), the climate platform (climate.py), the config flow (config_flow.py), and the corresponding tests (tests/components/ambiclimate/test_config_flow.py). Changes included adding a blank line between Home Assistant helper imports and local relative imports, reordering items within `from ... import (...)` blocks (e.g., reordering HVAC_MODE_* and SUPPORT_* constants), and ensuring external libraries like `ambiclimate` are imported before Home Assistant modules in tests. No functional logic was modified; the intent was purely stylistic to keep the repository consistent with automated formatting tools and avoid style/lint failures. The PR author ran tests locally (tox) to confirm that behavior was unchanged.",
+        "semantic_memory": "Consistent import ordering is important for readability and for satisfying automated style tools. PEP8, combined with tools like isort, prescribes grouping imports into standard library, third-party, and local/application imports, with each group separated by a blank line. Within each group, imports and imported symbols are typically sorted alphabetically. Applying these conventions not only improves code clarity but also prevents CI failures in projects that enforce style via linters or pre-commit hooks. When refactoring imports, it is crucial to verify that no functional changes are introduced: imports should only be reordered or regrouped, not added or removed unless necessary. Test files must also follow the same standards to keep the entire codebase consistent. Using automated tools (isort, black, etc.) is the recommended way to maintain uniform style across a large multi-contributor project.",
+        "procedural_memory": [
+            "When facing style or lint failures related to import ordering (e.g., isort/flake8 import order errors), use an automated tool like isort to correct import grouping and order.",
+            "Step 1: Identify the files with import-order violations (from linter output, CI logs, or pre-commit hooks).",
+            "Step 2: Run isort (or your project’s configured import sorter) on those files, e.g. `isort path/to/file.py` or `isort homeassistant/components/ambiclimate tests/components/ambiclimate`.",
+            "Step 3: Ensure that imports are grouped as per PEP8 and project conventions: standard library imports first, then third-party packages, then local/application-specific imports, with a blank line between groups.",
+            "Step 4: Within each import group, verify that imports are alphabetically sorted. For `from module import (...)` statements, sort the imported names alphabetically inside the parentheses.",
+            "Step 5: Pay attention to relative imports vs. package imports; local relative imports (e.g., `from .const import ...`) should be in the local/application group and separated from external imports by a blank line.",
+            "Step 6: In test modules, ensure third-party libraries (e.g., API SDKs) come before framework-specific imports (e.g., `from homeassistant import ...`) and then local integration imports, matching the same grouping rules.",
+            "Step 7: After applying isort, run the project’s test suite (e.g., `tox` or `pytest`) to confirm there are no functional regressions or import errors introduced by reordering.",
+            "Step 8: Re-run linters and formatting tools (isort, flake8, black, etc.) to verify that all style checks, including import order, pass.",
+            "Step 9: When submitting a PR, clearly state that the changes are style-only (no functional changes) if that is the case, to help reviewers focus on verifying that behavior remains unchanged."
+        ]
+    }
+}

@@ -1,0 +1,33 @@
+{
+    "search_index": {
+        "description_for_embedding": "Updated GitHub issue template to replace outdated Slack channel references with current Gitter chat links and removed a language-specific (Japanese) channel link to present a more neutral template for all users.",
+        "keywords": [
+            "issue template",
+            "GitHub templates",
+            "Slack to Gitter migration",
+            "communication channel links",
+            "documentation update",
+            "community support links",
+            "localization",
+            "Optuna",
+            "Gitter",
+            "Slack"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the project’s GitHub issue template for questions/help/support still referenced old Slack workspaces related to another project (Chainer) instead of the current Gitter rooms used by the Optuna community. The text instructed users to join the `#general` channel in the Chainer Slack or chainer-jp Slack for Japanese discussions. This was both outdated and brand-inconsistent. The pull request updated the template to point to the Optuna Gitter chat instead. Initially, two Gitter rooms were mentioned: the general `optuna/optuna` chat and the Japanese `optuna/optuna-jp` chat. A reviewer raised a concern that explicitly highlighting the Japanese channel in a global issue template might create an unintended impression for non-Japanese users. The author agreed and revised the template again, leaving only the general Gitter chat link. Finally, the reference and link definition for the Japanese Gitter room were removed entirely from the issue template. The resulting template now suggests Stack Overflow for questions and the single global `optuna/optuna` Gitter chat for interactive support, with no Slack or language-specific channels mentioned.",
+        "semantic_memory": "When communication infrastructure changes (e.g., moving from Slack to Gitter, Discord, or other platforms), all public-facing documentation and meta-files (like GitHub issue templates) must be updated to maintain consistency and avoid confusing users. Leaving stale references to old workspaces or to other projects can misdirect users or signal that the project is poorly maintained. Additionally, how community channels are presented in templates influences the perceived inclusiveness and neutrality of the project. Listing language-specific channels in a global template can unintentionally bias the impression of the project’s target audience. A common pattern is: (1) use issue templates to steer users toward appropriate support channels (Stack Overflow, forums, chats); (2) keep those links minimal and neutral in widely visible templates; and (3) document localized or specialized channels in more targeted documentation (e.g., regional docs, localized READMEs, or dedicated community pages). Small documentation diffs like these typically do not affect test coverage but are important for user experience, branding, and onboarding.",
+        "procedural_memory": [
+            "When communication channels or community platforms change, systematically update all user-facing references to avoid confusion and maintain a coherent support experience.",
+            "Step 1: Identify all places where old communication channels are referenced (README, docs, CONTRIBUTING, issue/PR templates, website, bot messages, etc.). Use full-text search for terms like 'Slack', 'Gitter', 'Discord', or specific workspace names.",
+            "Step 2: Confirm the current, official communication channels with project maintainers (e.g., which Gitter rooms, Discord servers, Discourse forums, or Stack Overflow tags are actively monitored).",
+            "Step 3: Decide which channels should be highlighted in high-visibility locations like GitHub issue templates. Aim for a small, neutral set of links (e.g., official chat + Q&A site) and consider whether language-specific or regional channels belong there or in more targeted documentation.",
+            "Step 4: Update the issue templates to replace outdated or incorrect links with the current official channels. Keep the prose concise and clear, explaining how different channels should be used (e.g., Stack Overflow for Q&A, chat for interactive support).",
+            "Step 5: Remove reference definitions for any links you no longer mention in the body of the template to avoid dead or unused link definitions and ensure consistency.",
+            "Step 6: Run linters or formatters for documentation/Markdown if the project uses them, and preview the issue template via GitHub’s UI to confirm that the links render correctly.",
+            "Step 7: In code review, discuss the visibility of localized or specialized channels. If there are concerns about perceived bias or clutter, either move those links to localized docs or provide a separate 'Community' or 'Support' page that lists all available channels.",
+            "Step 8: After merging, optionally broadcast the change (release notes, changelog, or a brief announcement) so maintainers and users know where they should now go for support.",
+            "Step 9: Periodically audit documentation and templates to ensure that community links remain accurate as platforms or preferences change over time."
+        ]
+    }
+}

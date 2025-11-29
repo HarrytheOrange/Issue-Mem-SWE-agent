@@ -1,0 +1,35 @@
+{
+    "search_index": {
+        "description_for_embedding": "Bug fix in napari's Qt plugin dialog where the 'available plugins' list incorrectly contained already-installed plugins due to a member variable (self.already_installed) being shadowed by a local variable. The fix removes the local set and consistently uses the instance attribute to track installed distributions, preventing duplicates in the available plugins listing.",
+        "keywords": [
+            "napari",
+            "qt_plugin_dialog",
+            "plugin dialog",
+            "available plugins list",
+            "installed plugins showing as available",
+            "duplicate entries",
+            "variable shadowing",
+            "member variable vs local variable",
+            "already_installed",
+            "plugin_manager",
+            "npe2",
+            "UI bug",
+            "state tracking bug"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the napari plugin installer dialog showed too many entries in the 'available plugins' list: installed plugins were also appearing as available. The issue was traced to a variable shadowing bug in `napari/_qt/dialogs/qt_plugin_dialog.py` within the `refresh` method. A local variable `already_installed = set()` was declared, which shadowed the intended instance attribute `self.already_installed`. The helper function `_add_to_installed` added distribution names to this local `already_installed` set instead of to `self.already_installed`. Later in the same method, when iterating over npe2 manifests and plugin engine plugins, the code checked membership against `already_installed` (the local set), which was only populated within the current call and did not persist as class state. This broke the logic for distinguishing between already installed plugins and those that should be listed as available, causing installed plugins to be considered 'available' again in the UI. The fix removed the local `already_installed` set, initialized `self.already_installed` instead, and updated all membership checks and additions (`already_installed.add(...)` and `if distname in already_installed`) to use `self.already_installed` consistently. As a result, the plugin dialog now correctly excludes installed plugins from the 'available plugins' list.",
+        "semantic_memory": "This bug illustrates a common pitfall in stateful UI logic: shadowing an instance or global state variable with a local variable of the same name. When a class attribute is intended to hold persistent state across method calls or to be shared across helper functions, accidentally introducing a local variable with the same name breaks that state management. Functions that update or consult the state may be interacting with a transient local object rather than the enduring instance attribute, leading to inconsistencies such as duplicates in lists, incorrect filters, or stale UI. In plugin or extension systems, the distinction between 'installed' vs 'available' items is often managed by sets or lists; if the tracking data structure is not the same one being consulted elsewhere in the code, the user-facing state will be wrong. Best practices include avoiding name reuse between local and instance variables, using `self.` consistently for stateful fields, and designing helper functions and callbacks with clear, explicit access to the intended state container. Static analysis and linters that detect shadowing, along with focused tests for UI state (e.g., verifying that installed items do not appear in an 'available' list), can prevent these issues.",
+        "procedural_memory": [
+            "When a UI list shows duplicates or includes items that should be excluded (e.g., installed items appearing in an 'available' list), suspect incorrect state tracking or filtering logic.",
+            "Step 1: Reproduce the issue in the UI and characterize it precisely (e.g., which entries are duplicated, which installed plugins appear in the 'available' tab).",
+            "Step 2: Locate the code responsible for populating the affected list (here, the `refresh` method in `qt_plugin_dialog.py` and its helper `_add_to_installed`). Identify the data structures used to track included/excluded items (e.g., sets like `already_installed`).",
+            "Step 3: Search for variables with the same name at different scopes (instance attributes vs local variables). In class methods, check for any local assignments like `foo = ...` where `self.foo` is also used elsewhere; this often indicates shadowing.",
+            "Step 4: Verify how helper functions and callbacks update state. Confirm that they are reading from and writing to the intended shared state container (e.g., `self.already_installed`) rather than to a locally scoped variable.",
+            "Step 5: Fix shadowing by removing or renaming local variables that conflict with instance attributes, and ensure all updates and membership checks use the correct attribute (e.g., replace `already_installed = set()` with `self.already_installed = set()` and use `self.already_installed.add(...)` and `if distname in self.already_installed`).",
+            "Step 6: Re-run the UI and verify that the list contents are now correct: installed items no longer appear in the 'available' list, and there are no unexpected duplicates.",
+            "Step 7: (Optional but recommended) Add unit or integration tests that validate the correct behavior of the list-population logic, specifically checking that installed items are excluded from the available list. This guards against future regressions.",
+            "Step 8: Consider adding static analysis or linter rules to flag variable shadowing (especially of attributes by locals) to prevent similar bugs in other parts of the codebase."
+        ]
+    }
+}

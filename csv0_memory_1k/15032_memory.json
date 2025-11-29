@@ -1,0 +1,30 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fix for Home Assistant zone component where zones created from config entries without an explicit radius (or passive flag) would not receive default values, causing misconfigured Zone entities. The fix supplies DEFAULT_RADIUS and DEFAULT_PASSIVE when those keys are missing from the config entry.",
+        "keywords": [
+            "Home Assistant",
+            "zone component",
+            "config entry",
+            "optional config",
+            "missing radius",
+            "DEFAULT_RADIUS",
+            "DEFAULT_PASSIVE",
+            "entity setup",
+            "dict.get default",
+            "configuration bug"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Home Assistant zone component had a subtle configuration bug when zones were created via config entries. The issue was that the `async_setup_entry` function read configuration values using `entry.get(CONF_RADIUS)` and `entry.get(CONF_PASSIVE)` without providing defaults. When a zone was created without a radius in its config entry (which is allowed by the configuration schema), the resulting `Zone` entity was instantiated with `radius=None` instead of the intended `DEFAULT_RADIUS`. Similarly, the passive flag could end up as `None` instead of using `DEFAULT_PASSIVE`. This could lead to zones not behaving correctly (for example, location-based automations relying on zone radius). The fix involved changing the setup code in `homeassistant/components/zone/__init__.py` so that the `Zone` object is constructed with `entry.get(CONF_RADIUS, DEFAULT_RADIUS)` and `entry.get(CONF_PASSIVE, DEFAULT_PASSIVE)`, ensuring that omitted fields fall back to sensible defaults. A corresponding test in `tests/components/zone/test_init.py` was adjusted so the zone setup test no longer relies on explicitly passing a radius, validating that setup succeeds even when radius is missing in the config entry data.",
+        "semantic_memory": "This fix illustrates a common configuration-handling pattern: when certain configuration fields are optional, especially in persisted or user-supplied data structures (like Home Assistant config entries), the code that consumes them must explicitly supply default values instead of assuming the keys are always present. Using `dict.get(key)` without a default yields `None` when the key is missing, which often silently propagates into constructors or logic that expect a real value, leading to subtle misbehavior rather than immediate, obvious errors. A robust approach is to align runtime defaults (used when reading config) with schema-level defaults, using constructs like `dict.get(key, DEFAULT)` or centralizing defaulting logic so that the application behaves consistently whether a setting is omitted or explicitly set. Tests should cover both the presence and absence of optional configuration keys to ensure defaults are applied correctly and regressions are caught early.",
+        "procedural_memory": [
+            "When diagnosing issues where entities or components misbehave with partially specified configuration, verify how optional configuration keys are read and whether defaults are consistently applied.",
+            "Step 1: Reproduce the issue by creating or loading a configuration that omits one or more optional fields (e.g., create a zone config entry without a radius or passive flag) and observe the resulting behavior or entity state.",
+            "Step 2: Inspect the component's setup or initialization code that consumes the configuration (e.g., `async_setup_entry`, constructors) and look specifically for `dict` accesses like `entry[key]` or `entry.get(key)` without a default value, which may return `KeyError` or `None` when the config key is absent.",
+            "Step 3: Cross-reference with the configuration schema or documentation to determine what the default values should be for any optional fields (e.g., `DEFAULT_RADIUS`, `DEFAULT_PASSIVE`). Ensure that these defaults are actually used at runtime when the key is missing.",
+            "Step 4: Update the consuming code to use safe access patterns that provide those defaults, such as `entry.get(CONF_RADIUS, DEFAULT_RADIUS)` instead of `entry.get(CONF_RADIUS)`, or refactor to a helper that merges user config with a defaults dictionary.",
+            "Step 5: Add or adjust unit tests to cover both cases: configuration where the optional field is provided and where it is omitted. For the omitted case, assert that the component behaves as if the default value were explicitly set (e.g., Zone radius equals DEFAULT_RADIUS when not provided in the config entry).",
+            "Step 6: Run the full test suite (e.g., `tox`) to ensure that the changes do not break other behavior and that the new tests pass, confirming that defaults are correctly applied in all relevant code paths."
+        ]
+    }
+}

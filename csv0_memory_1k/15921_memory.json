@@ -1,0 +1,34 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fix event parsing for Aqara Cube (model MFKZQ01LM) when used with Aqara AC Partner gateway by handling 'cube_status' payloads in the Xiaomi Aqara binary_sensor component and firing the correct cube_action events.",
+        "keywords": [
+            "Aqara cube",
+            "MFKZQ01LM",
+            "Xiaomi Aqara",
+            "binary_sensor",
+            "cube_status",
+            "status parsing",
+            "event bus",
+            "cube_action",
+            "Home Assistant",
+            "gateway integration bug"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Aqara Cube (model MFKZQ01LM) did not behave correctly when connected via an Aqara AC Partner gateway in Home Assistant. The Xiaomi Aqara binary_sensor platform expected cube actions to arrive in the 'status' field of the data payload, but the AC Partner gateway provided the cube action in a 'cube_status' field instead. As a result, cube actions were not recognized and no 'cube_action' events were fired on Home Assistant's event bus for this device. The fix added a conditional branch in the parse_data method of homeassistant/components/binary_sensor/xiaomi_aqara.py: if 'cube_status' is present in the incoming data, the code now fires a 'cube_action' event with action_type set to data['cube_status'] and updates self._last_action accordingly. This complements the existing handling of 'status' and 'rotate'. Although the PR was ultimately closed due to a missing CLA, the technical solution demonstrates how to support variant payload keys for the same device behavior.",
+        "semantic_memory": "Device integrations that depend on upstream gateways must account for variations in payload formats, even for the same hardware model. Different gateways or firmware versions may use different keys (e.g., 'status' vs 'cube_status') to convey the same semantic action. Robust integrations therefore need flexible parsing logic that: (1) recognizes multiple possible keys for a given concept, (2) normalizes them into a consistent internal representation, and (3) reliably emits the same events or state updates regardless of the source format. Centralized event firing (e.g., via an event bus) benefits from this normalization, because automations and higher-level logic can depend on a stable event schema while the integration layer absorbs protocol differences. Additionally, when adding support for new payload variants, it's important to maintain existing behavior (e.g., still handling 'status' and 'rotate') and simply extend the parsing to cover the new case. This pattern is widely applicable to any system that integrates with heterogeneous IoT gateways, APIs, or protocols where field names and payload schemas are not fully standardized.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Identify the symptom: Notice that a specific device or entity (e.g., an Aqara Cube) is not generating expected events or state changes in Home Assistant (or a similar platform), even though it appears connected.",
+            "Step 2: Inspect raw payloads: Enable debug logging or packet inspection for the relevant integration (e.g., Xiaomi Aqara component). Capture the raw data received from the gateway for the problematic device.",
+            "Step 3: Compare with working cases: Compare the raw payload from the non-working setup (e.g., Aqara AC Partner) with payloads from a known working gateway/setup. Look for differences in field names (e.g., 'cube_status' vs 'status') or structure.",
+            "Step 4: Map variant fields to internal semantics: Determine which new or different fields correspond to existing internal concepts (e.g., 'cube_status' corresponds to the cube action previously read from 'status'). Document this mapping.",
+            "Step 5: Extend the parser: In the integration's data parsing method (e.g., parse_data in xiaomi_aqara.py), add conditional logic to handle the new field name(s). For example, add an `if 'cube_status' in data:` block that mirrors the behavior of the existing 'status' handler, including event firing and any state tracking like _last_action.",
+            "Step 6: Normalize data to a stable event schema: Ensure that regardless of whether 'status' or 'cube_status' is present, the integration emits the same standardized event (e.g., 'cube_action') with the same attribute names (e.g., 'action_type'). This keeps automations and consumers unchanged.",
+            "Step 7: Test locally: Trigger various actions on the device (shake, flip, rotate, etc.) and confirm that the correct events are fired and internal state (like last action) updates correctly. Use logs or an event listener UI to verify.",
+            "Step 8: Add or adjust tests: Where possible, add unit or integration tests that simulate payloads with each supported field name ('status', 'cube_status', 'rotate', etc.) and assert that the same events are generated.",
+            "Step 9: Consider backward compatibility: Verify that existing setups using older gateways or payload formats still function as before; the new handling should be additive, not breaking.",
+            "Step 10: Document the behavior: Update documentation or developer notes to indicate that multiple payload field variants are supported and which gateways/firmware versions use which fields. This helps future debugging and maintenance."
+        ]
+    }
+}

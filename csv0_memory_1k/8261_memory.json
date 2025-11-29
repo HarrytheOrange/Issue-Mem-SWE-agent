@@ -1,0 +1,29 @@
+{
+    "search_index": {
+        "description_for_embedding": "Android web app shortcut created from the Home Assistant frontend was labeled 'Assistant' instead of 'Home Assistant' because the web app manifest short_name was set to 'Assistant'. The fix updated the manifest's short_name to 'Home Assistant' to present the correct app name, accepting possible truncation on the home screen.",
+        "keywords": [
+            "Android app shortcut name",
+            "PWA manifest short_name",
+            "Home Assistant frontend",
+            "web app shortcut label",
+            "mobile UX",
+            "homeassistant.components.frontend",
+            "name vs short_name",
+            "icon label truncation"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, users noticed that when adding Home Assistant to the Android home screen as a shortcut, the resulting icon was labeled 'Assistant' instead of 'Home Assistant'. This caused confusion because 'Assistant' is ambiguous and could be mistaken for Google Assistant or other assistant apps. The root cause was in the frontend configuration: the Progressive Web App (PWA) manifest-like settings in `homeassistant/components/frontend/__init__.py` defined `name: 'Home Assistant'` but `short_name: 'Assistant'`. Android primarily uses the `short_name` when displaying app shortcuts and in the task switcher, so the app appeared as just 'Assistant'. The fix changed the `short_name` from 'Assistant' to 'Home Assistant'. There was discussion about the trade-off: the original shorter label avoided truncation on the home screen (preventing 'Home Ass…'), but it introduced ambiguity. The final decision favored correctness and clarity of branding over avoiding truncation, accepting 'Home Assi…' or similar truncation on some devices as preferable to an incorrect app name.",
+        "semantic_memory": "Mobile and PWA platforms often distinguish between a full application name and a shorter label used in constrained UI contexts (e.g., home screen icons, task switcher). On Android PWAs, the `short_name` field can dominate how the app is shown in multiple places, not just where space is limited. Using an overly abbreviated or generic short name (like 'Assistant') can harm usability and brand clarity, even if it avoids truncation. A better practice is to choose a short_name that remains unambiguous and recognizable, even if partially truncated, and that clearly identifies the app compared to similar system apps. Truncation on home screens is a normal trade-off; misleading labels are more problematic. When configuring web app manifests or similar metadata, developers should test how names appear across different device fonts, sizes, and UI surfaces, and should value clarity and correct branding over purely cosmetic considerations like truncated labels.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Reproduce the issue on target devices.\n- On Android (or relevant platform), add the web app / site to the home screen or install it as a PWA.\n- Observe the label shown on the home screen icon and in the app/task switcher.\n- Note any discrepancies between the expected app name and what is displayed.",
+            "Step 2: Locate the manifest or metadata controlling the app name.\n- For PWAs, open the web app manifest (e.g., `manifest.json`) or equivalent configuration in the codebase.\n- In this case, inspect the frontend configuration file (e.g., `homeassistant/components/frontend/__init__.py`) where manifest-like data is defined.\n- Identify `name` and `short_name` fields, or platform-specific name fields (e.g., AndroidManifest, iOS app name, etc.).",
+            "Step 3: Understand platform-specific behavior for name vs short_name.\n- Consult platform documentation (e.g., Android PWA documentation) to learn how `name` and `short_name` are used.\n- Verify whether the platform uses `short_name` in multiple contexts (home screen, task switcher, notifications), not just in constrained spaces.\n- Recognize that a too-generic `short_name` may cause confusion even if it avoids truncation.",
+            "Step 4: Choose appropriate values for name and short_name.\n- Ensure `name` is the full, official product name.\n- Set `short_name` to a concise but still unambiguous version of the app name (e.g., 'Home Assistant' instead of just 'Assistant').\n- Accept reasonable truncation as preferable to an incorrect or misleading label.\n- If necessary, experiment with alternative short names that maintain identity while reducing length (e.g., 'HA Assistant', 'Home Asst', etc.).",
+            "Step 5: Implement the change in the codebase.\n- Update the configuration/manifest field: e.g., change `'short_name': 'Assistant'` to `'short_name': 'Home Assistant'` in the relevant file.\n- Ensure no other conflicting metadata defines a different name (e.g., multiple manifests, cached manifests).",
+            "Step 6: Test across devices and configurations.\n- Clear browser/PWA cache or uninstall and reinstall the web app to ensure the updated manifest is used.\n- Re-add the shortcut on Android and observe the new label on the home screen and in the task switcher.\n- Test with different font sizes and display configurations to see how the name truncates and whether it remains recognizable.",
+            "Step 7: Document the reasoning and trade-offs.\n- Record why the short_name was changed and the trade-off between truncation and clarity.\n- Note that Android always uses `short_name` in some contexts, so it must be accurate and distinctive.\n- This helps future developers avoid reintroducing ambiguous or overly generic short names."
+        ]
+    }
+}

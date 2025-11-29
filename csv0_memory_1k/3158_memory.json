@@ -1,0 +1,34 @@
+{
+    "search_index": {
+        "description_for_embedding": "Python project cleanup: remove accidentally committed .pyc (compiled bytecode) files from test fixtures to ensure tests don't depend on transient artifacts and to keep the repo clean.",
+        "keywords": [
+            "pyc files",
+            "compiled bytecode",
+            "git cleanup",
+            "test fixtures",
+            "StackStorm",
+            "Python cache files",
+            "repository hygiene",
+            "transient artifacts",
+            "test isolation",
+            "code coverage"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the StackStorm repository had several compiled Python bytecode files (*.pyc) checked into version control under the test fixtures directory: st2tests/st2tests/fixtures/packs/dummy_pack_1 and its actions subdirectory. These included __init__.pyc and dummy action .pyc files. The maintenance goal was to clean up these transient artifacts so that the test suite and repository did not rely on or contain compiled cache files. A contributor deleted all four .pyc files from the repo. Reviewers noted that tests needed to be re-run to confirm that nothing in the suite depended on the presence of these .pyc files and that their removal did not change behavior. There were no code changes beyond file deletions; coverage changed only trivially because these files were never meaningful source. The root cause was that bytecode cache files had been committed in an earlier change and lingered as tracked files instead of being ignored and left unversioned.",
+        "semantic_memory": "Compiled Python bytecode (*.pyc) files are build artifacts that should not be committed to version control. Keeping .pyc files in a repository can cause subtle issues: tests or tooling may accidentally depend on stale bytecode, cross-version incompatibilities can appear, and repository noise increases. In test fixtures, it's especially important that tests depend only on source and explicitly managed data, not on interpreter-generated cache files. A healthy practice is to ensure .pyc and __pycache__ are globally ignored (e.g., via .gitignore), periodically scan the repo for accidentally committed artifacts, and remove them. Any cleanup of such files should be accompanied by re-running tests to verify that no logic or test expectations rely on their presence. This pattern generalizes to all generated artifacts (logs, build outputs, virtualenvs, etc.): they should be ignored and not treated as canonical project state.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Detect unwanted compiled or generated artifacts in the repo. For Python, search for '*.pyc' and '__pycache__' directories (e.g., `find . -name '*.pyc' -o -name '__pycache__'`). For other languages, identify their common build artifacts.",
+            "Step 2: Determine whether any of these files are tracked by Git. Use `git status`, or more explicitly `git ls-files '*.pyc'` to list tracked bytecode files.",
+            "Step 3: Inspect the locations of tracked artifacts (e.g., under tests, fixtures, or source dirs) and confirm they are not intentionally versioned files. For test fixtures, verify that there is corresponding source (.py) or data intended to be the canonical fixture.",
+            "Step 4: Remove the unwanted artifacts from version control. For Git, run `git rm path/to/file.pyc` (or `git rm -r path/to/__pycache__`) for each tracked file or directory. Avoid deleting the source files.",
+            "Step 5: Prevent recurrence by updating ignore configuration (e.g., add `*.pyc` and `__pycache__/` to .gitignore). If this is a shared pattern across many repos, also configure global Git ignore rules.",
+            "Step 6: Rebuild and re-run the test suite. Confirm that all tests pass without relying on the removed artifacts. Pay special attention to tests in the same directories as the removed files to ensure they do not assume the presence of .pyc files.",
+            "Step 7: Check code coverage or other quality metrics if used. Ensure that coverage changes are expected and not indicative of removed executable source (coverage may shift trivially when non-source files are removed).",
+            "Step 8: Commit the cleanup change with a clear message (e.g., 'Remove stray .pyc files from test fixtures and update .gitignore'). Include notes in the PR description that tests have been re-run and that no behavior change is expected beyond cleanup.",
+            "Step 9: In code review, have reviewers explicitly confirm that only generated artifacts were removed (no source or fixture logic) and that test behavior is unchanged.",
+            "Step 10: Optionally, add CI checks or pre-commit hooks to prevent future commits from including disallowed artifact patterns (e.g., a pre-commit hook failing if '*.pyc' files are staged)."
+        ]
+    }
+}

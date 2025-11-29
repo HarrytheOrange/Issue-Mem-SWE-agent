@@ -1,0 +1,51 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant HomeKit GarageDoor accessory was incorrectly reacting to duplicate state change requests from HomeKit (e.g., scenes/automations sending the same open/close command repeatedly). This could push the HomeKit representation into incorrect intermediate states (opening/closing) and cause misbehavior. The fix ensures duplicate target states no longer change the HomeKit current_state to a transitional value, while still allowing the underlying Home Assistant service call (open_cover/close_cover) to execute so that out-of-sync entities can recover.",
+        "keywords": [
+            "Home Assistant",
+            "HomeKit",
+            "GarageDoor",
+            "cover",
+            "type_covers.py",
+            "duplicate state change",
+            "scenes",
+            "automations",
+            "transitional states",
+            "opening",
+            "closing",
+            "char_current_state",
+            "char_target_state",
+            "service_call",
+            "open_cover",
+            "close_cover",
+            "state desync",
+            "idempotent commands",
+            "homeassistant.components.homekit"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, a user reported that the HomeKit GarageDoor accessory in Home Assistant was misbehaving when used in HomeKit scenes/automations. HomeKit sometimes issues duplicate state changes (e.g., \"close the garage\" when it's already closed). The initial attempt to fix this added an early return in `GarageDoor.set_state` in `homeassistant/components/homekit/type_covers.py`, ignoring state changes when the requested value matched `char_current_state.value`. This successfully avoided duplicate transitions but raised a concern: if Home Assistant's internal entity state is incorrect or out-of-sync with reality, ignoring the service call could prevent the system from correcting itself.  \n\nAfter discussion, the final fix removed the early-return logic and refined the handling of transitional states instead. Now, `set_state` always performs the Home Assistant service call (`open_cover` or `close_cover`) whenever HomeKit asks to change the target state. However, before forcing the HomeKit characteristic into a transitional state (`opening` = 3, `closing` = 2), it checks whether the requested `value` already matches the current state. If it does, the code skips updating `char_current_state` to a transitional value, preventing weird loops or incorrect UI transitions in HomeKit when scenes send redundant commands. Tests in `tests/components/homekit/test_type_covers.py` were updated to cover duplicate target updates: they assert that `char_current_state` and `char_target_state` remain consistent and that events are emitted as expected.  \n\nThe net result: duplicate state-change requests from HomeKit no longer push the GarageDoor accessory into incorrect transitional states, while the underlying Home Assistant service calls still execute, allowing the integration to remain robust if internal state is ever wrong. This change is limited to the GarageDoor cover type; the discussion concluded that locks did not need the same treatment due to their simpler state handling.",
+        "semantic_memory": "This fix illustrates a general pattern for home automation and remote-control integrations:  \n\n1. **Duplicate Commands vs. Internal State Reliability**: When external systems (like HomeKit, Alexa, or scenes/automations) send duplicate commands, it's tempting to ignore them when the requested state matches the current state. However, doing so can be dangerous if the internal state might be stale or incorrect. A better approach is to:  \n   - Avoid redundant UI/state transitions in the bridge layer (e.g., not forcing a new transitional state that doesn't reflect reality).  \n   - Still forward the service call to the underlying platform, allowing the device or platform to correct any desynchronization.  \n\n2. **Handling Transitional States Carefully**: Devices with transitional states (e.g., `opening`, `closing`) are more sensitive to duplicate commands than simple binary devices (e.g., `locked`/`unlocked`). For such devices:  \n   - Transitional states should only be set when real state changes are taking place.  \n   - Reapplying the same target should not re-trigger a transitional state if the current state already matches the target; otherwise, the logical state machine can get into unexpected loops or visually confusing states.  \n\n3. **Idempotent API Design**: Home automation operations like `open`, `close`, `lock`, and `unlock` should ideally be idempotent: reissuing the same command should not cause harm or inconsistent state, and should be safe in scenes that get replayed often. For the bridge layer, the key is to ensure that repeated commands don't incorrectly mutate its internal representation while still letting the underlying system handle the physical command safely.  \n\n4. **Test for Duplicate Inputs**: Tests should exercise scenarios where the same target state is requested repeatedly, especially across different internal states. Verifying both:  \n   - That no spurious state transitions occur in the bridge representation.  \n   - That service calls still fire when appropriate, reinforces robust behavior under automations and scenes.",
+        "procedural_memory": [
+            "When diagnosing and fixing issues with duplicate state-change commands in a HomeKit/automation bridge:",
+            "Step 1: Reproduce the issue with automations/scenes",
+            "Create or use an existing HomeKit (or other external) scene/automation that sends the same command multiple times (e.g., a 'Good Night' scene that closes an already-closed garage door). Observe the bridge-level state changes and the device's behavior. Specifically check if transitional states (opening/closing) are toggled unnecessarily or devices misbehave.",
+            "Step 2: Inspect the bridge's state update logic",
+            "Find the handler responsible for external state changes (e.g., `set_state` for a HomeKit characteristic). Look for logic that sets both the platform service calls and the internal/transitional states (e.g., `char_current_state.set_value(...)`, `call_service(...)`). Identify when transitional states are set versus when the final states are set.",
+            "Step 3: Determine if state comparisons conflate 'no-op' with 'unsafe to call'",
+            "Check for code that completely ignores a state change when `requested_state == current_state` (e.g., early returns). Evaluate whether the internal/current state is always reliable; if not, early-return patterns may prevent necessary corrective actions.",
+            "Step 4: Separate UI/characteristic updates from backend service calls",
+            "Refactor the handler so that: (a) the backend service call (e.g., `open_cover` / `close_cover`, `lock` / `unlock`) is allowed to execute even if the bridge's internal state appears to already match the requested state, and (b) transitional state updates are guarded so they only occur for real changes. For example, only set `current_state` to `opening` or `closing` if `current_state.value != requested_target`.",
+            "Step 5: Implement conditional transitional state updates",
+            "Add conditions around transitional state assignments, e.g.: `if self.char_current_state.value != value: self.char_current_state.set_value(3)` for 'opening' and similar for 'closing'. This prevents duplicate commands from forcing the bridge into repetitive or inconsistent transitional states while still allowing the command through.",
+            "Step 6: Preserve or reinstate service calls",
+            "Ensure that the service call (e.g., `self.call_service(DOMAIN, SERVICE_OPEN_COVER, params)`) executes regardless of whether the internal state matches the requested state. This allows the underlying system to correct out-of-sync situations and keeps the behavior idempotent and safe for repeated commands.",
+            "Step 7: Extend and adjust tests for duplicate commands",
+            "Add or modify tests to cover: (a) sending a target state when the entity is already in that state, (b) verifying that `char_current_state` and `char_target_state` remain logically consistent, and (c) ensuring the service call is still invoked as expected and that no extra or spurious events are emitted. Use assertions on both state values and event counts.",
+            "Step 8: Consider differences between devices with and without transitional states",
+            "For simple binary devices (like many locks), duplicate commands may simply be harmless repeated calls, and skipping special handling can be acceptable. For devices with transitional states (doors, covers, garage doors), always review how those transitional states interact with idempotent external commands and add protections like those above.",
+            "Step 9: Validate with real devices and scenes",
+            "After changes, re-test with real automations/scenes, including edge cases (repeated scene invocations, rapid toggling, mixed device states). Confirm that devices no longer exhibit incorrect behavior and that the HomeKit/UI representation stays accurate and stable."
+        ]
+    }
+}

@@ -1,0 +1,31 @@
+{
+    "search_index": {
+        "description_for_embedding": "Packaging fix: removed `jax` from Optuna's `setup.py` extras requirements to avoid problematic automatic installation of JAX via `pip install optuna[xxx]`. JAX is now expected to be installed manually by users when needed.",
+        "keywords": [
+            "Optuna",
+            "setup.py",
+            "extras_require",
+            "jax",
+            "optional dependency",
+            "installation issue",
+            "packaging",
+            "pip",
+            "dependency management"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this PR, the Optuna project adjusted its Python packaging configuration by removing `jax` from the extras requirements defined in `setup.py`. Previously, `get_extras_require()` included a list of extra dependencies (for features like integration with other libraries) that contained `jax` alongside `optax` and `dm-haiku`. However, JAX has platform- and hardware-specific installation constraints (e.g., differing wheels for CPU/GPU, specific CUDA versions), and installing it generically through `pip install optuna[extra]` can fail or lead to incompatible environments. A prior discussion (referenced via a linked PR comment) highlighted this problem. The fix was simply to delete the \"jax\" entry from the corresponding extras list so that Optuna no longer tries to install JAX automatically. Users who need JAX-based functionality must now install `jax` themselves with the correct version and build for their system, while Optuna continues to list other integrations like `optax` and `dm-haiku` as extras.",
+        "semantic_memory": "This change illustrates a best practice in Python packaging around optional, environment-sensitive dependencies. Some libraries, such as JAX, PyTorch with CUDA, or TensorFlow, have complex installation requirements that depend on OS, hardware, or driver versions. Including such libraries directly in `install_requires` or `extras_require` can cause `pip install` of the main package or its extras to fail, because pip lacks the context needed to choose the right wheel or additional system dependencies. A more robust approach is to:\n\n- Treat these libraries as optional, user-managed dependencies.\n- Avoid declaring them in `setup.py`/`pyproject.toml` in a way that forces their installation indirectly.\n- Document their use clearly and specify that users must install them manually, following the library's own installation instructions.\n\nIn general, if a dependency is heavy, platform-specific, or has multiple incompatible variants, it's safer to exclude it from automatic installation and instead assume the user (or deploying system) will manage that dependency explicitly.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Identify problematic optional dependencies: Look for user reports or CI failures where `pip install your_package[extra]` fails due to large, platform-specific libraries (e.g., JAX, GPU-enabled frameworks, system-compiled libs). Check if those libraries are listed in `install_requires` or `extras_require` in `setup.py` or `pyproject.toml`.",
+            "Step 2: Confirm installation constraints: Review the external library's documentation to see if it has complex installation instructions (special wheels, CUDA versions, system packages). If the library recommends manual installation or has many platform-specific notes, it's a candidate to remove from automatic dependencies.",
+            "Step 3: Decide dependency strategy: Determine whether the library is truly required at install time or only needed for optional features. For optional features, prefer making the dependency optional and user-managed rather than auto-installed.",
+            "Step 4: Modify packaging configuration: In `setup.py` (or `pyproject.toml`), remove the problematic library from `install_requires` and/or any `extras_require` groups that would automatically pull it in. In this case, the fix was to delete the \"jax\" entry from the extras list returned by `get_extras_require()`.",
+            "Step 5: Update documentation and usage paths: Clearly document that the removed dependency is required for specific features but must be installed separately. Provide example commands and version hints (e.g., `pip install jax==...` with appropriate platform notes).",
+            "Step 6: Add runtime checks or lazy imports: In the parts of the code that rely on the optional dependency, add import guards or runtime checks. For example, catch `ImportError` and raise a user-friendly message directing users to install the missing library manually.",
+            "Step 7: Test installation workflows: Verify that `pip install your_package` and `pip install your_package[extras]` now succeed on the supported platforms without trying to install the problematic library. Also test the optional functionality after installing the external library manually.",
+            "Step 8: Monitor follow-up issues: After release, watch for user feedback to confirm that installation has become more reliable and that the new manual-install instructions are clear enough."
+        ]
+    }
+}

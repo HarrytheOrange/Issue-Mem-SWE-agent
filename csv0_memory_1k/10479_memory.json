@@ -1,0 +1,31 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant TCP sensor did not support JSON parsing in value templates, preventing use of `value_json`. The fix switches template rendering to `render_with_possible_json_value`, enabling automatic JSON parsing of TCP payloads while keeping existing error handling and control flow.",
+        "keywords": [
+            "Home Assistant",
+            "tcp sensor",
+            "JSON parsing",
+            "value_json",
+            "value_template",
+            "render_with_possible_json_value",
+            "sensor/tcp.py",
+            "template rendering",
+            "TemplateError",
+            "payload parsing"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this pull request, the Home Assistant TCP sensor could only use the raw TCP payload as `value` in its `value_template`. Users wanted to parse JSON responses from a TCP endpoint (e.g., an Ethereum miner returning JSON stats) and reference `value_json` inside the Jinja2 template, similar to other integrations. The original implementation called `value_template.render(value=value)`, which only passed a plain string and did not attempt JSON decoding. As a result, templates using `value_json` would fail. The fix modified `homeassistant/components/sensor/tcp.py` in the `update` method to call `render_with_possible_json_value(value)` instead of `render(value=value)`. This helper function attempts to parse the string as JSON and exposes both `value` and `value_json` to the template when appropriate. Error handling with `TemplateError` was preserved: on failure, an error is logged, and the method returns without updating the state; on success, `self._state` is set to the rendered result. This change enables configuration entries where a TCP sensor sends a JSON-RPC payload, receives JSON, and uses `value_json` in the template to extract and transform numeric values. The maintainers requested tests for this behavior, but the PR was eventually closed as stale before tests were added.",
+        "semantic_memory": "When a sensor or integration supports templating of payloads, it is important to pass data into the template in a form that matches user expectations and existing patterns across the system. In Home Assistant, many integrations expose both the raw string payload and a JSON-decoded structure via `value` and `value_json` in templates. The utility `render_with_possible_json_value` encapsulates this behavior: it accepts a string, tries to parse it as JSON, and if successful, provides a `value_json` object to the template while still making the raw text available. Using such a helper rather than directly calling a generic `render` method ensures consistent template capabilities across platforms (MQTT, REST, TCP, etc.), reduces duplication, and avoids subtle feature gaps where some platforms support JSON templating and others do not. Additionally, exception handling around template rendering should be explicit and robust: catch template errors, log meaningful context (including template and data), and avoid leaving the entity in an undefined state. This pattern—centralized helpers for common parsing logic plus consistent error handling—generalizes to any system where user-defined templates or scripts operate on external payloads.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Identify the capability gap\n- Observe user reports or configuration examples where a template expects `value_json` (or equivalent decoded structure) but fails in a specific integration.\n- Compare behavior with other, similar integrations (e.g., MQTT vs TCP sensor) that already support JSON parsing in templates.\n- Confirm that the payload is JSON-formatted and that the current platform only passes the raw string into the template.",
+            "Step 2: Inspect the template rendering path\n- Locate the component’s update or message-handling method where the state is set using a template (e.g., `update()` in the sensor platform).\n- Check how the template is invoked: is it calling a low-level `.render(...)` or a higher-level helper that may support JSON?\n- Search the codebase for patterns like `render_with_possible_json_value` or other helpers used in similar integrations.",
+            "Step 3: Switch to a JSON-aware rendering helper\n- Replace direct calls like `template.render(value=value)` with the standardized helper (e.g., `template.render_with_possible_json_value(value)`), which handles JSON detection and exposes `value_json`.\n- Ensure you pass the raw payload as a single argument, letting the helper manage the internal context (`value`, `value_json`).",
+            "Step 4: Preserve and clarify error handling\n- Keep or introduce a `try/except` around template rendering to catch template-specific exceptions (e.g., `TemplateError`).\n- On error, log a clear message including both the template and the original payload so users can debug misconfigurations.\n- Decide on failure behavior: typically, avoid updating the state and return from the method, rather than leaving a partially updated or invalid state.",
+            "Step 5: Maintain control flow consistency\n- Ensure the method returns immediately after handling a template when one is configured, so the fallback assignment (e.g., `self._state = value`) is not executed.\n- Verify that behavior when no template is configured remains unchanged (i.e., use the raw value as the state).",
+            "Step 6: Add or update tests\n- Write unit tests that:\n  - Provide a valid JSON payload and a template using `value_json` to confirm correct extraction and transformation.\n  - Provide invalid JSON to confirm that the template still receives the raw string or that appropriate errors are logged.\n  - Verify that a `TemplateError` does not crash the update cycle and that state is not incorrectly updated.\n- Run the test suite (e.g., `tox`) to ensure no regressions.",
+            "Step 7: Document the new capability\n- Update integration documentation to mention that JSON payloads are automatically parsed and that `value_json` can be used in templates.\n- Provide a configuration example demonstrating JSON extraction from a TCP (or analogous) payload."
+        ]
+    }
+}

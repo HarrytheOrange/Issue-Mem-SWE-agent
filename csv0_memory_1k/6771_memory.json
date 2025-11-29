@@ -1,0 +1,38 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant systemmonitor sensor was using psutil 5.2.0, which had multiple platform-specific bugs (missing temperature readings, FreeBSD virtual_memory failures, empty cpu_freq on Linux, and UnicodeDecodeError on Windows Process.memory_maps). The fix was to upgrade the pinned psutil dependency to 5.2.1 in both the component REQUIREMENTS and global requirements file, thereby inheriting upstream bug fixes.",
+        "keywords": [
+            "Home Assistant",
+            "systemmonitor sensor",
+            "psutil",
+            "dependency upgrade",
+            "pinned dependency",
+            "sensors_temperatures",
+            "cpu_freq",
+            "virtual_memory",
+            "UnicodeDecodeError",
+            "Process.memory_maps",
+            "Linux",
+            "FreeBSD",
+            "Windows",
+            "metrics missing",
+            "system monitoring"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Home Assistant `systemmonitor` sensor relied on psutil 5.2.0 for system metrics (temperatures, CPU frequency, virtual memory, and process memory maps). Users could encounter multiple issues due to psutil bugs: some Linux temperature sensors not appearing, `cpu_freq()` returning an empty list on Linux, `virtual_memory()` failing on FreeBSD 12 due to a missing sysctl parameter, and `Process.memory_maps()` raising `UnicodeDecodeError` on Windows with Python 3. These problems were upstream in psutil, not in Home Assistant’s own code. The maintainer resolved the issues by bumping the psutil requirement from `5.2.0` to `5.2.1`, which included fixes for all these bugs. Two files were updated: `homeassistant/components/sensor/systemmonitor.py` changed its `REQUIREMENTS` from `['psutil==5.2.0']` to `['psutil==5.2.1']`, and `requirements_all.txt` was updated from `psutil==5.2.0` to `psutil==5.2.1`. No functional changes were needed in the component itself; the fix was entirely a dependency version upgrade.",
+        "semantic_memory": "When an integration depends on a low-level system library (like psutil for system metrics), many runtime issues can manifest as missing data, incorrect readings, or platform-specific crashes. These are often caused by bugs in the upstream library version rather than in the application logic. If a project pins exact dependency versions, it can get stuck with known upstream bugs until those pins are updated. A common, effective fix is to upgrade to a newer library version that explicitly addresses the observed issues, as noted in the upstream changelog, instead of trying to implement local workarounds. Maintaining synchronized dependency declarations across component-local requirement lists and global requirements files is important; both need to be updated to avoid version drift. In general, for system-monitoring features, rely on stable, up-to-date versions of psutil or similar libraries, and periodically review their release notes for relevant bug fixes on all supported platforms.",
+        "procedural_memory": [
+            "When system-monitoring metrics are missing, incorrect, or causing errors, first determine whether the behavior is coming from the application code or from an underlying library like psutil.",
+            "Step 1: Reproduce the issue on the affected platform (e.g., Linux, FreeBSD, Windows) and capture exact symptoms, such as missing temperature sensors, empty `cpu_freq()` results, or specific exceptions like `UnicodeDecodeError`.",
+            "Step 2: Inspect the code path to see which library functions are involved (e.g., `psutil.sensors_temperatures()`, `psutil.cpu_freq()`, `psutil.virtual_memory()`, `psutil.Process().memory_maps()`).",
+            "Step 3: Check the currently installed library version (e.g., `pip show psutil` or inspecting the pinned version in requirements files).",
+            "Step 4: Review the upstream library’s changelog/release notes for the versions after the one you are using, looking for bug fixes that match your symptoms or platform (e.g., Linux, FreeBSD 12, Windows).",
+            "Step 5: If a newer version contains relevant fixes, locally upgrade to that version (e.g., `pip install psutil==5.2.1`) and rerun tests or manual checks to confirm that the issues are resolved.",
+            "Step 6: Once validated, update all dependency declarations in the project to the new version (e.g., change `REQUIREMENTS = ['psutil==5.2.0']` to `['psutil==5.2.1']` in the component, and update `requirements_all.txt` or equivalent global requirements). Keep these in sync to avoid version mismatches.",
+            "Step 7: Run the project’s automated test suite and any platform-specific tests (Linux, FreeBSD, Windows) to ensure there are no regressions introduced by the dependency bump.",
+            "Step 8: Document the change in the pull request description, explicitly referencing the upstream bug fixes that motivated the upgrade, and note any known configurations that benefit from the fix (e.g., `systemmonitor` sensor configuration that uses load, disk usage, and disk free sensors).",
+            "Step 9: After merging, monitor issue trackers for reports related to the upgraded library to catch any new incompatibilities or regressions."
+        ]
+    }
+}

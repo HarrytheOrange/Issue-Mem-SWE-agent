@@ -1,0 +1,5 @@
+# Ensure Python scripts use LF line endings
+*.py text eol=lf
+tools/**/bin/* text eol=lf
+tools/issue_rag/bin/issue_rag text eol=lf
+

@@ -1,0 +1,37 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fix StackStorm quickstart test chain where the error handler step returned success, causing the overall chain to be marked successful even when a prior step failed. The error_handler action now exits with a non-zero code, ensuring the chain fails on errors. The initial test step was also updated to assert actual CLI output (version/help) rather than just running commands, and command quoting was made consistent.",
+        "keywords": [
+            "StackStorm",
+            "st2",
+            "quickstart",
+            "workflow",
+            "action chain",
+            "error_handler",
+            "exit code",
+            "CI tests",
+            "false positive",
+            "core.local",
+            "YAML",
+            "test_basics",
+            "test_version",
+            "test_help"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the StackStorm quickstart test chain (contrib/tests/actions/chains/quickstart.yaml) had misleading behavior: if a step failed, control flowed to an error_handler step that simply ran `echo fail c4`. Because that command exited with status 0, the error_handler task was considered successful. The workflow engine then reported the entire chain as successful, even though at least one earlier step had failed. A concrete example: modifying the `test_action_list` step to run `st2 action list -j --pack=core | egrep -w 'nosuchthing'` made that step fail, but the chain status still showed success because the error handler succeeded. The fix changed the error_handler command to `echo quickstart test failed; exit 1`, ensuring that any error path results in a non-zero exit status and therefore a failed chain. Additionally, the first test step `test_basics` was too weak—it only ran `st2 --version; st2 -h` without checking output, so it could succeed even if nothing meaningful was returned. It was replaced by two steps: `test_version`, which runs `st2 --version 2>&1 | grep 'st2'`, and `test_help`, which runs `st2 -h | grep 'usage: st2'`. Both now assert on expected CLI output. The patch also standardized quotes and added a description to the trigger list step.",
+        "semantic_memory": "Workflows and test chains that use dedicated error-handling steps must ensure those steps propagate failure correctly. If an error handler returns a successful status (exit code 0), the orchestration engine may treat the whole workflow as successful, masking underlying failures and producing false positives in CI. To avoid this, error-handling actions should explicitly exit with a non-zero code when invoked as a result of a failure or should otherwise communicate failure status back to the workflow engine.\n\nSimilarly, automated tests that only execute commands without asserting on their outputs or exit codes are fragile: they can pass even when the system is misconfigured or returns empty/incorrect data. Good test design requires verifying both that commands run and that they produce expected results, such as checking version strings, usage text, or specific JSON fields. Consistent command quoting in YAML (or other configuration formats) also improves reliability, especially when commands include spaces, shell operators, or templating expressions.",
+        "procedural_memory": [
+            "When a workflow or test chain appears to succeed even though some steps should fail, verify how error handlers and failure paths propagate status.",
+            "Step 1: Reproduce the issue by intentionally breaking one of the workflow steps (e.g., make a search command return no matches) and observe the final workflow/chain status.",
+            "Step 2: Inspect the workflow/chain definition (YAML or equivalent) and identify the `on-failure` transitions and the actions they trigger (e.g., an `error_handler` node).",
+            "Step 3: Examine the error handler implementation (command, script, or action) to determine its exit behavior. Confirm whether it exits with code 0 even when handling an error.",
+            "Step 4: If the error handler should cause the overall workflow to fail, modify it to exit with a non-zero exit code (e.g., `exit 1`) or otherwise mark the task as failed according to the workflow engine's conventions.",
+            "Step 5: Rerun the workflow with a deliberately failing step and confirm that the workflow/chain status is now FAILED and not SUCCESS when the error_handler is invoked.",
+            "Step 6: Review test steps that only run CLI commands without assertions. Strengthen them by checking exit status and expected output content (e.g., pipe to `grep` or parse JSON fields) instead of merely executing commands.",
+            "Step 7: Ensure consistent quoting of command strings in configuration files (e.g., always wrap shell commands in double quotes in YAML) to avoid parsing issues and to safely include spaces, redirections, and templating expressions.",
+            "Step 8: Add or update comments/descriptions in the workflow steps to clarify their purpose, especially for steps that fetch or inspect lists, triggers, or other resources.",
+            "Step 9: Integrate these changes into CI and run the full test suite to ensure that failures are now correctly reported and that no new regressions are introduced."
+        ]
+    }
+}

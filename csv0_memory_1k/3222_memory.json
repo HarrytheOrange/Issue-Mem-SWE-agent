@@ -1,0 +1,34 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fixed a documentation inconsistency in Optuna's distribution classes (FloatDistribution, UniformDistribution, LogUniformDistribution, IntDistribution) where the description of the upper endpoint incorrectly said 'included from the range' instead of 'included in the range', clarifying that both low and high endpoints are inclusive.",
+        "keywords": [
+            "Optuna",
+            "distributions",
+            "FloatDistribution",
+            "UniformDistribution",
+            "LogUniformDistribution",
+            "IntDistribution",
+            "documentation fix",
+            "docstring consistency",
+            "range endpoints",
+            "inclusive bounds",
+            "typo",
+            "API documentation"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this pull request, the Optuna project fixed a minor but repeated documentation inconsistency in several distribution classes: FloatDistribution, UniformDistribution, LogUniformDistribution, and IntDistribution in optuna/distributions.py. The issue was that the docstrings describing the 'high' parameter (the upper endpoint of the distribution range) used the phrase 'included from the range', which was an incorrect and awkward wording compared to 'low', which was described as 'included in the range'. The fix unified the language by changing 'included from the range' to 'included in the range' for all affected classes, making it clear and consistent that both 'low' and 'high' are inclusive endpoints. No runtime behavior or logic changed; only the docstrings were corrected for clarity and consistency.",
+        "semantic_memory": "Documentation quality and consistency are crucial for usability and correctness, especially in APIs dealing with numerical ranges and boundaries. Even small phrasing issues like 'included from the range' vs. 'included in the range' can introduce confusion about whether endpoints are inclusive, which is critical for parameter distributions in optimization libraries. A general best practice is to ensure that repeated parameter semantics (such as 'low' and 'high' across multiple related classes) are documented using identical or clearly consistent wording. When a library has multiple similar classes (e.g., UniformDistribution, LogUniformDistribution, FloatDistribution, IntDistribution) that share conceptual parameters, their docstrings should be harmonized to avoid divergence over time. Proactive proofreading and standardizing terminology around boundaries (inclusive/exclusive), scaling (log vs. linear), and units helps prevent user misunderstandings and support queries. Documentation changes should still go through review and CI to ensure they match actual behavior and don't contradict tests or implementation.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar documentation inconsistencies:",
+            "Step 1: Identify duplicated concepts across classes or functions (e.g., distribution parameters like 'low' and 'high'). List all locations where these parameters are documented (docstrings, API references, user guides).",
+            "Step 2: For each parameter, compare the wording across all occurrences. Look specifically for subtle differences that could imply different semantics (e.g., 'included from the range' vs. 'included in the range', or inclusive vs. exclusive wording).",
+            "Step 3: Cross-check the documentation against the actual implementation and tests to confirm the intended behavior (e.g., verify that 'high' is indeed inclusive or exclusive based on code and tests).",
+            "Step 4: Decide on a canonical phrasing for each shared concept (e.g., 'Lower endpoint of the range of the distribution. low is included in the range.' and 'Upper endpoint of the range of the distribution. high is included in the range.'). Capture these as documentation style guidelines if possible.",
+            "Step 5: Update all docstrings and user-facing docs to use the agreed canonical phrasing. Ensure consistent terminology across similar classes and modules (FloatDistribution, UniformDistribution, LogUniformDistribution, IntDistribution, etc.).",
+            "Step 6: Run documentation builds (e.g., Sphinx) and linters (if available) to ensure there are no syntax errors or warnings. Optionally, add tests or checks that verify certain key phrases are present to prevent regressions.",
+            "Step 7: Include clear descriptions in the pull request noting that the changes are documentation-only and do not alter behavior. This helps reviewers quickly validate the change.",
+            "Step 8: After merging, consider updating any external examples, tutorials, or READMEs that might have copied the old wording, ensuring end-to-end consistency for users."
+        ]
+    }
+}

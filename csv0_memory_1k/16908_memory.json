@@ -1,0 +1,32 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fix for MQTT light RGB parsing where multi-channel RGBWW payloads (e.g. '0,255,0,0,0') caused errors because all values were passed to a function expecting only 3 RGB components. The fix trims the parsed list to the first three values before converting to HS.",
+        "keywords": [
+            "MQTT light",
+            "RGB parsing",
+            "RGBWW",
+            "payload split",
+            "comma-separated values",
+            "color_RGB_to_hs",
+            "homeassistant.components.light.mqtt",
+            "argument count mismatch",
+            "input validation",
+            "payload normalization"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In the Home Assistant MQTT light component, RGB color updates were received via an MQTT topic as comma-separated strings. The code parsed the payload with `payload.split(',')` and converted all resulting values to integers, then passed them directly to `color_util.color_RGB_to_hs(*rgb)`. This worked when the payload had exactly three components (R,G,B), but failed when users sent multi-channel payloads such as '0,255,0,0,0' (RGBWW). In those cases, the `rgb` list contained five integers, causing an argument count mismatch or incorrect behavior when passed to a function that expects exactly three RGB values. To handle this gracefully, the fix trimmed the parsed list to the first three items: `rgb = [int(val) for val in payload.split(',')][0:3]`. This allows extra channels (e.g., warm/cold white) to be ignored by the RGB conversion logic while still producing a valid HS color, avoiding errors and making it easier to integrate RGBWW devices that publish five-value color strings.",
+        "semantic_memory": "When consuming delimited payloads from external systems (like MQTT), the number of values may not match what your internal APIs expect. Functions like color converters, coordinate transformers, or other utilities typically expect a fixed number of arguments. Passing through unvalidated lists from `split()` directly into such functions can lead to runtime errors (wrong argument count or invalid ranges) when the payload schema changes or includes extra channels (e.g., RGBWW vs RGB). A robust pattern is to normalize or validate the parsed data: trim to the required number of elements, ignore unsupported extra channels, or explicitly handle extended formats. For color devices in particular, many ecosystems have overlapping but not identical representations (RGB, RGBW, RGBWW, HSV, etc.), so the integration layer should explicitly decide which components it supports and safely discard or separately use extra components instead of blindly forwarding them. Template-based transformations (e.g., splitting and slicing strings in configuration) can also be used when the core API remains limited to a simpler format.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Reproduce the failure by sending the same kind of payload the user reports (e.g., an MQTT message with a multi-channel color string like '0,255,0,0,0'). Observe logs and stack traces for argument count errors or type issues when the payload is processed.",
+            "Step 2: Locate the parsing logic for the incoming payload. Look for code that splits strings (e.g., `payload.split(',')`) and then directly passes the resulting list into helper functions via argument unpacking (`*list`) or expects a fixed-length list.",
+            "Step 3: Check the target function’s signature (e.g., a color conversion function) to confirm how many arguments it expects and what ranges/types they should be. Compare this to the number and format of values obtained from the payload.",
+            "Step 4: Decide on the supported format for this integration (e.g., only RGB, not RGBW/RGBWW). Based on that decision, normalize the parsed data: slice the list to the supported number of elements (e.g., `[0:3]` for RGB), or map/transform the extended format into the supported one.",
+            "Step 5: Implement the normalization/validation in the parsing code. For example, after splitting and converting to integers, apply `values = values[0:3]` to keep only the first three channels before passing them to `color_RGB_to_hs`. Optionally add checks to handle too few values, invalid integers, or out-of-range values.",
+            "Step 6: Add or adjust logging around the parsing step to log ignored extra channels or malformed payloads at debug level, helping future diagnosis without spamming normal logs.",
+            "Step 7: Re-test by sending both standard (3-value) and extended (e.g., 5-value) payloads. Verify that standard payloads still work as before and extended payloads no longer produce errors, with the extra channels safely ignored or handled.",
+            "Step 8: Update documentation or configuration examples to show how users with extended formats (like RGBWW) can adapt their payloads or use templates to match the supported format (e.g., `.split(',')[0:3]|join(',')` in a template), if the core API remains limited."
+        ]
+    }
+}

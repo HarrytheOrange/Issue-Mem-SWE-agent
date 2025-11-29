@@ -1,0 +1,34 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant Google Assistant integration bug: fan entities were exposed as generic SWITCH device types instead of the dedicated FAN type. Fix introduces TYPE_FAN constant and maps fan.DOMAIN to action.devices.types.FAN, updating tests accordingly.",
+        "keywords": [
+            "google_assistant",
+            "Home Assistant",
+            "fan device type",
+            "action.devices.types.FAN",
+            "DOMAIN_TO_GOOGLE_TYPES",
+            "device type mapping",
+            "smart_home integration",
+            "incorrect device classification",
+            "const.py",
+            "smart_home.py",
+            "test fixtures"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, Home Assistant's Google Assistant integration incorrectly exposed fan entities as SWITCH devices instead of using Google's dedicated FAN device type. The mapping table in homeassistant/components/google_assistant/smart_home.py mapped fan.DOMAIN to TYPE_SWITCH, and there was no TYPE_FAN constant defined. This meant Google Assistant saw fans as generic switches, which could affect user experience, UI representation, and potentially supported traits.\n\nThe fix introduced a new TYPE_FAN constant in homeassistant/components/google_assistant/const.py (PREFIX_TYPES + 'FAN') and updated DOMAIN_TO_GOOGLE_TYPES in smart_home.py to map fan.DOMAIN to TYPE_FAN instead of TYPE_SWITCH. The tests under tests/components/google_assistant/__init__.py were updated so the expected device descriptors for fan entities use 'action.devices.types.FAN' rather than 'action.devices.types.SWITCH'. After rebasing on a related PR to avoid conflicts, the changes passed tox tests and were accepted.",
+        "semantic_memory": "This case illustrates a common integration issue: misalignment between an internal domain model and an external platform's device taxonomy. When a platform (such as Google Assistant) defines specific device types (e.g., FAN, LIGHT, SWITCH), using a generic type instead of the specialized one can reduce functionality, break expectations, or cause inconsistent behavior even if basic on/off control still works.\n\nKey concepts:\n- **Device type mapping tables** (like DOMAIN_TO_GOOGLE_TYPES) are a critical abstraction: each internal domain (fan, light, climate) must map to the correct external device type constant.\n- **Explicit constants** (TYPE_FAN, TYPE_LIGHT, etc.) help maintain consistency and avoid magic strings. Missing constants often indicate missing mappings or support.\n- **Tests as contract checks**: Integration tests that assert the exact type string sent to the external platform serve as a contract. When a device type changes or a new device class is supported, tests must be updated to reflect the intended contract.\n- **Align with platform documentation**: External platform guides (e.g., Google's smart home device guides) should be treated as the source of truth for supported device types and traits. If they add or clarify a device type, the integration should be updated accordingly.\n\nIn general, when integrating with third-party ecosystems, correct classification of resources (device types, capabilities, traits) is as important as the basic connectivity. Misclassification often doesn't cause obvious runtime errors but leads to degraded UX or subtle feature loss.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Reproduce and observe external behavior\n- Link the integration (e.g., Home Assistant) to the external platform (e.g., Google Assistant).\n- Inspect how devices appear in the external platform's UI or debugging tools (e.g., Home graph, device listings, logs).\n- Note any device that appears as a generic type (like SWITCH) where a more specific type exists (like FAN, LIGHT, VACUUM).",
+            "Step 2: Confirm expected device type from documentation\n- Consult the external platform’s developer documentation (e.g., Google Smart Home device type guides).\n- Verify that there is a dedicated device type for the device category in question (e.g., FAN).\n- Capture the exact type identifier string (e.g., 'action.devices.types.FAN').",
+            "Step 3: Locate the mapping logic in the integration\n- Search the codebase for the mapping between internal domains and external device types (e.g., a DOMAIN_TO_GOOGLE_TYPES dict or similar registry).\n- Identify how the affected domain (e.g., fan.DOMAIN) is currently mapped.\n- Check for a corresponding constant in a central constants module (e.g., TYPE_FAN in const.py).",
+            "Step 4: Add or correct the type constant\n- If the type constant does not exist, add it to the constants module, following the existing naming and prefixing pattern (e.g., TYPE_FAN = PREFIX_TYPES + 'FAN').\n- If it exists but is unused or misused, verify its value matches the external platform’s expected type string and correct if needed.",
+            "Step 5: Update the domain-to-type mapping\n- In the mapping structure (e.g., DOMAIN_TO_GOOGLE_TYPES), update the entry for the affected domain.\n- Change the mapping from a generic type (e.g., TYPE_SWITCH) to the new specific type (e.g., TYPE_FAN).\n- Ensure the new type is imported where needed (e.g., from .const import TYPE_FAN).",
+            "Step 6: Update and/or add tests\n- Locate existing tests that assert the exported device descriptors (e.g., tests/components/google_assistant/__init__.py).\n- Update expected 'type' fields from the old type (e.g., 'action.devices.types.SWITCH') to the correct one (e.g., 'action.devices.types.FAN') for the relevant entities.\n- If no tests exist, add new tests that verify the representation of the device in the external platform payloads, including the 'type' field.",
+            "Step 7: Run the test suite and static checks\n- Execute the relevant test commands (e.g., tox, pytest) to ensure all tests pass.\n- Fix any failing tests that reveal additional places where the type is assumed to be the old value.\n- Optionally run linters/formatters if used in the project.",
+            "Step 8: Validate end-to-end in the external platform\n- Redeploy or restart the integration environment.\n- Trigger a resync with the external platform (e.g., Google Assistant 'request_sync').\n- Verify that the devices now appear with the correct type (e.g., FAN) in the external platform UI and that any type-specific behavior or UI is present.",
+            "Step 9: Document the change\n- Update release notes, changelog, or integration documentation to mention that the device type mapping has been corrected.\n- If applicable, note possible behavior changes for users, such as devices now appearing differently in the assistant."
+        ]
+    }
+}

@@ -1,0 +1,35 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fix for Home Assistant Pollen.com sensor where ZIP codes starting with 0 failed due to integer validation stripping leading zeros, and unguarded parsing of malformed/empty API responses caused KeyError/uninitialized data crashes. Solution: treat ZIP codes as strings, add try/except guards around API JSON access, initialize fallback data, and log when Pollen.com returns no data.",
+        "keywords": [
+            "Home Assistant",
+            "pollen sensor",
+            "Pollen.com",
+            "zip code leading zero bug",
+            "cv.positive_int",
+            "cv.string",
+            "configuration schema",
+            "API response validation",
+            "KeyError",
+            "HTTPError",
+            "pypollencom",
+            "JSON parsing",
+            "sensor update crash"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Home Assistant Pollen.com sensor had two major problems. First, ZIP codes starting with a leading zero (e.g., '00544') were failing. The platform schema validated `zip_code` as a positive integer (`cv.positive_int`), which stripped leading zeros when parsing configuration, resulting in an incorrect ZIP code being sent to the Pollen.com API and failed lookups. The fix changed the schema to require `zip_code` as a string (`cv.string`), and documentation examples now show the ZIP code quoted to preserve leading zeros.\n\nSecond, the integration assumed the Pollen.com API always returned a fully-populated JSON structure. The code accessed `data_attr['Location']['periods']` and `self.data.current_data['Location']` without any safety checks. When the API returned empty, partial, or error responses, these direct dictionary accesses raised `KeyError`, causing sensor update crashes. The patch wrapped these lookups in `try/except KeyError` blocks. On missing keys, it now logs an error message (\"Pollen.com API didn't return any data\") and exits the `update()` method early instead of crashing.\n\nAdditionally, the `_get_client_data` helper was adjusted to initialize `data = {}` before calling the client. This ensures that if a `pypollencom.exceptions.HTTPError` is raised, the method still returns a defined (empty) data structure rather than leaving `data` uninitialized. Together, these changes make the Pollen.com sensor robust against both configuration issues with ZIP codes and malformed or failed API responses.",
+        "semantic_memory": "This fix illustrates several generalizable patterns:\n\n1. **Treat identifiers with leading zeros as strings, not numbers.** ZIP codes, phone numbers, and similar identifiers are not numerical quantities; they are labels that may include leading zeros. Validating them as integers will silently alter their value by stripping zeros, causing subtle bugs when used with external services. Use string types and appropriate pattern validation instead.\n\n2. **Never assume external API responses are complete or well-formed.** Network calls and third-party APIs may return errors, partial payloads, or schema changes. Code that navigates nested response structures (`resp['Location']['periods']` etc.) should defensively handle missing keys or unexpected shapes via `try/except`, `.get()` with defaults, or schema validation. Logging clear diagnostic messages is better than letting a `KeyError` or similar propagate and crash the update cycle.\n\n3. **Initialize return variables before `try/except` blocks.** When catching exceptions around assignments, ensure that variables like `data` are defined to a safe default before the `try`. This avoids uninitialized variable errors and provides callers with predictable fallback values when the operation fails.\n\n4. **Fail soft in periodic update loops.** In sensor or polling code that runs on a schedule, transient API failures should not crash the component. Instead, log the error, keep the last known good state, and try again on the next cycle.\n\nThese patterns apply broadly to any integration dealing with configuration identifiers and external APIs, not just the Pollen.com sensor.",
+        "procedural_memory": [
+            "When an external API integration breaks for specific identifier values (e.g., ZIP codes with leading zeros), first verify how those identifiers are typed and validated in configuration.",
+            "Step 1: Inspect configuration schema for the affected field (e.g., `zip_code`). If it uses a numeric validator (`int`, `positive_int`, etc.), recognize that leading zeros will be removed.",
+            "Step 2: Change the schema to use a string validator (e.g., `cv.string`) or a more specific string pattern matcher, and update documentation/examples to show the value quoted (e.g., `zip_code: \"00544\"`).",
+            "Step 3: Reproduce the issue with the problematic identifier (e.g., a ZIP code starting with 0) before and after the change to confirm that the value is now preserved and accepted by the backend API.",
+            "Step 4: Audit all places where the integration parses the external API response. For each nested access like `resp['Location']['periods']` or similar, consider what happens if any key is missing.",
+            "Step 5: Wrap fragile nested dictionary or list accesses in `try/except` blocks catching `KeyError` (and `IndexError` if lists are involved), or use `.get()` with safe defaults. On failure, log a clear error message explaining that the API did not return the expected data, and exit the update early instead of raising.",
+            "Step 6: In helper methods that fetch data (e.g., `_get_client_data`), initialize the return variable (such as `data = {}` or `data = None`) before entering the `try` that may raise network/HTTP exceptions. Ensure that if an exception is caught, the function still returns a defined, safe value.",
+            "Step 7: Run existing unit/integration tests and, if possible, add tests that simulate malformed/empty API responses to verify that the component logs errors and continues running without crashing.",
+            "Step 8: Monitor logs in a real or staging environment to confirm that, under occasional API outages or bad responses, the system logs the issue but keeps the integration operational."
+        ]
+    }
+}

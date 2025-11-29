@@ -1,0 +1,30 @@
+{
+    "search_index": {
+        "description_for_embedding": "Upgrade the numpy dependency used by the Home Assistant OpenCV image_processing component from 1.13.1 to 1.13.3, and keep the component-specific REQUIREMENTS and the global requirements_all.txt in sync.",
+        "keywords": [
+            "numpy upgrade",
+            "dependency version bump",
+            "homeassistant.components.image_processing.opencv",
+            "requirements_all.txt",
+            "pinned dependency",
+            "library compatibility",
+            "Python package requirements"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Home Assistant project needed to update its pinned numpy version from 1.13.1 to 1.13.3. The numpy dependency was declared in two places: (1) in the OpenCV image_processing component via the REQUIREMENTS list in homeassistant/components/image_processing/opencv.py, and (2) in the global requirements_all.txt file. The change simply modified both occurrences to pin numpy==1.13.3 instead of numpy==1.13.1. The contributor also ensured that tests (via tox) passed and that the global requirements file remained consistent. The fix was not tied to a runtime bug description but to maintaining an up-to-date, aligned dependency across component-specific and global requirement declarations.",
+        "semantic_memory": "Projects that pin versions of third-party libraries must keep all references to those versions in sync across the codebase. In large Python projects, dependencies can be declared both per-component (e.g., a REQUIREMENTS constant within a module) and globally (e.g., requirements_all.txt). Upgrading a library version requires updating every declaration to avoid mismatches, installation confusion, or environment drift. Version bumps are often small, but they still need full test runs because even patch releases can introduce regressions or subtle behavior changes. It is good practice to centralize dependency management or have tooling (such as gen_requirements_all.py) that regenerates aggregated requirement files from source declarations. Always run tests after changing dependency versions to confirm that integrations relying on that library still work correctly.",
+        "procedural_memory": [
+            "When upgrading a pinned dependency version in a Python project, ensure all declarations of that dependency are updated consistently and verify the project still passes tests.",
+            "Step 1: Identify all places where the dependency is specified (e.g., module-level REQUIREMENTS lists, setup.py, requirements.txt, requirements_all.txt, or other manifest files).",
+            "Step 2: Decide the target version (e.g., numpy==1.13.3) based on release notes, compatibility requirements, and project policies on pinning or version ranges.",
+            "Step 3: Update each occurrence of the dependency to the new version, keeping component-specific requirements and the global requirements file in sync.",
+            "Step 4: If the project uses an aggregation script (e.g., script/gen_requirements_all.py), run it to regenerate any derived requirement files instead of editing generated files by hand, if that is the project convention.",
+            "Step 5: Install the updated dependencies in a fresh or isolated environment (e.g., virtualenv, tox environment) to ensure the new version resolves correctly and there are no conflicts.",
+            "Step 6: Run the full test suite (e.g., tox) and any relevant integration tests or examples that depend on the updated library, watching for regressions, deprecation warnings, or import errors.",
+            "Step 7: If tests fail, investigate whether the new version introduced breaking changes, and either adapt the code or choose a compatible version.",
+            "Step 8: Update any documentation or release notes that mention the dependency version, if applicable.",
+            "Step 9: Submit the change with a clear description such as 'Upgrade <library> to <version>' and reference any issue that requested the upgrade."
+        ]
+    }
+}

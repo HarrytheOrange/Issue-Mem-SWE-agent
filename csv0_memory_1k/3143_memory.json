@@ -1,0 +1,42 @@
+{
+    "search_index": {
+        "description_for_embedding": "Added a bash run-loop to the main run.sh script so the PokemonGo-Bot (pokecli.py) automatically restarts if it crashes or exits. The script wraps the bot command in a `while true` loop with a short delay, avoiding background execution so the next iteration starts only after the previous bot process finishes.",
+        "keywords": [
+            "bash",
+            "run.sh",
+            "while true loop",
+            "auto-restart",
+            "process supervision",
+            "pokemon go bot",
+            "pokecli.py",
+            "crash recovery",
+            "shell script",
+            "blocking vs background process"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this change set, the goal was to make the PokemonGo-Bot automatically restart if it crashed or exited. Initially, the contributor added a separate script `run_loop.sh` which wrapped the bot invocation (`python pokecli.py --config ...`) in a `while [ true ]` loop, sleeping 10 seconds between runs and printing a message indicating that the user must exit twice (Ctrl+C twice) to fully break out of the loop. The loop relied on the fact that, in bash, a command executed without `&` is blocking, so the loop only continues when `pokecli.py` exits or crashes.\n\nLater, instead of maintaining a separate `run_loop.sh`, the contributor integrated this looping behavior directly into the existing `run.sh` script. `run.sh` already handled selecting a config file (either from the first argument or a default `./configs/config.json`, with checks for its existence). The patch wrapped the `python pokecli.py --config ${config}` invocation inside a `while [ true ]` loop, added a one-second sleep and informational banner before each run, and a 10-second sleep after the process exits before restarting. The separate `run_loop.sh` file was then deleted.\n\nSome confusion arose in discussion: one user noted that the code seemed to launch `pokecli.py` every 10 seconds. Another commenter clarified that because the bot command is not run in the background (no `&`), bash waits for it to complete. Only after the bot stops or crashes does the script sleep 10 seconds and start the next iteration. The final behavior is: start run.sh, verify config, then repeatedly run the bot; if it crashes or exits, wait 10 seconds and relaunch, until the user interrupts the loop (Ctrl+C twice).",
+        "semantic_memory": "This fix illustrates a common pattern for simple process supervision using shell scripts: wrapping a long-running command in an infinite loop so it restarts automatically on exit. Key points include:\n\n- In bash, a command executed without an `&` runs in the foreground and blocks the script until it exits. This allows `while true; do command; done` to restart the command only after it finishes or crashes, rather than at fixed time intervals regardless of its state.\n- Adding a `sleep` between iterations provides a small cooldown period, preventing tight restart loops that could consume resources or spam logs if the process fails immediately on startup.\n- Integrating restart logic into the main run script (instead of a separate helper script) simplifies the user experience and reduces duplication of configuration handling.\n- User-facing messaging (e.g., banners explaining how to exit the loop, or that the script will restart on crash) helps avoid confusion about why a process keeps relaunching.\n- For simple projects, a bash loop can be a lightweight alternative to more complex process managers (systemd, supervisord, PM2, etc.), while still providing basic resilience against crashes.\n\nConceptually, this demonstrates the pattern: \"Use a controlling loop in the runner script to implement crash recovery and auto-restart, making sure the controlled process is blocking, not backgrounded.\"",
+        "procedural_memory": [
+            "To add automatic restart behavior for a CLI application via bash:",
+            "Step 1: Ensure your existing run script correctly parses arguments and resolves configuration paths. Validate that required config files exist and abort with a clear message if they do not.",
+            "Step 2: Identify the main command that launches your application (e.g., `python app.py --config ${config}`). Confirm it currently runs in the foreground (no trailing `&`). Foreground execution is required so the shell can detect when it exits.",
+            "Step 3: Wrap this command in a `while true` loop in your run script:",
+            "Step 3.1: Before the command, optionally print a banner explaining that the script will auto-restart and how to exit (e.g., 'Press Ctrl+C twice to end the loop').",
+            "Step 3.2: Optionally add a small `sleep` (e.g., `sleep 1`) before each launch to give the user time to read the message or abort.",
+            "Step 3.3: Execute the main process command without `&` so it blocks: `python pokecli.py --config ${config}`.",
+            "Step 3.4: After the command returns (either normal exit or crash), add a cooldown delay with `sleep` (e.g., `sleep 10`) to avoid rapid restart loops and give time for resources to be released.",
+            "Step 3.5: Close the loop with `done` so the process is relaunched indefinitely until the user interrupts the script (Ctrl+C).",
+            "Step 4: If you previously had a separate loop script (like `run_loop.sh`), consider consolidating logic into a single main script (`run.sh`) to prevent duplication of config-validation code and reduce the chance of divergence.",
+            "Step 5: Test the behavior:",
+            "Step 5.1: Run the script and verify that your application starts normally.",
+            "Step 5.2: Manually stop or crash the application (e.g., Ctrl+C inside the app, or introduce a controlled failure) and confirm that the script waits the configured delay and then restarts the application.",
+            "Step 5.3: Confirm that pressing Ctrl+C at the outer script level twice actually terminates the loop and does not immediately restart the application.",
+            "Step 6: If users report that the process \"restarts every N seconds\" unexpectedly, verify that:",
+            "Step 6.1: The inner application is not failing immediately on startup (check its logs/errors).",
+            "Step 6.2: The command is not being run in the background (no `&` at the end).",
+            "Step 6.3: The `sleep` is placed after the command, not only before, so restarts are time-separated after failures.",
+            "Step 7: Optionally enhance robustness by adding backoff logic (increasing sleeps after repeated crashes), logging restart attempts, or migrating to a proper process manager if requirements grow."
+        ]
+    }
+}

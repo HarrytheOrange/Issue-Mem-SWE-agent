@@ -1,0 +1,37 @@
+{
+    "search_index": {
+        "description_for_embedding": "Added a GitHub Actions workflow using Zomzog/changelog-checker to enforce that CHANGELOG.rst is updated on every pull request to master or version branches, with an option to skip via a 'no changelog' label.",
+        "keywords": [
+            "GitHub Actions",
+            "changelog checker",
+            "CHANGELOG.rst",
+            "CI enforcement",
+            "pull_request workflow",
+            "Zomzog/changelog-checker",
+            "checks.yaml",
+            "no changelog label",
+            "release process",
+            "automation"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this change, the repository maintainers wanted to ensure that contributors consistently update the CHANGELOG.rst file with every pull request, so that users and developers can track changes between releases without manual reminders in code review. To achieve this, they added a new GitHub Actions workflow file .github/workflows/checks.yaml. The workflow is named 'Checks' and triggers on pull_request events (assigned, opened, synchronize, reopened, labeled, unlabeled) targeting the master branch or any vX.Y version branch. The workflow defines a single job `changelog-checker` that runs on ubuntu-latest, checks out the repository, and then uses the marketplace action Zomzog/changelog-checker@v1.2.0 to verify that CHANGELOG.rst was modified in the PR. The action is configured with fileName: CHANGELOG.rst and checkNotification: Simple, and uses the standard GITHUB_TOKEN secret for API access. The process allows rare exceptions: when a PR legitimately does not need a changelog entry, reviewers can apply a 'no changelog' label to skip the check.",
+        "semantic_memory": "Automating changelog enforcement via CI helps maintain a reliable history of changes without relying on reviewers to remember to ask for updates. A common pattern is to run a GitHub Actions workflow on pull_request events that checks whether a specific changelog file has been touched. Using a dedicated marketplace action (like Zomzog/changelog-checker) simplifies implementation: it inspects the diff, verifies that the target file (e.g., CHANGELOG.rst or CHANGELOG.md) was modified, and can fail the check otherwise. Providing an escape hatch, such as a label (e.g., 'no changelog') or a special keyword in the commit/PR description, allows teams to handle trivial or meta changes that legitimately do not need a changelog entry. Restricting the workflow to certain branches (e.g., master and release branches) avoids unnecessary checks on experimental branches. This approach improves consistency of release notes, reduces friction in code reviews, and integrates documentation discipline directly into the CI pipeline.",
+        "procedural_memory": [
+            "Use CI to enforce changelog updates for pull requests.",
+            "Step 1: Decide which changelog file must be updated for code changes (e.g., CHANGELOG.rst or CHANGELOG.md) and where it resides in the repository.",
+            "Step 2: Identify which branches and PR events should trigger the changelog check (typically pull_request events targeting main/release branches with types like opened, synchronize, reopened, labeled, unlabeled).",
+            "Step 3: Add a new GitHub Actions workflow file under .github/workflows/, for example checks.yaml, and define a workflow name (e.g., 'Checks' or 'Changelog Check').",
+            "Step 4: Configure the workflow trigger section `on: pull_request:` with the appropriate event types and branch filters (e.g., branches: [master, v[0-9]+.[0-9]+]).",
+            "Step 5: Define a job (e.g., `changelog-checker`) that runs on a standard runner such as ubuntu-latest.",
+            "Step 6: Add a checkout step using `actions/checkout` to ensure the workflow has the repository contents, e.g., `- uses: actions/checkout@v1` or a newer version.",
+            "Step 7: Integrate a changelog checking action from the GitHub Marketplace, such as `Zomzog/changelog-checker`, by adding a step like `uses: Zomzog/changelog-checker@vX.Y.Z`.",
+            "Step 8: Configure the action inputs to match your project, e.g., `with: fileName: CHANGELOG.rst` and additional options like `checkNotification: Simple` or others per the action's documentation.",
+            "Step 9: Provide the required environment variables, typically `GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}`, so the action can interact with the GitHub API and PR metadata.",
+            "Step 10: Define a convention for skipping the changelog requirement when appropriate (e.g., a label named 'no changelog' or 'skip changelog') and ensure the chosen action supports or is configured to respect that mechanism.",
+            "Step 11: Document this process for contributors in CONTRIBUTING.md or similar, explaining that PRs must update the changelog or include the skip label for valid exceptions.",
+            "Step 12: Test the workflow by opening a test PR, confirming that it passes when CHANGELOG.rst is modified and fails when it's not, and validating that applying the skip label behaves as expected.",
+            "Step 13: If a similar requirement exists in related repositories (e.g., Exchange/plugin repos), reuse or adapt the same checks.yaml pattern to establish consistent changelog enforcement across the ecosystem."
+        ]
+    }
+}

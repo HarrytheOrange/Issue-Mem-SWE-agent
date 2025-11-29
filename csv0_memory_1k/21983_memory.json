@@ -1,0 +1,32 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant amcrest camera component did not expose an RTSP stream_source property required by the new stream component, preventing use of the play_stream service. The fix adds a stream_source property that returns the camera's RTSP URL based on the configured resolution, enabling RTSP streaming to devices like Google Home Hub.",
+        "keywords": [
+            "Home Assistant",
+            "amcrest",
+            "camera component",
+            "RTSP",
+            "stream_source",
+            "stream component integration",
+            "play_stream service",
+            "IP camera",
+            "Google Home Hub",
+            "missing property"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In the Home Assistant codebase, the amcrest camera integration supported multiple stream sources (mjpeg, snapshot, rtsp) via configuration, but it did not implement the camera entity's stream_source property required by the new stream component. As a result, the stream component and the play_stream service could not obtain the RTSP URL from an amcrest camera entity, even though the underlying library could provide one. To fix this, a new @property stream_source was added to the AmcrestCamera entity in homeassistant/components/amcrest/camera.py. This property returns self._camera.rtsp_url(typeno=self._resolution), which uses the configured resolution to build the RTSP URL. This change allows the stream component— which only supports RTSP—to work correctly with amcrest cameras and enables streaming to devices like Google Home Hub.",
+        "semantic_memory": "When integrating camera devices into a home automation platform that has a centralized stream subsystem, the camera entities must implement standardized interface properties (such as stream_source) that expose the appropriate stream URL. Even if a device supports multiple stream types (e.g., MJPEG, snapshots, RTSP), the integration must match what the central stream component expects. If the stream subsystem only supports RTSP, stream_source should return an RTSP URL, not MJPEG or snapshot URLs. Missing or misimplemented interface properties can make features like centralized streaming or play_stream services appear broken even though the underlying hardware & SDK support streaming. The general best practice is to (1) align integration-level APIs with the platform-wide streaming contracts, (2) return the most compatible stream type, and (3) use existing device methods (like rtsp_url with the correct resolution) to avoid duplicating URL construction logic.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Identify the symptom: A camera entity appears in the system, but platform-level streaming features (e.g., a stream component or play_stream service) do not work or the entity is not recognized as stream-capable.",
+            "Step 2: Inspect the camera entity interface: Check whether the entity implements required properties or methods defined by the platform (e.g., a stream_source property for Home Assistant’s camera entities). Compare with a known working camera integration.",
+            "Step 3: Verify stream capabilities of the underlying device/library: Confirm that the camera or its Python/SDK wrapper can produce the necessary stream URL (e.g., RTSP URL). Look for helper methods like rtsp_url, mjpeg_url, snapshot_url, etc.",
+            "Step 4: Align with the platform’s streaming expectations: Determine which stream type the central stream subsystem supports (e.g., RTSP only). Decide which URL should be exposed via the standardized property (e.g., return RTSP even if MJPEG and snapshot are also supported).",
+            "Step 5: Implement the missing property/method: In the camera entity class, add an appropriate property (e.g., @property def stream_source(self): ...) that returns the correct stream URL using the device/library helper (e.g., self._camera.rtsp_url(typeno=self._resolution)). Ensure it respects configuration options like resolution.",
+            "Step 6: Test end-to-end: Start the platform, confirm that the camera entity now exposes stream_source, and invoke the platform’s streaming feature (e.g., play_stream) to verify that streaming works to target devices (e.g., Google Home Hub).",
+            "Step 7: Add or update tests: Where possible, add unit or integration tests to assert that the camera entity’s stream_source returns a valid RTSP URL and that no regressions occur when configuration options change.",
+            "Step 8: Document capability and limitations: Note in docs or code comments that even if the integration supports multiple stream sources, the platform-level stream component may only support a specific type (such as RTSP). This sets expectations and guides future contributions."
+        ]
+    }
+}

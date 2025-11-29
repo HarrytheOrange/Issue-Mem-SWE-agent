@@ -1,0 +1,60 @@
+{
+    "search_index": {
+        "description_for_embedding": "Refactor of the PokemonGo bot walking/navigation system: extracted a Polyline generator class from the old PolylineWalker, introduced a new PolylineWalker that subclasses StepWalker, moved these into a walkers package, ensured origin/destination are included and intermediate GPS coordinates are rounded, and fixed all affected imports to prevent ImportError after the package reorganization.",
+        "keywords": [
+            "PolylineWalker",
+            "Polyline",
+            "StepWalker",
+            "walker",
+            "navigation",
+            "movement",
+            "GPS path",
+            "Google Directions API",
+            "polyline_generator",
+            "module refactor",
+            "package reorganization",
+            "import error",
+            "ImportError",
+            "python imports",
+            "PokemonGo bot",
+            "human_behaviour.sleep",
+            "cell_workers.utils.i2f"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this pull request, the walking/navigation subsystem of the PokemonGo bot was refactored around a new walker/navigator concept.\n\nOriginally, there was a PolylineWalker class that mixed two responsibilities: (1) computing a polyline path between an origin and destination using the Google Directions API, and (2) acting as a step-based walker within the bot's StepWalker framework. The refactor splits these concerns and reorganizes the code into a dedicated walkers package.\n\nKey changes:\n- The old PolylineWalker path-generation class was renamed to Polyline and moved to pokemongo_bot.walkers.polyline_generator. It now takes numerical origin/destination coordinates instead of the string addresses used in the tester, builds the Google Directions URL once (stored as self.URL), and constructs self.points as [origin] + intermediate points + [destination]. This ensures the full path includes both endpoints. The get_points and combine_polylines logic remains, but calculate_coord was enhanced to:\n  - Return the destination point exactly (no rounding) when the last step is reached.\n  - Return intermediate coordinates rounded to 5 decimals (~3–50 cm offset), which both reduces noise and makes float comparisons/equality checks more stable.\n- A new PolylineWalker class was introduced in pokemongo_bot.walkers.polyline_walker as a concrete StepWalker implementation. It wraps the Polyline generator and integrates with the bot:\n  - It calls the StepWalker base __init__ with (bot, speed, initLat, initLng, destLat, destLng).\n  - Instantiates Polyline with the current API position (converted via i2f) and destination, using the configured speed.\n  - Logs the generated Google Directions URL for visibility/debugging.\n  - The step() method unpauses the Polyline, waits one second (sleep), pauses again, retrieves the new position via get_pos(), updates the API position with 5-decimal rounding, triggers bot.heartbeat(), and returns True when the destination coordinates are reached.\n\n- The package layout was refactored:\n  - pokemongo_bot/polyline_walker/__init__.py was renamed to pokemongo_bot/walkers/__init__.py, now exporting Polyline and PolylineWalker from the walkers package.\n  - The old polyline_walker.py and polyline_tester.py were renamed and moved to walkers/polyline_generator.py and walkers/polyline_generator_tester.py respectively.\n\n- A test/utility script (polyline_generator_tester.py) was updated to construct Polyline with numeric lat/long tuples instead of address strings, and now prints out the points, polyline, encoded level, and speed.\n\n- After moving and renaming modules, a follow-up patch fixed import paths that would otherwise break at runtime:\n  - In pokemongo_bot/polyline_stepper.py, the import was updated from 'from polyline_walker import PolylineWalker' to 'from walkers.polyline_walker import PolylineWalker'.\n  - In walkers/polyline_walker.py, relative imports to human_behaviour and cell_workers.utils were corrected to absolute package imports: 'from pokemongo_bot.human_behaviour import sleep' and 'from pokemongo_bot.cell_workers.utils import i2f'.\n\nWithout these import fixes, the refactor would have caused ImportError/ModuleNotFoundError when trying to instantiate or use PolylineStepper or PolylineWalker. After the changes, the bot has a cleaner separation between polyline generation and step-based walking, and the new walker integrates correctly with the bot's StepWalker infrastructure.",
+        "semantic_memory": "This change illustrates several generalizable software engineering patterns and lessons:\n\n1. Separation of concerns when refactoring behavior:\n   - The original PolylineWalker class conflated path generation (talking to an external API, handling polylines) and the bot's walking/stepping behavior. The refactor splits these roles into a Polyline path generator and a PolylineWalker StepWalker implementation. This reduces coupling, improves testability, and enables alternative walkers/steppers to be plugged in.\n\n2. Clear architectural contracts for extension points:\n   - The new PolylineWalker subclasses StepWalker and adheres to a defined interface (constructor signature, step() method). Having a standard interface for walkers makes it much easier to swap movement strategies and configure them dynamically (e.g., via bot.config.walk_stepper).\n\n3. Package reorganization requires consistent import updates:\n   - When modules are moved or renamed, every import site must be updated. Using ambiguous or implicit imports (like top-level imports relying on sys.path quirks) increases the risk of runtime ImportError after refactors. Using explicit package-qualified imports (pokemongo_bot.human_behaviour, pokemongo_bot.cell_workers.utils) makes the codebase more robust to directory structure changes.\n\n4. Coordinate precision and floating-point equality:\n   - When working with GPS coordinates and computed paths, it is safer to:\n     - Round intermediate coordinates to a fixed precision before storing or comparing them.\n     - Treat the final destination point specially, ensuring it is represented exactly and compared directly.\n   - This avoids subtle bugs where tiny floating-point differences prevent a walker from recognizing that it has reached the destination.\n\n5. External API usage encapsulation:\n   - Building the Google Directions URL in one place and storing it (self.URL) centralizes external API usage, simplifies logging, and makes debugging and testing easier.\n\n6. Human-like behavior abstraction:\n   - The walker explicitly incorporates a timing/sleep behavior between movement steps (simulating real walking). Abstracting this into a human_behaviour module and then using it in walkers makes it easier to tune or replace humanization strategies without touching movement logic.\n\nOverall, the PR demonstrates how to refactor behavior modules in a bot-like system: extract domain utilities (polyline generation) from orchestration (step walking), define clear interfaces, and carefully fix all import paths after reorganizing packages.",
+        "procedural_memory": [
+            "When refactoring or adding a new movement/walker implementation in a bot, follow these steps:",
+            "Step 1: Identify and separate concerns.",
+            " - Locate classes that mix responsibilities (e.g., path generation plus step logic).",
+            " - Extract pure utility/domain logic (such as polyline generation from an external API) into its own class or module (e.g., Polyline in polyline_generator.py).",
+            "Step 2: Define or adhere to a walker/stepper interface.",
+            " - Ensure there is a clear base class or protocol (e.g., StepWalker) with required constructor arguments and a step() method.",
+            " - Make your concrete walker subclass this base and implement only behavior specific to this walking strategy.",
+            "Step 3: Encapsulate external API interactions.",
+            " - Build URLs or request payloads in one place and store them in attributes (e.g., self.URL) for easier logging and debugging.",
+            " - Ensure origin/destination formats are consistent (use numeric coordinates internally rather than free-form address strings, or convert at the boundary).",
+            "Step 4: Handle coordinate precision and path completeness.",
+            " - Include both origin and destination explicitly in your path: points = [origin] + intermediate_points + [destination].",
+            " - When calculating intermediate coordinates along segments, round to a fixed precision (e.g., 5 decimals) before storing or comparing.",
+            " - Treat the final destination specially: return it as-is (no rounding) and compare it directly to detect arrival.",
+            "Step 5: Integrate the walker with the bot core.",
+            " - In the walker's __init__, obtain the bot's current position from the API (converting types as needed, e.g., using i2f for integer-to-float).",
+            " - Initialize your path generator (Polyline) with current position, destination, and speed.",
+            " - In step(), advance the path generator, update the API position, and call any core bot hooks (e.g., bot.heartbeat()).",
+            " - Return a boolean indicating whether the destination has been reached to allow higher-level control flow.",
+            "Step 6: Update imports after moving or renaming modules.",
+            " - After reorganizing packages (e.g., moving polyline_walker to walkers.polyline_generator), search for all references to the old module/class names.",
+            " - Replace outdated imports with explicit package-qualified imports, such as 'from walkers.polyline_walker import PolylineWalker' and 'from pokemongo_bot.human_behaviour import sleep'.",
+            " - Avoid relying on implicit relative imports; prefer explicit package paths so that refactors are easier to reason about.",
+            "Step 7: Run and adjust tests and utility scripts.",
+            " - Update test scripts (like polyline_generator_tester.py) to use the new class names, modules, and argument types (e.g., lat/long tuples).",
+            " - Verify that logging shows correct URLs and that generated paths look reasonable.",
+            "Step 8: Diagnose and fix runtime import issues after refactor.",
+            " - If the bot fails with ImportError or ModuleNotFoundError after a reorganization, trace the failing module and confirm whether its location or name changed.",
+            " - Check that the package's __init__.py exports the expected symbols.",
+            " - Fix all import statements to reflect the new package structure, then rerun the bot/tests to confirm the errors are resolved."
+        ]
+    }
+}

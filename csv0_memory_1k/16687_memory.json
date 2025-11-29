@@ -1,0 +1,32 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant zeroconf component dependency bump: upgraded python-zeroconf from 0.21.0 to 0.21.1 in both the component REQUIREMENTS and requirements_all.txt to pick up upstream fixes and maintain compatibility with network discovery (mDNS/zeroconf).",
+        "keywords": [
+            "Home Assistant",
+            "zeroconf",
+            "python-zeroconf",
+            "dependency upgrade",
+            "requirements_all.txt",
+            "REQUIREMENTS variable",
+            "network discovery",
+            "mDNS",
+            "service discovery",
+            "netdisco compatibility"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Home Assistant project needed to upgrade its zeroconf integration to use python-zeroconf 0.21.1 instead of 0.21.0. The change was driven by an upstream zeroconf release that included relevant fixes or improvements, as referenced in the upstream changelog. The fix was implemented by updating the REQUIREMENTS list in homeassistant/components/zeroconf.py from 'zeroconf==0.21.0' to 'zeroconf==0.21.1', and synchronizing this version pin in requirements_all.txt under the zeroconf component section. A reviewer also noted that netdisco, which depends on zeroconf for discovery, may need a corresponding update, highlighting that related discovery libraries should be checked when bumping zeroconf. After the change, local tests and tox passed, confirming that the new zeroconf version is compatible with the existing zeroconf integration and overall Home Assistant environment.",
+        "semantic_memory": "When maintaining an integration that relies on third-party libraries (e.g., zeroconf/mDNS discovery), upgrading dependencies often involves more than just bumping a version number. The integration typically declares its dependencies in a component-specific REQUIREMENTS list and in a global requirements file. Both must be kept in sync to avoid environment inconsistencies. Additionally, libraries used for discovery (e.g., zeroconf, netdisco) can be tightly coupled: upgrading one may require checking and possibly upgrading the others to maintain protocol compatibility and avoid subtle runtime issues. Good practice is to consult the upstream changelog for breaking changes, ensure that all declarations of that dependency in the repository are aligned, and run the project's full test suite to verify no regressions. In large monorepos like Home Assistant, this often includes regenerating aggregated requirements files via helper scripts and ensuring that integrations sharing a protocol stack (e.g., discovery toolchains) stay on compatible versions.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Identify the dependency to upgrade and why: review upstream changelog (e.g., python-zeroconf) for bug fixes, security patches, or required protocol changes that affect your integration (e.g., zeroconf/mDNS discovery).",
+            "Step 2: Locate all places where the dependency version is pinned or declared in the codebase. For Home Assistant-style projects, this usually includes the component's REQUIREMENTS list (e.g., homeassistant/components/<component>.py) and global requirements files (e.g., requirements_all.txt).",
+            "Step 3: Update the version pin consistently in every location (e.g., change zeroconf==0.21.0 to zeroconf==0.21.1 in both the component file and requirements_all.txt). If the project uses an auto-generated requirements file, run the appropriate script (e.g., script/gen_requirements_all.py) instead of editing the generated file directly.",
+            "Step 4: Check for related or dependent libraries that might need coordinated upgrades (e.g., netdisco or other discovery components that rely on zeroconf). Review their compatibility requirements and update them as necessary to avoid mismatched protocol or API expectations.",
+            "Step 5: Install the updated dependencies into a clean or isolated environment (e.g., virtualenv, tox environment) and run the full test suite (e.g., tox) plus any relevant integration or discovery tests to ensure the new version does not introduce regressions.",
+            "Step 6: If the dependency affects network discovery or protocol-level behavior, perform a manual or automated functional test: verify that services are still discovered correctly (e.g., via zeroconf, avahi-browse, or the integration's UI) and that advertised metadata (e.g., txt records for Home Assistant) remains correct.",
+            "Step 7: Document the change in the pull request: reference the upstream changelog link, explain why the bump is needed, and mention any related libraries that were also updated or verified (e.g., noting that netdisco may also require an update).",
+            "Step 8: After review and CI verification, merge the dependency upgrade, keeping an eye on follow-up issues from users that might indicate subtle compatibility problems, especially in environments with diverse network setups."
+        ]
+    }
+}

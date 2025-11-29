@@ -1,0 +1,30 @@
+{
+    "search_index": {
+        "description_for_embedding": "Test pull request that only modifies README text, introducing a typo ('of a   a component') instead of fixing functionality. No actual feature or bug fix was implemented; PR appears to be for testing and stalled due to missing CLA.",
+        "keywords": [
+            "documentation change",
+            "README.rst",
+            "typo",
+            "no functional change",
+            "test pull request",
+            "CLA not signed",
+            "non-meaningful diff",
+            "code review hygiene"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, a contributor opened a pull request titled 'Added some-feature1' in the Home Assistant repository. The issue template suggested a potential feature, but the actual code change was limited to a single-line modification in README.rst. The text 'of a component,' was changed to 'of a   a component,' introducing an extra 'a' and additional spaces, which is a regression in documentation quality rather than a fix or feature. The contributor commented 'only test' and some random text ('sdfasf ...'), strongly indicating the PR was just a test of the contribution workflow. A maintainer noticed that the contributor had not signed the Contributor License Agreement (CLA) and requested they do so before review. No tests or functional changes were included, and there was no bug or feature to evaluate. This PR should be treated as a non-productive, test-only change that should not be merged because it degrades the documentation and does not implement the described feature.",
+        "semantic_memory": "This case illustrates several general points: (1) Not every pull request corresponds to a real bug fix or feature; some are test PRs or noise. Automated and human review should verify that changes are meaningful and improve the codebase or docs. (2) Documentation-only changes must still be reviewed for correctness and clarity; introducing typos or awkward wording is a regression even if tests still pass. (3) Enforcing contribution requirements like signing a CLA is an important gate before investing review time or merging. (4) Issue and PR titles/descriptions can be misleading; always compare them against the actual diff to understand what is truly being changed. (5) Repositories should discourage using the main project as a sandbox for contribution testing; instead, contributors can experiment on forks without opening meaningless PRs against the main repo. These patterns apply broadly to open-source project maintenance and automated PR triage: validate intent vs diff, ensure quality, and enforce contribution policies.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Inspect the diff carefully: Confirm whether the pull request actually implements a feature or fixes a bug, or if it only changes documentation or whitespace.",
+            "Step 2: Compare PR title/description with the diff: If the title suggests a feature (e.g., 'Added some-feature1') but the diff only changes a README line, flag the mismatch.",
+            "Step 3: Assess documentation quality: For doc-only changes, check grammar, spelling, clarity, and whether the change improves the documentation. If it introduces typos (like 'of a   a component'), treat it as a regression.",
+            "Step 4: Check contributor requirements: Verify whether the contributor has signed the CLA or met other project-specific requirements before investing further review effort.",
+            "Step 5: Engage the author: If the change appears to be a test (e.g., comments like 'only test' or random text), ask the author to clarify intent and explain the purpose of the change.",
+            "Step 6: Decide on action: If the PR is purely a test or degrades quality (e.g., adds a typo), close it with a brief explanation rather than merging. If there is a small but valid improvement, request corrections and then merge once fixed.",
+            "Step 7: Encourage best practices: Suggest that contributors use their own fork or a sandbox repo for testing Git/GitHub workflows instead of opening non-meaningful PRs to the main project.",
+            "Step 8: For automation or AI agents: Implement heuristics that down-rank or auto-flag PRs with tiny, low-signal diffs (single-word changes, random text) and mismatched titles, so maintainers can prioritize substantive contributions."
+        ]
+    }
+}

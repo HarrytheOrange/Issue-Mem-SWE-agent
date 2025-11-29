@@ -1,0 +1,29 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fix for Raspberry Pi RF switch component in Home Assistant where the rpi-rf device was not cleaned up on Home Assistant shutdown, causing GPIO resources not to be released. The fix registers a HOMEASSISTANT_STOP event listener that calls rfdevice.cleanup() when the system stops.",
+        "keywords": [
+            "rpi_rf",
+            "Raspberry Pi RF switch",
+            "GPIO cleanup",
+            "resource leak",
+            "EVENT_HOMEASSISTANT_STOP",
+            "homeassistant.components.switch",
+            "shutdown hook",
+            "cleanup on close"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In the Home Assistant `rpi_rf` switch platform, the RF device created from the `rpi-rf` library was not being cleaned up when Home Assistant shut down. This meant GPIO pins and related resources could remain in an inconsistent or locked state, potentially causing issues on restart or subsequent use. The fix introduces an explicit cleanup step tied to Home Assistant's shutdown event: the code now imports `EVENT_HOMEASSISTANT_STOP` from `homeassistant.const` and registers a one-time event listener via `hass.bus.listen_once`. When Home Assistant stops, the registered lambda calls `rfdevice.cleanup()`, ensuring the RF GPIO resources are properly released.",
+        "semantic_memory": "Hardware integrations that manage system resources (e.g., GPIO pins, serial ports, sockets) must explicitly release those resources on application shutdown or reload. Failing to do so can lead to resource leaks, locked device interfaces, or inconsistent hardware states. A common pattern in event-driven frameworks like Home Assistant is to register a shutdown or stop event handler (e.g., `EVENT_HOMEASSISTANT_STOP`) that invokes a cleanup or teardown method on the hardware abstraction object. This pattern ensures that initialization and teardown are symmetric: whenever you create or open a hardware device, you should also define how and when it is closed or cleaned up, usually via lifecycle hooks provided by the host framework.",
+        "procedural_memory": [
+            "When diagnosing resource-leak or hardware-lock issues in event-driven or long-running applications, check whether hardware resources are properly cleaned up on shutdown or reload.",
+            "Step 1: Identify the hardware or external resource being used (e.g., an RF device, GPIO controller, serial port, or socket) and locate its initialization in the code (e.g., where the `rfdevice` instance is created).",
+            "Step 2: Review the library's API (here, `rpi-rf`) to find the appropriate teardown or cleanup method (e.g., `cleanup()`, `close()`, `release()`). Confirm whether it is being called anywhere in the code.",
+            "Step 3: Check the application framework for lifecycle or shutdown events (e.g., `EVENT_HOMEASSISTANT_STOP` in Home Assistant, `on_close` hooks, or signal handlers in other systems).",
+            "Step 4: If no cleanup is wired into the lifecycle, add an event listener or handler that calls the device's cleanup method on shutdown. In Home Assistant, import `EVENT_HOMEASSISTANT_STOP` and use `hass.bus.listen_once(EVENT_HOMEASSISTANT_STOP, callback)` to register a one-time shutdown callback.",
+            "Step 5: Ensure the callback captures the specific device instance that needs cleanup (e.g., via a closure or storing it in component state) and that it only performs idempotent, safe cleanup operations.",
+            "Step 6: Test the behavior by starting the application, exercising the hardware functionality, then stopping/restarting the application. Verify that GPIO pins or other resources are released correctly (no warnings, no locked devices, and functionality works after restart).",
+            "Step 7: Document the cleanup behavior in the component or integration so future changes respect the requirement to pair initialization with proper teardown."
+        ]
+    }
+}

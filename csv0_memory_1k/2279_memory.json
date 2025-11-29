@@ -1,0 +1,31 @@
+{
+    "search_index": {
+        "description_for_embedding": "User-facing log messages in a Pokemon Go bot used internal API terminology ('fort') instead of the more familiar game concept ('pokestop'). The fix updated logger messages in move_to_fort.py to replace 'fort' with 'pokestop' for clarity and consistency with actual user-visible behavior.",
+        "keywords": [
+            "logging message",
+            "user-facing terminology",
+            "fort vs pokestop",
+            "move_to_fort.py",
+            "UX improvement",
+            "API naming mismatch",
+            "Pokemon Go bot",
+            "log clarity"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the bot’s logging referred to points of interest as 'forts', a term inherited from the Pokemon Go API where both gyms and pokestops are labeled as forts. However, this worker (move_to_fort.py) only handles pokestops, not gyms. Users found the terminology confusing and questioned why the logs referenced 'forts'. The resolution was to update the specific log messages in move_to_fort.py: one message about not moving due to insufficient inventory space and another about moving towards a location. Both were changed to use the clearer, user-aligned term 'pokestop'. The log line 'Not moving to any forts...' was changed to 'Not moving to any pokestops...', and 'Moving towards fort {}, ...' was changed to 'Moving towards pokestop: {}, ...'. This aligned internal behavior with user expectations without changing any functional logic.",
+        "semantic_memory": "When building systems on top of third-party APIs, internal terminology from the API may not align with the mental model of end-users. Using raw API terms (e.g., 'fort' for both gyms and pokestops) in user-facing logs, UI, or error messages can cause confusion, especially when the application only uses a subset of those concepts (e.g., only pokestops). A best practice is to map internal or API-level concepts to clear, domain-appropriate labels in all user-visible text. Logging and messaging should prioritize clarity, user vocabulary, and the actual functionality being performed, even if that means diverging from the underlying API terminology. This separation between internal representation and external communication improves usability and reduces support overhead.",
+        "procedural_memory": [
+            "When users report confusion over terminology in logs or UI, treat it as a usability bug, even if the code is functionally correct.",
+            "Step 1: Identify where user confusion arises by reviewing user reports, issue comments, and log excerpts they reference.",
+            "Step 2: Locate the relevant code paths that produce the confusing messages (e.g., search the codebase for the exact log string like 'fort').",
+            "Step 3: Understand the domain model: determine what the API term actually represents (e.g., 'fort' in the API covers both pokestops and gyms) and what subset the feature or worker actually uses (e.g., only pokestops).",
+            "Step 4: Decide on the most user-appropriate terminology based on how users talk about the feature (e.g., 'pokestop' instead of 'fort' when gyms are not involved).",
+            "Step 5: Update all relevant user-facing messages (logs, errors, prompts, UI text) in that context to use the clearer, domain-correct label while keeping internal logic and API calls unchanged.",
+            "Step 6: Ensure consistency: search for other occurrences of the internal term used in user-facing messages in the same module or related modules and adjust them to match the chosen terminology.",
+            "Step 7: Run tests or basic functional checks to confirm that only text changed and behavior remains intact (no formatting or string interpolation errors introduced).",
+            "Step 8: Document the rationale in the PR or commit message (e.g., 'API uses term X, but user-facing UI uses term Y for clarity'), so future maintainers understand why internal and external terms differ.",
+            "Step 9: For future features, establish a mapping layer or glossary between API terms and user-facing terms to prevent similar confusion and to centralize terminology changes."
+        ]
+    }
+}

@@ -1,0 +1,34 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant Lovelace UI configuration changes were not emitting any event when saved, preventing clients from reacting to config updates. The fix introduces a dedicated lovelace_updated event fired whenever the Lovelace config is saved to storage and adds this event to the WebSocket API permission whitelist so frontend clients can subscribe to it.",
+        "keywords": [
+            "Home Assistant",
+            "Lovelace",
+            "lovelace_updated",
+            "EVENT_LOVELACE_UPDATED",
+            "ui-lovelace.yaml",
+            "websocket_api",
+            "permissions whitelist",
+            "frontend update event",
+            "config saved event",
+            "event bus"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Lovelace UI configuration in Home Assistant could be edited and saved, but there was no system event emitted to indicate that the Lovelace configuration had changed. This meant that external listeners (e.g., the frontend or other integrations) could not reliably detect that the Lovelace config was updated and react accordingly (such as refreshing views or triggering follow-up actions).\n\nThe solution involved three coordinated changes:\n1. A new event constant EVENT_LOVELACE_UPDATED was introduced in homeassistant/components/lovelace/__init__.py. The Lovelace storage class was updated to hold a reference to hass (self._hass), so it could interact with the event bus.\n2. In the async_save method, after persisting the updated configuration via the storage helper, the code now calls self._hass.bus.async_fire(EVENT_LOVELACE_UPDATED) to emit an event whenever the Lovelace config is saved.\n3. To ensure that WebSocket clients are allowed to subscribe to this new event, EVENT_LOVELACE_UPDATED was imported into homeassistant/components/websocket_api/permissions.py and added to the set of whitelisted events alongside other configuration update events (themes, notifications, registries).\n\nThis combination ensures that on every Lovelace config save, the system fires a lovelace_updated event that frontend clients and other consumers can subscribe to via the WebSocket API, enabling reactive behavior tied to configuration updates.",
+        "semantic_memory": "This change illustrates a common pattern in event-driven systems with permissioned APIs:\n\n1. **Emit domain-specific events when important configuration or state changes occur.** When user-facing configuration (like a UI layout) is persisted, emitting a corresponding event (e.g., lovelace_updated) allows other parts of the system to react without tight coupling or polling.\n\n2. **Keep storage logic and event broadcasting close together.** The component responsible for persisting the configuration (the Lovelace storage helper) is also responsible for firing the update event immediately after a successful save. This preserves a clear sequence of operations: save, then notify.\n\n3. **Respect API permissions and whitelisting.** In systems where events are exposed over a WebSocket or other streaming API with access control, new events must be explicitly whitelisted. Forgetting to add a new event to the whitelist can make it appear as if the event is not fired, even when it is present on the internal bus.\n\n4. **Use named constants for events.** Defining EVENT_LOVELACE_UPDATED in the component and importing it from the permissions module avoids string duplication and reduces the risk of typos or mismatches between publishers and subscribers.\n\n5. **Minimal payloads are fine when the event is purely a signal.** When the relevant data is already retrievable via existing APIs or storage, the event can act as a simple trigger (no payload or just a minimal payload), keeping the event schema simple.",
+        "procedural_memory": [
+            "When you need to allow clients to react to configuration changes (e.g., a UI layout update) in an event-driven system, ensure you both fire an appropriate event at save-time and expose that event through any permissioned APIs.",
+            "Step 1: Identify the component responsible for saving the configuration or state (e.g., Lovelace storage helper in homeassistant/components/lovelace/__init__.py).",
+            "Step 2: Introduce a clear, descriptive event constant (e.g., EVENT_LOVELACE_UPDATED = 'lovelace_updated') in that component or a shared module.",
+            "Step 3: Ensure the class or function that performs the save has access to the application/event bus (e.g., store hass on self._hass in the class __init__).",
+            "Step 4: After a successful save operation (e.g., after await self._store.async_save(self._data)), call the event bus to fire the event (e.g., self._hass.bus.async_fire(EVENT_LOVELACE_UPDATED)). Keep the event payload simple unless additional data is necessary.",
+            "Step 5: Locate the API permissions or whitelist configuration for events (e.g., homeassistant/components/websocket_api/permissions.py).",
+            "Step 6: Import the new event constant into the permissions/whitelist module (e.g., from homeassistant.components.lovelace import EVENT_LOVELACE_UPDATED).",
+            "Step 7: Add the new event constant to the set or list of whitelisted events that can be subscribed to via the WebSocket or external API.",
+            "Step 8: Write or update tests to verify that the event is fired after a config save and that a WebSocket client with appropriate permissions can subscribe to and receive this event.",
+            "Step 9: Manually test in a running instance by: (a) starting the system, (b) attaching an event listener or WebSocket client to the new event type, (c) performing a configuration save in the UI or via API, and (d) confirming that the event is received and triggers the expected behavior.",
+            "Step 10: For future changes, document the new event in developer-facing docs so that other components and integrations can rely on it rather than implementing polling or ad-hoc detection logic."
+        ]
+    }
+}

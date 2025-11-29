@@ -1,0 +1,52 @@
+{
+    "search_index": {
+        "description_for_embedding": "Vendorized the vincenty geodesic distance algorithm into homeassistant.util.location to remove an external dependency, while preserving distance calculation behavior (km/miles) and adding regression tests for correctness.",
+        "keywords": [
+            "vincenty",
+            "geodesic distance",
+            "homeassistant.util.location",
+            "dependency removal",
+            "vendorize library",
+            "WGS84 ellipsoid",
+            "distance calculation",
+            "Python math",
+            "test coverage",
+            "requirements cleanup"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this pull request, the project removed its dependency on the third-party 'vincenty==0.1.4' package and instead vendorized the vincenty distance algorithm directly into homeassistant.util.location. Previously, the code imported 'vincenty' from an external library to compute distances between two latitude/longitude pairs. The change introduces constants for the WGS84 ellipsoid (AXIS_A, AXIS_B, FLATTENING), numerical parameters (MILES_PER_KILOMETER, MAX_ITERATIONS, CONVERGENCE_THRESHOLD), and a local vincenty(point1, point2, miles=False) implementation copied from the original library (with attribution and license notes). It computes the inverse Vincenty formula to return distances in kilometers (or miles when requested), handling coincident points and non-convergence (returns None on failure). The implementation uses math functions instead of the external package.\n\nThe PR also adds unit tests in tests/util/test_location.py to validate both the overall distance() utility (which returns meters) and the new internal vincenty() function. The tests use coordinates for Paris and New York and assert that the distance in kilometers and miles closely matches known values from independent tools. Finally, the dependency on 'vincenty==0.1.4' is removed from requirements_all.txt and setup.py, ensuring that the package no longer needs that external installation while preserving the original behavior and numerical accuracy.",
+        "semantic_memory": "This change illustrates a common pattern: vendorizing a small, stable algorithmic dependency to simplify installation and reduce external dependency overhead. For pure algorithmic utilities (like coordinate distance calculations), pulling the implementation into the host project can increase reliability by eliminating a PyPI dependency, improving control over versioning, and avoiding supply-chain or availability issues. When doing so, it is critical to:\n\n1. Preserve observable behavior by faithfully copying the algorithm (including constants, convergence thresholds, and edge-case handling) and adding tests anchored to known reference values.\n2. Respect licensing and attribution, including comments and links back to the original source.\n3. Ensure compatibility with existing higher-level utilities that used the external API, so users see no behavioral change.\n4. Cover numerical algorithms with realistic test cases (e.g., Paris–New York) and assert approximate equality within tolerances rather than exact values, since floating-point computations can vary slightly.\n\nMore generally, this example reinforces best practices around dependency management (removing unnecessary external libraries), deterministic numerical behavior, and test-driven refactoring when changing where an algorithm lives (external library vs internal module).",
+        "procedural_memory": [
+            "When you want to remove a small external dependency that provides a simple, stable algorithm (like distance computations), vendorize the algorithm into your codebase while preserving behavior and adding tests.",
+            "Step 1: Identify the external dependency and its usage.",
+            "  - Search the codebase for imports from the dependency (e.g., 'from vincenty import vincenty').",
+            "  - Determine exactly which functions/classes are used and what their expected inputs/outputs and semantics are (e.g., lat/lon pairs, units, edge cases).",
+            "Step 2: Obtain and review the original implementation and license.",
+            "  - Locate the dependency's source repository and find the implementation of the used functions.",
+            "  - Confirm the license allows vendoring (e.g., MIT, BSD) and note any required attribution.",
+            "  - Understand constants, numerical parameters, and edge-case handling (e.g., convergence thresholds, zero-distance cases, error returns).",
+            "Step 3: Copy and adapt the implementation into your project.",
+            "  - Create or extend an appropriate module (here: homeassistant.util.location).",
+            "  - Copy the function implementation and necessary constants (e.g., AXIS_A, AXIS_B, FLATTENING, MAX_ITERATIONS, CONVERGENCE_THRESHOLD).",
+            "  - Add attribution comments and a reference to the original license/repo as required.",
+            "  - Ensure the function signature and return types match existing usage (e.g., vincenty(point1, point2, miles=False) returning kilometers by default).",
+            "Step 4: Maintain compatibility and behavior.",
+            "  - Verify that all callers continue to work without change (e.g., a distance() helper that relies on vincenty() still returns meters as before).",
+            "  - Keep edge-case behavior identical: coincident points should return 0.0; non-convergence should return None or follow the original library's convention.",
+            "Step 5: Add robust tests anchored to external references.",
+            "  - Create unit tests that compute distances between well-known coordinates where reference answers are available (e.g., Paris–New York).",
+            "  - Test both primary and derived utilities: vincenty() in kilometers and miles, and any higher-level distance() wrappers.",
+            "  - Use approximate comparisons (assertAlmostEqual or rounding) to accommodate floating-point differences, specifying a reasonable tolerance (e.g., 2 decimal places).",
+            "Step 6: Remove the external dependency from configuration.",
+            "  - Remove the dependency from requirements files (requirements_all.txt, requirements.txt) and packaging configuration (setup.py install_requires).",
+            "  - Run dependency checks and ensure no other modules rely on the removed package.",
+            "Step 7: Run full test suite and validate behavior.",
+            "  - Execute the full test suite (e.g., 'tox') to confirm no regressions.",
+            "  - Optionally run a small manual check in a REPL to verify results match external tools (e.g., online distance calculators).",
+            "Step 8: Document the change and rationale.",
+            "  - In the PR or changelog, explain that the dependency was vendorized to simplify installation and reduce external requirements while keeping the same behavior.",
+            "  - Note any subtle behavioral guarantees (e.g., distance units, rounding behavior, handling of identical points)."
+        ]
+    }
+}

@@ -1,0 +1,30 @@
+{
+    "search_index": {
+        "description_for_embedding": "Experimental PR that unconditionally skips Qt exception handler tests (threading-related / signal-emitting tests) using pytest.mark.skip to see if they were responsible for intermittent Linux CI failures. The change did not resolve the Linux CI issues and the PR was closed.",
+        "keywords": [
+            "pytest.mark.skip",
+            "flaky tests",
+            "Linux CI failure",
+            "Qt tests",
+            "threading tests",
+            "exception handler",
+            "napari _qt _tests test_exception_handler",
+            "temporary test skip for debugging"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the project was experiencing persistent, hard-to-diagnose Linux CI failures that were suspected to be related to threading and/or Qt-related exception handling tests. To test this hypothesis, a PR was created that added `@pytest.mark.skip(\"testing CI\")` to three tests in `napari/_qt/_tests/test_exception_handler.py`: `test_exception_handler_interactive`, `test_keyboard_interupt_handler`, and `test_exception_handler_gui`. These tests involve Qt, logging, and signal emission, and may indirectly depend on threading or event loop behavior, which can differ across platforms and CI environments. The goal was not a permanent fix but an experiment: if skipping these tests made Linux CI green, the team would then refine the approach to skip only on Linux or only on CI. After running CI with these tests skipped, Linux builds still failed, indicating that these tests were not the root cause of the CI instability. As a result, the PR was closed without merging, and the search for the real source of Linux CI failures continued. The episode demonstrates using selective test skipping as a diagnostic tool rather than as a final solution.",
+        "semantic_memory": "When dealing with intermittent CI failures—especially on a specific platform like Linux and in GUI or threading-heavy code—tests involving event loops, signals, and exception handling are common suspects. A pragmatic diagnostic pattern is to temporarily skip or isolate those tests to see if CI stabilizes. However, such skipping should be treated as an experiment, not a fix: if removing the suspected tests does not resolve the issue, it is evidence that the root cause lies elsewhere. Persistent, platform-specific failures often stem from differences in environment (headless display, timing, race conditions, or library versions) rather than any single test. Best practice is to (1) use conditional marks (e.g., only on Linux or CI) when genuinely needed and (2) avoid merging broad unconditional skips as a permanent measure, as they mask potential regressions. The episode also reflects a key principle: use CI configuration and test markers as tools for hypothesis testing and narrowing down the failure surface area, then revert or refine once the hypothesis is disproven.",
+        "procedural_memory": [
+            "Use targeted test skipping/marking as a diagnostic tool for flaky or platform-specific CI failures, and avoid treating broad skips as a permanent solution.",
+            "Step 1: Identify patterns in CI failures: note which jobs (e.g., Linux), environments (headless, specific Python/Qt versions), or test modules are failing most often. Check logs for references to GUI, threading, or event loop behavior.",
+            "Step 2: Hypothesize likely culprits: focus on tests involving threading, GUI frameworks (Qt, Tk, etc.), signals, or exception handlers, as they are more sensitive to timing and environment differences in CI.",
+            "Step 3: Temporarily skip suspected tests: add `@pytest.mark.skip(\"testing CI\")` (or a similar clear message) to the specific tests suspected of causing failures. Keep the change small and localized to make the experiment easy to interpret.",
+            "Step 4: Rerun CI and compare results: if CI becomes stable, you have strong evidence that those tests are contributing to the problem. If CI still fails, the problem likely lies elsewhere; remove or revert the experimental skips.",
+            "Step 5: If the hypothesis is confirmed, refine the skip: replace unconditional skips with conditional markers, e.g. `@pytest.mark.skipif(sys.platform == \"linux\", reason=\"fails on Linux CI due to ...\")` or a custom marker like `@pytest.mark.skip_on_ci` tied to an environment variable.",
+            "Step 6: Investigate root cause: for confirmed problematic tests, inspect how they interact with threading or GUI event loops (e.g., missing `qtbot.waitSignal`, race conditions, reliance on real timers). Reproduce locally using a similar environment (e.g., Docker image matching CI) if possible.",
+            "Step 7: Implement a real fix: adjust the test (e.g., add proper synchronization, use fixtures like `qtbot` correctly, mock out GUI components), or adjust the application code if it has genuine concurrency issues. Only leave skips in place if the underlying issue cannot be resolved and is documented as such.",
+            "Step 8: Clean up experimental changes: if an experimental skip does not help, delete those decorators and close or revert the exploratory PR, documenting that those tests are not responsible for the CI failure. This avoids accumulating stale skips that hide useful test coverage."
+        ]
+    }
+}

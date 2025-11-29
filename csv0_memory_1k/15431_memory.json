@@ -1,0 +1,31 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant mysensors light entities were changing brightness multiple times when turned on because the power-on command was sent before dimmer/color updates. Fix: reorder async_turn_on so dimmer and color are set first, then call _turn_on_light(), reducing flicker/undesired transitions.",
+        "keywords": [
+            "home assistant",
+            "mysensors",
+            "light component",
+            "async_turn_on ordering",
+            "dimmer",
+            "brightness flicker",
+            "color update",
+            "device command ordering",
+            "optimistic mode",
+            "multiple state transitions"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In the Home Assistant mysensors light integration, users observed that turning on a light caused multiple unintended brightness changes (visible flicker/step changes) during a single turn-on operation. The implementation of async_turn_on() in homeassistant/components/light/mysensors.py called self._turn_on_light() before setting the dimmer level and color values via _turn_on_dimmer() and _turn_on_rgb_and_w(). This sequence meant the light powered on first (often at a default or prior brightness) and then received subsequent dimmer and color updates, resulting in multiple visible transitions. The fix was to reorder the calls in all relevant async_turn_on implementations so that configuration commands (dimmer level and color) are sent first, and the final power-on command _turn_on_light() is invoked last. Specifically: (1) in dimmer-only lights, async_turn_on now calls _turn_on_dimmer(**kwargs) then _turn_on_light(); (2) in RGB and RGBW variants, async_turn_on now calls _turn_on_dimmer(**kwargs), then _turn_on_rgb_and_w(...), and finally _turn_on_light(). The optimistic state update remains unchanged. After this change, the light turns on directly at the target dimmer/color state, eliminating intermediate brightness jumps.",
+        "semantic_memory": "When controlling hardware devices (e.g., lights) that support multiple state parameters (power, brightness, color), the order of commands matters for user-perceived behavior. If you turn a light 'on' first and then adjust brightness or color, the device may briefly display a default or previous state and then transition to the desired state, causing flicker or multiple visible changes. A more natural behavior is to set all configuration parameters (brightness, color, temperature, etc.) first and then send a single 'power on' command so that the device becomes visible to the user in its final desired state. This principle is especially important in asynchronous, event-driven frameworks like Home Assistant where a single user action can map to several low-level device commands. The general pattern: batch or sequence lower-level state changes in a way that minimizes intermediate observable states; use the final power toggle as the last step. This also ties into optimistic state updates: the UI should reflect the final desired state only after all commands that affect the device's user-visible state have been issued.",
+        "procedural_memory": [
+            "When diagnosing device flicker or multiple visual transitions on a single user action (e.g., turning on a smart light), first identify all low-level commands the integration sends for that action.",
+            "Step 1: Reproduce the issue.\n- Turn on the affected light entity and observe whether it briefly shows a default/previous brightness or color before settling on the requested state.\n- Note whether the behavior happens only with certain transitions (e.g., from off to a dimmed state or color change).",
+            "Step 2: Inspect the integration's turn-on/command code path.\n- Locate the async_turn_on/turn_on implementation for the device/platform (e.g., homeassistant/components/light/mysensors.py).\n- Identify the order in which power, brightness, color, and other configuration calls are made (e.g., _turn_on_light, _turn_on_dimmer, _turn_on_rgb_and_w).",
+            "Step 3: Determine which commands affect user-visible state and how the device behaves.\n- Check device or protocol documentation to see what default state is used when powering on without specifying dimmer/color.\n- Confirm whether sending brightness/color after power-on causes separate transitions (e.g., first 100% white, then dimmed color).",
+            "Step 4: Reorder commands to minimize intermediate visible states.\n- Change the sequence so configuration commands (brightness/dimmer, color, color temperature, etc.) are executed before the power-on command.\n- Example pattern:\n  - _set_brightness(...)\n  - _set_color(...)\n  - _turn_on_light()  # last\n- Ensure this is applied consistently across all variations (dimmer-only, RGB, RGBW, etc.).",
+            "Step 5: Preserve or adjust optimistic/UI state updates.\n- If the integration uses optimistic mode (e.g., gateway.optimistic), keep async_schedule_update_ha_state() after the full sequence so the UI reflects the final state, not an intermediate one.\n- Verify that state updates are not triggered between intermediate commands if that would misrepresent the device state.",
+            "Step 6: Test the fix.\n- Manually exercise different combinations of brightness and color when turning on the light.\n- Verify that the light turns on directly into the requested brightness/color without flicker or multiple visible transitions.\n- Run automated tests (tox/pytest) if available, or add new tests that validate the new ordering behavior when feasible.",
+            "Step 7: Generalize the pattern for similar integrations.\n- Audit other device/platform implementations that send power + configuration commands for similar ordering problems.\n- Apply the same principle: set target configuration first, then power on, and only then update the UI/optimistic state."
+        ]
+    }
+}

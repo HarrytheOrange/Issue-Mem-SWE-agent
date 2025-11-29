@@ -1,0 +1,35 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant denonavr media_player integration failed to correctly detect the power state on newer Denon AVR models (e.g., AVR-X6300H) due to a bug in the underlying denonavr Python library. The fix was to bump the denonavr dependency from 0.7.2 to 0.7.3, where the upstream issue was resolved, and update both the component REQUIREMENTS and requirements_all.txt.",
+        "keywords": [
+            "Home Assistant",
+            "denonavr",
+            "media_player.denonavr",
+            "Denon AVR-X6300H",
+            "power state detection",
+            "device state not set",
+            "integration bug",
+            "dependency bump",
+            "library upgrade",
+            "requirements_all.txt",
+            "Python 3.5",
+            "Debian",
+            "homeassistant.components.media_player.denonavr"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, a user running Home Assistant on Debian with Python 3.5 reported that the denonavr media_player integration did not correctly set the power state for newer Denon AVR models, specifically an AVR-X6300H. The core Home Assistant integration itself was not directly at fault; instead, the issue stemmed from the underlying third-party Python library denonavr, which had a bug affecting power state detection for newer devices. The denonavr project released version 0.7.3 that addressed this problem. The Home Assistant maintainer resolved the issue by bumping the dependency from denonavr==0.7.2 to denonavr==0.7.3 in two places: the component-local REQUIREMENTS list in homeassistant/components/media_player/denonavr.py and the global requirements_all.txt. No other code changes were needed because the fix was entirely upstream in the denonavr library. Although a user also suggested adding Internet radio station control and favorites browsing, that feature request was not part of this patch; the PR strictly focused on pulling in the upstream bugfix via the version bump. After the bump, newer AVR models correctly reported their power state in Home Assistant.",
+        "semantic_memory": "This case demonstrates a common pattern in integrations that wrap third-party libraries: bugs observed in the application (here, Home Assistant) may actually be caused by issues in the underlying dependency. When a device-specific behavior (like power state reporting for a particular AVR model) is broken and the integration code appears correct, it is important to check the upstream library for open issues and newer releases.\n\nPinning dependencies to exact versions, as Home Assistant does, improves reproducibility but also means bugfixes in upstream libraries will not be picked up automatically. To propagate such fixes, maintainers must explicitly bump the pinned version everywhere it is referenced and ensure consistency between component-local requirements and global requirement manifests. Keeping these in sync avoids confusing situations where different parts of the system or different install paths use different versions of the same library.\n\nIn general, for hardware integrations: \n- Hardware/model-specific bugs often get fixed upstream in vendor or community libraries rather than in the higher-level application.\n- Upgrading to a known-good library version is often the simplest and safest fix if the upstream changelog/issue tracker confirms that it addresses the specific bug.\n- Feature requests (e.g., Internet radio station control) are distinct from bugfixes and should be handled separately from dependency bump patches to keep changes small, reviewable, and low-risk.",
+        "procedural_memory": [
+            "When a device integration misreports or fails to update state (e.g., power state) for specific hardware models, first verify whether the issue originates in the integration wrapper code or in the underlying library.",
+            "Step 1: Reproduce and characterize the problem.\n- Confirm the environment (OS, Python version, application version, specific hardware model).\n- Enable debug logging for the integration and the underlying library if possible.\n- Verify that the device behaves correctly outside the application (e.g., using the library directly, vendor tools, or manual control).",
+            "Step 2: Inspect the integration code.\n- Check how the integration computes or retrieves the problematic state (power, source, volume, etc.).\n- Look for calls into the third-party library; determine whether the integration is simply exposing library behavior or performing additional logic that could be wrong.",
+            "Step 3: Check the upstream library.\n- Identify which library and version the integration depends on (e.g., REQUIREMENTS in the component and any global requirements file).\n- Review the library’s changelog, GitHub issues, and pull requests for bugs matching the observed behavior (e.g., power state not set for newer AVR models).\n- Confirm whether a newer library version includes a fix for the issue.",
+            "Step 4: Verify the fix externally.\n- Optionally, install the newer library version in a test environment and run a minimal script that uses the library directly with the target device to confirm the bug is resolved.\n- If resolved, note the exact version that contains the fix.",
+            "Step 5: Bump the dependency version in the application.\n- Update the component’s local dependency specification (e.g., REQUIREMENTS = ['denonavr==0.7.3']).\n- Update any global or mirrored requirements lists (e.g., requirements_all.txt) to the same version to keep them consistent.\n- Ensure there are no other references to the old version in the codebase or build/packaging configuration.",
+            "Step 6: Run tests and basic integration checks.\n- Run the application’s unit and integration tests related to the component.\n- Manually test the integration with at least one affected device model to confirm the state is now correctly detected.\n- Watch logs for new errors or regressions introduced by the library upgrade.",
+            "Step 7: Document and merge.\n- Reference the related issues (both application-level and upstream) in the commit or PR description.\n- Clearly state that the fix is an upstream bug resolved by bumping the dependency version, with no functional changes in the integration code itself.\n- Keep feature additions (such as new controls or UI elements) out of the dependency bump PR to avoid conflating bugfixes and new functionality.",
+            "Step 8: For future maintenance.\n- Periodically review upstream library releases for bugfixes relevant to supported hardware.\n- Consider adding tests or monitoring for critical device states (like power state) so regressions are caught early when dependencies change."
+        ]
+    }
+}

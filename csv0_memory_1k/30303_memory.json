@@ -1,0 +1,36 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant’s AlarmDecoder integration had a Python dependency/version incompatibility. The fix was to bump the alarmdecoder library from 1.13.2 to 1.13.9 in the integration manifest and global requirements file, resolving requirements conflicts.",
+        "keywords": [
+            "Home Assistant",
+            "alarmdecoder",
+            "Alarmdecoder integration",
+            "dependency conflict",
+            "requirements incompatibility",
+            "version pinning",
+            "manifest.json",
+            "requirements_all.txt",
+            "package bump",
+            "integration dependency"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Home Assistant AlarmDecoder integration was pinned to alarmdecoder==1.13.2 in both its manifest.json and the global requirements_all.txt. Users encountered a requirements incompatibility (a dependency conflict involving the alarmdecoder package). Upstream library development had released alarmdecoder==1.13.9, which addressed the incompatibility. The fix consisted solely of updating the version constraint from 1.13.2 to 1.13.9 in the integration manifest and in requirements_all.txt. Automated tests showed one failure that was determined to be unrelated to this change. While there was some discussion about waiting for explicit user validation, the maintainers concluded that the new library version clearly resolved the requirements issue and decided to merge the PR. The change is minimal, localized, and does not alter integration logic—only the dependency pin.",
+        "semantic_memory": "This case illustrates a common pattern in large Python projects with strict version pinning: dependency incompatibilities are often resolved by bumping to a newer upstream library that has been updated for compatibility. When an integration declares dependencies in multiple places (e.g., a component manifest and a global requirements file), these must remain synchronized to avoid conflicting pins. Minimal version bumps can be safe to merge, even with limited user feedback, when (1) the change is constrained to dependency metadata, (2) the upstream release explicitly addresses the compatibility problem, and (3) automated tests pass or any failures are demonstrably unrelated. It also highlights the importance of using project-specific tooling (like hassfest and requirements generators) to keep manifests and derived requirement files consistent. In general, dependency management best practices include: avoiding over-constrained version pins unless necessary, periodically updating pinned versions to incorporate compatibility fixes, verifying that all requirement declarations align, and relying on CI plus selective user validation for regression detection.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar dependency incompatibility issues in an integration:",
+            "Step 1: Detect the problem: Look for pip/installation errors, CI logs, or runtime import errors indicating that a package version is incompatible with other requirements (e.g., 'Could not satisfy requirement', 'version conflict', or 'Incompatible requirements').",
+            "Step 2: Identify the pinned versions: Check all places where the affected package is declared. In Home Assistant, this typically includes the integration’s manifest.json (requirements field) and global files like requirements_all.txt (and possibly requirements_test.txt, etc.).",
+            "Step 3: Inspect upstream changes: Visit the upstream package’s repository or PyPI page to see newer releases and changelogs. Look for notes about compatibility fixes, dependency updates, or bug fixes related to your issue.",
+            "Step 4: Choose a target version: Select the minimal upstream version that resolves the incompatibility (often the newest stable release that mentions a fix). Make sure that version is compatible with the rest of your stack (Python version, other dependencies).",
+            "Step 5: Update integration metadata: Bump the package version in the integration’s manifest.json requirements list and in any central/global requirements file (e.g., requirements_all.txt), ensuring both locations specify the same version.",
+            "Step 6: Regenerate derived files: If the project uses tooling to derive requirements (e.g., `python3 -m script.gen_requirements_all` in Home Assistant), run it so all generated requirement files stay in sync with the manifest.",
+            "Step 7: Run project validation tools: Use project-specific validation tools (e.g., `python3 -m script.hassfest`) to check that manifests and integration metadata are valid and consistent.",
+            "Step 8: Run tests locally: Execute the project's test suite (e.g., via tox). Investigate any test failures. Confirm whether failures are caused by the version bump or are unrelated pre-existing issues.",
+            "Step 9: Optionally seek user validation: When the change affects external hardware integrations or edge cases, ask affected users (via the linked issue) to test the updated dependency in their environment, if feasible.",
+            "Step 10: Document the rationale in the PR: Clearly state that the change is a dependency bump to fix a requirements incompatibility, referencing the upstream fix or linked issue. This helps reviewers quickly assess risk.",
+            "Step 11: Merge with caution: If tests pass and the change is minimal (just dependency pins), it is often reasonable to merge even with limited user feedback, especially when the previous version is known-broken or incompatible.",
+            "Step 12: Monitor after release: After deployment, watch for new issues related to the updated dependency (regressions, new incompatibilities) and be prepared to adjust the version again or add compatibility shims if needed."
+        ]
+    }
+}

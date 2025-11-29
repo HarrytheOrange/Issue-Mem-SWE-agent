@@ -1,0 +1,49 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant CO2Signal sensor was polling the external CO2Signal API too frequently and without a configurable interval. The fix introduced a SCAN_INTERVAL constant and optional scan_interval configuration, used Throttle to rate-limit update calls, and scheduled periodic updates with track_time_interval to reduce API usage.",
+        "keywords": [
+            "Home Assistant",
+            "CO2Signal",
+            "sensor",
+            "SCAN_INTERVAL",
+            "scan_interval",
+            "Throttle",
+            "track_time_interval",
+            "polling interval",
+            "API rate limiting",
+            "homeassistant.components.sensor.co2signal"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Home Assistant CO2Signal sensor component did not define its own polling interval and therefore relied on the default update schedule. This could cause the integration to call the external CO2Signal API more frequently than desired, potentially hitting rate limits or being inefficient. The author aimed to (1) reduce how often the integration queries the API by setting a longer default interval, and (2) allow users to configure this interval via configuration.yaml.\n\nThe code changes introduced a SCAN_INTERVAL constant set to 60 seconds and added CONF_SCAN_INTERVAL to the platform schema so users could specify a custom scan_interval. In setup_platform, the component reads the scan_interval from the configuration, passes it (and hass) into the CO2Sensor entity, and the entity’s __init__ registers a periodic callback using track_time_interval(hass, self.update, scan_interval). The update method itself is decorated with @Throttle(SCAN_INTERVAL) to ensure it runs at most once per SCAN_INTERVAL, providing an additional safeguard against too-frequent calls.\n\nReview discussion surfaced design concerns: in Home Assistant, SCAN_INTERVAL at the platform level already controls how often the core calls Entity.update() when should_poll() is True. Using Throttle directly on update() can block forced updates, and manually scheduling updates with track_time_interval duplicates what the core scheduler does. Reviewers suggested either relying solely on SCAN_INTERVAL (and removing manual scheduling/Throttle) or implementing a shared data object with Throttle for caching, while letting entities read from that cache. Despite those concerns, the core intention of the PR was to introduce a defined and configurable scan interval for the CO2Signal sensor to limit API calls.",
+        "semantic_memory": "When integrating polling-based sensors with external APIs (like in Home Assistant), it is important to explicitly control the polling interval to respect API rate limits and avoid unnecessary network traffic. Frameworks like Home Assistant already provide built-in mechanisms for this, such as SCAN_INTERVAL (a module-level constant) and per-entity polling behavior controlled via should_poll().\n\nA common anti-pattern is to combine multiple scheduling or throttling mechanisms for the same entity—e.g., decorating Entity.update() with Throttle while also using SCAN_INTERVAL or separately scheduling updates with track_time_interval. This can lead to unexpected behavior: forced updates may be blocked by Throttle, latencies can be confusing, and the code becomes harder to reason about.\n\nA better pattern is:\n- Use SCAN_INTERVAL (or the framework's equivalent) for the primary polling cadence of entities that should poll.\n- If there are multiple entities sharing the same remote data, use a central data coordinator or shared data object that fetches from the external API at a controlled rate (using Throttle or a scheduled callback), then have entities read from that cached data instead of each entity calling the API directly.\n- Avoid double-scheduling (both core polling and manual track_time_interval) for the same entity unless there is a clear and documented reason.\n\nAlso, if the framework supports overriding scan_interval via configuration, prefer that mechanism over custom CONF_SCAN_INTERVAL unless the integration requires special handling. Throttling update() directly is acceptable for simple integrations, but developers must be aware that it changes the semantics of forced or on-demand updates.",
+        "procedural_memory": [
+            "To diagnose and fix similar issues with polling intervals and API rate limiting in a Home Assistant sensor integration:",
+            "Step 1: Identify symptoms of over-polling or rate limit issues. Look for error logs from the external API, abnormally high traffic, or user reports that the sensor is making too many requests.",
+            "Step 2: Inspect the sensor integration code to see how updates are triggered. Check for:",
+            "  - A SCAN_INTERVAL constant at the module level.",
+            "  - The presence or absence of should_poll() in the entity.",
+            "  - Any use of Throttle around update() or other data-fetching functions.",
+            "  - Any manual scheduling via track_time_interval or similar mechanisms.",
+            "Step 3: Decide on the appropriate polling model:",
+            "  - If each entity polls independently and there is no shared data, rely on SCAN_INTERVAL (or the framework default) to control the polling interval.",
+            "  - If multiple entities depend on the same remote call, create a separate data coordinator object that fetches from the external API and caches the results. Entities should read from this cache instead of calling the API directly.",
+            "Step 4: Implement or adjust SCAN_INTERVAL:",
+            "  - Define a module-level SCAN_INTERVAL (e.g., SCAN_INTERVAL = timedelta(seconds=60)) that represents a safe default poll rate for the API.",
+            "  - If the framework allows user configuration of scan_interval, add the corresponding configuration option to the platform schema and ensure that the framework’s standard mechanism handles it (do not re-implement your own scheduler unnecessarily).",
+            "Step 5: Avoid double-scheduling and redundant throttling:",
+            "  - If you rely on the core polling mechanism (SCAN_INTERVAL + should_poll == True), do NOT also call track_time_interval on the same update method.",
+            "  - Use Throttle primarily on data-fetch functions in a shared data object or coordinator, not directly on Entity.update() unless you fully understand the impact on forced updates.",
+            "Step 6: Wire up the entity correctly:",
+            "  - In setup_platform, construct the entity (or data coordinator) with any needed parameters (token, coordinates, etc.).",
+            "  - If you use a coordinator object, that object should schedule its own periodic refresh (via track_time_interval) and expose cached values to entities.",
+            "Step 7: Test the behavior:",
+            "  - Verify that the entity updates occur at the desired interval by inspecting logs or setting a short interval in a test environment.",
+            "  - Trigger a forced update (e.g., via a Home Assistant service like homeassistant.update_entity) and confirm it works as expected and is not blocked by Throttle.",
+            "  - Check that API rate limits are no longer exceeded and that the external service is queried at the new, reduced frequency.",
+            "Step 8: Document configuration and behavior:",
+            "  - Update or add documentation so users know the default scan interval and how to configure it.",
+            "  - Clarify any limitations (e.g., minimal allowed interval, impact of Throttle if used)."
+        ]
+    }
+}

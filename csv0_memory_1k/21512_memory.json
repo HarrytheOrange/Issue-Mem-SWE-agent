@@ -1,0 +1,43 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant AirVisual sensor integration updated its pinned dependency from pyairvisual 2.0.1 to 3.0.1, fixing issues that required the newer library version and keeping REQUIREMENTS and requirements_all.txt in sync.",
+        "keywords": [
+            "pyairvisual",
+            "AirVisual sensor",
+            "homeassistant.components.sensor.airvisual",
+            "dependency upgrade",
+            "pinned version",
+            "requirements_all.txt",
+            "REQUIREMENTS constant",
+            "third-party library bugfix",
+            "integration dependency mismatch"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Home Assistant AirVisual sensor integration needed to be updated to use pyairvisual 3.0.1 instead of 2.0.1. The upstream pyairvisual library had released a new version (3.0.1) that presumably contained fixes or changes required by Home Assistant. The pull request modified two places: the REQUIREMENTS constant in homeassistant/components/sensor/airvisual.py and the corresponding entry in requirements_all.txt, both changing from 'pyairvisual==2.0.1' to 'pyairvisual==3.0.1'. A prior related discussion indicated attention to the exact line where the dependency is declared, suggesting that earlier changes may have omitted or misconfigured this requirement. After updating both declarations, tests were run locally and via tox to ensure the integration still worked. The core fix was aligning Home Assistant’s AirVisual integration with the newer, correct version of its underlying library and keeping all dependency declarations consistent.",
+        "semantic_memory": "This case illustrates several general patterns around dependency management in large applications: (1) When a third-party library that powers an integration is updated with important fixes or API changes, the host application must explicitly bump the pinned version to stay compatible and benefit from those fixes. (2) In ecosystems like Home Assistant, there are often multiple sources of truth for dependencies (a component-level REQUIREMENTS variable and a global requirements_all.txt). These must be kept in sync to avoid confusion, deployment issues, or mismatched environments. (3) Even small, seemingly trivial dependency version bumps require running the full test suite (e.g., via tox) to validate that no regressions were introduced by the new library version. (4) When an integration depends on an external API-wrapper library, it is usually more maintainable to upgrade the wrapper and keep the integration code thin, rather than re-implementing logic locally. (5) Code review comments about specific requirement lines underscore the importance of precise dependency declarations: missing or incorrect pinned versions can silently break integrations at install or runtime. Overall, the best practice is to treat dependency version changes as first-class changes: synchronize all declaration points, consult the upstream changelog, and validate via tests.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar dependency issues:",
+            "Step 1: Identify the integration and its underlying library.",
+            "Determine which integration or component is failing or needs enhancement (e.g., a sensor integration like AirVisual). Identify the third-party library it depends on, usually via a REQUIREMENTS constant or requirements file.",
+            "Step 2: Check the current and latest library versions.",
+            "Inspect the current pinned version in the codebase and compare it to the latest release on PyPI or the library’s GitHub. Review the library’s changelog to understand new fixes, breaking changes, or required updates.",
+            "Step 3: Confirm the need for an upgrade.",
+            "Map reported issues or desired features to the changes mentioned in the library’s changelog. If the upstream version includes fixes or features you need, plan a version bump. Ensure there are no known breaking changes that affect your integration.",
+            "Step 4: Update all dependency declarations.",
+            "Update the component-level requirement (e.g., the REQUIREMENTS list in the component’s __init__.py or sensor.py) to the new pinned version. Then update any central requirements aggregation file (e.g., requirements_all.txt) so that there is a single, consistent version across the project.",
+            "Step 5: Run tests and static checks.",
+            "Run the full existing test suite (e.g., tox, pytest) to verify that the integration still works with the new library version. If tests are missing for critical behaviors, add or improve tests to cover them, especially around areas mentioned in the upstream changelog.",
+            "Step 6: Manually exercise the integration if possible.",
+            "When practical, run the application in a development environment and manually test the integration against real or mocked data to confirm that API calls, authentication, and parsing still behave correctly with the upgraded library.",
+            "Step 7: Address any breaking changes.",
+            "If the library introduces API changes, adjust the integration code accordingly (e.g., updated method names, parameter formats, or response schemas). Keep the integration logic as thin as possible, delegating complexity to the library.",
+            "Step 8: Document and reference the upstream changes.",
+            "In the pull request, reference the upstream release or changelog so reviewers understand why the version bump is necessary. This also helps future maintainers trace behavior changes back to the library version.",
+            "Step 9: Ensure code review focuses on dependency accuracy.",
+            "During review, double-check that the dependency version is updated in all locations and that there are no stale or conflicting pins. Address reviewer comments about specific lines where requirements may have been removed or misconfigured previously.",
+            "Step 10: Monitor after deployment.",
+            "After the change is merged and deployed, monitor logs and user reports for any regressions related to the integration. If issues surface, verify whether they stem from the new library version and adjust pins or code accordingly."
+        ]
+    }
+}

@@ -1,0 +1,36 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fix for Home Assistant LG webOS TV media_player where the media_image_url used the largeIcon field, which on some webOS versions is a local file path instead of an HTTP URL. The fix adds a check: use largeIcon only if it starts with 'http', otherwise fall back to the icon field, which is a valid HTTP URL for the current source icon.",
+        "keywords": [
+            "Home Assistant",
+            "LG webOS",
+            "webostv",
+            "media_player",
+            "media_image_url",
+            "largeIcon",
+            "icon",
+            "file path vs URL",
+            "image preview missing",
+            "HTTP URL validation",
+            "backward compatibility",
+            "version-dependent API behavior"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Home Assistant integration for LG webOS TVs (media_player.webostv) was failing to show the media image preview for some TV models. The media_image_url property returned self._app_list[self._current_source_id]['largeIcon']. On at least one webOS TV (v1.4), the largeIcon field contained a local filesystem path instead of an HTTP URL. Since the Home Assistant frontend expects an HTTP-accessible image URL, it could not load the preview, resulting in missing artwork. Investigation showed that on other webOS versions (e.g., v2), both icon and largeIcon are HTTP URLs, but on the affected version only icon was a proper HTTP URL for the current source icon, while largeIcon was a non-HTTP file path. The fix first changed media_image_url to use icon directly, then evolved into a more robust solution: when computing media_image_url, read the largeIcon value, and if it does not start with 'http', fall back to the icon value. This preserves the higher-resolution largeIcon where available (and URL-based), while remaining compatible with devices where largeIcon is a file path. After this change, media_image_url always returns a valid HTTP URL and the image preview is restored across different webOS versions.",
+        "semantic_memory": "This case illustrates a common integration issue where external APIs or device fields are not homogeneous across versions or environments. A property that conceptually represents an image (e.g., largeIcon) might sometimes be a URL and sometimes a local path, while the consuming system expects an HTTP URL that can be fetched by a browser or remote client. Rigidly trusting the field type or format can lead to broken features (such as missing thumbnails) when the API semantics change or differ per firmware version. A robust pattern is to validate assumed data formats (e.g., checking if a supposed URL actually starts with 'http') and introduce a fallback chain: prefer the most desirable field (e.g., high-resolution largeIcon) when it meets requirements, and otherwise fall back to an alternative field (e.g., icon) that is more likely to be compatible. This aligns with defensive programming and version-tolerant integrations: always assume that upstream APIs may return differing formats, and encode lightweight validation and fallback logic rather than hard-coding a single field. Additionally, favor storing or exposing only values that are directly usable by downstream consumers (e.g., ensuring media_image_url is always fetchable over HTTP).",
+        "procedural_memory": [
+            "When diagnosing missing image previews or broken media artwork in an integration that consumes device or service metadata, inspect the raw data for the fields used to generate image URLs.",
+            "Step 1: Reproduce the issue by navigating to the UI screen where the image preview or artwork should appear and confirm that no image is shown (e.g., empty thumbnail or broken image icon).",
+            "Step 2: Enable debug logging or add temporary logging/inspection in the integration to dump the raw metadata from the external device/service (e.g., the app list for LG webOS: icon, largeIcon, and any other image-related fields).",
+            "Step 3: Compare values across different devices or firmware versions if available. Check whether fields like largeIcon and icon differ in format (e.g., one is an HTTP URL, the other a filesystem path).",
+            "Step 4: Identify the field currently used by the integration (e.g., largeIcon) and verify whether it actually contains a valid HTTP URL that can be resolved by clients. If not, confirm whether an alternative field (e.g., icon) has a proper HTTP URL.",
+            "Step 5: Implement defensive logic when constructing the media_image_url (or equivalent public property):\n- Retrieve the preferred field (e.g., largeIcon).\n- Validate that it meets expectations (e.g., string and starts with 'http' or passes a URL parser).\n- If validation fails, fall back to a secondary field that is known to be acceptable (e.g., icon).",
+            "Step 6: Ensure that the method returns None or an empty value only when no usable URL is available, not just because the preferred field is in an unexpected format.",
+            "Step 7: Add comments or brief documentation in the code explaining why the fallback exists (e.g., \"some webOS versions return a file path in largeIcon; fallback to icon if largeIcon is not an HTTP URL\"). This helps maintainers understand the version-specific behavior.",
+            "Step 8: Test on multiple device/firmware versions (if possible) to confirm that high-resolution icons are used where available (largeIcon with HTTP URL) and that older devices still show previews via the fallback (icon).",
+            "Step 9: Optionally, add unit tests or integration tests that simulate both behaviors: one where largeIcon is a valid HTTP URL and another where largeIcon is a file path, asserting that the correct URL is returned in each case.",
+            "Step 10: After deploying the fix, monitor logs or user feedback for any remaining devices where neither field is usable, and extend the fallback strategy if necessary."
+        ]
+    }
+}

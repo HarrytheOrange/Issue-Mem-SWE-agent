@@ -1,0 +1,42 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fixes a KeyError in the Home Assistant Fitbit sensor caused by unexpected Fitbit measurement_system values (e.g., 'en_NO'). The sensor now safely handles unknown systems by falling back to metric or en_US units based on Home Assistant's configured temperature unit (Celsius vs Fahrenheit).",
+        "keywords": [
+            "fitbit",
+            "Home Assistant",
+            "sensor",
+            "measurement_system",
+            "KeyError",
+            "FITBIT_MEASUREMENTS",
+            "unit mapping",
+            "temperature_unit",
+            "TEMP_CELSIUS",
+            "fallback logic",
+            "defensive programming",
+            "localization"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Home Assistant Fitbit sensor integration crashed with a KeyError when parsing a user's Fitbit profile. The code assumed that client.system (Fitbit's measurement system string) would always be one of 'en_US', 'en_GB', or 'metric', and directly indexed FITBIT_MEASUREMENTS[self.client.system]. A user had measurement_system set to 'en_NO', which was not defined in FITBIT_MEASUREMENTS, causing a KeyError and platform crash.\n\nThe initial fix wrapped the dictionary access in a try/except and defaulted to FITBIT_MEASUREMENTS['metric'] when a KeyError occurred. After discussion, the behavior was refined: instead of always defaulting to metric, the code now chooses the fallback measurement system based on Home Assistant's configured temperature unit. The FitbitSensor constructor was updated to accept an is_metric boolean, derived from hass.config.temperature_unit == TEMP_CELSIUS. During measurement_system resolution, if client.system is unknown, the code checks is_metric: if true (Celsius), it uses FITBIT_MEASUREMENTS['metric']; otherwise (Fahrenheit), it uses FITBIT_MEASUREMENTS['en_US']. This keeps units consistent with the user's temperature preferences while preventing crashes from unexpected Fitbit locale strings. The constructor signature and setup_platform() were updated accordingly, and a minor docstring typo was also fixed.",
+        "semantic_memory": "This fix illustrates a general pattern for robustly handling external configuration or localization values that are mapped to internal unit or settings dictionaries.\n\nKey lessons:\n\n1. **Never assume external enums/locales are complete**: When mapping external identifiers (e.g., Fitbit's measurement_system like 'en_US', 'en_GB') to internal structures, new or region-specific values (e.g., 'en_NO') can appear without notice. Direct dictionary indexing risks KeyError and crashes.\n\n2. **Use defensive access with sensible fallbacks**: Access mappings with try/except, dict.get with defaults, or explicit validation. When an unknown key is encountered, fall back to a reasonable default rather than failing hard, especially in integrations with third-party services.\n\n3. **Base defaults on related user configuration**: Instead of a single hardcoded default, choose fallback behavior informed by other known settings. Here, Home Assistant's temperature_unit (Celsius vs Fahrenheit) is used to decide whether to use metric or en_US units, making the default more user-aligned.\n\n4. **Pass only what you need (boolean flags vs raw config)**: The final change simplifies the API of FitbitSensor by passing a derived boolean (is_metric) instead of the raw temperature unit constant. This makes the intent clear and keeps unit-resolution logic localized.\n\n5. **Localization and units are cross-cutting concerns**: When dealing with locale/region-based behavior, unit systems, or internationalization, code should anticipate evolving combinations of region codes and ensure that the app behaves gracefully for unrecognized locales.\n\nOverall, the fix demonstrates best practices in defensive programming around external APIs: validate assumptions, handle unknown values gracefully, and choose defaults informed by user preferences.",
+        "procedural_memory": [
+            "When diagnosing and fixing crashes due to unexpected external configuration values or enums, follow these steps:",
+            "Step 1: Reproduce and inspect the error",
+            "Identify the exception type and location in the code (e.g., KeyError in FITBIT_MEASUREMENTS[self.client.system]). Reproduce the issue with affected configuration (e.g., a Fitbit account with measurement_system='en_NO') or simulate the external value.",
+            "Step 2: Identify the assumptions in the mapping logic",
+            "Locate where external values (locale strings, enums, IDs) are mapped to internal dictionaries or structures. List all keys the code expects (e.g., 'en_US', 'en_GB', 'metric') and compare them to actual values seen in production/logs.",
+            "Step 3: Add defensive access to the mapping",
+            "Replace direct dictionary indexing with safer access patterns:\n- Wrap access in try/except KeyError, or\n- Use dict.get(key, default) with a meaningful default, or\n- Validate the key against allowed values and branch accordingly.\nEnsure that an unknown key cannot crash the platform.",
+            "Step 4: Design a sensible fallback strategy",
+            "Do not pick a default arbitrarily. Use related configuration or user preferences to select a reasonable fallback. In this case:\n- Inspect the system's temperature unit setting.\n- If temperature_unit == TEMP_CELSIUS, treat the system as metric.\n- Otherwise, treat it as en_US (imperial).",
+            "Step 5: Pass the minimal necessary information into components",
+            "When wiring configuration into a component (like a sensor class), derive simple flags or values instead of passing complex configuration. For example, pass is_metric = (temperature_unit == TEMP_CELSIUS) into FitbitSensor instead of the full temperature_unit constant, and use that boolean to choose metric vs en_US in fallback logic.",
+            "Step 6: Update constructor signatures and call sites consistently",
+            "If you modify a class's constructor (e.g., adding is_metric), update all instantiations (setup_platform, tests, etc.) to pass the new argument. Ensure docstrings and comments reflect the new behavior.",
+            "Step 7: Add or run tests to cover edge cases",
+            "Extend tests (or add new ones) that simulate unknown external keys (e.g., client.system = 'en_NO') and verify that:\n- No exception is raised.\n- The measurement system falls back correctly based on the configured temperature unit.\nAlso run the existing test suite (e.g., tox) to ensure no regressions.",
+            "Step 8: Log or monitor unexpected values (optional but recommended)",
+            "Consider logging unknown external keys when they are encountered so you can later decide whether to explicitly support them. This is especially useful for integrations with evolving APIs or region codes."
+        ]
+    }
+}

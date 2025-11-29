@@ -1,0 +1,33 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant Verisure integration: simplified entity naming for binary_sensor, camera, lock, and switch components by removing hardcoded type suffixes (\"door window\", \"camera\", \"lock\", \"switch\") and using only the Verisure area/name specified in the Verisure portal. This removes redundant information and lets users control naming in the Verisure UI.",
+        "keywords": [
+            "Home Assistant",
+            "Verisure",
+            "entity naming",
+            "component name",
+            "binary_sensor.verisure",
+            "camera.verisure",
+            "lock.verisure",
+            "switch.verisure",
+            "redundant suffix",
+            "area label",
+            "localization",
+            "UX cleanup"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this pull request, the Home Assistant Verisure integration had its entity naming logic adjusted for several platforms: binary_sensor, camera, lock, and switch. Previously, each entity name was constructed by taking the Verisure-reported area (e.g., 'Kitchen') and appending a hardcoded type suffix such as 'door window', 'camera', 'lock', or 'switch'. This resulted in names like 'Kitchen door window' or 'Living Room switch'. Users and reviewers pointed out that this was redundant (because Home Assistant already groups entities by domain and shows icons) and that it prevented them from having full control over device names and localization through the Verisure portal. The code change removed these hardcoded suffixes.\n\nConcretely, in each component's `name` property, the return value was changed from `hub.get_first(..., self._device_label) + \" <type>\"` to just `hub.get_first(..., self._device_label)`. As a result, entity names now directly reflect the area/name configured in the Verisure system without adding extra text. This simplifies names, avoids duplication of type information, and allows users to express the device type or any other detail directly in the Verisure label (e.g., 'Kitchen window', 'Garage lock') in whatever language they prefer.",
+        "semantic_memory": "When integrating external devices or services into a home automation platform, entity naming should prioritize user control, clarity, and localization over hardcoded patterns. Appending fixed suffixes such as the device type ('camera', 'switch', 'lock') to names that already come from the external system often leads to redundancy, especially when the platform already conveys type/domain information through entity domains and icons. Furthermore, hardcoding English suffixes makes localization harder and overrides user-configured names in the upstream service.\n\nA good pattern is to:\n- Use the name or area configured in the external service (e.g., Verisure, Hue, etc.) as the primary entity name.\n- Avoid hardcoded, language-specific suffixes or prefixes that restate the device type.\n- Let users encode additional semantics (like 'temp', 'humidity', or local-language names) directly in the upstream service if they choose, and simply surface that faithfully in the integration.\n- Consider how names appear in the UI: since domain and icon already signal the device type, entity names should focus on location and user-intended description.\n\nThis improves UX, respects user customization, and reduces maintenance effort around localization and naming conventions.",
+        "procedural_memory": [
+            "When diagnosing confusing or redundant entity names in a device integration, start by examining how the `name` property is computed for each entity/platform.",
+            "Step 1: Identify the source of the name.\n- Locate the entity class (e.g., `VerisureDoorWindow`, `VerisureCamera`, etc.).\n- Find the `name` property implementation.\n- Determine whether the name is composed from external data (API fields like `area`, `deviceLabel`) plus additional hardcoded strings.",
+            "Step 2: Check for redundancy and UX impact.\n- Review how entities appear in the UI: domain (binary_sensor, camera, lock, switch) and icons may already convey type.\n- Look for patterns like `area + \" switch\"`, `area + \" lock\"` that repeat the domain/type.\n- Consult UX feedback or issues where users complain about overly long or redundant names.",
+            "Step 3: Decide on a naming strategy.\n- Prefer using the upstream device name or area as-is when it is user-configurable in the external service.\n- Avoid appending hardcoded, language-specific suffixes or prefixes unless there is a strong reason.\n- Consider whether users can rename devices upstream (e.g., Verisure portal) to express type, room, or other details if they want.",
+            "Step 4: Implement the change.\n- Update the `name` property to return only the upstream label or area, e.g.:\n  - Before: `return hub.get_first(query, self._device_label) + \" lock\"`\n  - After:  `return hub.get_first(query, self._device_label)`\n- Ensure consistency across all related platforms (binary_sensor, camera, lock, switch, sensor, etc.).",
+            "Step 5: Validate behavior.\n- Run existing unit/integration tests for the integration.\n- If available, add or update tests that assert correct naming behavior.\n- Manually inspect a few entities in a test environment: confirm they now show the expected names (e.g., just 'Kitchen' instead of 'Kitchen switch').",
+            "Step 6: Communicate changes.\n- Note in release notes or documentation that entity naming has been simplified and that users should adjust names in the external service if they want different or more descriptive labels.\n- Mention that this change improves localization by not hardcoding English suffixes.",
+            "Step 7: Apply pattern elsewhere when appropriate.\n- Review other integrations or platforms that construct names with fixed type suffixes.\n- Use the same principle: leverage upstream configurable names and minimize hardcoded language or redundant descriptors."
+        ]
+    }
+}
