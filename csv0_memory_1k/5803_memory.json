@@ -1,0 +1,31 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fixes a typo in the Home Assistant Sky Hub device_tracker integration where the user-facing error message and docstring misspelled 'router' and referenced 'Sky Hub 5'. The message was corrected to read 'router' and the docstring now generically refers to 'Sky Hub'.",
+        "keywords": [
+            "Home Assistant",
+            "device_tracker",
+            "sky_hub",
+            "Sky Hub",
+            "router typo",
+            "misspelling",
+            "user-facing error message",
+            "UX polish",
+            "string fix"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this pull request, a minor but user-visible bug in the Home Assistant Sky Hub device_tracker integration was fixed. The module `homeassistant/components/device_tracker/sky_hub.py` contained a docstring and an error message with incorrect wording. The `get_scanner` docstring read 'Return a Sky Hub 5 scanner if successful.', which may have been inaccurate or unnecessarily specific, and was changed to 'Return a Sky Hub scanner if successful.' More importantly, the IOError message raised when failing to fetch data from the Sky Hub told the user: 'Try to reboot the rooter.' The word 'rooter' was misspelled; it should have been 'router'. This was corrected to 'Try to reboot the router.' The change improves clarity and professionalism of user-facing text without affecting runtime logic.",
+        "semantic_memory": "Even small typos in user-facing messages are bugs because they affect clarity, perceived quality, and user trust. In production systems, especially home automation platforms like Home Assistant, error messages often serve as the primary guidance for users when something goes wrong. Misspellings or inaccurate terminology can confuse users or make the software appear unpolished. Therefore, user-visible strings (docstrings that show in UIs or logs, exceptions, log messages, configuration help texts) should be treated with the same rigor as code: reviewed, proofread, and corrected promptly. Additionally, product names or hardware references should be accurate and not overly specific if the code is intended to support a broader range of models. Small, targeted PRs that adjust only a string are valid and valuable when they improve UX and do not change behavior.",
+        "procedural_memory": [
+            "When reviewing or writing code, explicitly scan user-facing strings (error messages, logs, UI text, documentation-related docstrings) for typos, grammatical errors, and inaccurate terminology.",
+            "Step 1: Identify all user-visible text in the relevant module (e.g., search for raise statements, logger calls, and docstrings that may surface in help or UI).",
+            "Step 2: Check spelling and grammar manually or with tooling (editor spell-checkers, linters, or CI checks that flag common typos).",
+            "Step 3: Verify that terminology and product names are correct and appropriately specific (e.g., 'router' vs 'rooter'; 'Sky Hub' vs 'Sky Hub 5' if the code is not model-specific).",
+            "Step 4: Update the strings to correct spelling, grammar, and wording while preserving the original intent and meaning of the message.",
+            "Step 5: Ensure that the error message remains actionable for the user; if the message suggests an action (like rebooting a router), confirm it is still valid advice.",
+            "Step 6: Run the test suite (or at least import and basic runtime checks) to ensure that only strings changed and no functional behavior was affected.",
+            "Step 7: If the project has translation/localization, consider whether the change requires updating translation keys or informing translators.",
+            "Step 8: In the PR description, clearly state that the change is a user-facing text correction, so reviewers know that no behavior is expected to change."
+        ]
+    }
+}

@@ -1,0 +1,30 @@
+{
+    "search_index": {
+        "description_for_embedding": "System monitor sensors in Home Assistant were exposing raw OS load averages with many decimal places (e.g., 0.2724609375), leading to an ugly UI. The fix was to round the 1m, 5m, and 15m load average sensor values to two decimal digits in the backend before exposing them.",
+        "keywords": [
+            "Home Assistant",
+            "system monitor",
+            "load average",
+            "os.getloadavg",
+            "sensor rounding",
+            "float precision",
+            "UI readability",
+            "sensor.py"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, Home Assistant's system monitor integration was exposing OS load averages directly from os.getloadavg(). On a Raspberry Pi 3 running Python 3.7.4, these values had long binary-float-derived representations such as (0.2724609375, 0.3505859375, 0.3515625). These overly precise values looked messy in the UI and were inconsistent with other numerical sensors that were already rounded (disk usage, memory, IO, etc.). There was a brief discussion about whether this should be handled at the UI layer, but the contributor opted for a backend change consistent with existing system monitor sensors. The fix was implemented in homeassistant/components/systemmonitor/sensor.py by wrapping each os.getloadavg() element access in round(..., 2). Specifically, for sensor types 'load_1m', 'load_5m', and 'load_15m', the code was changed from self._state = os.getloadavg()[i] to self._state = round(os.getloadavg()[i], 2), ensuring that only two decimal digits are exposed through the sensors and improving UI readability.",
+        "semantic_memory": "When exposing numeric metrics from system APIs (e.g., CPU load, memory usage, IO stats) to end users, raw floating point values often have more precision than is meaningful. This can clutter UIs and make values harder to scan at a glance. A common pattern is to normalize or round such values in the backend before they are serialized or presented, especially when similar metrics in the same integration are already rounded. There is an architectural trade-off: formatting could be handled in the UI layer (for maximum flexibility), but if an API or integration already treats these numbers as user-facing values, then performing consistent rounding server-side can be pragmatic and avoids duplicating formatting logic across clients. Another generalizable point: Python's floating point representation can lead to awkward decimal expansions when directly converting binary floats to strings. Applying round(value, n) or equivalent formatting to the appropriate number of decimal digits aligns the representation with human expectations and domain-specific resolution (e.g., load averages rarely need more than two decimals). Finally, maintaining consistency across related sensors is important for UX: if other system monitor values are rounded, newly added or previously unformatted metrics should match that behavior.",
+        "procedural_memory": [
+            "When system metrics appear with excessively long decimal precision in the UI, first identify where the values originate and how they are passed to the frontend.",
+            "Step 1: Reproduce the issue by logging or printing the raw values from the underlying system call (e.g., os.getloadavg(), psutil metrics) to confirm that the backend is emitting high-precision floats.",
+            "Step 2: Locate the integration or module responsible for exposing these metrics (e.g., system monitor sensor.py). Identify the specific sensor types or fields that map directly to these raw values.",
+            "Step 3: Check existing behavior for similar metrics in the same integration: see whether other numeric values are already rounded or formatted (e.g., disk usage, memory, CPU percent). Use this as a consistency baseline.",
+            "Step 4: Decide the layer for formatting: if the architecture or project conventions place formatting in the frontend, implement the rounding/formatting there; otherwise, apply rounding in the backend where the state/value is set.",
+            "Step 5: Implement rounding to an appropriate precision using language primitives (in Python, round(value, 2) or format strings) at the point where the sensor state or API response value is assigned. For example: self._state = round(os.getloadavg()[0], 2).",
+            "Step 6: Run existing tests and, if necessary, add or update tests to assert that the exposed values now have the desired precision (e.g., comparing against rounded values or checking string formatting).",
+            "Step 7: Verify in the UI or API consumers that values now appear with the intended number of decimal places and remain stable across platforms (e.g., Raspberry Pi vs x86).",
+            "Step 8: Document the behavior if necessary, clarifying that certain metrics are rounded to specific decimal places so API consumers and UI developers know what to expect."
+        ]
+    }
+}

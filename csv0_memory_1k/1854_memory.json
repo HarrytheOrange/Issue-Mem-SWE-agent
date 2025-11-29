@@ -1,0 +1,33 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fix for packs/views/file API endpoint crashing when serving binary data due to a bug in the Pecan web framework. The project now uses a StackStorm-maintained fork of Pecan (st2-patched branch) containing an upstream fix, referenced directly via a Git URL in requirements.txt instead of the Pypi pecan==0.7.0 release.",
+        "keywords": [
+            "binary data",
+            "packs/views/file endpoint",
+            "Pecan framework bug",
+            "web API",
+            "StackStorm fork",
+            "requirements.txt",
+            "git dependency",
+            "WSGI response handling",
+            "encoding error",
+            "framework patch"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the `packs/views/file` endpoint in the StackStorm API would throw an error when returning binary data. Investigation showed that the root cause was not in the StackStorm code itself, but in the Pecan web framework version pinned in `requirements.txt` (`pecan==0.7.0`). A later version of Pecan contained a fix, but upgrading wholesale was either risky or constrained, so the team decided to fork Pecan and cherry-pick only the required change. The fix implemented in this pull request was to replace the PyPI dependency pin with a VCS dependency on a StackStorm-maintained fork: `-e git+https://github.com/StackStorm/pecan.git@st2-patched#egg=pecan`. The `st2-patched` branch hosts Pecan with the necessary binary-data-handling fix. There was some discussion about branch naming conventions (using `st2-patched` for consistency with other forks) and the need to track this fork and bug in an external issue tracker (JIRA). This unblocked the release (0.13) while clearly marking the dependency as a temporary workaround until the fork can be removed.",
+        "semantic_memory": "This case illustrates a common pattern when a critical bug resides in a third-party dependency rather than in the application code itself. When an upstream library (here, the Pecan web framework) mishandles a specific data type (binary responses), it can surface as endpoint-specific crashes in the application. If it is not safe or feasible to upgrade to the latest library release, a pragmatic approach is to maintain a minimal fork of the dependency where only the required upstream fix is cherry-picked. That fork can be referenced directly from dependency management (e.g., `requirements.txt`) via a Git URL and pinned branch, effectively overriding the published version. Clear naming conventions (e.g., `st2-patched`) and external bug tracking help communicate that this fork is temporary technical debt, meant to be removed once the official library release includes the fix. In web/API contexts, issues with binary data often stem from framework-level encoding/decoding logic (e.g., treating bytes as text, incorrect charset assumptions in middleware) rather than endpoint implementation, so examining framework issue trackers and commit history is often necessary.",
+        "procedural_memory": [
+            "When an endpoint fails specifically on binary data (e.g., file download, image, archive) but works on text, suspect framework or middleware encoding/response handling issues rather than just business logic.",
+            "Step 1: Reproduce the error with a minimal request that returns binary data from the affected endpoint. Capture the stack trace and logs to see which library and function are failing (e.g., inside Pecan or another web framework).",
+            "Step 2: Identify the exact library and version implicated in the trace (here, `pecan==0.7.0`). Check the library's issue tracker and changelog for bug reports related to binary responses, encoding, or similar errors.",
+            "Step 3: Locate the upstream commit or release that fixes the problem. Assess whether upgrading the dependency to that version is safe given your project's compatibility constraints (APIs, other pinned libraries, release timing).",
+            "Step 4: If a direct upgrade is not feasible, create a fork of the dependency under your organization (e.g., `github.com/YourOrg/pecan`). Cherry-pick the minimal upstream fix into a dedicated branch (e.g., `st2-patched` or `yourapp-patched`).",
+            "Step 5: Update your dependency configuration (`requirements.txt`, `pyproject.toml`, etc.) to point to the fork and branch, using a VCS URL. For example in `requirements.txt`: `-e git+https://github.com/YourOrg/pecan.git@yourapp-patched#egg=pecan`.",
+            "Step 6: Run your full test suite and add/extend tests specifically around the problematic behavior (e.g., tests that ensure binary file responses from the endpoint work and no longer raise errors). Confirm that there are no regressions from using the forked dependency.",
+            "Step 7: Document the fork in your project (README, dev docs, or dependency policy) and create a ticket in your issue tracker to: (a) track the dependency fork, (b) monitor upstream releases, and (c) plan removal of the fork once an official version contains the fix.",
+            "Step 8: Establish naming conventions for patched branches across forks (e.g., `st2-patched`, `stackstorm_patched`) to make it obvious they are temporary forks carrying local patches.",
+            "Step 9: Periodically revisit forks during dependency upgrade cycles. When an official release includes the necessary fix, remove the VCS dependency, revert to the published version (e.g., `pecan>=fixed_version`), and delete or archive the forked branch."
+        ]
+    }
+}

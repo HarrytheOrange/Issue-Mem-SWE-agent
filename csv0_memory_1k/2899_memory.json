@@ -1,0 +1,30 @@
+{
+    "search_index": {
+        "description_for_embedding": "Cleanup change in Optuna: removed an obsolete, unused private method Trial._after_func and its related import from optuna/trial/_trial.py after it became redundant in a previous refactor.",
+        "keywords": [
+            "Optuna",
+            "Trial._after_func",
+            "unused private method",
+            "dead code removal",
+            "code cleanup",
+            "refactor artifact",
+            "optuna.trial._trial",
+            "technical debt"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this pull request, the Optuna maintainers removed an obsolete private method `Trial._after_func` from `optuna/trial/_trial.py`, along with its unused import `TrialState` from `optuna.trial._state`. The method had been introduced to call the sampler's `after_trial` hook with a filtered study and trial state. However, a prior refactor (PR #2158) changed how trial finalization and sampler callbacks are handled, leaving `_after_func` no longer invoked anywhere in the codebase. Despite being private and unused, it remained as dead code. This PR cleans it up by deleting the method body and the associated unused import, slightly reducing line count and improving coverage, with no functional behavior change.",
+        "semantic_memory": "This PR illustrates maintenance of a healthy codebase by removing dead code—specifically, an unused private method that became obsolete after a refactor. Even private, internal methods should not linger if they’re never called, because they: (1) confuse future readers about behavior that no longer exists, (2) increase the surface area for bugs and merge conflicts, and (3) complicate refactors by implying dependencies that are actually gone. When refactors change control flow (e.g., how callbacks like `after_trial` are invoked), it is important to systematically identify and remove now-unused helper functions and related imports. Safe removal requires confirming there are no remaining references in the repo, that no public API contracts are broken, and that tests still pass. This is an example of managing technical debt: even non-bug, non-feature changes that reduce cruft improve maintainability and reliability over time.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues (unused / obsolete internal methods after refactors).",
+            "Step 1: Detect potential dead code.\n- Use your IDE or static analysis tools (e.g., `pyflakes`, `pylint`, `vulture`, or language-server diagnostics) to find functions/classes/imports that are defined but never referenced.\n- Pay particular attention to private or internal helpers (e.g., names starting with `_`) that are often left behind after refactors.",
+            "Step 2: Verify the method is truly unused.\n- Perform a full-text search in the repository for the method or symbol name (e.g., `\"_after_func\"`).\n- Ensure there are no references in code, tests, or documentation.\n- Confirm it is not part of the documented public API or used via reflection/dynamic calls (e.g., `getattr`, plugin systems). For private/internal names this risk is lower but still worth a quick check.",
+            "Step 3: Understand the original purpose.\n- Skim the method’s implementation and any comments to know what it used to do (e.g., calling `sampler.after_trial` with a filtered study).\n- Look at git history (`git blame` or the referenced prior PR) to understand why it was introduced and how later refactors made it obsolete.",
+            "Step 4: Confirm the behavior is covered elsewhere.\n- Ensure that the core behavior the method used to provide (e.g., invoking callbacks, updating state) is now handled by the new/refactored code path.\n- Check tests related to that behavior (e.g., tests for sampler `after_trial` hooks) to make sure they still pass and do not rely on the old helper.",
+            "Step 5: Remove the dead code and related imports.\n- Delete the obsolete method definition.\n- Remove any now-unused imports (e.g., `from optuna.trial._state import TrialState` if it was only used by that method).\n- Clean up any comments that referenced the old method.",
+            "Step 6: Run the test suite and static checks.\n- Execute the relevant unit/integration tests to ensure no regressions.\n- Re-run linters and type checkers to confirm no remaining references and no new warnings.",
+            "Step 7: Document the change in the PR.\n- In the PR description, clearly state that this is a non-functional change removing an unused method that became obsolete in a previous refactor (reference the prior PR or commit if possible).\n- Mention that the method was private/internal and unused, to reassure reviewers that no public API has been broken.",
+            "Step 8: Monitor after merge.\n- After merging, watch for any downstream reports that might indicate unexpected reliance on the removed symbol (rare but possible).\n- If needed, reintroduce functionality via a well-documented deprecation path rather than silently relying on private helpers."
+        ]
+    }
+}

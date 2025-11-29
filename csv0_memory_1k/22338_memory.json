@@ -1,0 +1,31 @@
+{
+    "search_index": {
+        "description_for_embedding": "RTSP camera streams in Home Assistant were showing green artifacts, buffering, and premature stops due to UDP packet loss. The fix configures FFmpeg to prefer TCP for RTSP streams by setting the 'rtsp_flags=prefer_tcp' option when requesting a stream, improving stability and stream quality.",
+        "keywords": [
+            "RTSP",
+            "FFmpeg",
+            "prefer_tcp",
+            "UDP packet loss",
+            "green artifacts",
+            "buffering",
+            "Home Assistant stream component",
+            "rtsp_flags",
+            "network reliability",
+            "video streaming"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "Users of the Home Assistant stream component reported unstable RTSP camera streams: frequent buffering, green artifacts, and video stopping after 30–60 seconds. Investigation suggested that these issues were caused by UDP packet loss on some networks, as RTSP commonly uses UDP by default. To address this, the stream initialization logic in homeassistant/components/stream/__init__.py was updated. When request_stream() is called and the stream_source is a string starting with 'rtsp://' and no explicit options are provided, the code now sets options['rtsp_flags'] = 'prefer_tcp'. This instructs FFmpeg to use TCP for RTSP transport, which is more resilient to packet loss. After the change, user testing confirmed significantly more stable streams, with longer uninterrupted viewing and fewer buffering events or artifacts.",
+        "semantic_memory": "RTSP streaming problems such as green frames, artifacts, buffering, or premature termination can often stem from UDP transport unreliability, especially on congested or lossy networks, Wi‑Fi, or when NAT/firewalls are involved. FFmpeg and similar tools allow control over RTSP transport using options like 'rtsp_flags=prefer_tcp' or 'rtsp_transport=tcp'. Preferring TCP for RTSP can dramatically improve stability at the cost of slightly higher latency or overhead. A good default is to automatically enable TCP for RTSP streams in environments where you do not control the network quality, while still allowing explicit overrides via options. More broadly, when dealing with media streaming bugs that manifest as corruption or intermittent failures rather than hard errors, it is important to examine transport protocol choices (UDP vs TCP) and to leverage library-specific flags to tune transport behavior.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Observe and characterize the symptoms.\n- Check for video artifacts (e.g., green frames), frequent buffering, or streams stopping after a short time.\n- Note whether the issues are more pronounced on certain networks (Wi‑Fi, remote access, etc.).",
+            "Step 2: Identify the streaming protocol and transport.\n- Confirm that the source is an RTSP stream (URLs starting with 'rtsp://').\n- Check your media pipeline (FFmpeg, GStreamer, etc.) to see if RTSP is using UDP by default.\n- Review logs or debug output to confirm the transport (UDP vs TCP).",
+            "Step 3: Test with TCP transport manually.\n- For FFmpeg, run a manual command forcing TCP, e.g.: ffmpeg -rtsp_transport tcp -i rtsp://... or using -rtsp_flags prefer_tcp.\n- Compare stability and quality between UDP and TCP tests.\n- If TCP resolves artifacts and buffering, you have strong evidence that UDP packet loss is the root cause.",
+            "Step 4: Apply a code-level configuration change.\n- Locate where the RTSP stream is created or FFmpeg options are set (e.g., request_stream or similar factory function).\n- Add logic that detects RTSP URLs (e.g., isinstance(source, str) and source.startswith('rtsp://')).\n- When no explicit options override is provided, set an option telling the underlying library to prefer TCP for RTSP:\n  - For FFmpeg: options['rtsp_flags'] = 'prefer_tcp' or options['rtsp_transport'] = 'tcp'.\n- Ensure this is conditional so you do not break existing explicit configurations.",
+            "Step 5: Preserve configurability and backward compatibility.\n- Only set the TCP preference when the caller has not provided an options dict or when the relevant key is absent.\n- Document the behavior so advanced users know how to override it (e.g., they can still force UDP if needed).",
+            "Step 6: Test in realistic conditions.\n- Run local integration tests or tox tests to ensure the change doesn’t break other functionality.\n- Test with multiple RTSP cameras and different networks.\n- Verify that streams run for several minutes without artifacts or premature stopping, and track buffering frequency.",
+            "Step 7: Monitor and iterate.\n- After deployment, collect user feedback about stream stability.\n- If some environments require different tuning (e.g., forcing UDP or changing buffer sizes), consider exposing additional configuration options while keeping safe defaults."
+        ]
+    }
+}

@@ -1,0 +1,31 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant Pushover notify integration: improved error logging when downloading an image attachment fails. Instead of a generic 'Image not found' message, the log now includes the image URL and HTTP response status code, while still sending the notification without the attachment.",
+        "keywords": [
+            "Home Assistant",
+            "pushover",
+            "notify",
+            "notification",
+            "image attachment",
+            "image download failure",
+            "HTTP response code",
+            "logging improvement",
+            "requests.exceptions.RequestException",
+            "diagnostics"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In the Home Assistant Pushover notification integration, users can specify an image attachment that is downloaded from a URL before sending the notification. When the HTTP GET request for this image failed (non-200 status), the code logged a generic message 'Image not found' and removed the attachment key, resulting in the notification being sent without the image. This made it difficult to debug why the image download was failing (e.g., wrong URL, 403/404, server issues). The fix updated the error logging in `homeassistant/components/pushover/notify.py` so that, if the response status code is not 200, it now logs: 'Failed to download image %s, response code: %d', including both the original attachment URL (`data[ATTR_ATTACHMENT]`) and the HTTP status code (`response.status_code`). The behavior of stripping the attachment and sending the notification without an image remains the same; only the error reporting is more informative.",
+        "semantic_memory": "When remote resource downloads fail in notification or integration code, generic error messages hinder diagnosis. It's a good practice to log contextual information such as the resource identifier (e.g., URL or path) and the HTTP status code or specific exception details. This allows users and developers to quickly determine whether the issue is due to a bad URL, permissions, network problems, or upstream server errors. Even when the system can recover gracefully (e.g., sending a notification without an attachment), logs should still be explicit and actionable. More broadly, for any network I/O failure, combining the failing input value with the returned status/exception in the log message significantly improves debuggability without altering user-facing behavior. Also, if you handle exceptions like `requests.exceptions.RequestException`, make sure success/failure branches both provide meaningful logs.",
+        "procedural_memory": [
+            "When diagnosing vague or unhelpful error reports around downloading external resources (images, files, etc.), first identify where the HTTP or network request is performed in the code.",
+            "Step 1: Locate the code path that performs the download (e.g., a `requests.get` or similar call in the notification integration). Identify what it does on success (e.g., uses `response.content`) and on failure (non-200 status or exceptions).",
+            "Step 2: Check existing logging in the error branch. If the log message is generic (e.g., 'Image not found' or 'Download failed'), enhance it to include the key context: the requested URL or resource identifier and the HTTP status code or exception message.",
+            "Step 3: Update the error logging accordingly. For HTTP failures, log something like: `\"Failed to download image %s, response code: %d\"`, passing both the URL and `response.status_code`. For exceptions, log the exception type and message explicitly.",
+            "Step 4: Ensure the functional behavior remains correct and robust. In this case, if the image cannot be downloaded, continue to remove the attachment key from the data and send the notification without an attachment, so that improved logging does not change external behavior.",
+            "Step 5: Test locally by forcing various failure modes: invalid URLs, 404/500 responses, timeouts, etc. Verify that the new logs include the URL and status code or exception, and that the primary action (sending the notification) still works without the attachment.",
+            "Step 6: Run formatters and linters (e.g., `black` for Python) to keep the codebase consistent, especially when adjusting logging strings and parameters.",
+            "Step 7: Document in commit/PR description that this change improves diagnostic logging without altering the integration's external API or behavior, so reviewers understand the scope."
+        ]
+    }
+}

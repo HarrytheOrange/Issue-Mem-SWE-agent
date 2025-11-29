@@ -1,0 +1,55 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant Xiaomi Miio vacuum integration extended to expose last cleaning start and stop times as attributes, aligned with Neato platform keys. Implementation initializes a last_clean attribute, populates it from the python-miio library (last_clean_details), and safely adds clean_start and clean_stop attributes to device_state_attributes only when data is available.",
+        "keywords": [
+            "home-assistant",
+            "xiaomi_miio",
+            "vacuum",
+            "last_clean",
+            "clean_start",
+            "clean_stop",
+            "device_state_attributes",
+            "entity attributes",
+            "python-miio",
+            "integration feature parity"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this pull request, the developer extended the Home Assistant Xiaomi Miio vacuum integration to expose the start and end timestamps of the last cleaning cycle, mirroring existing behavior from the Neato vacuum platform. Two new constants, ATTR_CLEAN_START and ATTR_CLEAN_STOP, were added. A new instance attribute self.last_clean was introduced and initialized to None in the vacuum entity's __init__ method to avoid attribute errors before data is fetched. During each update() call, the code now calls self._vacuum.last_clean_details() (provided by the python-miio library) and stores the result in self.last_clean. In device_state_attributes(), if self.last_clean is truthy, it adds clean_start and clean_stop keys to the attributes dictionary, populated from self.last_clean.start and self.last_clean.end respectively. This ensures that the vacuum entity exposes consistent 'last clean times' attributes while remaining robust when the data is not yet available. The PR was marked as dependent on a corresponding python-miio upstream PR and thus could not be merged until the upstream change was released and included.",
+        "semantic_memory": "When extending device integrations, it is common to expose additional telemetry or state details as entity attributes for feature parity across platforms (e.g., Neato vs Xiaomi vacuums). Key patterns include: (1) defining explicit constants for new attribute names for consistency and reuse; (2) adding new instance attributes that are initialized in __init__ to prevent AttributeError or inconsistent state before the first successful update; (3) populating those attributes in the integration's update routine, typically from the device library's higher-level methods (e.g., last_clean_details) rather than duplicating protocol logic; (4) conditionally adding attributes to the state only when data is present, so that entities do not expose misleading or incomplete information; and (5) respecting external library versioning by gating features on upstream support and coordinating releases. This pattern provides safer, extensible, and backwards-compatible integration updates, especially where the device library is evolving in parallel.",
+        "procedural_memory": [
+            "To add or fix similar 'last operation' attributes in a Home Assistant device integration, follow these steps:",
+            "Step 1: Identify the desired data and upstream support",
+            "Determine what additional data (e.g., last clean start/stop, last run duration) should be exposed on the entity and confirm the upstream device library (e.g., python-miio) provides a stable method or property (such as last_clean_details) to retrieve it.",
+            "If not yet available, implement or wait for the upstream change and note the dependency clearly in the PR description.",
+            "Step 2: Define new attribute constants",
+            "In the integration module, add clear, descriptive constants for each new attribute key, e.g.:",
+            "ATTR_CLEAN_START = 'clean_start'",
+            "ATTR_CLEAN_STOP = 'clean_stop'",
+            "Use naming consistent with other platforms or entities to maintain feature parity and improve discoverability.",
+            "Step 3: Extend the entity's internal state",
+            "In the entity class __init__ method, add a new instance attribute to hold the extra state, e.g.:",
+            "self.last_clean = None",
+            "Initialize it to None to avoid AttributeError in other methods before the first update executes.",
+            "Step 4: Populate the new state during updates",
+            "In the update() method (or async_update() in async integrations), call the appropriate upstream method to fetch the new data, for example:",
+            "self.last_clean = self._vacuum.last_clean_details()",
+            "Assign the result to the instance attribute, along with other state values like consumable_state or clean_history.",
+            "Handle exceptions or unavailable data gracefully so the entity remains available even if the new data cannot be fetched.",
+            "Step 5: Expose the attributes in device_state_attributes",
+            "In device_state_attributes (or extra_state_attributes), augment the returned dict with the new attributes only when the backing data is present:",
+            "if self.last_clean:",
+            "    attrs[ATTR_CLEAN_START] = self.last_clean.start",
+            "    attrs[ATTR_CLEAN_STOP] = self.last_clean.end",
+            "This avoids exposing None or invalid values and keeps the state representation accurate.",
+            "Step 6: Ensure compatibility and parity",
+            "Verify that the newly added attributes match naming and semantics used by similar platforms (e.g., Neato) to provide a uniform user experience across integrations.",
+            "Step 7: Coordinate dependency and release management",
+            "If the feature depends on a new version of an upstream library, update the REQUIREMENTS or requirements_all.txt as needed, and document the dependency in the PR.",
+            "Do not merge until the upstream change is released and the dependency bump is incorporated.",
+            "Step 8: Test locally",
+            "Run the integration against an actual or mocked device to confirm the new attributes appear correctly in Home Assistant's state machine and developer tools.",
+            "Run the test suite (tox or pytest) to ensure there are no regressions, and add tests that validate the presence and correctness of the new attributes when upstream data is available and when it is not (None)."
+        ]
+    }
+}

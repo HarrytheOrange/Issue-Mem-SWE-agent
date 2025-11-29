@@ -1,0 +1,50 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant history/logbook HTTP endpoints were blocking the event loop by building large JSON responses synchronously. The fix offloads JSON serialization to the executor using hass.async_add_job, so JSON is built in a worker thread instead of the main asyncio loop.",
+        "keywords": [
+            "Home Assistant",
+            "history component",
+            "logbook component",
+            "HTTP endpoint",
+            "JSON serialization",
+            "JSON building in executor",
+            "async_add_job",
+            "run_in_executor",
+            "event loop blocking",
+            "performance issue",
+            "slow history endpoint",
+            "aiohttp self.json"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Home Assistant history and logbook HTTP endpoints were causing performance issues because they built large JSON responses directly in the asyncio event loop. The handlers used self.json(result) and self.json(events) synchronously at the end of the request, which could be expensive when the result sets were large (e.g., many states or events). This synchronous JSON serialization blocked the event loop and contributed to slow or stuck requests, as noted in a related issue discussion.\n\nTo fix it, the developer updated both history.get and logbook.get handlers. They first stored the hass instance from request.app['hass'] into a local variable for easier reuse. Then, instead of calling self.json(...) directly, they offloaded that call to Home Assistant's executor using hass.async_add_job. Concretely, they changed:\n\n- history: `return self.json(result)` to `response = yield from hass.async_add_job(self.json, result); return response`\n- logbook: `return self.json(events)` to `response = yield from hass.async_add_job(self.json, events); return response`\n\nThis runs JSON building in a worker thread instead of in the main event loop, reducing blocking and improving responsiveness for history and logbook endpoints. The team decided to limit this change to history and logbook for now, with the option to generalize later if similar issues emerge elsewhere.",
+        "semantic_memory": "When working with asynchronous frameworks (like Home Assistant's asyncio-based core and aiohttp web server), CPU-bound or heavy synchronous operations can block the event loop and degrade performance. JSON serialization of large data structures is a common culprit: even though it's just 'formatting data', it can be expensive enough to cause noticeable stalls if done inline in an async request handler.\n\nA good pattern is to offload heavy synchronous work to a thread or process pool using the framework's executor utilities (e.g., loop.run_in_executor, hass.async_add_job). This keeps the main event loop responsive while the heavy work is performed elsewhere. Then the coroutine awaits the result and returns it once ready.\n\nFor web APIs, even convenience methods like self.json(...) can be blocking if they do the serialization synchronously. If they are not natively async, and the payloads can be large, they should be wrapped in executor calls. The pattern is:\n\n- Compute or fetch data (possibly already using async_add_job for DB queries or state aggregation).\n- Offload JSON encoding or other CPU-heavy transformation to the executor.\n- Await the result and return the HTTP response.\n\nThis pattern is particularly important in multi-tenant or long-running home automation systems where many concurrent tasks share a single event loop.",
+        "procedural_memory": [
+            "When diagnosing similar issues (slow or blocking async HTTP endpoints due to JSON building or other CPU-heavy operations), follow these steps:",
+            "Step 1: Identify symptoms of event loop blocking",
+            "  - Look for slow HTTP endpoints (history/logbook-like views) that get significantly slower with larger result sets.",
+            "  - Check logs or monitoring/metrics for warnings about the event loop being blocked or tasks overrunning their time budget.",
+            "  - Use profiling or simple timing logs around response-building code to detect long serialization times.",
+            "Step 2: Inspect the async handlers for synchronous heavy work",
+            "  - Review the coroutine or callback that handles the HTTP request.",
+            "  - Look for calls like json.dumps(...), self.json(...), or other transformation functions that are not async and operate on large collections.",
+            "  - Check if these are executed directly in the event loop (i.e., not via an executor).",
+            "Step 3: Extract the framework context needed for executor offloading",
+            "  - In Home Assistant, obtain the hass instance from `request.app['hass']` and store it in a local variable for reuse.",
+            "  - In raw asyncio/aiohttp, use the event loop (`request.app.loop` or `asyncio.get_event_loop()`) as the executor entry point.",
+            "Step 4: Offload heavy synchronous work to an executor",
+            "  - Replace direct calls like `return self.json(result)` with an executor-wrapped call, for example:\n    - `response = yield from hass.async_add_job(self.json, result)` (or `response = await hass.async_add_job(self.json, result)` in modern syntax).\n    - Then `return response`.",
+            "  - For generic asyncio/aiohttp, use `response = await loop.run_in_executor(None, lambda: web.json_response(result))` or similar.",
+            "Step 5: Ensure the rest of the pipeline is also non-blocking",
+            "  - Verify that upstream data collection (e.g., database queries, state aggregation like get_significant_states or _get_events) is already running in the executor or is truly async.",
+            "  - If not, similarly wrap those calls with async_add_job or run_in_executor.",
+            "Step 6: Test under realistic load",
+            "  - Run local tests (e.g., Home Assistant's tox suite) to ensure no regressions.",
+            "  - Hit the endpoints with large datasets and observe response times and CPU usage.",
+            "  - Confirm that the event loop remains responsive (no long blocking warnings).",
+            "Step 7: Consider generalizing if the pattern recurs",
+            "  - If you find multiple endpoints calling the same synchronous JSON helper, consider refactoring that helper to be executor-aware or providing an async wrapper.",
+            "  - However, as in this case, it may be acceptable to first patch the most problematic endpoints (history/logbook) and only generalize once there is clear need."
+        ]
+    }
+}

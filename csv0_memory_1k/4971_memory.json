@@ -1,0 +1,57 @@
+{
+    "search_index": {
+        "description_for_embedding": "Update project governance metadata by adding a new contributor (Amanda McGuinness / @amanda11) to OWNERS.md after a successful governance vote, reflecting her ongoing contributions across StackStorm Exchange, Ansible, ChatOps, docs, and core.",
+        "keywords": [
+            "StackStorm",
+            "governance",
+            "contributors list",
+            "OWNERS.md",
+            "project metadata",
+            "TSC vote",
+            "access control",
+            "recognizing contributors",
+            "community management"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the StackStorm project updated its governance metadata to formally recognize a new contributor, Amanda McGuinness (@amanda11). The underlying issue was not a software bug but a governance and documentation gap: Amanda had been significantly contributing since the v3.2.0 pre-release (testing, bug discovery and fixes in Orquesta and StackStorm-Exchange packs, documentation improvements, and adding CentOS/RHEL 8 support in Ansible), but she was not yet listed among official StackStorm Contributors.\n\nA proposal was raised to add her to the Contributors list as defined in the project’s GOVERNANCE.md. During the discussion, the team followed the documented process: a one‑week voting period was observed, and the Technical Steering Committee (TSC) achieved the required 3/4 majority vote to approve the proposal. Once consensus was confirmed, the change was implemented as a simple documentation update.\n\nThe actual code change is a one-line modification to OWNERS.md, adding a new bullet under the Contributors section: “* Amanda McGuinness ([@amanda11](https://github.com/amanda11)) - StackStorm Exchange, Ansible, ChatOps, Documentation, core.” This aligns the public governance document with the reality of her contributions and ensures transparency about who is recognized as a project contributor.",
+        "semantic_memory": "This case illustrates good governance and community practices in open source projects rather than a technical bug fix. Key generalizable concepts include:\n\n1. **Governance as Code / Governance in Repo**: Project roles and decision-making processes are documented in-version-controlled files (e.g., OWNERS.md, GOVERNANCE.md). Changes to governance (e.g., adding contributors, maintainers) are made via the same Pull Request workflow as code changes, ensuring traceability and transparency.\n\n2. **Clear Role Definitions**: Explicitly defining roles like Contributors, Maintainers, and TSC members clarifies who does what, who can vote, and what level of responsibility or trust has been granted. This helps onboard newcomers and avoid confusion.\n\n3. **Formal Recognition of Contributions**: Recognizing recurring contributors publicly (e.g., updating OWNERS.md) is a non-technical but crucial practice. It builds community goodwill, encourages continued engagement, and documents the human landscape of the project.\n\n4. **Governance-Driven Workflow**: Changes to governance follow a documented process—such as a fixed voting period and a required voting threshold (eg, 1 week and 3/4 majority). This prevents ad-hoc decision-making and sets expectations for how changes to roles are approved.\n\n5. **Using PRs for Non-Code Changes**: Even non-code, administrative changes (like adding someone to a list of contributors) should go through the normal PR and review process. This makes the governance history auditable and gives the community a chance to comment.\n\n6. **Attribution of Areas of Expertise**: When adding contributors, including their primary areas of contribution (Exchange packs, Ansible, ChatOps, docs, core, etc.) provides a quick map of who to approach for help in different parts of the ecosystem.\n\nThese practices help maintain a healthy, transparent open source project where human roles are managed with the same rigor as the source code.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to handle and implement similar governance/role updates in a project:",
+            "Step 1: Verify the contributor’s history and impact",
+            "Review the candidate’s contributions across the project (PRs, issues, code reviews, documentation, testing, etc.).",
+            "Confirm that their involvement meets any documented criteria for the role you’re proposing (e.g., ‘Contributor’, ‘Maintainer’, etc.).",
+            "Collect relevant links (PRs, issues, discussions) that demonstrate their sustained contribution and areas of focus.",
+            "Step 2: Check the project’s governance policy",
+            "Open the project’s GOVERNANCE.md (or equivalent) and identify the exact process required to add or change roles (voting period, quorum, who can vote, etc.).",
+            "Note requirements such as minimum voting duration (e.g., 1 week) and approval thresholds (e.g., 3/4 majority of TSC).",
+            "Step 3: Raise a proposal (issue or discussion)",
+            "Create an issue or discussion thread proposing the role update. State:",
+            "- Who is being proposed (GitHub handle and name).",
+            "- Their contributions and areas of expertise (with links).",
+            "- The exact role/permissions change being requested.",
+            "- A reminder of the governance process that will be followed (e.g., a 1-week vote).",
+            "Notify the relevant governance body (e.g., @Org/tsc or @Org/maintainers) so they can participate.",
+            "Step 4: Run the voting process",
+            "Leave the proposal open for the required period defined in governance.",
+            "Ask eligible voters (e.g., TSC members) to explicitly vote (e.g., +1/-1/0) in the issue or discussion.",
+            "Track votes and ensure that quorum and threshold (e.g., 3/4 approval) are met.",
+            "Step 5: Implement the change in the repository",
+            "Once approved, create a PR modifying the appropriate governance/metadata file (e.g., OWNERS.md, MAINTAINERS.md, or a team mapping file).",
+            "Add an entry for the new contributor/maintainer with:",
+            "- Their name and GitHub handle.",
+            "- A brief description of their main contribution areas or responsibilities (e.g., Exchange, Ansible, Docs, Core).",
+            "Reference the original proposal issue/discussion and the successful vote in the PR description for traceability.",
+            "Step 6: Review and merge the PR",
+            "Have one or more existing maintainers review and approve the PR, confirming it matches the decision made during voting and follows formatting conventions.",
+            "Merge the PR once approval and CI (if any) are satisfied, thereby updating the canonical governance documentation.",
+            "Step 7: Communicate the outcome",
+            "Post a closing comment on the original proposal issue/discussion, summarizing the result (e.g., vote passed, PR merged).",
+            "Tag the new contributor/maintainer to acknowledge and thank them publicly.",
+            "Optionally update any related communication channels (Slack, mailing list, docs site) to reflect the updated list of contributors/maintainers.",
+            "Step 8: Keep governance files consistent",
+            "If your project has multiple governance-related files (OWNERS.md, teams in GitHub org, documentation site, etc.), ensure they’re updated consistently.",
+            "Periodically audit these files to ensure they match the actual membership and responsibilities in practice."
+        ]
+    }
+}

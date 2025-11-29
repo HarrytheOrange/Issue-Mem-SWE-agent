@@ -1,0 +1,44 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant Hue integration: configuration schema for the bridge host was restricted to IP addresses only (`ipaddress.ip_address`), breaking setups that relied on FQDN/hostnames. A proposed fix relaxed validation to allow any string for `host`, but maintainers noted this breaks discovery logic that depends on IP-based matching, so a more complete solution with edge-case handling and tests is required.",
+        "keywords": [
+            "Home Assistant",
+            "Hue integration",
+            "bridge configuration",
+            "CONF_HOST",
+            "FQDN vs IP",
+            "ipaddress.ip_address",
+            "voluptuous",
+            "config schema validation",
+            "discovery matching",
+            "hostname support"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In the Home Assistant Hue component, users previously could configure the bridge using a hostname/FQDN as the `host` in `configuration.yaml`. A later change tightened the configuration schema to validate the `host` strictly as an IP address using `vol.All(ipaddress.ip_address, cv.string)`. This broke users who relied on FQDNs instead of raw IPs. A contributor submitted a PR that changed the schema line in `homeassistant/components/hue/__init__.py` from `vol.Required(CONF_HOST): vol.All(ipaddress.ip_address, cv.string)` to `vol.Required(CONF_HOST): cv.string`, effectively allowing any string including hostnames.\n\nDuring review, maintainers pointed out that Hue discovery uses IP addresses and relies on matching the discovered bridge IP to the configured host. Simply allowing arbitrary strings (like FQDNs) without updating the rest of the logic would break that matching and thus the discovery flow. Because of these hidden dependencies, the change was deemed \"not so simple\" and could not be accepted as-is. The maintainer invited a more comprehensive PR that would reintroduce hostname support, handle all edge cases (especially discovery/matching), and include appropriate tests. The immediate patch itself was just a one-line change to loosen validation, but the discussion exposed a deeper architectural dependency on IP-based identifiers.",
+        "semantic_memory": "When validating network endpoints in configuration (e.g., `host` fields), over-constraining input to IP addresses can unintentionally break legitimate use cases where hostnames or FQDNs are preferred or required. Users often rely on DNS names for stability, flexibility, and best practices, rather than hardcoding IPs.\n\nHowever, changing validation from \"IP-only\" to \"any string\" is not risk-free. Other parts of the system may implicitly assume that the `host` field is always an IP address (for example, discovery logic or deduplication that key off IPs). If those assumptions exist, simply loosening input validation can break matching logic, caching, or resource identification, even if configuration parsing itself succeeds.\n\nThe generalizable pattern:\n- Configuration schemas and runtime logic must be aligned: if schema enforces IP-only, other code may have been written assuming that guarantee.\n- Supporting hostnames/FQDNs in addition to IPs requires more than just validation changes: you may need to normalize or resolve names to IPs for internal matching, or refactor code to use a different canonical identifier.\n- Any schema change that broadens allowed values should be accompanied by tests covering discovery, matching, and integration with existing flows to prevent subtle regressions.\n\nBest practice is to:\n- Allow both IP and hostname at the configuration boundary for usability.\n- Internally, resolve and store stable canonical identifiers (e.g., resolved IP plus perhaps a bridge ID) and ensure discovery and configuration are matched on those identifiers, not on raw user input strings.\n- Document supported formats and their implications (e.g., if hostnames will be resolved once at startup vs dynamically).",
+        "procedural_memory": [
+            "Step-by-step process to diagnose and fix similar issues where a host field is restricted to IPs but users need hostnames/FQDNs:",
+            "Step 1: Identify the symptom",
+            "Confirm user reports that configuration with a hostname/FQDN (e.g., `hue-fqdn.example.com`) is rejected or fails, while the same value as an IP address works. Reproduce by adding such a configuration and running validation or startup.",
+            "Step 2: Inspect configuration schema and validation",
+            "Locate the schema definition for the relevant integration/module (e.g., `BRIDGE_CONFIG_SCHEMA` in the Hue integration). Look for validators like `ipaddress.ip_address`, `vol.IPv4Address`, or custom IP-only checks. Note whether the field is declared as `vol.All(ipaddress.ip_address, cv.string)` or similar, which enforces IP-only input.",
+            "Step 3: Search for assumptions in the codebase",
+            "Before relaxing validation, search the codebase for where this config field is used (e.g., `CONF_HOST`). Look for places where the code assumes the value is an IP: direct numeric address comparisons, string equality against discovered IPs, storage in IP-only collections, or use in discovery or deduplication logic.",
+            "Step 4: Map discovery and matching flows",
+            "Analyze how discovery works for the integration. Determine what identifier discovery provides (IP, hostname, MAC, bridge ID, etc.) and how it is matched against configured entries. If matching is done via IP address equality with `CONF_HOST`, recognize that allowing hostnames without further changes will break this logic.",
+            "Step 5: Design a complete solution",
+            "Decide how to support hostnames while keeping discovery stable:\n- Option A: Allow both hostnames and IPs in config, but normalize internally by resolving hostnames to IPs and storing both forms (e.g., `configured_host` and `resolved_ip`). Match discovery on the resolved IP.\n- Option B: Change discovery and matching to use a different canonical identifier (like a bridge ID), so the `host` can be free-form (IP or hostname) while matching uses the more stable identifier.\nSpecify how and when DNS resolution occurs and how failures are handled.",
+            "Step 6: Update the schema appropriately",
+            "Modify the configuration schema so that it accepts both IPs and hostnames. Common strategies:\n- Use a validator that accepts either: e.g., `vol.Any(ipaddress.ip_address, cv.domain)`, then convert to a normalized representation.\n- Or accept `cv.string` at the boundary but perform validation/resolution in a dedicated setup function that enforces additional constraints and logs clear errors.\nAvoid changing to a bare `cv.string` without ensuring downstream code can handle non-IP values.",
+            "Step 7: Adjust dependent logic and add safeguards",
+            "Update any discovery/matching or internal logic that assumes the host is an IP. For example:\n- If matching uses `if discovered_ip == config[CONF_HOST]`, change it to compare against a stored `resolved_ip`.\n- Ensure that any network calls can handle hostnames (most libraries do, but verify).\nAdd defensive code where necessary to log a clear message if resolution fails or if a mismatch occurs.",
+            "Step 8: Add tests for edge cases",
+            "Create tests that cover:\n- Configuration with a raw IP host.\n- Configuration with a hostname/FQDN.\n- Discovery returning an IP and matching correctly against both IP and FQDN configurations.\n- Failure modes: invalid hostname, unresolvable hostname, or DNS changes.\nThese tests should ensure that both legacy IP-based setups and hostname-based setups behave correctly.",
+            "Step 9: Update documentation",
+            "Update the integration documentation to state that `host` can be an IP or a hostname/FQDN, specifying any behavior around resolution and discovery. Provide example configurations for both formats.",
+            "Step 10: Communicate constraints in review",
+            "When reviewing or submitting PRs that relax schema validation, call out any implicit assumptions in the code (e.g., discovery uses IP) and describe how the change addresses them. Avoid merging minimal schema-only changes that seem harmless but break deeper invariants."
+        ]
+    }
+}

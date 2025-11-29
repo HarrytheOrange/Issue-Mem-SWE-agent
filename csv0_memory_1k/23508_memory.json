@@ -1,0 +1,32 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant InfluxDB integration crashed on network timeouts because the InfluxDB writer only caught InfluxDBClientError and IOError, not requests.RequestException. Fix: extend the exception handler to also catch requests.exceptions.RequestException (e.g., ReadTimeout) so the retry logic runs instead of crashing.",
+        "keywords": [
+            "Home Assistant",
+            "influxdb integration",
+            "influxdb writer",
+            "requests.exceptions.RequestException",
+            "ReadTimeout",
+            "HTTPConnectionPool",
+            "timeout handling",
+            "retry logic",
+            "unhandled exception",
+            "network I/O error"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Home Assistant InfluxDB component occasionally crashed when writing metrics to InfluxDB. The stack trace showed a requests.exceptions.ReadTimeout originating from requests' HTTPConnectionPool, bubbling up through influxdb.client.write and into the integration's write_to_influxdb method. The existing code only caught exceptions.InfluxDBClientError and IOError around the write_points call, so RequestException-derived errors were not handled. As a result, a transient network timeout killed the writer instead of being retried. The fix was to broaden the exception handler to also catch requests.exceptions.RequestException in the same place, reusing the existing retry loop. Now ReadTimeout (and other requests-related network failures) trigger the configured retry behavior instead of crashing the integration.",
+        "semantic_memory": "When integrating with services via HTTP clients like the Python requests library or libraries that wrap it (such as the InfluxDB Python client), you must consider all relevant exception types, especially for network I/O. Many client libraries use requests under the hood and may raise requests.exceptions.RequestException or its subclasses (ReadTimeout, ConnectTimeout, ConnectionError, etc.) in addition to their own domain-specific exception classes. If your code only catches the library-specific exceptions (e.g., InfluxDBClientError) and generic IOErrors but ignores RequestException, then transient network failures can escape the intended retry/error-handling paths and crash the application. A robust pattern is to group these network-related exceptions together in retry logic and treat them as expected transient failures, logging and retrying instead of allowing them to propagate as unhandled exceptions. This is especially important in long-running services and background workers that communicate with external systems.",
+        "procedural_memory": [
+            "To diagnose and fix similar issues with unhandled network exceptions in external service integrations:",
+            "Step 1: Examine error logs and stack traces for recurring crashes related to external I/O (e.g., HTTP calls). Identify the top-most unhandled exception type (such as requests.exceptions.ReadTimeout or ConnectionError).",
+            "Step 2: Trace the stack down to your integration or wrapper code. Find where you call the external client library (e.g., influxdb.client.write_points, requests.get/post, etc.). Note any existing try/except blocks and what they currently catch.",
+            "Step 3: Compare the caught exceptions with the external library's documented exception hierarchy. For libraries built on requests, check whether RequestException and its subclasses can be raised directly or wrapped.",
+            "Step 4: Update the error-handling logic to include all relevant network-related exception types. For example, expand `except (LibrarySpecificError, IOError):` to also catch `requests.exceptions.RequestException` or the specific subclasses you want to treat as transient.",
+            "Step 5: Ensure that the exception handler applies the intended behavior: log the failure with context, increment any counters, and execute retry logic (e.g., sleep and retry up to max_tries). Avoid silently swallowing unexpected errors without logging.",
+            "Step 6: Add or run tests that simulate network timeouts or connection errors. You can mock the client to raise RequestException subclasses and verify that your code retries rather than crashes.",
+            "Step 7: Deploy and monitor logs to confirm the behavior: you should see handled warnings/errors with retry attempts instead of unhandled stack traces crashing the component or service.",
+            "Step 8: As a best practice, centralize network error handling around external services, and periodically review it when upgrading dependencies since exception behavior or types can change between versions."
+        ]
+    }
+}

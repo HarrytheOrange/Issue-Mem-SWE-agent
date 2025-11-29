@@ -1,0 +1,36 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant PR proposed adding the 'config' integration as a dependency of the 'frontend' component so Lovelace could organize entities by area. The change was blocked due to security concerns about exposing configuration management APIs through dependencies before verifying that all config write actions are restricted to admin users. The PR was ultimately closed, with a suggested alternative of adding a dedicated area-list WebSocket command in the frontend instead of depending on the full config integration.",
+        "keywords": [
+            "Home Assistant",
+            "frontend",
+            "config integration",
+            "integration dependency",
+            "Lovelace",
+            "areas",
+            "area list",
+            "security",
+            "admin-only access",
+            "WebSocket API",
+            "configuration management",
+            "manifest.json"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, a Home Assistant pull request attempted to make the 'frontend' integration depend on the 'config' integration by adding 'config' to `homeassistant/components/frontend/manifest.json` under `dependencies`. The motivation was that Lovelace's default UI now organizes entities by area, and area information is currently exposed via the config domain. Historically, there was a rule that no integration should depend on 'config' because doing so effectively opens access to configuration management APIs, which are sensitive. With the introduction of authentication and an admin group, the maintainer (balloob) noted that this restriction might be lifted in the future, but only after auditing all actions on the config panel to ensure that any write operations require admin privileges and are not accessible to regular users. Another maintainer (awarecan) pointed out that the correct fix is more complex than just adding a dependency: instead, a dedicated area list WebSocket command should be added in the frontend component so the UI can obtain area data without depending on the full config integration. Given the lack of a completed security audit and the architectural concerns, the maintainers agreed that the PR should be closed for now and not merged.",
+        "semantic_memory": "When considering new dependencies between components or integrations, especially in systems that expose configuration or management APIs, it is critical to evaluate the security and access control implications, not just the functional benefits. Adding a dependency on a powerful configuration integration can implicitly grant access to sensitive operations that were not intended for that consumer, particularly if the dependency exposes generic APIs for creating, updating, or deleting configuration entities. This is especially risky if user roles and permissions (such as admin vs non-admin) are not strictly enforced at every API entry point. A better pattern is to design narrow, purpose-specific APIs (e.g., a read-only endpoint or WebSocket command that just returns a list of areas or metadata) instead of exposing the full configuration subsystem. Before relaxing previously established architectural rules (like ‘no integration may depend on config’), one should perform a thorough audit to ensure that all write operations are properly gated by authorization checks and that no elevation-of-privilege path is introduced through new dependencies. In general, UI-facing components should prefer dedicated, least-privilege interfaces instead of broad dependencies on configuration or management services.",
+        "procedural_memory": [
+            "When a frontend or UI feature needs configuration-like data (e.g., areas, groups, metadata), avoid immediately adding a dependency on the entire configuration subsystem.",
+            "Step 1: Identify what specific data the frontend needs (e.g., a read-only list of areas and their IDs) and whether this data is currently only available through a privileged config API.",
+            "Step 2: Review existing architectural rules or guidelines about dependencies on configuration or management components (e.g., 'no integration may depend on config') and understand their security rationale.",
+            "Step 3: Evaluate security implications: determine what APIs would become reachable if the dependency is added. Check if those APIs allow write or delete operations, or expose sensitive configuration details.",
+            "Step 4: Check the authentication and authorization model: verify whether all configuration-related actions, especially write operations, are gated by admin-only or appropriate role checks. If unsure, do not introduce the dependency yet.",
+            "Step 5: If there is any doubt about access control, propose or implement a narrower, least-privilege API instead of a broad dependency. For example, add a dedicated, read-only WebSocket or HTTP endpoint in the UI-related component that yields only the needed data (like an area list).",
+            "Step 6: Design that new API to enforce authorization explicitly (e.g., allow read-only access to certain data for all authenticated users, and limit write operations to admins only). Document its intended usage and security constraints.",
+            "Step 7: If a broader policy change is desired (e.g., allowing dependencies on config), schedule or perform a systematic audit of all config endpoints to confirm that non-admin users cannot perform configuration changes. Only then update the architectural rule.",
+            "Step 8: In code review, scrutinize PRs that add dependencies on configuration or management components. Ask: Does this introduce an unintentional control surface? Is there a narrower interface we can expose instead?",
+            "Step 9: If the needed security audit or architectural changes are not yet done, close or defer the PR that introduces the risky dependency, and track a follow-up task or issue for implementing the proper, secure API.",
+            "Step 10: After implementing the dedicated, least-privilege endpoint and verifying tests, update the frontend or caller to use that new endpoint instead of depending on the full config integration."
+        ]
+    }
+}

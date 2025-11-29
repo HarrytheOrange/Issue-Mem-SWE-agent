@@ -1,0 +1,34 @@
+{
+    "search_index": {
+        "description_for_embedding": "Attempted feature to support complex-valued image data by moving magnitude/phase/real/imag rendering to the GPU via vispy shaders instead of pre-rendering on the CPU. PR was ultimately closed in favor of implementing this properly upstream in vispy (vispy/vispy#1999).",
+        "keywords": [
+            "complex data",
+            "complex-valued images",
+            "magnitude phase rendering",
+            "real imaginary rendering",
+            "GPU rendering",
+            "vispy",
+            "shader-based visualization",
+            "napari",
+            "offload computation to GPU",
+            "upstream dependency change"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "This PR aimed to add support for visualizing complex-valued data (e.g., complex images) by moving the rendering of magnitude, phase, real, and imaginary components onto the GPU using vispy, rather than pre-rendering derived images on the CPU. The approach rendered different representations (mag/phase/real/imag) via vispy nodes and custom shader logic. A compromise in the implementation was that 3D volumes were still reduced to real-valued volumes before going into the GPU texture, and some of the more exotic colormaps that jointly encoded real and imaginary parts were temporarily lost. The change was relatively invasive to vispy nodes, and the PR remained a draft with no tests yet. During review, maintainers noted that a lot had changed in vispy and questioned whether this was still the right direction. The original author then pointed out that a better long-term solution was being developed directly in vispy (vispy/vispy#1999) and suggested closing this PR. The PR was closed with the understanding that complex-data support should be implemented upstream in vispy and then consumed by this project, rather than maintaining a bespoke, invasive local solution.",
+        "semantic_memory": "When adding support for complex-valued data visualization, it's generally better to handle the core image representation and rendering logic as close to the rendering backend as possible, often via GPU shaders, rather than pre-rendering multiple derivative arrays on the CPU. Offloading rendering modes (magnitude, phase, real, imaginary) to the GPU allows dynamic switching of representations and better performance. However, such changes can be invasive if done only in a downstream project; if the rendering stack depends on a third-party library (like vispy), the cleanest, most maintainable approach is to implement the necessary abstractions and shader support upstream. Downstream applications can then use standardized APIs, reducing maintenance burden and merge conflicts. Additionally, temporary compromises (e.g., reducing 3D complex volumes to real-valued textures, or dropping some advanced colormaps) may be acceptable for a first iteration, but they should be clearly documented and tested. Old or conflicted PRs that are superseded by upstream work should be closed, with clear cross-references, rather than continuously rebased, to keep the codebase clean.",
+        "procedural_memory": [
+            "When you need to support complex-valued data visualization:",
+            "Step 1: Clarify requirements: determine which representations the user needs (e.g., magnitude, phase, real part, imaginary part, or combinations) and whether 2D, 3D, or time-series data must be supported.",
+            "Step 2: Inspect the rendering stack: identify which library (e.g., vispy, OpenGL, vtk) is responsible for GPU rendering and what hooks it provides for custom shaders or data types.",
+            "Step 3: Decide where to implement support: if the rendering capability is broadly useful, plan to implement complex-data support upstream in the rendering library (e.g., vispy) rather than building a one-off solution in your application.",
+            "Step 4: Design GPU-based rendering modes: define shader logic or rendering pipelines that can take a complex-valued texture (or two-channel real/imag representation) and compute magnitude/phase/real/imag on the GPU, with uniforms or parameters to switch modes at runtime.",
+            "Step 5: Handle dimensionality constraints: if the current GPU pipeline only supports real-valued textures, decide how to encode complex data (e.g., real in R channel, imag in G channel). For 3D volumes, decide whether you can support complex volumes directly or must reduce them to real-valued textures as a temporary compromise.",
+            "Step 6: Preserve or document trade-offs: if you must drop advanced features (e.g., fancy colormaps combining real and imaginary parts), explicitly document these as limitations and design the API so they can be reintroduced later.",
+            "Step 7: Integrate with the application: once upstream rendering support is in place, expose configuration options in the application (layer types, dropdowns, or controls to choose mag/phase/real/imag), and ensure the data pipeline passes complex data correctly to the renderer.",
+            "Step 8: Add tests: create tests that load small complex arrays, verify visual modes (through programmatic checks of shader outputs if possible), and make sure switching between modes does not crash or reshape data unexpectedly.",
+            "Step 9: Manage legacy or superseded PRs: if your local PR becomes obsolete due to better upstream work (e.g., a more complete vispy PR), close the local PR, reference the upstream PR, and plan a follow-up integration PR once the upstream change is merged.",
+            "Step 10: Revisit 3D and advanced visualization: after the basic complex rendering is stable, iterate to support full 3D complex volumes and reintroduce sophisticated colormaps or composite visualizations (e.g., encoding phase as hue and magnitude as value)."
+        ]
+    }
+}

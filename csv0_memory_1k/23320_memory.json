@@ -1,0 +1,32 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant ZHA devices were losing the battery_quantity attribute after restart because the attribute was never read from the cached Zigbee state during async_read_state. The fix was to add a get_attribute_value call for 'battery_quantity' with from_cache, ensuring it is restored like battery_size and other battery attributes.",
+        "keywords": [
+            "Home Assistant",
+            "ZHA",
+            "Zigbee",
+            "battery_quantity",
+            "battery attributes",
+            "state restore",
+            "cached attributes",
+            "async_read_state",
+            "get_attribute_value",
+            "regression"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, ZHA (Zigbee Home Automation) devices in Home Assistant were not preserving their battery_quantity attribute across Home Assistant restarts. Users observed that other battery-related attributes (like battery_size) would correctly restore from cache, but battery_quantity would revert to an unknown or default state after every restart. The root cause was in the ZHA power configuration channel implementation: the async_read_state method explicitly requested cached values for 'battery_percentage_remaining' and 'battery_voltage', but it never requested 'battery_quantity'. As a result, that attribute was never rehydrated from Zigbee's cached state on startup. The fix added a single line to async_read_state in homeassistant/components/zha/core/channels/general.py to call get_attribute_value('battery_quantity', from_cache=from_cache). This change aligned battery_quantity with the other battery attributes, ensuring that its value survives restarts.",
+        "semantic_memory": "When a system has a state-restoration mechanism that relies on explicitly reading or subscribing to individual attributes, missing one attribute from this restoration path will cause that attribute to appear transient or to be lost across restarts. In frameworks like Home Assistant's ZHA integration, cluster/channel classes often provide an async_read_state or similar method that enumerates all attributes that should be restored from cache on startup. If a new attribute is added (e.g., battery_quantity) or an existing one was previously handled differently, but the code that restores state is not updated correspondingly, the attribute will not persist across restarts even though the rest of the system appears to function correctly. A best practice is to centralize attribute lists or ensure tests validate that all user-facing attributes are included in both update and restore flows (read from cache, subscribe to reports, and persist state). Also, whenever adding or changing entity attributes, developers should search for and update all lifecycle touchpoints: initialization, polling, report handling, and state restoration code paths.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Reproduce the issue by setting a specific attribute (e.g., a battery-related attribute) on a device, confirming it is visible in the UI, then restarting the application or integration to see if the attribute value is lost.",
+            "Step 2: Inspect the integration's startup or state restoration code (e.g., async_read_state, restore_state, or equivalent) to see which attributes are explicitly read from cache or reinitialized on startup.",
+            "Step 3: Compare the list of attributes being restored with the list of attributes the entity exposes during normal runtime (e.g., attributes read during regular polling or via attribute reports). Look for discrepancies where an attribute is used elsewhere but not included in the restore logic.",
+            "Step 4: For any missing attribute, add a corresponding retrieval call using the same mechanism as the existing ones (e.g., get_attribute_value('attribute_name', from_cache=from_cache) or its equivalent for that integration). Keep the pattern consistent with how other attributes are handled.",
+            "Step 5: Run the local test suite (e.g., via tox or the project's test runner) and add or update tests that specifically cover restart persistence for the affected attribute, if such tests do not already exist.",
+            "Step 6: Manually verify the fix: set the attribute again, restart the application/integration, and confirm the value is restored correctly and visible in the UI.",
+            "Step 7: As a preventative measure, document all attributes that must persist across restarts and, where possible, centralize them in a single list or configuration so that future changes require updating only one place.",
+            "Step 8: Review related lifecycle paths (attribute reporting handlers, polling loops, and restore logic) whenever adding new user-facing attributes to ensure they are consistently managed in all phases (initial read, updates, and restore from cache)."
+        ]
+    }
+}

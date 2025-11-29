@@ -1,0 +1,34 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fix for an asynchronous logging handler shutdown bug: replaces version-dependent asyncio.Queue join/task_done logic with a simpler, reliable mechanism that closes the handler by sending a sentinel to the queue and waiting for the logging thread to terminate.",
+        "keywords": [
+            "async logging handler",
+            "async_close",
+            "homeassistant.util.logging",
+            "asyncio.Queue",
+            "queue.join",
+            "task_done",
+            "thread shutdown",
+            "graceful shutdown",
+            "cross-python compatibility",
+            "logging thread hang"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, an asynchronous logging handler in Home Assistant had unreliable shutdown behavior across different Python versions. The original implementation of async_close() attempted to support both older and newer asyncio.Queue APIs by conditionally using queue.join()/task_done() when available, and falling back to polling queue.empty() otherwise. The worker thread's _process() method likewise tried to support both modes by optionally invoking queue.task_done() for each processed record. This multi-path implementation was brittle: it depended on Python-version-specific behavior of asyncio.Queue, and could lead to races or hangs where async_close(blocking=True) would never return, or would not reliably wait for the handler to fully close.\n\nThe fix simplified the logic substantially. In async_close(), the code now always enqueues a sentinel value (None) to signal the worker thread to stop, and when blocking=True, it simply waits in a loop until the worker thread is no longer alive by repeatedly yielding asyncio.sleep(0). In the worker thread's _process() method, the support_join/task_done logic was removed entirely. The loop now just pulls records from the queue; when it encounters the None sentinel, it closes the underlying handler and returns, allowing the thread to terminate. This approach eliminates dependency on asyncio.Queue.join()/task_done() and avoids checking queue.empty() across threads, producing a more robust and Python-version-agnostic shutdown behavior for the async log handler.",
+        "semantic_memory": "Asynchronous components that coordinate between threads and event loops should avoid relying on fragile or version-specific queue semantics like join()/task_done() when used across threads. Using asyncio.Queue.join()/task_done() in conjunction with a separate worker thread introduces several pitfalls: differing availability across Python versions, subtle race conditions around task_done counts, and unreliable use of queue.empty() for synchronization between threads.\n\nA more robust pattern for shutting down threaded async workers is:\n- Use a clear sentinel value (e.g., None) placed on the queue to indicate shutdown.\n- In the worker, exit cleanly when the sentinel is received and perform any necessary resource cleanup (e.g., handler.close()).\n- On the caller side, if a blocking shutdown is needed, wait for the worker thread to finish (e.g., via thread.join() or a thread-liveness loop) instead of trying to infer completion from queue state.\n\nThis decouples shutdown semantics from the internal details of the queue implementation, improves portability across Python versions and platforms, and reduces the likelihood of deadlocks or hangs during shutdown of asynchronous logging or other background workers.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Identify symptoms of problematic async shutdown. Look for hangs, deadlocks, or inconsistent behavior when calling a `close()` or `async_close()` method with a blocking option. In tests, see if shutdown sometimes never returns or returns before background work is actually complete.",
+            "Step 2: Inspect the coordination mechanism between the main event loop and background threads. Check whether the code uses `asyncio.Queue.join()`/`task_done()` or `queue.empty()` across threads to determine when work is finished.",
+            "Step 3: Recognize anti-patterns. Using `queue.empty()` across threads is unreliable, and mixing `asyncio.Queue.join/task_done` with a separate worker thread can be fragile, especially across Python versions or different asyncio implementations.",
+            "Step 4: Introduce a sentinel-based shutdown protocol. Define a special value (e.g., `None`) that, when placed on the queue, signals the worker thread to stop processing and clean up resources.",
+            "Step 5: Simplify the worker loop. In the worker thread’s processing loop, read from the queue; if the record is the sentinel, perform necessary closes (e.g., `handler.close()`) and return. Otherwise, process the record as usual.",
+            "Step 6: Simplify the close/async_close logic. In `async_close()`, always enqueue the sentinel onto the queue. For non-blocking shutdown, you can return immediately after enqueuing.",
+            "Step 7: For blocking shutdown, wait on thread termination instead of queue state. When `blocking=True`, poll the worker thread’s liveness (e.g., `while thread.is_alive(): await asyncio.sleep(0, loop=loop)`) or use `thread.join()` from synchronous code. Avoid relying on `queue.join()`/`task_done()` when coordinating with a separate thread.",
+            "Step 8: Remove version-dependent branches. Eliminate conditional logic that checks for the existence of `queue.join`, `queue.task_done`, or other version-specific attributes; the sentinel + thread-join approach is typically portable across Python versions.",
+            "Step 9: Add tests that exercise shutdown behavior. Include tests that call `async_close(blocking=True)` and assert that: (a) the handler is actually closed, (b) the worker thread terminates, and (c) the call returns reliably without hanging under various timing conditions.",
+            "Step 10: Run tests on multiple Python versions or platforms if supported. This validates that the new shutdown mechanism is indeed version-agnostic and does not rely on subtle behaviors of a particular asyncio implementation."
+        ]
+    }
+}

@@ -1,0 +1,41 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant InfluxDB integration bug where configuring both 'include.domains' and 'include.entities' acted as an AND filter instead of OR, causing events to be dropped when they matched only one of the lists. Fixed by changing the whitelist condition so that an event is included if it matches either the domain or the entity whitelist, and adding tests for combined domain+entity includes.",
+        "keywords": [
+            "Home Assistant",
+            "InfluxDB",
+            "event_to_json",
+            "include domains",
+            "include entities",
+            "whitelist",
+            "filter logic bug",
+            "AND vs OR",
+            "configuration",
+            "tests",
+            "homeassistant.components.influxdb"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, users configuring the Home Assistant InfluxDB integration experienced silent data loss when using both domain and entity whitelists. The `influxdb` config supported `include.domains` and `include.entities`. The intended behavior was: if an event's domain is whitelisted OR its entity_id is whitelisted, it should be written to InfluxDB. However, the implemented condition was:\n\n    if (whitelist_e and state.entity_id not in whitelist_e) or \\\n            (whitelist_d and state.domain not in whitelist_d):\n        return\n\nThis effectively required that an event satisfy both filters whenever both whitelists were configured. As a result, a configuration like:\n\n    influxdb:\n      include:\n        domains:\n          - sensor\n        entities:\n          - climate.hallway\n\ncaused all `sensor.*` entities to be dropped unless they were explicitly listed in `entities`, because the OR of the two negative conditions meant any non-listed entity (even with a whitelisted domain) would be filtered out. Users saw that adding an entirely unrelated entity to the include list could prevent previously working domain-based writes from reaching InfluxDB.\n\nThe fix changed the logic to treat the combination of whitelists as an OR condition:\n\n    if ((whitelist_e or whitelist_d)\n            and state.entity_id not in whitelist_e\n            and state.domain not in whitelist_d):\n        return\n\nNow, if either a domain whitelist or an entity whitelist is configured, an event is dropped only when it matches neither list. This preserves the old behavior when only one list is used, but corrects the behavior when both are present. Additional tests were added in `tests/components/test_influxdb.py`:\n- `test_event_listener_whitelist_domain` was adjusted to ensure that adding a domain-only include behaves correctly without interference from entities.\n- A new `test_event_listener_whitelist_domain_and_entities` explicitly checks that:\n  - Events from domain `fake` are written while `another_fake` is dropped.\n  - Entity `other.one` is written while `other.two` is dropped when `entities` includes only `other.one`.\n\nA small lint fix (line wrapping) was also applied in the test file.",
+        "semantic_memory": "This fix illustrates a common pitfall in configuration-driven filter logic: combining multiple inclusion criteria using the wrong boolean semantics. When two whitelists (domains and entities) are meant to be alternative criteria, implementing them as an AND of negative conditions (`(A and not matchA) or (B and not matchB)`) accidentally makes both constraints mandatory whenever both are present. The user expectation for 'include' filters that accept multiple dimensions is often that they form a logical OR: an item is allowed if it satisfies any configured include rule.\n\nGeneralizable lessons:\n- Be explicit about how multiple filters (domains, entities, tags, etc.) should combine: AND or OR. Align implementation with documentation and user expectations.\n- For whitelist-style includes, a common and intuitive behavior is: if any include list is configured, accept an item if it matches at least one list; reject only if it matches none. For blacklist-style excludes, the opposite is typical: reject if it matches any blacklist.\n- Watch out for De Morgan-like transformations that turn simple ideas ('must match either filter') into complex expressions; these are error-prone and make logic harder to reason about. Prefer writing the condition directly in positive terms when possible.\n- When bugs are configuration-sensitive, unit tests should cover not just individual filter dimensions but also combinations (e.g., only domains, only entities, both domains and entities) to avoid regressions when additional filters are added.\n- Even when a feature appears relatively straightforward (filtering events before writing to a DB), small logical errors in the filter conditions can lead to silent data loss, which is particularly dangerous. Tests should verify both acceptance and rejection paths for each combination of filters.",
+        "procedural_memory": [
+            "When diagnosing issues around filtering or whitelisting logic in an integration (e.g., events not being written to a database):",
+            "Step 1: Reproduce the configuration",
+            "Set up a minimal configuration that mirrors the user report (e.g., InfluxDB with `include.domains` and `include.entities` both set). Use known entities and domains that should be written, and others that should be excluded.",
+            "Step 2: Observe actual behavior",
+            "Trigger events for different combinations (matching only domain, only entity, both, neither) and see which ones are written to the destination (e.g., logs, DB, or mocked client in tests). Note cases where events are unexpectedly dropped or accepted.",
+            "Step 3: Inspect the filter condition",
+            "Locate the filtering logic (here, `event_to_json` in the InfluxDB integration). Carefully analyze the boolean expression that decides whether to return early or process the event. Translate the condition into plain language (e.g., 'this returns if A and not in A_list OR B and not in B_list').",
+            "Step 4: Compare intent vs implementation",
+            "Clarify the intended behavior: should multiple whitelists act as OR (any match passes) or AND (all must match)? Compare this with the existing expression. Watch for subtle issues like negative conditions combined with OR, which often invert the intended logic.",
+            "Step 5: Rewrite the condition clearly",
+            "Re-express the logic in direct, positive terms. For an OR-style whitelist combination, something like: `if any whitelist is configured and the item matches none of them, skip`. In code: `if ((whitelistA or whitelistB) and not matchA and not matchB): return`. Ensure behavior still matches expectations when only one whitelist is configured.",
+            "Step 6: Add comprehensive tests",
+            "Create or extend tests to cover all combinations:\n- Only domain whitelist configured\n- Only entity whitelist configured\n- Both configured\nFor each case, assert both that matching items are written and non-matching items are not. Use explicit test cases for entities that match only one dimension (domain-only match, entity-only match) and neither.",
+            "Step 7: Run tests and validate edge cases",
+            "Run the test suite to ensure no regressions. Manually think through edge cases: empty lists, `None` vs `[]`, unexpected values. Verify that the logic behaves correctly when no whitelist is configured (typically: accept everything).",
+            "Step 8: Document behavior",
+            "Update or confirm documentation to clearly state how multiple include filters interact (AND vs OR). This prevents future misunderstandings and provides a reference point when modifying the logic later."
+        ]
+    }
+}

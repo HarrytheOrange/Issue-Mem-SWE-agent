@@ -1,0 +1,31 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant Sensibo climate integration threw 'float object is not callable' errors because it treated superclass min_temp/max_temp attributes as methods (calling super().min_temp() / max_temp()). The fix is to reference these as properties (super().min_temp / super().max_temp) when the local temperature list is empty.",
+        "keywords": [
+            "Home Assistant",
+            "Sensibo",
+            "climate component",
+            "min_temp",
+            "max_temp",
+            "super()",
+            "property vs method",
+            "float object is not callable",
+            "TypeError",
+            "Python inheritance bug"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In the Home Assistant Sensibo climate component, the entity class overrides min_temp and max_temp as properties that should either use a local _temperatures_list or fall back to the superclass implementation. The code mistakenly treated the superclass min_temp and max_temp as methods, calling super().min_temp() and super().max_temp(). However, in the base climate class, min_temp and max_temp are defined as properties that return floats. When _temperatures_list was empty, the code executed the fallback path and attempted to call the returned float, resulting in a 'TypeError: float object is not callable'. The fix was to remove the parentheses and correctly access the superclass properties: use 'super().min_temp' and 'super().max_temp' in the conditional expressions. No behavior change occurs when _temperatures_list is non-empty; the bug only manifested on the fallback path.",
+        "semantic_memory": "This bug illustrates a common Python inheritance and attribute access pitfall: confusing properties (attributes accessed without parentheses) with methods (callables that must be invoked). When overriding API surfaces that are properties in a base class, the subclass must preserve the same interface (i.e., also use @property) and treat the superclass attributes as properties, not as methods. Calling a non-callable object (such as a float returned from a property) will raise a 'TypeError: <type> object is not callable'. This often happens when developers refactor methods into properties or vice versa but do not update all call sites, or when working with frameworks where many attributes are implemented as properties. A related best practice is to consult the parent class definition (or documentation) to confirm whether an attribute is a method, property, or plain field before using super(). Also, defensive coding around fallback behavior (like using a local cache or list and then falling back to a superclass default) needs to respect the exact type and interface of the fallback value.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Reproduce and capture the error.\n- Run the integration or component and trigger the code path where the error occurs.\n- Observe the stack trace, especially the final line indicating something like 'TypeError: float object is not callable' or 'X object is not callable'.\n- Note the exact line where a non-callable is being used with parentheses.",
+            "Step 2: Inspect the failing call site.\n- Open the file and locate the line referenced in the traceback.\n- Identify which expression is being called like a function (e.g., super().min_temp(), some_attribute()).\n- Add temporary logging or use a debugger to print type(some_attribute) if needed.",
+            "Step 3: Check the superclass or definition of the attribute.\n- Navigate to the base class where the attribute is defined (e.g., the framework’s base entity or component class).\n- Confirm whether the attribute is:\n  - A method (def foo(self): ...) requiring parentheses, or\n  - A property (@property def foo(self): ...) or plain attribute that should be accessed without parentheses.\n- Also check the documented API to see how it is intended to be used by subclasses.",
+            "Step 4: Align the subclass usage with the base class API.\n- If the base class defines 'min_temp' and 'max_temp' as properties returning floats, then:\n  - In the subclass, annotate the overrides with @property as well.\n  - Access the superclass values with 'super().min_temp' and 'super().max_temp' (no parentheses).\n- If you discover the reverse (the base defines a method and your code treats it as a property), then call it with parentheses instead.",
+            "Step 5: Update conditional or fallback logic correctly.\n- Where you have conditional expressions involving the superclass attribute, ensure you don’t accidentally call the returned value.\n  - Correct pattern for properties: 'return cached_value if cached_value is not None else super().value_property'.\n  - Correct pattern for methods: 'return cached_value if cached_value is not None else super().value_method()'.\n- Verify that any local data structures (like _temperatures_list) contain the expected types and that indexing into them matches the fallback type (e.g., float).",
+            "Step 6: Run tests and add regression coverage.\n- Re-run the existing test suite (e.g., tox) to ensure no regressions.\n- Add or extend tests that set up the scenario where the fallback to the superclass is used (e.g., _temperatures_list is empty) to confirm no 'object is not callable' TypeError occurs.\n- If the integration interacts with hardware or external services, include unit tests that mock these parts and specifically exercise the property/method access.",
+            "Step 7: Review for similar patterns elsewhere.\n- Search the codebase for other uses of the same base-class properties or methods (e.g., grep for 'min_temp(' or 'max_temp(').\n- Fix any other instances where properties are treated as methods or vice versa.\n- Consider documenting in the contributor guidelines or module docstring that these attributes are properties to reduce future confusion."
+        ]
+    }
+}

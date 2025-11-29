@@ -1,0 +1,262 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import json
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Sequence
+
+import os
+import numpy as np
+
+
+def get_default_memory_dir() -> Path:
+    """Get the default memory directory path.
+    
+    Priority order:
+    1. ISSUE_RAG_MEMORY_DIR environment variable (for host directory mounted in container)
+    2. csv0_memory_1k in the bundle directory (if copied)
+    3. csv0_memory_1k relative to project root
+    """
+    # First priority: environment variable (for mounted host directory)
+    env_path = os.getenv("ISSUE_RAG_MEMORY_DIR")
+    if env_path:
+        env_memory_dir = Path(env_path)
+        if env_memory_dir.exists():
+            return env_memory_dir
+    
+    script_dir = Path(__file__).resolve().parent
+    bundle_root = script_dir.parent
+    
+    # Second priority: csv0_memory_1k in the bundle directory (if copied)
+    bundle_memory_dir = bundle_root / "csv0_memory_1k"
+    if bundle_memory_dir.exists():
+        return bundle_memory_dir
+    
+    # Third priority: csv0_memory_1k in project root (relative to bundle)
+    project_memory_dir = bundle_root.parent.parent / "csv0_memory_1k"
+    if project_memory_dir.exists():
+        return project_memory_dir
+    
+    # Fallback: try absolute path (for host development)
+    fallback = Path(__file__).resolve().parent.parent.parent / "csv0_memory_1k"
+    if fallback.exists():
+        return fallback
+    
+    # Default fallback (will raise error if doesn't exist)
+    return bundle_root / "csv0_memory_1k"
+
+
+class Embedder:
+    def __init__(self, model_name: str) -> None:
+        try:
+            from sentence_transformers import SentenceTransformer  # type: ignore[import]
+        except ImportError as exc:  # pragma: no cover
+            raise ImportError(
+                "Install the 'sentence_transformers' package to run the issue_rag tool."
+            ) from exc
+        self._model = SentenceTransformer(model_name)
+
+    def encode(self, texts: Sequence[str]) -> np.ndarray:
+        if not texts:
+            return np.empty((0, 0), dtype=np.float32)
+        return self._model.encode(
+            list(texts),
+            convert_to_numpy=True,
+            show_progress_bar=False,
+            normalize_embeddings=True,
+        )
+
+
+@dataclass(frozen=True)
+class MemoryEntry:
+    memory_id: str
+    embedding_text: str
+    agent_memory: dict[str, Any]
+    path: Path
+
+
+@dataclass(frozen=True)
+class EmbeddingIndex:
+    entries: Sequence[MemoryEntry]
+    matrix: np.ndarray
+
+    @classmethod
+    def build(cls, entries: Sequence[MemoryEntry], embedder: Embedder) -> "EmbeddingIndex":
+        vectors = embedder.encode([entry.embedding_text for entry in entries])
+        return cls(entries=list(entries), matrix=vectors)
+
+    def search(self, query_vector: np.ndarray, top_k: int) -> list[tuple[MemoryEntry, float]]:
+        if not self.entries:
+            return []
+        if query_vector.size == 0 or self.matrix.size == 0:
+            return []
+        scores = self.matrix @ query_vector
+        k = min(max(top_k, 0), len(self.entries))
+        if k == 0:
+            return []
+        indices = np.argsort(scores)[::-1][:k]
+        return [(self.entries[index], float(scores[index])) for index in indices]
+
+
+def normalize_memory_ids(raw_ids: Sequence[str] | None) -> set[str] | None:
+    if not raw_ids:
+        return None
+    normalized: set[str] = set()
+    for raw in raw_ids:
+        value = raw.strip()
+        if not value:
+            continue
+        normalized.add(Path(value).stem)
+    return normalized or None
+
+
+def load_memory_entries(memory_dir: Path, focus_ids: set[str] | None) -> list[MemoryEntry]:
+    if not memory_dir.exists():
+        env_var = os.getenv("ISSUE_RAG_MEMORY_DIR")
+        error_msg = f"Memory directory not found: {memory_dir}\n\n"
+        error_msg += "To fix this, you have two options:\n\n"
+        error_msg += "Option 1: Mount host directory (recommended for large files):\n"
+        error_msg += "  - Set environment variable: ISSUE_RAG_MEMORY_DIR=/mnt/csv0_memory_1k\n"
+        error_msg += "  - Mount directory when running: --env.deployment.docker_args='[\"-v\", \"C:/path/to/csv0_memory_1k:/mnt/csv0_memory_1k\"]'\n\n"
+        error_msg += "Option 2: Copy directory to bundle:\n"
+        error_msg += "  - Copy csv0_memory_1k to tools/issue_rag/csv0_memory_1k\n\n"
+        if env_var:
+            error_msg += f"Note: ISSUE_RAG_MEMORY_DIR is set to '{env_var}' but that path doesn't exist.\n"
+        raise FileNotFoundError(error_msg)
+    entries: list[MemoryEntry] = []
+    for path in sorted(memory_dir.glob("*_memory.json")):
+        stem = path.stem
+        if focus_ids and stem not in focus_ids:
+            continue
+        data = json.loads(path.read_text(encoding="utf-8"))
+        search_index = data.get("search_index") or {}
+        desc = search_index.get("description_for_embedding")
+        keywords = search_index.get("keywords") or []
+        parts: list[str] = []
+        if isinstance(desc, str) and desc.strip():
+            parts.append(desc.strip())
+        if isinstance(keywords, Sequence) and not isinstance(keywords, (str, bytes)):
+            keyword_text = " ".join(
+                keyword.strip()
+                for keyword in keywords
+                if isinstance(keyword, str) and keyword.strip()
+            )
+            if keyword_text:
+                parts.append(keyword_text)
+        embedding_text = " ".join(parts).strip()
+        agent_memory = data.get("agent_memory")
+        if not embedding_text or not isinstance(agent_memory, dict):
+            continue
+        entries.append(
+            MemoryEntry(memory_id=stem, embedding_text=embedding_text, agent_memory=agent_memory, path=path)
+        )
+    if focus_ids and not entries:
+        joined = ", ".join(sorted(focus_ids))
+        raise ValueError(f"No memory entries found for: {joined}")
+    if not entries:
+        raise ValueError(f"No memory entries loaded from {memory_dir}")
+    return entries
+
+
+def match_issue_to_memory(
+    issue_text: str,
+    entries: Sequence[MemoryEntry],
+    top_k: int,
+    embedder: Embedder,
+) -> list[tuple[MemoryEntry, float]]:
+    issue_vector = embedder.encode([issue_text])
+    if issue_vector.size == 0:
+        return []
+    index = EmbeddingIndex.build(entries, embedder)
+    return index.search(issue_vector[0], top_k)
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="Match issue descriptions to csv0_memory_1k entries and emit agent_memory content."
+    )
+    parser.add_argument("issue", help="Issue description text to match.")
+    parser.add_argument(
+        "--memory-dir",
+        type=Path,
+        default=None,
+        help="Directory containing *_memory.json files (defaults to csv0_memory_1k in bundle or project root).",
+    )
+    parser.add_argument(
+        "--memory-id",
+        action="append",
+        help="Restrict matching to specific memory file stems (e.g., 3126_memory). Can be repeated.",
+    )
+    parser.add_argument(
+        "--top-k",
+        type=int,
+        default=3,
+        help="Number of agent memories to display (default: 3).",
+    )
+    parser.add_argument(
+        "--embedding-model",
+        type=str,
+        default="sentence-transformers/all-MiniLM-L6-v2",
+        help="SentenceTransformer model identifier used for embeddings.",
+    )
+    return parser
+
+
+def main() -> None:
+    parser = build_parser()
+    args = parser.parse_args()
+
+    issue_text = args.issue.strip()
+    if not issue_text:
+        raise ValueError("Issue description must not be empty.")
+
+    memory_dir = args.memory_dir if args.memory_dir is not None else get_default_memory_dir()
+    focus_ids = normalize_memory_ids(args.memory_id)
+    entries = load_memory_entries(memory_dir.resolve(), focus_ids)
+    embedder = Embedder(args.embedding_model)
+    matches = match_issue_to_memory(issue_text, entries, args.top_k, embedder)
+    if not matches:
+        print("No matching agent memories found.")
+        return
+    
+    print("=" * 80)
+    print(f"Found {len(matches)} relevant agent memories (sorted by similarity):")
+    print("=" * 80)
+    
+    for index, (entry, score) in enumerate(matches, start=1):
+        print(f"\n[Memory {index}] memory_id: {entry.memory_id} | similarity_score: {score:.4f}")
+        print("-" * 80)
+        
+        agent_memory = entry.agent_memory
+        if isinstance(agent_memory, dict):
+            episodic = agent_memory.get("episodic_memory", "")
+            semantic = agent_memory.get("semantic_memory", "")
+            procedural = agent_memory.get("procedural_memory", [])
+            
+            if episodic:
+                print("\nEpisodic Memory:")
+                print(episodic)
+            
+            if semantic:
+                print("\nSemantic Memory:")
+                print(semantic)
+            
+            if procedural and isinstance(procedural, list):
+                print("\nProcedural Memory:")
+                for step in procedural:
+                    if isinstance(step, str):
+                        print(f"  • {step}")
+        else:
+            print(json.dumps(agent_memory, ensure_ascii=False, indent=2))
+        
+        if index != len(matches):
+            print("\n" + "=" * 80)
+    
+    print("\n" + "=" * 80)
+
+
+if __name__ == "__main__":
+    main()
+

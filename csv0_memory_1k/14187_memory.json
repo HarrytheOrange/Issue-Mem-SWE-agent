@@ -1,0 +1,32 @@
+{
+    "search_index": {
+        "description_for_embedding": "Upgrade the pinned numpy dependency from 1.14.2 to 1.14.3 across Home Assistant components (trend binary_sensor and OpenCV image_processing) and global requirements files to stay current with upstream bugfix releases and keep tests passing.",
+        "keywords": [
+            "numpy",
+            "dependency upgrade",
+            "version pin",
+            "requirements_all.txt",
+            "requirements_test_all.txt",
+            "binary_sensor.trend",
+            "image_processing.opencv",
+            "third-party library",
+            "requirements mismatch",
+            "package maintenance"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the project needed to upgrade its pinned numpy dependency from version 1.14.2 to 1.14.3. The change was motivated by staying aligned with upstream bugfix releases and ensuring compatibility with the codebase, particularly for components that rely on numpy for calculations and image processing (the trend binary_sensor and OpenCV-based image_processing). The fix involved updating all places where numpy was pinned: the REQUIREMENTS list in `homeassistant/components/binary_sensor/trend.py` and `homeassistant/components/image_processing/opencv.py`, as well as the central dependency lists `requirements_all.txt` and `requirements_test_all.txt`. All these were changed from `numpy==1.14.2` to `numpy==1.14.3`. After the version bump, local tests (including tox) were run to confirm that Home Assistant still functioned correctly and that no regressions were introduced.",
+        "semantic_memory": "This case illustrates the importance of maintaining consistent and centralized dependency versioning in a large codebase. When upgrading a pinned library like numpy, every reference (component-level REQUIREMENTS, global requirements files, and test requirements) must be updated together to avoid conflicts or hidden mismatches between runtime and test environments. It also highlights a best practice: whenever upstream libraries release bugfix or security versions, projects that pin those dependencies should review the changelog, then update their pins and rerun the full test suite. Maintaining a single source of truth for dependency versions (or carefully synchronized multiple sources if required by architecture) avoids subtle bugs, environment drift, and CI failures caused by inconsistent versions.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Identify the desired new version of the dependency by reviewing the upstream changelog (e.g., numpy release notes) and confirming that it is a compatible bugfix or minor release.",
+            "Step 2: Search the codebase for all occurrences of the dependency pin (e.g., search for `numpy==`), including component-specific REQUIREMENTS variables and global files like `requirements.txt`, `requirements_all.txt`, and `requirements_test_all.txt`.",
+            "Step 3: Update every occurrence of the pinned version to the new version, ensuring consistency across runtime, integration-specific, and test dependencies (e.g., change `numpy==1.14.2` to `numpy==1.14.3` everywhere).",
+            "Step 4: If there are components that declare their own REQUIREMENTS (such as `homeassistant/components/...`), make sure those declarations match the global requirements files to avoid mismatched environments between installed packages and component expectations.",
+            "Step 5: Rebuild or reinstall dependencies in your development environment (e.g., reinstall requirements or recreate the virtualenv) so the new version is actually used.",
+            "Step 6: Run the full automated test suite (e.g., `tox` or project-specific test runners) to verify that the new dependency version does not break existing functionality.",
+            "Step 7: If any tests fail, inspect whether the failure is due to a behavioral change in the dependency; consult the upstream changelog and adjust code or configuration as needed.",
+            "Step 8: Document the dependency upgrade in the project’s changelog or PR description, including a reference to the upstream release notes if relevant, and ensure reviewers are aware of any potential impact areas (e.g., components relying heavily on that library)."
+        ]
+    }
+}

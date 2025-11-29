@@ -1,0 +1,55 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant Ambiclimate integration was updated to use ambiclimate Python library version 0.1.2 instead of 0.1.1, resolving issues tracked upstream in the library. The fix consisted of bumping the pinned dependency version in the integration manifest and in the global requirements files.",
+        "keywords": [
+            "Ambiclimate",
+            "homeassistant.components.ambiclimate",
+            "ambiclimate==0.1.2",
+            "dependency upgrade",
+            "integration broken due to external library bug",
+            "manifest.json requirements",
+            "requirements_all.txt",
+            "requirements_test_all.txt",
+            "third-party API client bugfix",
+            "Home Assistant integration maintenance"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Home Assistant Ambiclimate integration depended on the Python library `ambiclimate==0.1.1`. An upstream series of commits in the `pyAmbiclimate` project (referenced via https://github.com/Danielhiversen/pyAmbiclimate/commits/master) contained fixes and improvements that were needed for the integration to function correctly or more reliably (issue #24036). To align Home Assistant with the updated library and pull in these fixes, the PR updated the pinned version of the `ambiclimate` dependency from `0.1.1` to `0.1.2` in three places: the integration's `manifest.json`, `requirements_all.txt`, and `requirements_test_all.txt`. No functional code changes were made to the integration itself; the resolution was entirely a dependency bump to a newer, fixed library version.",
+        "semantic_memory": "When an integration relies on a third-party library, many runtime issues (authentication failures, API changes, intermittent errors, protocol incompatibilities) are often resolved upstream in that library rather than inside the host application. A clean and robust fix in these cases is to update the pinned dependency version across all relevant configuration files so that the application consistently uses the newer library. For Home Assistant integrations, that typically involves updating: (1) the integration's `manifest.json` `requirements` list, (2) the global `requirements_all.txt`, and (3) `requirements_test_all.txt` used for CI/test environments. This ensures the same version is used in development, testing, and production, avoiding subtle environment-specific issues. More generally, when a bug is traced to an upstream client library, the best practice is to: confirm the fix upstream, bump the version, keep version pins consistent everywhere, and rely on the library to encapsulate protocol/API changes rather than reimplementing workarounds in the integration code.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues involving third-party integration libraries:",
+            "Step 1: Identify the failure mode",
+            "Observe and record the symptoms: error logs, stack traces, and user reports for the affected integration (e.g., Ambiclimate integration failing to connect or control devices).",
+            "Verify whether the breakage correlates with external factors (e.g., vendor API changes, cloud-side changes, or library updates) rather than recent internal code changes.",
+            "",
+            "Step 2: Check the upstream library",
+            "Locate the third-party client library used by the integration (e.g., `ambiclimate` for Ambiclimate) from the integration's `manifest.json` or requirements files.",
+            "Review the upstream library's repository (commits, release notes, issues) to see if a bugfix or change matches the observed symptom.",
+            "Confirm that a newer version exists which addresses the issue (e.g., `0.1.2` fixing problems present in `0.1.1`).",
+            "",
+            "Step 3: Verify compatibility locally",
+            "In a development environment, update the dependency to the candidate fixed version in your virtualenv or local environment (e.g., `pip install 'ambiclimate==0.1.2'`).",
+            "Run the integration locally with the new library and verify that the issue is resolved and no regressions are introduced.",
+            "Run the relevant test suites (e.g., `tox`, component-specific tests) to ensure the change is safe.",
+            "",
+            "Step 4: Update all version pins in the project",
+            "Update the integration manifest to use the new version:\n- Edit `homeassistant/components/<integration>/manifest.json` and change the version in the `requirements` list (e.g., `\"ambiclimate==0.1.1\"` → `\"ambiclimate==0.1.2\"`).",
+            "Update global requirements for production:\n- Edit `requirements_all.txt` so the integration entry matches the new version.",
+            "Update testing requirements:\n- Edit `requirements_test_all.txt` to match the same new version.",
+            "Ensure all occurrences of the library version in the repo are consistent to avoid environment drift.",
+            "",
+            "Step 5: Regenerate derived files and run checks",
+            "If the project provides helper scripts (e.g., `python3 -m script.gen_requirements_all`, `python3 -m script.hassfest` in Home Assistant), run them to update derived requirement files and validate manifests.",
+            "Run the full test suite (e.g., `tox`) and linting to confirm there are no issues.",
+            "",
+            "Step 6: Document and link to upstream context",
+            "In the PR description or commit message, reference the upstream library changes or release notes so reviewers understand why the bump is necessary.",
+            "Link the fixing issue (e.g., `fixes #<issue-number>`) so the bug is automatically closed when the PR is merged.",
+            "",
+            "Step 7: Monitor post-merge behavior",
+            "After the change is released, monitor logs, user reports, and issue trackers for any new errors related to the integration.",
+            "If new issues appear, re-check upstream library behavior and consider pinning to a more conservative version or adding integration-level safeguards."
+        ]
+    }
+}

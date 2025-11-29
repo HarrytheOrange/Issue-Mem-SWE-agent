@@ -1,0 +1,30 @@
+{
+    "search_index": {
+        "description_for_embedding": "Documented the RuntimeError raised by Optuna's Study.optimize when called recursively, adding a Sphinx 'Raises' section to the docstring while intentionally not documenting generic TypeError validations.",
+        "keywords": [
+            "Optuna",
+            "Study.optimize",
+            "Sphinx documentation",
+            "Raises section",
+            "RuntimeError",
+            "nested invocation",
+            "exception documentation",
+            "Python dynamic typing"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this PR, a contributor updated the documentation of Optuna's Study.optimize method to explicitly describe an important exception behavior. The method raises a RuntimeError if it is invoked in a nested fashion (i.e., optimize is called from within another optimize for the same process). This behavior existed in the code but was not documented. The contributor added a 'Raises:' section to the Sphinx-compatible docstring within optuna/study.py, stating that a RuntimeError is raised when nested invocation occurs. During the review, there was a discussion about also documenting TypeError exceptions that might be raised due to type-checking of arguments. The maintainer pointed out that in Python, being dynamically typed, not all type errors are systematically checked or tested, and trying to document every incidental TypeError would be inconsistent and hard to maintain. The contributor then removed any mention of TypeError from the proposed documentation, leaving only the RuntimeError as a clearly defined, interface-level exception. The final change is a minimal but precise documentation update that improves the API contract clarity for users calling Study.optimize.",
+        "semantic_memory": "This case illustrates best practices for documenting exceptions in a dynamic language like Python. Not every possible exception should be documented; instead, documentation should focus on exceptions that are part of the stable, intentional interface contract—those that users can and should rely on. These include semantic or protocol-level errors (such as a RuntimeError on illegal nested invocation) rather than incidental or low-level errors like generic TypeErrors arising from bad argument types. In Python, expected types are typically communicated through type hints and general API descriptions. Attempting to exhaustively list all exceptions, especially those due to type issues or internal implementation details, tends to be brittle and costly to maintain. A pragmatic guideline is to document exceptions that represent well-defined misuse or state constraints (e.g., illegal call order, invalid configuration, unsupported operation) and that are unlikely to change with internal refactoring. For libraries using Sphinx or similar tools, the 'Raises:' section should therefore enumerate only those exceptions that form part of the public contract, treating others as implementation details.",
+        "procedural_memory": [
+            "When improving exception documentation for a public API in a Python library, focus on exceptions that represent stable, intentional contract behavior and avoid documenting incidental or low-level exceptions.",
+            "Step 1: Identify the public method whose behavior needs clearer documentation (e.g., a core API like Study.optimize).",
+            "Step 2: Inspect the implementation to find explicitly raised exceptions that reflect semantic constraints or contract violations (e.g., RuntimeError when a method is called in an illegal nested way).",
+            "Step 3: Determine which of these exceptions are intended as part of the public API contract (i.e., users are expected to know about and possibly handle them) versus those that are side effects of internal checks (e.g., incidental TypeErrors from argument validation).",
+            "Step 4: For the contract-level exceptions, add or update a 'Raises:' section in the docstring (or equivalent Sphinx/ReST documentation) describing, for each exception, the condition under which it is raised in clear, user-focused language.",
+            "Step 5: Avoid documenting generic or incidental exceptions such as TypeError resulting from type mismatches in a dynamically typed language, especially when they are not fully consistent across the codebase and not guaranteed behavior.",
+            "Step 6: Cross-check the new documentation with type hints and existing tests to ensure that the described exceptions are actually raised in the stated conditions and are unlikely to change due to internal refactors.",
+            "Step 7: Discuss with maintainers whether additional exceptions should be considered part of the interface; decide on a case-by-case basis, balancing usefulness to users against the maintenance cost of keeping exception docs accurate.",
+            "Step 8: After consensus, refine the docstrings accordingly, keeping the 'Raises:' section minimal and focused on the most important, stable exceptions, and then land the documentation change."
+        ]
+    }
+}

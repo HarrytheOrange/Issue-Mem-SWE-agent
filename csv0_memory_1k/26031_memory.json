@@ -1,0 +1,32 @@
+{
+    "search_index": {
+        "description_for_embedding": "Pull request was mistakenly opened to merge the upstream Home Assistant dev branch in the wrong direction; no functional code changes or bug fixes were applied. The PR was effectively a branch update mistake and was abandoned.",
+        "keywords": [
+            "git",
+            "GitHub",
+            "pull request",
+            "wrong direction merge",
+            "branch update",
+            "no-op PR",
+            "home-assistant",
+            "workflow error"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, a GitHub pull request titled 'Merge pull request #1 from home-assistant/dev' was opened, nominally to update a branch with changes from the Home Assistant dev branch. The issue description was minimal ('update branch'), and there was no actual patch content attached. A participant (user 'horga83') later commented 'Oops sorry folks wrong direction', indicating that the PR attempted to merge in the wrong direction (likely trying to merge upstream dev into the fork or main project incorrectly, or vice versa). As a result, no code changes, bug fixes, or configuration updates were actually made. The PR represented a workflow mistake rather than a software defect and was effectively a no-op with respect to the codebase.",
+        "semantic_memory": "Sometimes GitHub pull requests are created by mistake, especially when trying to sync a fork or a feature branch with an upstream development branch. A 'wrong direction' merge typically means that the base and compare branches were swapped: instead of updating a local/fork branch from upstream, the user attempts to merge their fork back into upstream or to merge upstream into the wrong target. These errors create PRs that contain no intentional changes or that would overwrite the wrong branch. Recognizing such PRs early and closing them avoids accidental regressions and noise in project history. In general, when working with forks and upstream repositories, developers should: (1) clearly understand which branch is the base (target) and which is the compare (source) in a PR; (2) use git remotes and local merges/rebases to sync with upstream rather than opening PRs solely for branch updates; and (3) verify PR diffs before requesting a merge to ensure that the direction and contents are correct. This is a workflow best-practice issue, not a functional bug.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Identify the intent of the PR. If the title/description suggests 'update branch' or 'sync with upstream' but the PR is opened against the main project instead of the fork (or vice versa), suspect a wrong-direction merge.",
+            "Step 2: Inspect the PR diff. If there are no meaningful changes, or if the changes appear to be the entire upstream history being applied to a branch that should already track it, the PR may be a mistaken branch sync.",
+            "Step 3: Check the base and compare branches on GitHub. Confirm whether the base (target) branch is the correct repository/branch and the compare (source) is the one that should be merged. If they are reversed, the PR is in the wrong direction.",
+            "Step 4: Communicate on the PR. Ask the author to confirm their intent. If they acknowledge it is a mistake (e.g., 'wrong direction'), close the PR without merging and label it accordingly (e.g., 'invalid' or 'no-op').",
+            "Step 5: For the author: to update your local or forked branch from the upstream dev branch, avoid using a PR against upstream. Instead, add the upstream remote locally: `git remote add upstream <upstream-url>` if not already set.",
+            "Step 6: Fetch and merge/rebase from upstream: `git fetch upstream` followed by `git checkout <your-branch>` and `git merge upstream/dev` or `git rebase upstream/dev`, depending on the project's preferred workflow.",
+            "Step 7: Push the updated branch to your fork: `git push origin <your-branch>`. This updates your fork without involving an upstream PR.",
+            "Step 8: Before opening any PR, double-check the GitHub UI: ensure the base repository and branch are the project you want to modify, and the compare repository and branch are your fork/feature branch that contains the intended changes.",
+            "Step 9: Verify the changes in the PR diff view. Only open or keep open a PR if the diff shows the specific, intentional changes you want to contribute (bug fixes, features, config updates). If it shows large, unexpected diffs or nearly the entire project history, re-check your branch structure.",
+            "Step 10: As a maintainer, consider creating contribution guidelines that explicitly describe how to sync forks and branches (including sample git commands), to reduce the likelihood of wrong-direction PRs in the future."
+        ]
+    }
+}

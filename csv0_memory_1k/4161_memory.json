@@ -1,0 +1,35 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fix for a napari example where the initial 3D view in add_points_on_nD_shapes.py did not show the intended shapes clearly. The change explicitly configures viewer.dims and viewer.camera (ndisplay, current slice, camera angles, and zoom) so the first two rectangles are in view when the example starts.",
+        "keywords": [
+            "napari",
+            "example",
+            "add_points_on_nD_shapes.py",
+            "3D viewer",
+            "initial camera view",
+            "viewer.dims.ndisplay",
+            "viewer.dims.set_point",
+            "viewer.camera.angles",
+            "viewer.camera.zoom",
+            "UI/UX",
+            "visualization",
+            "nD shapes"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In the napari repository, the example script examples/add_points_on_nD_shapes.py had a usability issue: when run, the initial 3D view did not clearly show the shapes that the example is about, making it confusing for users. The viewer was switched to 3D (viewer.dims.ndisplay = 3), but the chosen slice and camera pose/zoom were left to defaults, resulting in a suboptimal initial view of the data. To fix this, the PR updated the example's setup right before napari.run(): it retained viewer.dims.ndisplay = 3, explicitly set the displayed slice with viewer.dims.set_point(axis=0, value=0), and configured the camera with viewer.camera.angles = (70, 30, 150) and viewer.camera.zoom = 2.5. The comment above this block was also updated to clarify that the viewer is set to 3D with the first two rectangles in view. This ensured that when the example launches, the relevant shapes are immediately visible and the intent of the demo is clear.",
+        "semantic_memory": "When building visualization examples (especially in tools like napari or other 3D/ND viewers), relying on default camera position, zoom, and slice selection can lead to an initial view that hides or poorly frames the data. This degrades the perceived quality of the example and confuses users. A best practice is to explicitly configure the viewer state (dimensions, current slice, camera orientation, and zoom) so that the user sees a meaningful, informative view as soon as the example runs. In napari specifically, this means controlling viewer.dims.ndisplay to choose 2D vs 3D, viewer.dims.set_point to select which slice/axis is shown, and viewer.camera properties (such as angles and zoom) to frame the relevant objects. In general, example and demo code should be treated like UX: the initial state should highlight the core concept without requiring manual navigation or camera adjustment.",
+        "procedural_memory": [
+            "When an example or visualization script opens with an unhelpful or confusing view of the data, adjust the viewer's dimension and camera settings so the important structures are visible immediately.",
+            "Step 1: Reproduce the issue by running the example or script and observing the initial view. Identify what should be visible (e.g., specific shapes, objects, or regions) but is not clearly shown.",
+            "Step 2: Inspect how the viewer is initialized. In napari, look for viewer.dims and viewer.camera usage near napari.run() or after data and layers are added.",
+            "Step 3: Ensure the correct dimensional display mode is set. For 3D scenes, set viewer.dims.ndisplay = 3. For 2D, set it to 2. Confirm this matches the intended example.",
+            "Step 4: Set the current slice or position along non-displayed axes. Use viewer.dims.set_point(axis=<axis_index>, value=<coordinate>) so that the relevant slice of the nD data is visible when the viewer opens.",
+            "Step 5: Adjust camera orientation to frame the data. In napari, set viewer.camera.angles to a tuple of angles that provides a clear perspective on the objects (e.g., viewer.camera.angles = (70, 30, 150)). Verify different angles until the important shapes are well framed.",
+            "Step 6: Adjust camera zoom so that the relevant objects fill the view but are not clipped. In napari, use viewer.camera.zoom = <float>, increasing or decreasing until the scene looks good on typical screens.",
+            "Step 7: Update comments or documentation near this setup code to explain that these settings are chosen to make specific objects visible on startup (e.g., 'set the viewer to 3D rendering mode with the first two rectangles in view'). This helps future maintainers understand why the values are not arbitrary.",
+            "Step 8: Re-run the example to verify that the initial view now clearly shows the intended data without manual user navigation. Optionally test on different screen sizes to ensure the framing is robust.",
+            "Step 9: For new examples or demos, always include an explicit 'initial view' configuration (dims, slice, camera pose/zoom) as part of the example boilerplate to avoid similar issues in the future."
+        ]
+    }
+}

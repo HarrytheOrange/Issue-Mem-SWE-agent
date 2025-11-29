@@ -1,0 +1,44 @@
+{
+    "search_index": {
+        "description_for_embedding": "Flaky reproducibility tests for Optuna's LightGBMTuner/LightGBMTunerCV were caused by LightGBM numerical instability. The fix adds the `force_col_wise=True` parameter to LightGBM params in tests, alongside `deterministic=True`, to enforce a numerically stable, deterministic execution path and make best score reproducibility tests reliable.",
+        "keywords": [
+            "Optuna",
+            "LightGBMTuner",
+            "LightGBMTunerCV",
+            "LightGBM",
+            "force_col_wise",
+            "deterministic",
+            "numerical instability",
+            "flaky tests",
+            "reproducibility",
+            "best_score",
+            "optuna_seed",
+            "integration tests"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, integration tests for Optuna's LightGBMTuner and LightGBMTunerCV, specifically `test_tune_best_score_reproducibility`, were occasionally failing. These tests verify that running tuning with the same `optuna_seed` yields the same best score. Although the tests already set `deterministic: True` in the LightGBM parameters, results were still subject to numerical instability, likely due to LightGBM's underlying algorithm and threading behavior. To stabilize the behavior, the patch modified `tests/integration_tests/lightgbm_tuner_tests/test_optimize.py` by adding `\"force_col_wise\": True` to the parameter dictionary used in the reproducibility tests (both the LightGBMTuner and LightGBMTunerCV variants). This forces LightGBM to use the column-wise histogram algorithm, which is more numerically stable and deterministic in this context. After this change, the reproducibility tests became robust against subtle numerical variations, eliminating the flaky behavior without changing library runtime code, only the test configuration.",
+        "semantic_memory": "Machine learning integration tests that assert strict equality of metrics (e.g., identical best scores or predictions) can be fragile due to numerical instability and non-determinism in underlying libraries. Even when a library exposes a `deterministic` or `random_seed` setting, other parameters (such as algorithm variants, multithreading, or hardware-specific optimizations) may still introduce small floating-point differences between runs. In LightGBM, using `force_col_wise=True` can enforce a specific, generally more stable histogram construction algorithm, which, combined with `deterministic=True` and fixed seeds, greatly improves reproducibility. A robust approach to ML reproducibility testing is to: (1) configure all relevant determinism-related parameters (algorithm mode, seeds, number of threads, etc.), and (2) ensure tests compare results within tolerances or under configurations known to be numerically stable. When tests are intended to verify strict reproducibility guarantees (like for a `seed` argument), they should run under the most deterministic configuration available from the underlying ML library.",
+        "procedural_memory": [
+            "When ML-related reproducibility tests become flaky due to numerical instability, adjust the underlying library configuration to a more deterministic mode and/or relax equality checks.",
+            "Step 1: Identify the flaky test.",
+            "Locate tests that assert exact equality of metrics or outputs across runs (e.g., `test_tune_best_score_reproducibility`). Confirm that failures are non-systematic and related to small numeric differences.",
+            "Step 2: Inspect the ML library configuration used in the test.",
+            "Review the parameter dict passed to the ML library (e.g., LightGBM). Check for parameters controlling determinism: seeds, deterministic flags, algorithm variants, threading options, and hardware optimizations.",
+            "Step 3: Enable all documented determinism-related settings.",
+            "For LightGBM, ensure `\"random_seed\"` is fixed and `\"deterministic\": True` is set. For other libraries, find equivalent flags (e.g., `random_state`, `deterministic`, `num_threads=1`, etc.).",
+            "Step 4: Force a numerically stable algorithm variant when available.",
+            "In LightGBM, add `\"force_col_wise\": True` (or the recommended deterministic mode from the library docs) to the params used in the test. This reduces algorithmic sources of non-determinism (e.g., different histogram construction strategies).",
+            "Step 5: Limit sources of parallel non-determinism if needed.",
+            "Consider setting `num_threads: 1` or disabling features known to cause non-deterministic behavior (e.g., GPU training, certain parallel reductions), especially in tests that require bit-for-bit reproducibility.",
+            "Step 6: Decide on strict vs tolerant comparisons.",
+            "If the purpose of the test is to verify logical behavior and not bit-exact equality, use approximate comparisons (e.g., `assert abs(a - b) < 1e-6`) instead of `==`. Only require strict equality when the library contract explicitly guarantees it under deterministic settings.",
+            "Step 7: Apply the fix in test code, not production code, when the issue is test flakiness.",
+            "Modify the test configuration (as in this PR: add `\"force_col_wise\": True` in the LightGBM param dict inside `test_tune_best_score_reproducibility`) to stabilize outcomes without altering runtime logic exposed to users.",
+            "Step 8: Re-run tests multiple times to validate stability.",
+            "Run the test suite repeatedly (e.g., in a loop or on CI with re-runs) to ensure the flaky behavior is resolved and that determinism is now reliable.",
+            "Step 9: Document the determinism assumptions.",
+            "Add comments near the test configuration explaining why specific parameters (e.g., `force_col_wise`) are set, so future maintainers understand they are required to avoid numerical instability in reproducibility tests."
+        ]
+    }
+}

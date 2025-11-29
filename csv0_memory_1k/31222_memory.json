@@ -1,0 +1,62 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant Velbus integration enhancement adding a `set_memo_text` service to set memo text on Velbus glass control modules. The change updates the integration to expose a new service with voluptuous validation, template rendering support for the memo text, consistent use of Home Assistant CONF/SERVICE constants, and improved error logging when calling the underlying python-velbus `set_memo_text` API.",
+        "keywords": [
+            "Home Assistant",
+            "Velbus",
+            "set_memo_text service",
+            "memo text display",
+            "glass control module",
+            "VMBGPO",
+            "VMBGPOD",
+            "VMBELO",
+            "python-velbus 2.0.37",
+            "service registration",
+            "voluptuous schema",
+            "cv.template",
+            "CONF_ADDRESS",
+            "CONF_MEMO_TEXT",
+            "SERVICE_SET_MEMO_TEXT",
+            "Template rendering",
+            "VelbusException",
+            "error logging"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this change, the Velbus integration for Home Assistant was extended to support setting memo text on Velbus glass control modules (e.g., VMBGPO(D) and VMBELO). The existing integration only offered a `sync_clock` service and did not expose the memo text feature supported by recent versions of the python-velbus library.\n\nTo implement this, the author first added a new service handler function inside `async_setup` in `homeassistant/components/velbus/__init__.py`. The handler, `set_memo_text`, extracts the module address and a memo text from the service data, calls the underlying Velbus controller's `get_module(...).set_memo_text(...)` method, and catches `velbus.util.VelbusException` to log a clear error message (\"An error occurred while setting memo text: %s\"). A small refinement was added to store the module address in a local `module_address` variable for clarity.\n\nInitially, custom attribute constants `ATTR_MEMO_TEXT` and `ATTR_MODULE_ADDRESS` were introduced, but later the code was refactored to align with Home Assistant naming conventions. The integration now uses the core `CONF_ADDRESS` constant from `homeassistant.const` and introduces `CONF_MEMO_TEXT` & `SERVICE_SET_MEMO_TEXT` in `const.py`. The service registration uses these constants instead of ad-hoc attribute names.\n\nTo support dynamic content, the memo text argument was initially treated as a plain string but later switched to `cv.template`. The handler assigns `memo_text.hass = hass` and calls `memo_text.async_render()` before passing the result to `set_memo_text`, allowing users to use Home Assistant templates in their memo text. Input validation is enforced with voluptuous: `CONF_ADDRESS` is coerced to `int` and constrained to 0–255, while `CONF_MEMO_TEXT` defaults to an empty template.\n\nFinally, the `services.yaml` file for the Velbus integration was updated to document the new `set_memo_text` service, its `address` and `memo_text` fields, their descriptions, and example values. The underlying python-velbus dependency was updated to 2.0.37 to ensure the Velbus library provides the `set_memo_text` functionality. This PR results in a new user-facing service `velbus.set_memo_text` that can be called from automations and scripts to push memo text to supported Velbus displays.",
+        "semantic_memory": "This change illustrates a standard pattern for extending a Home Assistant integration with new services based on capabilities from an underlying device library. Key generalizable ideas:\n\n1. **Service Exposure for Device Features**: When the device library adds new functions (like `set_memo_text`), the integration should expose them as Home Assistant services, providing clear schemas, documentation, and error handling so they are usable from automations and scripts.\n\n2. **Consistent Use of Constants and Naming Conventions**: Home Assistant favors common constants such as `CONF_*` for configuration/service parameters and `SERVICE_*` for service names. Reusing `CONF_ADDRESS` and defining `CONF_MEMO_TEXT` / `SERVICE_SET_MEMO_TEXT` avoids ad-hoc string literals and improves maintainability and discoverability.\n\n3. **Service Schema and Validation**: Use voluptuous schemas (`vol.Schema`) to validate service parameters (`vol.Coerce(int)`, `vol.Range`, etc.). This ensures well-formed input before making device calls, protecting the system from invalid data and making error handling simpler and more predictable.\n\n4. **Template-aware Service Fields**: Many Home Assistant services accept templated strings. When a field should be templatable, using `cv.template` instead of `cv.string`, then attaching the `hass` instance and calling `async_render()` is the proper pattern. This enables users to dynamically generate values (like memo text) based on entity states, time, and other context.\n\n5. **Error Handling with Contextual Logging**: Wrapping device calls in try/except blocks and catching library-specific exceptions (`VelbusException`) allows the integration to log descriptive error messages rather than failing silently or crashing. Including context in the log message (\"while setting memo text\") makes debugging easier.\n\n6. **Services Documentation in `services.yaml`**: Every new service should be documented in the integration’s `services.yaml` file with descriptions, field explanations, and usage examples. This integrates with Home Assistant’s UI and developer docs, improving usability.\n\n7. **Aligning Integration Changes with Dependency Updates**: When exposing new features based on the device library, ensure the integration’s manifest and requirements point to a version that actually supports those features (e.g., python-velbus >= 2.0.37). This avoids runtime errors due to missing methods.",
+        "procedural_memory": [
+            "When adding a new service to a Home Assistant integration that wraps a new or existing device library feature, follow these steps:",
+            "Step 1: Confirm library support",
+            "Ensure the underlying device library (e.g., python-velbus) actually provides the desired functionality (e.g., a `set_memo_text` method on the module object). If not, add/update the function in the library first and bump the dependency version in the integration’s manifest and `requirements_all.txt`.",
+            "Step 2: Define or reuse appropriate constants",
+            "In the integration’s `const.py`, define any new configuration or service constants you need (e.g., `CONF_MEMO_TEXT = \"memo_text\"`, `SERVICE_SET_MEMO_TEXT = \"set_memo_text\"`). Wherever possible, reuse global constants from `homeassistant.const` like `CONF_ADDRESS`/`CONF_NAME` instead of inventing new ones.",
+            "Step 3: Implement the service handler in `__init__.py` (or the integration’s main module)",
+            "Inside `async_setup` (or the relevant setup function), define a local function that will handle the service call. For example:",
+            "- Read parameters from `service.data` using the constants (e.g., `module_address = service.data[CONF_ADDRESS]`, `memo_text = service.data[CONF_MEMO_TEXT]`).",
+            "- If the parameter can be templated, ensure it uses `cv.template` in the schema (next step), then set `memo_text.hass = hass` and call `rendered = memo_text.async_render()` before using the value.",
+            "- Invoke the appropriate library method on the device/controller (e.g., `controller.get_module(module_address).set_memo_text(rendered)`).",
+            "- Wrap calls in `try/except` catching library-specific exceptions (e.g., `velbus.util.VelbusException`) and log helpful error messages indicating what operation failed.",
+            "Step 4: Register the service with voluptuous validation",
+            "Use `hass.services.async_register` to expose the service:",
+            "- Provide the integration’s `DOMAIN` and a service name constant (e.g., `SERVICE_SET_MEMO_TEXT`).",
+            "- Define a `vol.Schema` to validate all parameters. Use `vol.Required` for mandatory parameters (e.g., `CONF_ADDRESS`) and `vol.Optional` for others (`CONF_MEMO_TEXT` with a default).",
+            "- For numeric fields like addresses, apply `vol.Coerce(int)` and `vol.Range(min=0, max=255)` to ensure valid ranges and types.",
+            "- For templated text fields, use `cv.template` instead of `cv.string`.",
+            "Step 5: Document the service in `services.yaml`",
+            "In the integration’s `services.yaml` file, add an entry for the new service:",
+            "- Give a clear `description` explaining what it does and any device configuration prerequisites.",
+            "- Under `fields`, document each parameter (`address`, `memo_text`), including a description, what format it uses (e.g., decimal address), and an example value.",
+            "- Note any limits, such as maximum text length enforced by the device.",
+            "Step 6: Align naming and clean up legacy attributes",
+            "If earlier iterations used ad-hoc attribute names (e.g., `ATTR_MEMO_TEXT`, `ATTR_MODULE_ADDRESS`), refactor them to use `CONF_*` and `SERVICE_*` patterns. Update all references in the code and schemas to keep naming consistent with Home Assistant conventions.",
+            "Step 7: Test the service end-to-end",
+            "Run the integration locally with the device hardware or a realistic simulator:",
+            "- Call the new service from Developer Tools → Services in Home Assistant using various inputs, including valid/invalid addresses and memo text lengths.",
+            "- Test template usage by passing expressions like `\"{{ states('sensor.trash_status') }}\"` as memo text and confirm it renders correctly on the device.",
+            "- Check the logs to ensure that any failures (e.g., invalid address, communication errors) produce meaningful error messages without crashing the integration.",
+            "Step 8: Update or add tests when possible",
+            "Add unit tests or integration tests that exercise the new service handler, including success paths and error scenarios (e.g., raising a fake `VelbusException`). Ensure that the service schema enforces the desired validation, and that template rendering is invoked properly."
+        ]
+    }
+}

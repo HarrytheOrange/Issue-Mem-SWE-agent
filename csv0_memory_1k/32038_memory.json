@@ -1,0 +1,51 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant automation integration removed the functional use of the deprecated hide_entity configuration option. The option is now accepted only for backward compatibility (marked deprecated with invalidation_version=0.110) and no longer influences automation entity visibility. The change cleans up the AutomationEntity API by removing the hidden attribute while keeping configuration parsing lenient during the deprecation window.",
+        "keywords": [
+            "home assistant",
+            "automation integration",
+            "hide_entity",
+            "deprecated configuration option",
+            "schema validation",
+            "PLATFORM_SCHEMA",
+            "cv.deprecated",
+            "breaking change management",
+            "entity visibility",
+            "Lovelace UI"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this pull request, the Home Assistant core team finalized the deprecation of the `hide_entity` option for the automation integration. Historically, automations could be declared with `hide_entity: true` in `configuration.yaml`, and the `AutomationEntity` class stored a `_hidden` flag and exposed a `hidden` property so UI layers could hide these entities.\n\nBecause Lovelace is now the standard UI, entity visibility is controlled at the UI layer and `hide_entity` is obsolete. The first patch removed all internal handling of this option: it deleted the `CONF_HIDE_ENTITY` constant, the `DEFAULT_HIDE_ENTITY` default, the `hidden` attribute and property from `AutomationEntity`, and the retrieval of `hidden` from the config when constructing automation entities. It also removed `CONF_HIDE_ENTITY` from the `PLATFORM_SCHEMA` and its default value.\n\nHowever, this initial change made configs that still contain `hide_entity` invalid, which would have been too abrupt for users. The second patch reintroduced `CONF_HIDE_ENTITY` into the module, but only in the configuration schema, not in the runtime entity logic. The `PLATFORM_SCHEMA` was updated to:\n- Mark `CONF_HIDE_ENTITY` as deprecated with `cv.deprecated(CONF_HIDE_ENTITY, invalidation_version=\"0.110\")`.\n- Accept `vol.Optional(CONF_HIDE_ENTITY): cv.boolean` without using it anywhere.\n\nNet result: `hide_entity` no longer has any effect on automation entities, and the internal `AutomationEntity` representation is simplified (no `_hidden` attribute). Users can still keep `hide_entity` in their configuration for a transitional period without validation errors, but they will receive deprecation warnings with a clear invalidation version, after which the option will be removed from the schema entirely.",
+        "semantic_memory": "This fix illustrates a clean pattern for removing obsolete configuration options and associated runtime behavior in a configuration-driven system:\n\n1. **UI-driven deprecations**: When a UI evolves (e.g., Lovelace in Home Assistant) to manage concerns like visibility, older back-end options such as `hide_entity` can become redundant. Backend code should not keep behavior that duplicates or conflicts with the UI's responsibilities.\n\n2. **Two-phase removal of configuration options**: Instead of immediately rejecting old options, a two-phase approach is used:\n   - Phase 1: Mark the option as deprecated and stop using it in runtime logic, but keep it in the schema. Users see warnings but their configs still load.\n   - Phase 2: After a specified `invalidation_version`, remove the option from the schema entirely, turning use into an error.\n\n3. **Using validation helpers for deprecation**: The `cv.deprecated` helper is used to annotate deprecated keys in the validation schema, with an explicit `invalidation_version`. This provides structured, automated warnings and a clear timeline for removal.\n\n4. **Remove dead runtime code once behavior is obsolete**: When an option is logically obsolete, its runtime effects should be removed (e.g., removing `_hidden` and the `hidden` property from `AutomationEntity`). Leaving the option only in schema (for validation/deprecation purposes) avoids feature creep and confusion.\n\n5. **Backward compatibility vs. cleanliness trade-off**: The patch demonstrates how to maintain backward compatibility at the configuration surface while simplifying internal models, which lowers maintenance cost without abruptly breaking users.\n\n6. **Decoupling configuration acceptance from semantic meaning**: An option can be accepted and validated (for compatibility and warnings) without influencing runtime semantics. This is a useful intermediate state for safe migrations.",
+        "procedural_memory": [
+            "Step-by-step approach to removing an obsolete configuration option while minimizing user disruption:",
+            "Step 1: Identify the obsolete option and its usage.",
+            " - Locate the configuration constant (e.g., CONF_HIDE_ENTITY) and where it's defined.",
+            " - Find all references in schemas (PLATFORM_SCHEMA, config validators) and runtime code (entity attributes, properties, initialization).",
+            "Step 2: Remove the runtime behavior tied to the option.",
+            " - Remove any attributes and properties that only exist to support the option (e.g., `_hidden` field and `hidden` property on an entity class).",
+            " - Remove passing that option into object constructors and any logic that changes behavior based on it.",
+            " - Ensure that after removal, the system still behaves correctly with the new model (e.g., UI drives visibility instead of backend flags).",
+            "Step 3: Keep the option in the configuration schema but mark it deprecated.",
+            " - Reintroduce or keep the configuration key constant (e.g., `CONF_HIDE_ENTITY = \"hide_entity\"`).",
+            " - In the schema, wrap it with a deprecation helper like `cv.deprecated(CONF_HIDE_ENTITY, invalidation_version=\"X.YY\")`.",
+            " - Keep the key as optional in the schema (e.g., `vol.Optional(CONF_HIDE_ENTITY): cv.boolean`) but do not pass its value into runtime objects.",
+            " - Choose a clear invalidation version that aligns with release cycles and communicates when the option will be fully removed.",
+            "Step 4: Validate that old configurations still load but emit deprecation warnings.",
+            " - Start Home Assistant (or the relevant system) with configurations that include the deprecated option.",
+            " - Confirm that configuration parsing succeeds and that appropriate deprecation logs/warnings are emitted.",
+            " - Confirm that the option no longer alters runtime behavior (e.g., automation visibility is unchanged).",
+            "Step 5: Communicate the breaking change to users.",
+            " - Update release notes to clearly state that the option is deprecated and no longer has any effect.",
+            " - Explain the rationale (e.g., UI replaced functionality) and provide guidance on alternative approaches if needed.",
+            "Step 6: Plan and execute final removal after the invalidation version.",
+            " - After the specified version, remove the deprecated key from the schema entirely.",
+            " - Remove the `cv.deprecated` wrapper and any remaining references to the option.",
+            " - Add tests or checks to ensure using the removed key now causes clear, actionable errors.",
+            "Step 7: General diagnostic steps for similar future cases.",
+            " - When encountering configuration-related issues, check for deprecation warnings and invalidation versions.",
+            " - Review the config schema for deprecated fields and verify whether they still affect runtime behavior or are now no-ops.",
+            " - When designing deprecations, always plan the full lifecycle: deprecate → warn → no-op → reject → delete."
+        ]
+    }
+}

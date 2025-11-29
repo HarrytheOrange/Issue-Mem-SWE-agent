@@ -1,0 +1,32 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant Vizio media_player integration stopped working after a Vizio firmware update because it depended on an outdated pyvizio library (0.0.3). Updating the integration's REQUIREMENTS to use pyvizio==0.0.4 restores compatibility with the new firmware.",
+        "keywords": [
+            "Home Assistant",
+            "media_player",
+            "vizio",
+            "pyvizio",
+            "firmware update",
+            "integration broken after firmware upgrade",
+            "dependency version bump",
+            "requirements",
+            "device API change",
+            "Python library compatibility"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Home Assistant Vizio media_player integration stopped working after users updated their Vizio device firmware. The underlying issue was not in Home Assistant's own Vizio platform code but in its dependency on an external library, pyvizio. The integration pinned pyvizio to version 0.0.3, which no longer supported the updated Vizio firmware API. A newer pyvizio release (0.0.4) contained the necessary fixes for the new firmware. The proposed code change was minimal: update the REQUIREMENTS constant in homeassistant/components/media_player/vizio.py from ['pyvizio==0.0.3'] to ['pyvizio==0.0.4']. During review, maintainers noted process requirements (signing the CLA, running script/gen_requirements_all.py, and targeting the dev branch instead of master). Ultimately, the same fix was already merged into the dev branch via another pull request (PR #19048), making this PR redundant. The practical fix that resolved the bug was upgrading the pyvizio dependency to 0.0.4 in the Vizio integration.",
+        "semantic_memory": "Device integrations often depend on external client libraries that must track changes in device firmware or remote APIs. When a device vendor ships a firmware update, the device's API behavior can change in ways that break existing integrations, even if the integration's own code did not change. In such cases, the compatibility fix frequently lives in the dedicated client library rather than the integration itself. Pinning dependencies to old versions can prolong breakage once the library is updated upstream. A common pattern is: device firmware changes → client library releases a new version with protocol fixes → the application (e.g., Home Assistant integration) must bump its dependency requirement and regenerate any consolidated requirements files. Good practice includes: avoiding overly strict pinning unless necessary, monitoring upstream libraries for compatibility releases, and ensuring that fixes target the correct development branch and follow repo-specific tooling (like regenerating requirements files). Also, before opening a PR, contributors should check whether a similar fix has already landed in the primary development branch to avoid duplicate efforts.",
+        "procedural_memory": [
+            "When a device integration breaks after a firmware update, first suspect protocol/API changes and verify whether the underlying client library has released a new version addressing the issue.",
+            "Step 1: Reproduce and observe the failure.\n- Update the device firmware and confirm that the integration that previously worked now fails.\n- Check application logs for errors from the affected integration or its dependency library (e.g., connection errors, API schema mismatches).",
+            "Step 2: Identify the dependency and its pinned version.\n- Locate the integration/module responsible for the device (e.g., homeassistant/components/media_player/vizio.py).\n- Find the dependency specification (e.g., REQUIREMENTS or requirements.txt) and note the pinned version (pyvizio==0.0.3 in this case).",
+            "Step 3: Check the upstream library for updates.\n- Visit the dependency's repository or PyPI page (e.g., pyvizio) and review release notes/changelog for versions newer than the one you are using.\n- Look for mentions of fixes related to firmware, protocol changes, or compatibility updates with the affected device.",
+            "Step 4: Test with the updated library locally.\n- In a development environment, install the newer library version (e.g., pyvizio==0.0.4).\n- Run the integration locally against the updated device firmware and verify that functionality is restored and no regressions occur.",
+            "Step 5: Update the application’s dependency declaration.\n- Modify the integration’s dependency list to use the fixed version (e.g., change REQUIREMENTS from ['pyvizio==0.0.3'] to ['pyvizio==0.0.4']).\n- If the project requires consolidated requirements files (like Home Assistant’s script/gen_requirements_all.py), run the required tooling to regenerate them.",
+            "Step 6: Follow repository contribution process.\n- Ensure any contributor prerequisites are met (e.g., sign a Contributor License Agreement).\n- Target the correct branch for bug fixes (often the dev or main development branch, not master if the project distinguishes them).\n- Run the full test suite and any linting/validation checks required by the project.",
+            "Step 7: Avoid duplicate work.\n- Before opening or finalizing a PR, search existing pull requests and issues to see if someone has already submitted or merged a similar fix (as happened here with PR #19048 in the dev branch).\n- If a fix already exists, reference it and close or adjust your PR accordingly.",
+            "Step 8: Document the change.\n- In the PR description or release notes, explicitly state that a device firmware update required bumping the external client library to restore compatibility.\n- This helps users understand why they must upgrade and simplifies future troubleshooting when similar issues occur."
+        ]
+    }
+}

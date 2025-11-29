@@ -1,0 +1,39 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant Ombi integration updated to support password-based authentication in addition to API key, enforcing mutual exclusivity and requiring at least one auth method via Voluptuous schema, and updating the pyombi dependency. The setup now authenticates using either password+username or API key before testing the connection.",
+        "keywords": [
+            "Home Assistant",
+            "Ombi",
+            "ombi component",
+            "authentication",
+            "password auth",
+            "API key auth",
+            "mutually exclusive config",
+            "Voluptuous",
+            "vol.Exclusive",
+            "cv.has_at_least_one_key",
+            "pyombi",
+            "manifest requirements",
+            "integration setup",
+            "OmbiError"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In the Home Assistant Ombi integration, configuration previously required an API key for authentication and did not support password-based login. A user requested the ability to authenticate with a username and password instead of an API key. The fix updated the Ombi component configuration schema in `homeassistant/components/ombi/__init__.py` to accept either an API key or a password, along with a required host and username. The schema now uses `vol.Exclusive(CONF_API_KEY, \"auth\")` and `vol.Exclusive(CONF_PASSWORD, \"auth\")` to ensure that API key and password are mutually exclusive configuration options, and `cv.has_at_least_one_key(\"auth\")` to enforce that at least one of them is provided. In the `setup` function, an `Ombi` client is instantiated with the host, port, ssl, urlbase, username, and whichever authentication credential is provided (`password` or `api_key`). The code then calls `ombi.authenticate()` followed by `ombi.test_connection()`, catching `pyombi.OmbiError` to log failures. To support this new behavior, the `pyombi` library dependency was upgraded from `0.1.5` to `0.1.10` in both `manifest.json` and `requirements_all.txt`. This resolved the feature request (issue #28274) by allowing Ombi to be configured using a username and password while maintaining support for API key authentication and enforcing clean, validated auth configuration.",
+        "semantic_memory": "When an integration supports multiple authentication methods (e.g., API key vs username/password), configuration validation should encode both the exclusivity and the requirement that at least one method must be provided. Voluptuous enables this via `vol.Exclusive` groups and helper validators like `cv.has_at_least_one_key`. This prevents ambiguous or incomplete configs (no credentials, or conflicting credentials) from reaching runtime. Additionally, when adding new auth options, the underlying client library must support those options; dependency versions in manifests and global requirements need to be updated accordingly. It is good practice to explicitly trigger an authentication step (e.g., `client.authenticate()`) and then a connection or health check (`client.test_connection()`), handling library-specific exceptions, so misconfiguration is caught early during setup rather than at first use. Overall, schema-driven validation, mutually-exclusive config groups, and early authentication checks are robust patterns for integrations that interact with external services.",
+        "procedural_memory": [
+            "To add or change authentication options for an integration that talks to an external service:",
+            "Step 1: Confirm that the underlying client library supports the desired authentication method (e.g., username/password). If not, update or extend the client library first.",
+            "Step 2: Update dependency versions where necessary: adjust the integration's `manifest.json` `requirements` field and any shared `requirements_all.txt` or similar files to use a library version that supports the new auth method.",
+            "Step 3: Modify the configuration schema to support the new authentication fields. For Home Assistant + Voluptuous, import `CONF_API_KEY`, `CONF_PASSWORD`, and use `vol.Exclusive` to group mutually exclusive options:",
+            "Step 3.1: Replace a single required auth field (e.g., `vol.Required(CONF_API_KEY)`) with `vol.Exclusive(CONF_API_KEY, \"auth\")` and `vol.Exclusive(CONF_PASSWORD, \"auth\")` inside the same schema.",
+            "Step 3.2: Add a top-level validator such as `cv.has_at_least_one_key(\"auth\")` to enforce that at least one of the exclusive options is provided.",
+            "Step 4: In the setup/initialization function, read the optional auth values from the config (`config[DOMAIN].get(CONF_PASSWORD)` and `config[DOMAIN].get(CONF_API_KEY)`) rather than assuming one is always present.",
+            "Step 5: Construct the client object with all the required connection parameters (host, port, ssl, urlbase, username) and pass in whichever auth parameters the config provides (`password` and/or `api_key`), allowing `None` where appropriate.",
+            "Step 6: Explicitly perform an authentication call on the client (e.g., `client.authenticate()`) followed by a connectivity or health check (e.g., `client.test_connection()`), so authentication errors surface during setup.",
+            "Step 7: Catch and log library-specific exceptions (e.g., `pyombi.OmbiError`) to provide clear diagnostics if authentication or connection fails, and prevent the integration from being set up in an invalid state.",
+            "Step 8: Add or update tests to cover: (a) API-key-only configuration, (b) password-only configuration, (c) invalid configuration with no auth fields, and (d) invalid configuration with conflicting auth settings, ensuring the schema and setup logic behave as expected.",
+            "Step 9: Update user-facing documentation to show new configuration examples (e.g., using `username` + `password`) and clarify which auth methods are supported and how exclusivity/precedence works."
+        ]
+    }
+}

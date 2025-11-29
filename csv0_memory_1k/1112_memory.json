@@ -1,0 +1,33 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fix for StackStorm packs.install where rerunning a pack installation created a recursive nested directory (pack/pack/...) because shutil.move was targeting an existing destination directory. The fix removes any existing pack directory before moving and moves into the parent packs directory instead of pack-specific subpath, making pack installs idempotent.",
+        "keywords": [
+            "StackStorm",
+            "packs.install",
+            "pack_mgmt",
+            "download.py",
+            "shutil.move",
+            "recursive directory",
+            "nested directory",
+            "idempotent install",
+            "overwrite existing directory",
+            "git repo clone"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, rerunning `packs.install` in StackStorm caused a recursive directory structure inside the pack, such as `<packs_base>/mypack/mypack/...`. The installation workflow cloned the pack repo to a temporary location and then used `_move_packs` to move the pack directory into the packs base directory. The original implementation called `shutil.move(abs_pack_temp_location, os.path.join(abs_repo_base, pack))`. When the destination directory `<abs_repo_base>/pack` already existed from a previous install, `shutil.move` moved the new `pack` directory *inside* the existing `pack` directory (creating `<abs_repo_base>/pack/pack`), instead of replacing it. This led to recursive nesting each time the install was rerun.\n\nThe fix changed `_move_packs` from a `@staticmethod` to an instance method so it could use `self.logger`, and updated the move logic. For each pack, the code now computes `dest_pack_path = os.path.join(abs_repo_base, pack)`. If `dest_pack_path` exists, it logs a debug message and removes the existing directory with `shutil.rmtree(dest_pack_path)`. Then it logs that it is moving the pack and calls `shutil.move(abs_pack_temp_location, abs_repo_base)` (i.e., moves into the parent directory, not directly to `.../pack`). This allows `shutil.move` to create the correct `.../pack` directory from the source and avoids creating a nested directory when re-installing a pack. The result is that re-running pack installation is now idempotent and does not create recursive directories.",
+        "semantic_memory": "This fix illustrates a common filesystem manipulation pitfall: using `shutil.move` (or similar functions) with an already-existing directory as the destination can produce unintended nested directory structures. When the destination path is a directory, many file operations treat it as a parent, creating a new child directory or file inside it instead of replacing it. If your code assumes an overwrite/replace semantics, you must explicitly remove or handle the existing target before moving.\n\nMore broadly, idempotent operations (such as installers, deployers, or sync tasks) must be careful about pre-existing state. Simply re-running the same operation should not compound directory structures or leave stale files lying around. A robust pattern is:\n- Compute the exact destination path for the resource.\n- If that path already exists and you intend to replace it, remove it first (or clean its contents) in a controlled way.\n- Then move/copy into the parent directory (letting the filesystem create a new directory at the final name), or otherwise ensure that the move semantics are clearly understood.\n\nAnother lesson is the value of logging at key decision points: logging when an existing directory is being removed and when a move occurs helps diagnose subtle filesystem issues. Turning a static helper into an instance method to access `self.logger` is a pragmatic way to add such observability.",
+        "procedural_memory": [
+            "When diagnosing recursive or nested directories after repeated installs or deployments:",
+            "Step 1: Reproduce the issue by re-running the install/deploy command and inspect the resulting directory structure. Look for patterns like `<dest>/pack/pack`, deep nesting, or duplicated directories.",
+            "Step 2: Examine the code that performs filesystem moves/copies (e.g., `shutil.move`, `shutil.copytree`, `os.rename`). Identify the source path, the destination path, and whether the destination can already exist.",
+            "Step 3: Review the semantics of the filesystem API being used. For `shutil.move(src, dst)`, if `dst` exists and is a directory, `src` is moved *into* `dst`, potentially creating `dst/basename(src)` and causing nesting when `basename(src)` equals the destination directory name.",
+            "Step 4: Decide on the intended behavior for re-runs: overwrite/replace, merge, or skip if exists. For idempotent installers, overwrite/replace is often desired.",
+            "Step 5: Implement explicit handling of existing destinations. For a replace behavior:\n- Compute `dest_pack_path = os.path.join(base, pack_name)`.\n- If `os.path.exists(dest_pack_path)`, remove it with `shutil.rmtree(dest_pack_path)` or clean it as appropriate.\n- Then call `shutil.move(src_pack_path, base)` so that the move creates a fresh `base/pack_name` directory rather than nesting inside an existing one.",
+            "Step 6: Add logging at key points: before deleting an existing directory and before moving the new directory. This helps future debugging and confirms that overwrites are intentional.",
+            "Step 7: If the helper function was static and you now need logging or configuration access, convert it to an instance method (`self._move_packs`) and update call sites accordingly.",
+            "Step 8: Create regression tests if possible: install a pack, modify or reinstall it, then assert that the resulting directory structure is exactly one level deep and contains the expected files, with no `pack/pack` nesting.",
+            "Step 9: Consider adding a user-facing `force` or `overwrite` flag in higher-level APIs to control whether existing packs should be removed and re-installed, and wire that flag to the logic that removes existing directories before moving."
+        ]
+    }
+}

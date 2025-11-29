@@ -1,0 +1,44 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant HTML5 notification service updated its pywebpush dependency from 0.6.1 to 1.0.0 to remove reliance on the unmaintained pyelliptic library and restore compatibility with systems using OpenSSL 1.1. The fix consists of bumping the pywebpush version and removing the explicit pyelliptic dependency from component and global requirements files.",
+        "keywords": [
+            "dependency upgrade",
+            "pywebpush",
+            "pywebpush 1.0.0",
+            "pyelliptic",
+            "unmaintained dependency",
+            "OpenSSL 1.1 compatibility",
+            "homeassistant.components.notify.html5",
+            "requirements_all.txt",
+            "requirements_test_all.txt",
+            "library version pinning",
+            "breaking transitive dependency"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Home Assistant HTML5 notification component (`homeassistant.components.notify.html5`) depended on `pywebpush==0.6.1`, which in turn depended on the unmaintained `pyelliptic` library. A newer `pyelliptic` (1.5.8) introduced a breaking change, so the project previously pinned `pyelliptic==1.5.7` to avoid breakage. However, this setup still tied the system to an unmaintained crypto library and caused compatibility issues on systems using OpenSSL 1.1. Upstream `pywebpush` released version 1.0.0, which removed the dependency on `pyelliptic` entirely and works with OpenSSL 1.1. The fix in this PR updates the HTML5 notifier `REQUIREMENTS` from `['pywebpush==0.6.1', 'PyJWT==1.4.2', 'pyelliptic==1.5.7']` to `['pywebpush==1.0.0', 'PyJWT==1.4.2']`, and removes `pyelliptic==1.5.7` entries from both `requirements_all.txt` and `requirements_test_all.txt`. The global `pywebpush` version is also bumped to 1.0.0 in those files. After the change, Home Assistant no longer directly depends on `pyelliptic`, reducing maintenance risk and improving OpenSSL 1.1 compatibility.",
+        "semantic_memory": "This case illustrates a common pattern in dependency management: transitive dependencies from third-party libraries can become unmaintained, introduce breaking changes, or conflict with system libraries (e.g., OpenSSL upgrades). Pinning a problematic dependency version (e.g., `pyelliptic==1.5.7`) is only a temporary mitigation and can lock a project into fragile, outdated crypto code. A more robust solution is to upgrade to a newer version of the primary dependency (here, `pywebpush`) that has removed or replaced the problematic transitive dependency. When upstream libraries modernize their dependency trees (e.g., dropping unmaintained crypto libraries in favor of better-supported alternatives), downstream projects should prefer adopting those versions rather than maintaining complex pins. This often requires updating component-level requirements and central requirements files consistently (runtime and test requirements) and validating the upgrade via test runs. Managing dependencies in this way reduces security and compatibility risks and keeps the project aligned with the ecosystem's current practices.",
+        "procedural_memory": [
+            "Step 1: Identify the problematic dependency chain",
+            "Determine which component or module fails or is constrained by dependency issues (e.g., HTML5 notifications using pywebpush). Inspect its direct dependencies and their transitive dependencies (e.g., pywebpush -> pyelliptic). Look for signs such as: unmaintained packages, breaking changes in minor releases, incompatibilities with system libraries (like OpenSSL 1.1), or pinned versions used only to avoid breakage.",
+            "Step 2: Check upstream libraries for newer releases",
+            "Review the changelog and releases of the primary third-party library (here, pywebpush). Verify whether newer versions have removed or replaced the problematic transitive dependency (e.g., pywebpush 1.0.0 dropping pyelliptic). Confirm that the new version claims compatibility with the environment causing issues (e.g., supports OpenSSL 1.1).",
+            "Step 3: Plan the dependency upgrade",
+            "Decide on a specific version to upgrade to (prefer a stable, non-pre-release version that explicitly addresses the issue). Ensure any direct pins to the problematic transitive dependency (e.g., pyelliptic==1.5.7) can be removed. Identify all places where the dependency version is declared: component-level REQUIREMENTS, global requirements files (runtime and test), and possibly CI configs or extra requirement sets.",
+            "Step 4: Update component-level requirements",
+            "In the relevant component/module file (e.g., `homeassistant/components/notify/html5.py`), update the REQUIREMENTS list to use the new primary dependency version (e.g., change `pywebpush==0.6.1` to `pywebpush==1.0.0`). Remove explicit entries for the now-unneeded transitive dependency (e.g., remove `pyelliptic==1.5.7` entirely). Keep any still-needed dependencies (e.g., PyJWT) unchanged unless they also require updates.",
+            "Step 5: Update global and test requirements",
+            "In `requirements_all.txt` and any other consolidated requirement files (e.g., `requirements_test_all.txt`), update the pinned version of the primary dependency (pywebpush) to the new version. Remove sections that pin the obsolete/unmaintained transitive dependency (pyelliptic). Maintain or update comments indicating which component requires which package, to keep traceability.",
+            "Step 6: Regenerate requirements if necessary",
+            "If the project uses scripts to generate or sync requirement files (e.g., `script/gen_requirements_all.py`), run those scripts to ensure that the changes are reflected correctly and consistently across all generated files.",
+            "Step 7: Run the full test suite",
+            "Execute the project's test suite (e.g., `tox`) to verify that upgrading the dependency and removing the transitive one does not introduce regressions. Pay special attention to tests covering the affected functionality (e.g., HTML5 notifications). Fix or adjust tests only if behavior changes are intentional and understood.",
+            "Step 8: Validate runtime behavior in a representative environment",
+            "When dealing with environment- or system-level compatibility (like OpenSSL), test in an environment that matches real deployments (e.g., system with OpenSSL 1.1). Confirm that the functionality that previously failed or required workarounds now runs correctly without the unmaintained dependency.",
+            "Step 9: Document and reference related issues",
+            "In the PR or commit message, reference related upstream and project issues (e.g., pywebpush issues #48 and #49) and describe the rationale: removal of unmaintained dependency, OpenSSL compatibility, and simplification of requirements. This helps maintainers understand and review the change, and aids future troubleshooting.",
+            "Step 10: Monitor after deployment",
+            "After merging and releasing, monitor for bug reports related to the upgraded dependency. If issues arise, consult the new library's documentation and issue tracker, and adjust pins or configuration as necessary while avoiding reintroducing unmaintained or insecure dependencies."
+        ]
+    }
+}

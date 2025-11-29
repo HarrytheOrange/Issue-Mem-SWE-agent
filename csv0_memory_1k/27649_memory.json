@@ -1,0 +1,31 @@
+{
+    "search_index": {
+        "description_for_embedding": "Refactor of the Home Assistant statsd component to move the 'statsd' dependency import from inside the setup() function to a top-level module import, and to normalize import order in the related tests. This aligns with project style guidelines and improves consistency of dependency handling.",
+        "keywords": [
+            "statsd",
+            "Home Assistant",
+            "top-level import",
+            "in-function import",
+            "lazy import",
+            "component setup",
+            "import order",
+            "tests",
+            "code style",
+            "refactor"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this change set, the Home Assistant statsd integration was updated to comply with a project rule that imports should not be placed inside functions unless strictly necessary. Previously, the statsd client library was imported inside the setup(hass, config) function of homeassistant/components/statsd/__init__.py. This was changed by moving `import statsd` to the top of the module alongside the other imports. The code using the statsd library in setup() remains the same, but now relies on the module-level import. Alongside this, the test file tests/components/statsd/test_init.py had its imports reorganized: pytest was moved to the top third-party section, and Home Assistant modules (core, setup, components.statsd, const) were grouped and alphabetized according to the project's import conventions. The related CI test run initially failed due to an environment creation issue unrelated to the code, and a maintainer simply re-ran the tests, which then passed. The net result is a stylistic/architectural cleanup rather than a functional bug fix.",
+        "semantic_memory": "Moving imports from inside functions to the module level is a common refactoring driven by style guidelines, tooling expectations, and dependency management concerns. Top-level imports make dependencies explicit, improve static analysis, and avoid unexpected behavior due to conditional or delayed imports. However, this can require ensuring that optional dependencies are correctly declared and installed so that module import does not fail when the component is not used. Tests often need matching updates to keep import order consistent with linters (e.g., isort, flake8-import-order). More broadly, import placement is not just about style: it affects module initialization behavior, error visibility (fail fast at import time rather than at runtime), startup performance, and plugin/component loading patterns. When refactoring imports, developers should consider optional vs. required dependencies, how the framework discovers integrations, and any mocking or patching strategies used in tests.",
+        "procedural_memory": [
+            "When refactoring function-level imports to module-level imports in a component or integration:",
+            "Step 1: Identify any imports that are currently inside functions (e.g., setup(), handler functions, or command functions) and confirm whether they need to be lazy/conditional or can be safely moved to the top level.",
+            "Step 2: Move the import statement(s) to the module's top-level import section, grouping them correctly (standard library, third-party, then local/project imports) and ordering them according to the project's style or isort configuration.",
+            "Step 3: Remove the now-redundant in-function import line(s) and ensure that all references to the imported module still resolve correctly (no shadowing, no circular imports introduced).",
+            "Step 4: For any third-party dependencies now imported at module load time, verify they are properly declared in the project’s dependency/manifest configuration so that environments where the component is used have the package installed.",
+            "Step 5: Update tests to match import ordering conventions: place standard library imports first, then third-party libraries (e.g., pytest, voluptuous), followed by project-specific imports (e.g., homeassistant.*). Ensure imports are alphabetized within each group if that’s the convention.",
+            "Step 6: Run the full test suite (and any style/linters like flake8, isort, or tox environments) to confirm there are no import errors, circular dependencies, or style violations introduced by the change.",
+            "Step 7: If CI fails due to environment or dependency issues unrelated to the code (e.g., environment creation problems), rerun the job and, if failures persist, inspect dependency declarations and CI configuration to ensure the newly-top-level imported package is available in the test environment."
+        ]
+    }
+}

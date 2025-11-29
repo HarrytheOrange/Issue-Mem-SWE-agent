@@ -1,0 +1,31 @@
+{
+    "search_index": {
+        "description_for_embedding": "Docker development image built on Python 3.7 was still prefetching tox dependencies using the py36 environment, causing tox basepython version conflicts during docker build. Fix: update Dockerfile.dev to run tox -e py37 --notest so the prefetched tox environment matches the base image Python version.",
+        "keywords": [
+            "Dockerfile.dev",
+            "tox",
+            "py36",
+            "py37",
+            "basepython conflict",
+            "virtualization/Docker",
+            "Python version mismatch",
+            "docker build error",
+            "tox -e py37 --notest",
+            "home-assistant development image"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the project’s development Docker image had already been upgraded to use Python 3.7 as the base image. However, the Dockerfile.dev still ran `tox -e py36 --notest` to prefetch dependencies. During `docker build`, tox emitted a warning about a conflicting basepython version: it detected that the tox environment `py36` implied Python 3.6, but the actual interpreter in the container was Python 3.7. The warning was:\n\n`UserWarning: conflicting basepython version (set 37, should be 36) for env 'py36'; resolve conflict or set ignore_basepython_conflict`\n\nThis mismatch could lead to confusion or improper environment setup. The fix was straightforward: update the Dockerfile.dev prefetch step to match the new Python version by changing the command from `RUN tox -e py36 --notest` to `RUN tox -e py37 --notest`. After this change, the tox environment name aligns with the Python 3.7 base image, eliminating the basepython conflict warning during docker builds.",
+        "semantic_memory": "When using tox inside Docker images or other controlled environments, the tox environments and their configured Python versions must remain consistent with the underlying interpreter in the image. If a tox environment name (e.g., `py36`) is used while the image runs a different Python version (e.g., 3.7), tox can detect a basepython conflict and issue warnings or cause unexpected behavior.\n\nGeneralizable principles:\n- Keep tox env names and `basepython` configurations in sync with the actual Python interpreter version used in CI, Docker, or runtime images.\n- After upgrading the Python version of a project (or the base image), systematically update all tox-related configuration and any scripts (Dockerfiles, CI configs, makefiles) that invoke tox with hard-coded env names.\n- Pay attention to tox warnings like `ignore_basepython_conflict` and `conflicting basepython version`, as they indicate version drift that can cause subtle test or dependency issues.\n- Pre-fetching dependencies with tox (`tox -e <env> --notest`) is useful to speed up development or CI builds, but it must match the environment that will actually run tests and the project code.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Observe the error/warning during docker build or tox run. Look for tox warnings like `conflicting basepython version` or mentions of `ignore_basepython_conflict`.",
+            "Step 2: Identify the Python version used in the environment. For Docker, check the base image tag (e.g., `python:3.7`) or run `python --version` inside the container.",
+            "Step 3: Inspect tox configuration. Open `tox.ini` and review env names (e.g., `py36`, `py37`) and any `basepython` settings. Ensure they match the actual Python interpreter version you intend to use.",
+            "Step 4: Check all places where tox is invoked. This includes Dockerfiles, CI configs (GitHub Actions, Travis, GitLab CI, etc.), shell scripts, and Makefiles. Look for hard-coded tox env names like `tox -e py36`.",
+            "Step 5: Align tox env names and commands with the Python version. If the project/base image has been upgraded to Python 3.7, change tox invocations from `tox -e py36` to `tox -e py37` (or update `tox.ini` to define the correct env). In Dockerfiles, update prefetch commands such as `RUN tox -e py36 --notest` to `RUN tox -e py37 --notest`.",
+            "Step 6: Rebuild the Docker image or re-run the CI pipeline. Confirm that the tox basepython conflict warnings no longer appear and that dependencies are correctly prefetched.",
+            "Step 7: Prevent future mismatches. When bumping the Python version in the project or base images, include a checklist step to audit and update all tox-related configurations and commands. Optionally, define generic envs (like `envlist = py3`) or centralize Python version definitions to reduce duplication."
+        ]
+    }
+}

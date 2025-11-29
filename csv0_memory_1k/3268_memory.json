@@ -1,0 +1,38 @@
+{
+    "search_index": {
+        "description_for_embedding": "Documentation bug fix in Optuna's CLI tutorial: several CLI subcommands (ask, best-trial, best-trials, tell, trials) were missing from the csv-table in the recipe, and a description containing a comma needed escaping using Sphinx/reStructuredText :escape: in a csv-table.",
+        "keywords": [
+            "Optuna",
+            "CLI",
+            "command-line interface",
+            "tutorial",
+            "recipes",
+            "004_cli.py",
+            "csv-table",
+            "Sphinx",
+            "reStructuredText",
+            "rst :escape:",
+            "documentation bug",
+            "missing commands",
+            "ask",
+            "best-trial",
+            "best-trials",
+            "tell",
+            "trials"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Optuna project had a minor documentation issue in the CLI tutorial (tutorial/20_recipes/004_cli.py). The tutorial contains a reStructuredText csv-table listing available CLI commands and their descriptions. Over time, new CLI subcommands such as `ask`, `best-trial`, `best-trials`, `tell`, and `trials` had been added to the actual CLI but were missing from this tutorial table, causing the docs to be incomplete and potentially confusing for users. The pull request added these missing commands to the csv-table, borrowing their phrasing from the existing API documentation.\n\nDuring the change, it became apparent that one of the new descriptions, \"Finish a trial, which was created by the ask command.\", contained a comma. In a reStructuredText csv-table, commas are used as column separators, so the comma inside the description would be misinterpreted and break the table rendering. To fix this, the author added the `:escape: \\` option to the csv-table directive and escaped the problematic comma as `\\,` in the `tell` row. This preserved the textual comma in the rendered documentation while keeping the table format correct.\n\nA reviewer also suggested turning command names into links in the table for better usability, but the team agreed to handle that in a follow-up PR to keep the current change small and focused on completeness and formatting correctness.",
+        "semantic_memory": "This fix illustrates two generalizable points about maintaining CLI/documentation consistency and working with Sphinx/reStructuredText tables.\n\nFirst, when a project exposes a command-line interface, any official documentation that lists commands (tutorials, reference pages, cheat-sheets) must be kept in sync with the actual CLI. Over time, new subcommands are often added or semantics change, and it is easy for manually maintained tables or lists to drift out of date. Regularly cross-checking documentation against the actual CLI (e.g., `--help` output or a single source of truth in code) is a good practice to avoid confusing users.\n\nSecond, Sphinx/reStructuredText csv-table directives treat commas as column separators. When text in a cell needs to contain a comma, the comma must be escaped; otherwise Sphinx will mis-parse the table and either fail to build or render a malformed table. The `:escape:` option lets you define a character (commonly `\\`) that can precede commas (and other special characters) to indicate they are literal. This pattern—defining `:escape: \\` and then writing `\\,` where a literal comma is needed—is generally applicable to any reST csv-table.\n\nMore broadly, this case reinforces that documentation formatting issues are often subtle and tied to the markup language’s parsing rules. When changing tables or lists in Sphinx docs, especially csv-tables, check for characters that have structural meaning (commas, pipes, etc.) and ensure they are properly escaped or the table structure is adjusted. It also shows the value of incremental, narrowly scoped PRs: completeness and formatting fixed first, then enhancements like adding links planned for follow-up work.",
+        "procedural_memory": [
+            "To diagnose and fix missing CLI commands and formatting issues in Sphinx/reStructuredText documentation, follow these steps:",
+            "Step 1: Identify discrepancies between CLI and docs.\n- Run the CLI with `--help` (and subcommands as needed) to obtain the authoritative list of commands and descriptions.\n- Compare this list with any tables or lists in the documentation (tutorials, reference pages) that claim to enumerate available commands.\n- Note any commands that exist in the CLI but are not documented, or commands whose descriptions differ significantly from the CLI or API reference.",
+            "Step 2: Determine the documentation source of truth.\n- Locate the relevant documentation file(s), e.g., `.rst` or `.py` tutorial files used by Sphinx (such as `tutorial/20_recipes/004_cli.py`).\n- Confirm whether the table is manually maintained (csv-table or simple table) or auto-generated from code (autodoc, sphinx-click, etc.).\n- If the table is manual, plan to update it directly; if auto-generated, adjust the generator configuration or docstrings instead.",
+            "Step 3: Add missing commands and synchronize descriptions.\n- For each missing command, add a new row to the table with the command name and a concise description.\n- Preferably reuse or adapt wording from existing API or CLI help messages to maintain consistency across docs and help output.\n- For multi-word commands (e.g., `study optimize`, `storage upgrade`), ensure whitespace is preserved correctly in the table cell.",
+            "Step 4: Handle commas and special characters in csv-tables.\n- If you are using `.. csv-table::`, recognize that commas separate columns.\n- If any description text requires a literal comma (or other special character used by the table), add an `:escape:` directive to the table, e.g.: `:escape: \\`.\n- Escape the comma inside cell text by prefixing it with the escape character, e.g., write `Finish a trial\\, which was created by the ask command.` instead of `Finish a trial, which was created by the ask command.`\n- Ensure there are no unescaped commas in single-cell descriptions, otherwise Sphinx may misinterpret them as column separators.",
+            "Step 5: Build and visually inspect the documentation.\n- Run the Sphinx build (e.g., `make html` or the project’s doc build command).\n- Check that the documentation builds without errors or warnings related to the modified file.\n- Open the generated HTML page and verify that the table renders correctly: all commands appear as expected, descriptions are shown fully, and commas appear in the correct places.",
+            "Step 6: Consider usability enhancements in separate changes.\n- After the basic list of commands is accurate and correctly formatted, consider additional improvements like turning command names into links to detailed reference sections.\n- For such enhancements, plan separate PRs to keep review scope small and reduce the risk of introducing new formatting issues.",
+            "Step 7: Prevent future drift between CLI and documentation.\n- Establish a habit of updating the documentation whenever new CLI subcommands are added or modified.\n- Optionally, introduce documentation tests or checks (e.g., a small script that compares documented commands against the CLI `--help` output) to detect discrepancies early.\n- Document in the contributor guidelines where and how to update CLI docs when new commands are introduced."
+        ]
+    }
+}

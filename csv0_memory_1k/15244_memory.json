@@ -1,0 +1,32 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fix for Home Assistant's Xiaomi Miio device_tracker compatibility with python-miio 0.4: the station status result changed from a dict with key 'mat' to an object exposing 'associated_stations', so the integration was updated to iterate over station_info.associated_stations instead of station_info['mat'].",
+        "keywords": [
+            "Home Assistant",
+            "xiaomi_miio",
+            "device_tracker",
+            "python-miio 0.4",
+            "API change",
+            "breaking change",
+            "attribute vs dict access",
+            "associated_stations",
+            "station_info['mat']",
+            "DeviceException"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In the Home Assistant project, the Xiaomi Miio device_tracker integration stopped working correctly after upgrading to python-miio 0.4. Previously, the call self.device.status returned station information as a dictionary containing a 'mat' key, and the code iterated over station_info['mat'] to collect MAC addresses of associated devices. With python-miio 0.4, the status() call started returning a richer object instead of a plain dict, exposing associated stations via an associated_stations attribute rather than the 'mat' dictionary key. As a result, accessing station_info['mat'] either failed or yielded incorrect behavior with the new library version. The pull request fixed this by replacing the loop `for device in station_info['mat']:` with `for device in station_info.associated_stations:`, and then appending device['mac'] as before. This restored compatibility with python-miio 0.4 while keeping the rest of the logic intact. There was also side discussion about moving unrelated Synology changes to another PR and a reminder for the contributor to sign the CLA, but the core functional change was the API adaptation from dict key to attribute access.",
+        "semantic_memory": "Library upgrades often change return types or access patterns from simple dictionaries to richer objects with properties. When integrating with third-party libraries like python-miio, code that assumes a particular data structure (e.g., indexing with string keys) is brittle and vulnerable to breakage when the library evolves. A robust pattern is to verify after upgrades whether methods like status() still return the same type and structure. If the library now offers named attributes (e.g., associated_stations) instead of dict keys (e.g., 'mat'), the integration must be updated to use these attributes. This reflects a broader best practice: treat third-party API return values as contracts that can change across major/minor versions, and isolate or abstract such dependencies so they can be updated with minimal impact. Also, when a library wraps raw responses in data classes or objects, the preferred access is often via documented properties, not internal dictionary keys.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: After upgrading a third-party library (e.g., python-miio), run the relevant integration or component and watch for runtime errors (TypeError, KeyError, AttributeError) around calls to that library, especially where the code assumes specific response structures.",
+            "Step 2: Identify the failing call. In this case, locate where self.device.status is called and how its result (station_info) is used (e.g., station_info['mat']). Check logs and stack traces to pinpoint the exact line.",
+            "Step 3: Inspect the new library’s API and return types. Use the library’s documentation, release notes, or interactive inspection (repr(), dir(), type()) to understand what status() now returns. Confirm whether the object is still a dict or a new class with attributes.",
+            "Step 4: Map old fields to new ones. Determine the new equivalent of the old data field (here, 'mat'). For python-miio 0.4, the associated stations are now exposed via an associated_stations attribute instead of a 'mat' key.",
+            "Step 5: Update the code to use the new API surface. Replace dictionary key access with attribute access where appropriate. Concretely, change `for device in station_info['mat']:` to `for device in station_info.associated_stations:` while preserving any downstream usage like device['mac'] if that structure remains the same.",
+            "Step 6: Add defensive checks if the library might return different structures across versions or in error conditions (e.g., check hasattr(station_info, 'associated_stations') or handle None / empty lists) if backward compatibility is required.",
+            "Step 7: Run the integration tests or manually exercise the functionality (e.g., trigger device tracking) to ensure that associated devices are discovered correctly and that no new exceptions occur.",
+            "Step 8: Document the dependency on the new library version and, if necessary, update requirements and changelogs to indicate that the integration is compatible with python-miio 0.4+ and relies on associated_stations rather than the old 'mat' field."
+        ]
+    }
+}

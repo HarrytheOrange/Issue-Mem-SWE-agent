@@ -1,0 +1,48 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant tellduslive entities (switch, cover, light) were not updating their state immediately after an actuator command. Because these entities are non-polling, removing schedule_update_ha_state caused the UI to revert to the old state until the next poll. The fix is to explicitly trigger the entity update callback (_update_callback / async_schedule_update_ha_state) in the actuator and change handlers so Home Assistant reflects the new state right after a command.",
+        "keywords": [
+            "Home Assistant",
+            "tellduslive",
+            "entity state not updating",
+            "non polling entities",
+            "schedule_update_ha_state",
+            "async_schedule_update_ha_state",
+            "update_callback",
+            "switch state revert",
+            "cover state revert",
+            "light state revert",
+            "actuator methods",
+            "UI state desync"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Home Assistant tellduslive integration (switches, covers, and lights) exhibited incorrect state behavior after user actions. When a user toggled a switch (or operated a cover or light), the entity briefly changed state in the UI and then reverted back to its previous state until the next scheduled update. This regression happened after a previous refactor (#18780) removed explicit calls to schedule_update_ha_state, under the assumption that state updates would be handled automatically.\n\nHowever, these tellduslive entities are effectively non-polling for state changes triggered by user commands, meaning Home Assistant will not automatically refresh the state at the end of the service call. Without an explicit state-update trigger, Home Assistant continued to show the old state even though the device had changed.\n\nThe fix reintroduced an explicit state update, but in a cleaner, integration-specific way: calls to self._update_callback() were added immediately after actuator operations. Specifically:\n- In tellduslive cover entities, close_cover, open_cover, and stop_cover now call self.device.down()/up()/stop() and then self._update_callback().\n- In tellduslive switch entities, turn_on and turn_off now call self.device.turn_on()/turn_off() and then self._update_callback().\n- In tellduslive light entities, the changed() method, which is invoked when properties may have changed, now updates internal brightness and then calls self._update_callback().\n\nThis ensures that whenever the device is commanded or reports a change, the integration notifies Home Assistant, which then updates the entity state in the UI immediately. The discussion also clarified the design principle: non-polling entities must manage their own state updates, typically via callbacks from the device or directly inside actuator methods.",
+        "semantic_memory": "For non-polling or event-driven home automation entities, the platform will not automatically refresh the entity state after every actuator call. If the integration does not explicitly trigger a state update when a device changes, the UI and automations may see stale states: entities appear to revert to old values until the next polling cycle.\n\nGeneralizable principles:\n1. **Non-polling entities must push state updates**: If an entity does not rely on a regular polling interval, it should call the appropriate state-update mechanism (e.g., async_schedule_update_ha_state, an internal update callback, or equivalent) whenever its state changes—either in a callback triggered by the device, or directly within the actuator method.\n\n2. **Actuator methods need to synchronize with the state machine**: When an integration sends a command (turn_on, turn_off, open_cover, set_mode, etc.), it should either:\n   - Update its internal state representation and explicitly notify the framework to refresh the entity, or\n   - Ensure that a device-originated callback will update the state and trigger the refresh shortly thereafter.\n\n3. **UI reversion is a symptom of missing state sync**: When an entity briefly changes to the new state and then flips back, it often indicates that the framework is reapplying the last known state from its internal store because no fresh state was provided after the command.\n\n4. **Refactors that remove explicit schedule_update calls can break non-polling flows**: Centralizing or removing explicit calls to schedule_update_ha_state must be done with awareness of which entities rely on push-based updates. Non-polling entities will require some form of explicit state update trigger left in place.\n\n5. **Integration-specific callbacks are a good abstraction**: Using an internal _update_callback or similar abstraction decouples the integration code from the framework-specific update APIs, making it easier to adjust behavior across multiple entity types consistently.",
+        "procedural_memory": [
+            "When diagnosing a Home Assistant (or similar platform) entity whose UI state reverts after toggling, follow this process:",
+            "Step 1: Reproduce and characterize the symptom",
+            "- Toggle the entity (switch, light, cover, climate, etc.) from the UI or via a service call.",
+            "- Observe whether the UI briefly shows the new state and then changes back to the old state until the next polling cycle or manual refresh.",
+            "- Confirm whether the physical device actually changes state correctly (to rule out command failures).",
+            "Step 2: Determine if the entity is polling or non-polling",
+            "- Inspect the integration code for the entity: look for should_poll or equivalent configuration.",
+            "- If should_poll is False or the entity relies on event/callback-based updates, treat it as non-polling.",
+            "- Check if there is a coordinator, push callback, or similar mechanism that is expected to drive state changes.",
+            "Step 3: Inspect actuator and change-handling methods",
+            "- Examine methods like turn_on, turn_off, open_cover, close_cover, set_mode, or changed/async_write_ha_state handlers.",
+            "- Verify whether these methods (or the callbacks they trigger) call a state-update mechanism such as async_schedule_update_ha_state, schedule_update_ha_state, _update_callback, or equivalent.",
+            "- Look for recent refactors or PRs that may have removed or altered these calls.",
+            "Step 4: Add or restore explicit state update triggers",
+            "- For actuator methods (e.g., turn_on):\n  - Send the command to the device (device.turn_on()).\n  - Immediately afterward, call the integration’s state update hook (e.g., self._update_callback() or self.async_schedule_update_ha_state()).\n- For device-driven callbacks (e.g., changed() or on_update()):\n  - Update internal state attributes (like cached brightness, mode, etc.).\n  - Then call the state update hook to notify the platform.",
+            "Step 5: Keep framework-specific concerns encapsulated",
+            "- Prefer an internal method like _update_callback that centralizes how state updates are propagated to the platform, so you can adjust its implementation without changing every entity method.",
+            "Step 6: Test the fix",
+            "- Run local tests (e.g., tox, pytest) to ensure no regressions.\n- Manually toggle the entity from the UI:\n  - Confirm that the UI state changes and stays at the new value.\n  - Verify that automations and templates that depend on the entity state see the correct value immediately.",
+            "Step 7: Apply the pattern across related entities",
+            "- If one entity type (e.g., switch) needed this fix, review other tellduslive or similar integration entities (cover, light, climate, etc.).\n- Ensure all non-polling entities call their update callback after actuator actions or device change callbacks.",
+            "Step 8: Document the behavior",
+            "- Note in integration docs or code comments that these entities are non-polling and must explicitly push state changes.\n- This helps prevent future refactors from removing necessary update calls."
+        ]
+    }
+}

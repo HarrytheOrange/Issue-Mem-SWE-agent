@@ -1,0 +1,55 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant fixes: increase UE Smart Radio cloud timeouts from 5s to 30s due to slow uesmartradio.com response, and add robust, iterative JSON deserialization in unifi_direct device tracker to handle malformed JSON from Unifi APs (e.g., SSIDs containing unescaped quotes) without crashing.",
+        "keywords": [
+            "home-assistant",
+            "ue_smart_radio",
+            "media_player",
+            "unifi_direct",
+            "device_tracker",
+            "timeout",
+            "slow remote service",
+            "connection timeout",
+            "requests.post",
+            "JSONDecodeError",
+            "malformed JSON",
+            "unescaped quotes",
+            "WiFi SSID",
+            "Unifi AP",
+            "defensive parsing",
+            "robust deserialization"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "This pull request addressed two separate robustness issues in Home Assistant integrations.\n\n1) UE Smart Radio timeout issue:\nThe uesmartradio.com cloud service, used by the `ue_smart_radio` media_player platform, had become very slow. With the existing 5-second timeout on HTTP requests (both for login and subsequent API calls), users on fast connections still experienced failed connections because the server often took around 12 seconds just to initialize the connection. The fix was to increase the `requests.post` timeouts from 5 seconds to 30 seconds in two places: (a) the `send_request` helper that talks to the UE Smart Radio backend, and (b) the login request to `https://www.uesmartradio.com/user/login`. This change aligns the timeout with observed real-world latency and reduces spurious errors due to premature timeouts.\n\n2) Unifi Direct malformed JSON issue:\nIn the `unifi_direct` device tracker, the function `_response_to_json` parses a stringified HTTP response from a Unifi access point. The AP sometimes returns invalid JSON when ESSIDs (SSIDs) contain double quotes (`\"`), which are not properly escaped in the JSON payload. Previously, the code attempted a simple `json.loads(str(response)[31:-1].replace(\"\\\\\", \"\"))`, which would raise a `json.decoder.JSONDecodeError` and crash the integration whenever the AP sent malformed JSON.\n\nTo work around this firmware bug, the PR replaces the simple parse with an iterative, defensive parsing loop:\n- It converts the response to a string and strips some prefix/suffix just as before, and removes backslashes.\n- It enters a `while True` loop attempting `json.loads(data)`.\n- If parsing succeeds, it breaks the loop and continues as normal.\n- If parsing fails with `JSONDecodeError`, it uses a regex against the exception message to find the character index (`char N`) where parsing broke, subtracts 2 (to align with the manipulated string), logs a warning about the incorrect character position, removes that character from `data`, and retries.\n- If `data` becomes empty before a successful parse, it logs a warning that the JSON was too broken to recover and returns an empty string instead of crashing.\n\nThe comments note that this is a temporary workaround until Unifi fixes their JSON output. The practical effect is that the integration degrades gracefully (possibly losing some data) instead of failing systematically whenever SSIDs contain problematic characters.",
+        "semantic_memory": "Generalizable lessons from this PR:\n\n1) Timeouts must match real-world latency: Hard-coded short timeouts (e.g., 5 seconds) for external web services can become invalid over time as those services slow down or change. A too-aggressive timeout causes spurious failures that look like network errors but are simply due to realistic response times. Observed latency (e.g., 12 seconds to connect) should guide timeout configuration, often with some margin (e.g., 30 seconds). Timeouts should be explicitly set and periodically revisited for long-lived integrations.\n\n2) Be defensive with third-party JSON: When consuming JSON from third-party hardware or services (like Unifi APs), you cannot assume strict RFC compliance. Malformed JSON (e.g., unescaped quotes inside strings) is common. If a strict `json.loads` fails and you cannot control the upstream producer, it may be better to attempt to sanitize or partially salvage the data than to crash the whole integration. This includes:\n- Catching `json.decoder.JSONDecodeError`.\n- Logging diagnostic details (position of the error, the fact that sanitization is happening).\n- Attempting systematic fixes (e.g., removing or escaping problematic characters or segments) in a controlled loop.\n- Falling back to an empty or partial result when recovery fails, so the system continues operating.\n\n3) Workaround patterns for broken upstreams: When upstream devices or services are buggy and cannot be immediately fixed, a local workaround can keep a system stable. These should:\n- Be clearly documented in comments as temporary.\n- Be conservative in their sanitization (avoid over-altering data, prefer targeted removals/escapes).\n- Provide clear logging for debugging and future removal once the upstream bug is fixed.\n\n4) Graceful degradation over crashes: For non-critical data pipelines (e.g., presence detection, SSID tables), it's often preferable to drop malformed data with a warning instead of failing entire components. Returning an empty response or partial data with logs is usually better user experience than repeated stack traces and component failures.\n\n5) Error-specific handling: Parsing error messages (like the character index extracted from `JSONDecodeError`) can guide automated recovery. While relying on message formats is brittle, this can be an effective temporary strategy when no better metadata is available.",
+        "procedural_memory": [
+            "How to handle slow third-party services and adjust timeouts:",
+            "Step 1: Reproduce the issue and measure real-world latency. Use tools like curl, Postman, or simple Python scripts with timestamps to measure connection setup and response times to the external service.",
+            "Step 2: Compare measured latency to your current timeout values. If the service often responds slower than your timeout but still successfully completes, your timeout is too low.",
+            "Step 3: Identify all code locations where requests to that service are made (e.g., all requests.post or requests.get calls to the same domain).",
+            "Step 4: Increase the timeout values to something comfortably above normal observed latency (e.g., if average is 12 seconds, consider 25–30 seconds) while still maintaining reasonable fail-fast behavior.",
+            "Step 5: Add or verify logging around timeout exceptions so that if the service becomes even slower or unreachable, users see clear error messages instead of silent failures.",
+            "Step 6: Test locally in conditions similar to production latency to confirm that timeouts no longer fire prematurely and that the integration behaves correctly.",
+            "Step 7: If appropriate, consider making the timeout configurable via settings rather than hard-coded, so users can tune it for their environment.",
+            "",
+            "How to make JSON parsing resilient to malformed third-party responses:",
+            "Step 1: Capture the raw response from the device/service that is causing JSON parsing errors (e.g., enable debug logging or log the raw body before parsing).",
+            "Step 2: Attempt to parse the JSON with a standard parser (json.loads). Inspect any JSONDecodeError exceptions, especially their messages and character positions.",
+            "Step 3: Identify common patterns in the malformed JSON (e.g., SSIDs with unescaped quotes, trailing commas, invalid characters).",
+            "Step 4: Implement a wrapper parsing function instead of calling json.loads directly. This function should:",
+            "- Convert the response into the exact string you intend to parse.",
+            "- Wrap json.loads in a try/except for json.decoder.JSONDecodeError.",
+            "- On failure, log the error details (including the problematic position) at warning or debug level.",
+            "",
+            "Step 5: In the exception handler, implement targeted sanitization based on the identified pattern. Examples:",
+            "- Use regex to extract the 'char N' index from the exception message and remove/escape that character, then retry parsing.",
+            "- Apply pattern-based replacements (e.g., strip unescaped quotes from SSIDs) if the corruption is predictable.",
+            "",
+            "Step 6: Loop the parse–sanitize–retry cycle a limited number of times or until success. Ensure there is a termination condition (e.g., data becomes empty or a max iteration count) to avoid infinite loops.",
+            "Step 7: If parsing still fails after sanitization attempts, log a clear warning that the JSON is unrecoverable and return a safe fallback value (e.g., empty dict, empty list, or empty string) instead of raising, so the component does not crash.",
+            "Step 8: Keep the workaround well-commented, marking it as temporary and referencing the upstream bug or ticket. This helps future maintainers know when and why to remove or adjust the logic.",
+            "Step 9: Monitor logs in production to ensure the workaround is effective and not masking deeper issues (e.g., frequent unparseable JSON indicating a broader problem)."
+        ]
+    }
+}

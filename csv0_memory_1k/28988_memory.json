@@ -1,0 +1,32 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fixes a logic bug in Home Assistant's MQTT climate entity where changing the hold preset mode (e.g., from one hold value to another or to eco) was not possible because existing hold state was always cleared instead of updated. The fix refactors async_set_preset_mode to properly distinguish between away presets and hold presets, allowing hold mode changes and mapping PRESET_NONE to turning hold off.",
+        "keywords": [
+            "Home Assistant",
+            "MQTT climate",
+            "climate preset_mode",
+            "hold mode",
+            "away mode",
+            "async_set_preset_mode",
+            "state machine bug",
+            "optimistic update",
+            "PRESET_NONE",
+            "PRESET_ECO"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In the MQTT climate integration of Home Assistant, users could not change the hold mode once it was set (e.g., from one hold preset to another or to eco). The method async_set_preset_mode had logic that always cleared the hold mode whenever a hold was currently active (`if self._hold: self._set_hold_mode(None)`), and because it was structured as an `if/elif`, the new hold preset was never applied in the same call. This made it impossible to directly transition between different hold presets and caused incorrect behavior when interacting with away mode. The fix restructured the preset handling: when switching to the away preset, it now explicitly clears any active hold before enabling away mode; when not dealing with away, it derives a `hold_mode` from the requested preset (mapping PRESET_NONE to None) and always calls `_set_hold_mode(hold_mode)` without the previous `if self._hold`/`elif` branching. Additional tests were added to verify that (1) setting a hold mode followed by setting the away preset publishes MQTT messages to turn hold off and enable away mode, and (2) changing from one hold preset to another (e.g., to PRESET_ECO) publishes the correct MQTT `hold-topic` payload and updates the entity's `preset_mode` attribute, and that PRESET_NONE maps to an MQTT 'off' payload.",
+        "semantic_memory": "When managing multiple related device modes (e.g., away vs hold), tightly coupling their state transitions with naive `if/elif` chains can introduce hidden state machine bugs. In this case, the logic tried to 'clear hold if it is active, otherwise set a new hold mode', which prevented changing from one hold mode to another in one operation because the second branch never ran when the first one matched. A more robust pattern is to: (1) separate orthogonal concerns (away vs hold) explicitly, (2) handle special presets like \"none\" by mapping them to a normalized internal representation (e.g., None), and (3) ensure that the function always applies the intended target state rather than making assumptions based on current state. It is also important to consider interactions between override modes—such as clearing hold when entering away—but not the reverse. Comprehensive tests should cover sequences of mode transitions, not just single-mode toggles, because many bugs emerge only in multi-step flows.",
+        "procedural_memory": [
+            "When a device mode cannot be changed as expected (e.g., hold preset in a climate entity):",
+            "Step 1: Reproduce the issue by performing the exact sequence of state transitions a user would do (e.g., set a hold preset, then attempt to set another hold preset, or switch to away). Observe both the external behavior (UI state) and the backend interactions (e.g., MQTT messages and entity attributes).",
+            "Step 2: Locate the mode-handling function (here, async_set_preset_mode) and inspect its control flow, particularly any `if/elif` logic that depends on current mode flags (e.g., `self._hold`, `self._away`). Look for patterns where the current state might short-circuit or prevent the new requested state from being applied.",
+            "Step 3: Identify orthogonal concerns and separate them. For example, handle away mode transitions in their own branch (switching away on/off) and handle hold mode transitions in a separate branch, instead of interleaving them in a single `if/elif` chain.",
+            "Step 4: Normalize special preset values. Map user-facing constants like PRESET_NONE to a consistent internal representation (e.g., `hold_mode = None`) right at the start of the relevant branch, so the subsequent logic can be uniform and simpler.",
+            "Step 5: Ensure that for every call to change a mode, the function unconditionally moves toward the requested target state rather than making decisions based solely on current state. For hold modes, this means deciding the desired final hold value and calling `_set_hold_mode(desired_value)` once, instead of 'if active then clear, else set'.",
+            "Step 6: For interactions between modes (e.g., entering away mode implies hold should be cleared), make these transitions explicit: when `preset_mode == PRESET_AWAY`, clear hold if necessary, then set away. Avoid implicit interaction via shared flags that are hard to reason about.",
+            "Step 7: Add or extend tests to cover sequences of changes, not just individual toggles. For example, test: no preset → hold-on; hold-on → eco; eco → none; hold-on → away; away → none. Verify both outbound messages (e.g., MQTT publishes) and entity state attributes (`preset_mode`).",
+            "Step 8: Run the full test suite and, if possible, integration tests against a real or mocked broker/device, to confirm that the new logic neither breaks existing behavior nor introduces race conditions in optimistic updates."
+        ]
+    }
+}

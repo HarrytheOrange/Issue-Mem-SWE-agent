@@ -1,0 +1,32 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fix for Home Assistant climate component where the frontend temperature slider broke when min/max temperature attributes were present but None. The fix changes state attribute construction to omit attributes whose converted value is None, preventing invalid temperature bounds from being sent to the UI.",
+        "keywords": [
+            "Home Assistant",
+            "climate component",
+            "frontend slider",
+            "temperature slider",
+            "min_temp",
+            "max_temp",
+            "None values",
+            "state_attributes",
+            "convert_for_display",
+            "UI bug"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In the Home Assistant climate component, the frontend temperature slider malfunctioned when the climate entity's min or max temperature was undefined (None). The backend still exposed ATTR_MIN_TEMP and ATTR_MAX_TEMP in the state attributes with None-derived values, which caused the frontend slider logic to fail when attempting to render or calculate slider bounds. The fix modified the state_attributes property to build the attributes dictionary using a comprehension that filters out any entries whose converted display value is None. Specifically, it now iterates over the current temperature, min temp, max temp, and target temperature key/value pairs, applies _convert_for_display to each, and only includes those attributes in the dictionary if the result is not None. This prevents invalid None-based min/max attributes from reaching the frontend and restores correct slider behavior.",
+        "semantic_memory": "When building API or state payloads for UI components, including attributes with None or invalid values can break frontend widgets that assume valid numeric ranges for things like sliders. A robust pattern is to filter out optional attributes whose values are None or cannot be safely rendered. Instead of unconditionally constructing a dictionary with all possible keys, generate the dictionary from key/value pairs and discard any entries whose value is None. This avoids leaking incomplete or unsupported state into client code. Furthermore, conversion helpers (such as units or display formatting functions) should be applied before filtering, so that only attributes that can be meaningfully displayed are sent to the UI. This pattern generalizes to any system where partial or optional state is exposed to a frontend or API consumer: handle None explicitly and avoid advertising capabilities (e.g., min/max bounds) unless they are actually available.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Reproduce the bug by configuring or simulating an entity (or data source) where optional numeric bounds (e.g., min/max values) are None or not provided, then observe the frontend/UI component (e.g., slider) that uses those values.",
+            "Step 2: Inspect the API/state payload sent from the backend to the frontend (e.g., via browser dev tools, network inspector, or logging) and check whether attributes like min and max are present with null/None values.",
+            "Step 3: Review the frontend component code (or documentation) to see how it interprets these attributes. Confirm whether it expects valid numbers and fails or behaves incorrectly when receiving null/None.",
+            "Step 4: Locate the backend code that builds the data structure (e.g., state_attributes or JSON response). Look for places where all possible attributes are unconditionally added to a dictionary, regardless of whether their values are None.",
+            "Step 5: Introduce a safe construction pattern: assemble key/value pairs, run any necessary conversion (e.g., _convert_for_display), and then filter out any entries whose value is None before building the final dictionary or JSON object.",
+            "Step 6: Ensure that conversion functions gracefully handle None inputs (either by returning None or by short-circuiting) so that the subsequent filtering step reliably removes invalid or non-displayable attributes.",
+            "Step 7: Add or update tests to cover cases where optional attributes are None, verifying that the resulting payload omits these attributes and that the frontend no longer misbehaves with missing bounds.",
+            "Step 8: Re-run the full test suite (e.g., tox) and perform manual UI checks to confirm that sliders and other widgets render correctly when optional attributes are not available."
+        ]
+    }
+}

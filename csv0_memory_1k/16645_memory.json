@@ -1,0 +1,29 @@
+{
+    "search_index": {
+        "description_for_embedding": "Packaging metadata was outdated: the project supported Python 3.7 but the PyPI classifiers only listed 3.5 and 3.6. The fix added the 'Programming Language :: Python :: 3.7' classifier to setup.cfg so the published package correctly advertises 3.7 support.",
+        "keywords": [
+            "Python 3.7",
+            "PyPI classifier",
+            "setup.cfg",
+            "packaging metadata",
+            "trove classifiers",
+            "version support",
+            "Home Assistant"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this case, the Home Assistant project already supported Python 3.7 in practice (documentation stated support for Python 3.5.3 or later), but the package metadata did not reflect this. The setup.cfg file only listed Python 3.5 and 3.6 under the 'Programming Language' classifiers. This could mislead users and tooling on PyPI into thinking Python 3.7 was not supported. After a brief discussion (one maintainer noting another related issue, another confirming it was fine to run on 3.7 even if not yet the recommended version), the fix was to add a single line in setup.cfg: 'Programming Language :: Python :: 3.7' to the classifier list. No code changes or tests were needed beyond ensuring existing tox tests still passed.",
+        "semantic_memory": "When a project adds support for a new Python version, it is important to keep packaging metadata in sync with actual support and documentation. PyPI trove classifiers are used by users, tools, and automation (e.g., dependency resolvers, badges, and search filters) to determine which Python versions are supported. If documentation and runtime compatibility say a version is supported but classifiers are missing, it creates confusion and may prevent adoption or automated selection for that environment. A small but essential maintenance task is updating setup.cfg (or setup.py/pyproject.toml) with the appropriate 'Programming Language :: Python :: X.Y' classifiers whenever support is added or dropped. This should be coordinated with CI matrix updates and documentation so all three sources—code (tests), docs, and metadata—consistently represent supported versions.",
+        "procedural_memory": [
+            "When adding support for a new Python version, ensure the package metadata (classifiers) matches actual support.",
+            "Step 1: Confirm support policy and reality – verify that the project’s documentation and CI/test matrix indicate support for the new Python version (e.g., Python 3.7) and that tests pass on that version.",
+            "Step 2: Locate the packaging configuration – identify whether the project uses setup.cfg, setup.py, or pyproject.toml (or a combination) to declare PyPI classifiers.",
+            "Step 3: Update classifiers – in the appropriate section (often 'classifier' in setup.cfg or 'classifiers' in setup.py/pyproject.toml), add the line 'Programming Language :: Python :: X.Y' for each newly supported Python version.",
+            "Step 4: Keep other metadata in sync – update any 'python_requires' fields and documentation (README, docs site, installation guides) to be consistent with the newly supported version.",
+            "Step 5: Run tests – execute the full test suite (e.g., via tox or CI) on the new Python version to ensure compatibility is real, not just declared.",
+            "Step 6: Review related issues – check for existing issues or PRs about version support to ensure there are no blockers or conflicting decisions (e.g., open issues about dropping or delaying support).",
+            "Step 7: Publish and verify – after releasing, verify on PyPI that the new classifier appears correctly, and optionally check that tools (e.g., pip, badges, metadata inspectors) recognize the updated version support.",
+            "Step 8: For future changes – whenever support for a version is added or dropped, treat classifiers, CI matrix, and docs as a trio that must be updated together."
+        ]
+    }
+}

@@ -1,0 +1,44 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fix for Home Assistant automation state triggers with 'for' timers where attribute-only state updates were incorrectly restarting the timer. The change ensures that only true state changes (based on last_changed) affect the 'for' timer, preventing attribute updates (like GPS position changes) from resetting automation timers.",
+        "keywords": [
+            "Home Assistant",
+            "automation",
+            "state trigger",
+            "for timer",
+            "last_changed",
+            "attribute change",
+            "device tracker",
+            "timer reset bug",
+            "state condition",
+            "dt_util.utcnow"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, a Home Assistant user had an automation that was supposed to trigger when a device tracker stayed in a particular state (e.g., 'away') for 2 minutes. The automation used a state trigger with a 'for' clause. However, the automation never fired because the device tracker updated its attributes (GPS coordinates) every 60 seconds. Each attribute update caused the state change trigger's 'for' timer to restart, even though the main state value did not change. The root cause was that the automation state trigger logic restarted the 'for' timer on any state update, including attribute-only changes, instead of only on real state changes. The fix added a guard in `homeassistant/components/automation/state.py` to ignore events where `from_s.last_changed == to_s.last_changed`. In Home Assistant, `last_changed` only changes when the primary state value changes, not when only attributes change. By comparing `last_changed` instead of the raw state or attributes, the implementation aligns the trigger behavior with the existing state condition logic and correctly handles `force_update` edge cases. New tests were added in `tests/components/automation/test_state.py` to verify that attribute-only changes do not reset the 'for' timer for both state triggers and state conditions, and that the automation correctly fires once the required time has actually elapsed.",
+        "semantic_memory": "When implementing time-based triggers or conditions tied to entity state, it's crucial to distinguish between actual state changes and attribute-only updates. In systems like Home Assistant, the `last_changed` property is a reliable indicator of a true state change, because it only updates when the core state value changes, not when attributes change. Using `last_changed` for timing logic avoids unintended timer resets caused by frequent attribute updates (e.g., GPS coordinates, sensor metadata). This pattern is especially important when dealing with 'for' semantics (e.g., 'state must be X for N seconds'). The timer should start when the state transitions into the target value and should not reset unless the state actually changes away from that value. Attribute updates while the state remains the same should be ignored by the timer logic. Additionally, ensuring consistent behavior between triggers and conditions (e.g., both using `last_changed`-based logic) avoids subtle discrepancies and edge cases, including `force_update` behavior, where an entity can emit an update without changing state. Robust automated tests should simulate time progression and state/attribute changes to verify these semantics in detail.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Reproduce the issue with a minimal automation or scenario.",
+            "Create a simple automation or test case that uses a state trigger (or condition) with a 'for' clause. Use an entity that updates its attributes frequently while keeping its core state constant (e.g., a device tracker that periodically updates GPS coordinates). Verify that the intended automation either never fires or fires incorrectly when attributes change.",
+            "Step 2: Inspect how the system differentiates state vs attribute changes.",
+            "Review the entity model to understand which properties represent the primary state and how changes are tracked (e.g., `state`, `attributes`, `last_changed`, `last_updated`). Confirm whether attribute-only changes update `last_changed` or just `last_updated` (or equivalent).",
+            "Step 3: Trace the trigger/condition timing logic.",
+            "Locate the code that implements 'for' semantics for state triggers and conditions. Identify where timers are started, restarted, or canceled. Check what criteria are used to decide that 'the state has changed'—is it based on any state object update, on the `state` value, or on metadata like `last_changed`?",
+            "Step 4: Identify unintended timer resets.",
+            "Add logging or debug statements to the trigger/condition logic to print out `from_state`, `to_state`, `from_state.state`, `to_state.state`, and `from_state.last_changed` / `to_state.last_changed` on every event. Confirm that attribute-only updates are causing the 'for' timer to restart or reschedule even when the main state is unchanged.",
+            "Step 5: Choose the correct change-detection metric.",
+            "Decide on a robust way to detect real state changes. In systems like Home Assistant, prefer comparing `last_changed` of the previous and new state (`from_s.last_changed != to_s.last_changed`) instead of comparing raw `state` strings or attributes. This ensures consistent behavior and avoids complications with `force_update` or noisy attribute updates.",
+            "Step 6: Implement a guard to ignore attribute-only changes.",
+            "Add a guard clause at the beginning of the relevant trigger/condition handler to skip further processing when only attributes changed. For example: `if from_s.last_changed == to_s.last_changed: return`. This prevents restarting 'for' timers on attribute-only updates while allowing them on genuine state changes.",
+            "Step 7: Align triggers and conditions.",
+            "Ensure both trigger logic and condition logic use the same definition of 'state has changed' and the same timing semantics. If conditions already rely on `last_changed`, update triggers to do the same to avoid inconsistent behavior between them.",
+            "Step 8: Write regression tests that simulate time and attribute changes.",
+            "Create tests that simulate: (a) entering the target state and starting the 'for' timer; (b) attribute-only updates occurring before the 'for' period elapses; (c) time passing to just before and then past the 'for' threshold. Use a controllable time source (e.g., patching `dt_util.utcnow` or equivalent) and explicit time-advance events to precisely control elapsed time. Assert that: the timer is not reset by attribute changes; the automation does not fire before the 'for' duration; and the automation does fire once enough time has truly passed.",
+            "Step 9: Test edge cases like forced updates.",
+            "If the platform supports forced state updates without actual value change, verify that the new logic handles those correctly (e.g., by relying on `last_changed` rather than raw update events). Add tests to cover these edge cases if possible.",
+            "Step 10: Document behavior and merge.",
+            "Document the clarified semantics: 'for' timers are only affected by real state transitions, not attribute-only updates. This helps users understand why frequent attribute updates won't interfere with their time-based automations. After tests pass and behavior is verified, merge the change."
+        ]
+    }
+}

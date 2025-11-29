@@ -1,0 +1,33 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant WAQI sensor was failing due to an UnboundLocalError caused by a bug (typo) in the underlying pwaqi library. The fix was to bump the pwaqi dependency from version 1.3 to 1.4 and update all requirement declarations accordingly.",
+        "keywords": [
+            "Home Assistant",
+            "WAQI sensor",
+            "pwaqi",
+            "dependency bump",
+            "library bug",
+            "UnboundLocalError",
+            "requirements_all.txt",
+            "REQUIREMENTS variable",
+            "typo in library",
+            "sensor.waqi"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Home Assistant WAQI (World Air Quality Index) sensor component was failing at runtime with an UnboundLocalError. Investigation revealed that the problem did not stem from Home Assistant's sensor integration code itself but from a typo inside the external dependency library `pwaqi`. The Home Assistant integration pinned `pwaqi` at version 1.3 via the component's REQUIREMENTS list and in `requirements_all.txt`. The pwaqi library maintainers fixed the bug and released version 1.4. To resolve the issue, the PR simply updated the dependency from `pwaqi==1.3` to `pwaqi==1.4` in both `homeassistant/components/sensor/waqi.py` and `requirements_all.txt`. After bumping the version and confirming tests (tox/CI) passed, the UnboundLocalError caused by the underlying typo was eliminated.",
+        "semantic_memory": "When an integration or service fails with runtime errors like UnboundLocalError, the root cause is often in a third-party library rather than the application glue code. In ecosystems that pin dependency versions, a bug fix in an upstream library requires bumping the pinned version across all relevant requirement declarations to propagate the fix. Maintaining consistency between component-specific REQUIREMENTS (or similar per-module dependency lists) and centralized requirement files (like `requirements_all.txt`) is essential to avoid version drift. Using strict version pins ensures reproducibility but also means that bug fixes in upstream libraries won't be picked up automatically and require explicit version updates. A minimal, non-invasive fix for downstream projects is often just upgrading the dependency to the bug-fixed version instead of patching around the bug locally.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Reproduce and capture the error: Run the failing component or tests and record the exact exception type, message, and stack trace (e.g., UnboundLocalError).",
+            "Step 2: Analyze the stack trace: Identify whether the error originates in your project code or in a third-party dependency (look at file paths and module names in the traceback).",
+            "Step 3: Check dependency versions: Determine which version of the implicated library is being used (e.g., from REQUIREMENTS variables, requirements.txt, poetry/lock files, etc.).",
+            "Step 4: Investigate upstream: Search the library's issue tracker and changelog for the error or related bugs (e.g., typos, variable name mistakes, UnboundLocalError fixes) and see if a newer version addresses it.",
+            "Step 5: Test locally with updated dependency: Temporarily bump the dependency version in your local environment (e.g., `pip install pwaqi==1.4`) and rerun the failing scenario to verify the bug is resolved.",
+            "Step 6: Update pinned versions in code: Once confirmed, update all relevant requirement declarations in the codebase to the new version (e.g., component-specific REQUIREMENTS and global `requirements_all.txt` or equivalent). Ensure consistency across all requirement files.",
+            "Step 7: Run automated tests: Execute the project's test suite (tox, pytest, CI) to ensure that the dependency upgrade does not introduce regressions elsewhere.",
+            "Step 8: Document the change: In the PR or commit message, clearly state that the fix is a dependency bump to consume an upstream bug fix (mention the error type and the upstream version that fixes it).",
+            "Step 9: Monitor and follow up: After merging, keep an eye on error reports or logs to ensure the issue is resolved in all environments and no new compatibility issues appear."
+        ]
+    }
+}

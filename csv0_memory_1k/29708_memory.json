@@ -1,0 +1,32 @@
+{
+    "search_index": {
+        "description_for_embedding": "PEP8 import sorting cleanup for the Home Assistant Plex integration using isort, aligning import order with Black-compatible configuration and updating tests and component modules accordingly.",
+        "keywords": [
+            "PEP8",
+            "import order",
+            "isort",
+            "Black",
+            "code style",
+            "Home Assistant",
+            "plex component",
+            "config_flow",
+            "test imports",
+            "pre-commit"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this pull request, the Home Assistant Plex integration had its imports reordered to comply with PEP8 using isort. The change touched four files: `homeassistant/components/plex/__init__.py`, `homeassistant/components/plex/config_flow.py`, `tests/components/plex/mock_classes.py`, and `tests/components/plex/test_config_flow.py`. The modifications were purely stylistic: imports were reordered and grouped (e.g., reordering constants within `from .const import (...)` and standardizing the order of Home Assistant imports and test imports). No functional logic changed. The author also noted that Black and isort can conflict by default on formatting and suggested a compatible isort configuration (`multi_line_output=3`, `include_trailing_comma=True`, `force_grid_wrap=0`, `use_parentheses=True`, `line_length=88`) and the future addition of isort to `.pre-commit-config.yaml`. Tests were confirmed to pass, ensuring that the refactor did not introduce behavioral changes.",
+        "semantic_memory": "Import ordering and formatting are common sources of noisy diffs and style inconsistencies in Python projects. Tools like isort can automatically sort and group imports following PEP8 or a custom profile. When a codebase also uses Black, isort must be configured to be compatible with Black's formatting rules to avoid churn where each tool repeatedly rewrites the file differently. A known compatible isort configuration uses `multi_line_output=3`, `include_trailing_comma=True`, `force_grid_wrap=0`, `use_parentheses=True`, and `line_length=88` (Black's default). Applying isort systematically on a per-component or per-module basis reduces the risk of conflicts and large, noisy changes. Including isort in a pre-commit configuration enforces consistent import ordering before code reaches CI, preventing style-only PRs and avoiding merge conflicts caused by differing developer environments. Import-only refactors should always be validated with the test suite to ensure no accidental removals or mis-grouping of imports that affect conditional imports or side effects.",
+        "procedural_memory": [
+            "Use isort to enforce PEP8-style import ordering in a Python project, especially when combined with Black, ensuring their configurations are compatible.",
+            "Step 1: Identify the scope of the import cleanup (e.g., a single component or module tree) to keep the change set manageable and reduce merge conflicts.",
+            "Step 2: Configure isort to be compatible with Black. In `setup.cfg`, `.isort.cfg`, or `pyproject.toml`, set options such as: `multi_line_output=3`, `include_trailing_comma=True`, `force_grid_wrap=0`, `use_parentheses=True`, and `line_length=88`.",
+            "Step 3: Run isort only on the targeted files or directories, for example: `isort homeassistant/components/plex tests/components/plex`.",
+            "Step 4: Inspect the diffs to confirm that only import ordering and grouping changed, with no unintended code modifications or removed imports.",
+            "Step 5: Run the project test suite (e.g., `tox`, `pytest`) to ensure that the import reordering did not remove required imports or alter import-time side effects.",
+            "Step 6: If the project uses pre-commit hooks, add an isort hook with the same configuration so that future commits automatically maintain consistent import ordering.",
+            "Step 7: When working in a shared codebase, consider applying isort incrementally (per component or feature) to avoid massive, disruptive diffs and reduce the risk of conflicts.",
+            "Step 8: Document the isort + Black setup in the contributor guidelines so all developers use the same style tooling and configuration."
+        ]
+    }
+}

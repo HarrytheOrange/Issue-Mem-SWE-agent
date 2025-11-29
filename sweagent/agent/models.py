@@ -110,6 +110,12 @@ class GenericAPIModelConfig(PydanticBaseModel):
     it with other people).
     """
 
+    custom_input_cost_per_1k_tokens: float | None = None
+    """Override prompt/input cost ($) per 1K tokens when litellm has no price info."""
+
+    custom_output_cost_per_1k_tokens: float | None = None
+    """Override completion/output cost ($) per 1K tokens when litellm has no price info."""
+
     fallbacks: list[dict[str, Any]] = []
     """List of fallbacks to try if the main model fails
     See https://docs.litellm.ai/docs/completion/reliable_completions#fallbacks-sdk
@@ -733,19 +739,6 @@ class LiteLLMModel(AbstractModel):
                 raise ContextWindowExceededError from e
             raise
         self.logger.debug(f"Response: {response}")
-        try:
-            cost = litellm.cost_calculator.completion_cost(response, model=self.config.name)
-        except Exception as e:
-            self.logger.debug(f"Error calculating cost: {e}, setting cost to 0.")
-            if self.config.per_instance_cost_limit > 0 or self.config.total_cost_limit > 0:
-                msg = (
-                    f"Error calculating cost: {e} for your model {self.config.name}. If this is ok "
-                    "(local models, etc.), please make sure you set `per_instance_cost_limit` and "
-                    "`total_cost_limit` to 0 to disable this safety check."
-                )
-                self.logger.error(msg)
-                raise ModelConfigurationError(msg)
-            cost = 0
         choices: litellm.types.utils.Choices = response.choices  # type: ignore
         n_choices = n if n is not None else 1
         outputs = []
@@ -770,6 +763,26 @@ class LiteLLMModel(AbstractModel):
             ):
                 output_dict["thinking_blocks"] = response.choices[i].message.thinking_blocks  # type: ignore
             outputs.append(output_dict)
+        custom_input_cost = self.config.custom_input_cost_per_1k_tokens
+        custom_output_cost = self.config.custom_output_cost_per_1k_tokens
+        if custom_input_cost is not None or custom_output_cost is not None:
+            prompt_rate = custom_input_cost or 0.0
+            completion_rate = custom_output_cost or 0.0
+            cost = ((input_tokens * prompt_rate) + (output_tokens * completion_rate)) / 1000
+        else:
+            try:
+                cost = litellm.cost_calculator.completion_cost(response, model=self.config.name)
+            except Exception as e:
+                self.logger.debug(f"Error calculating cost: {e}, setting cost to 0.")
+                if self.config.per_instance_cost_limit > 0 or self.config.total_cost_limit > 0:
+                    msg = (
+                        f"Error calculating cost: {e} for your model {self.config.name}. If this is ok "
+                        "(local models, etc.), please make sure you set `per_instance_cost_limit` and "
+                        "`total_cost_limit` to 0 to disable this safety check."
+                    )
+                    self.logger.error(msg)
+                    raise ModelConfigurationError(msg)
+                cost = 0
         self._update_stats(input_tokens=input_tokens, output_tokens=output_tokens, cost=cost)
         return outputs
 

@@ -1,0 +1,36 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant Radiotherm CT50 climate integration bug: when Home Assistant is configured for Celsius, the thermostat API (which expects Fahrenheit in 0.5-degree increments) silently ignores setpoints that are not integer or .5 values in Fahrenheit (e.g., 22°C → 71.6°F). The fix rounds temperatures to the nearest 0.5 before sending them to the CT50 in both the set_temperature and set_operation_mode paths.",
+        "keywords": [
+            "Home Assistant",
+            "Radiotherm",
+            "CT50",
+            "climate component",
+            "thermostat integration",
+            "Celsius to Fahrenheit conversion",
+            "temperature rounding",
+            "0.5 degree increments",
+            "device API constraint",
+            "silent failure",
+            "setpoint not applied",
+            "round(value * 2) / 2",
+            "set_temperature",
+            "set_operation_mode"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In the Home Assistant integration for the Radiotherm CT50 thermostat, users reported that when Home Assistant was configured to use metric units (Celsius), some temperatures could not be set. Specifically, values like 20°C or 25°C worked, while 22°C failed silently; the UI showed success, but the CT50 thermostat did not change its setpoint. The root cause was that the CT50 API expects Fahrenheit setpoints and only accepts values that are integer or end in .5, but Home Assistant was sending Fahrenheit values derived from Celsius that could have arbitrary decimals (e.g., 22°C → 71.6°F). The CT50 simply ignored unsupported values without error. The fix was implemented in homeassistant/components/climate/radiotherm.py by rounding the temperature to the nearest 0.5 units before assigning it to the device in all relevant code paths. Specifically, both in set_temperature (for STATE_COOL and STATE_HEAT) and in set_operation_mode (when switching directly to COOL or HEAT with an existing target temperature), the code now uses `round(temperature * 2.0) / 2.0` to constrain temperatures to 0.5 increments before writing to `self.device.t_cool` or `self.device.t_heat`. This ensures that any Celsius setpoint is converted to a compatible Fahrenheit value that the CT50 accepts.",
+        "semantic_memory": "When integrating with hardware devices or third-party APIs, you must respect the granularity and domain constraints of their input parameters. Some thermostats (like the Radiotherm CT50) accept temperature setpoints only in specific increments (e.g., 0.5°F or whole degrees). If your application uses different units or higher precision (e.g., Celsius with standard float conversion to Fahrenheit), the resulting values may be rejected or ignored by the device, sometimes silently. A robust integration should normalize values to the device-supported step size (e.g., rounding to the nearest 0.5 or nearest integer) and apply this normalization consistently across all code paths that write to the device (direct set calls, mode changes that apply target temperatures, schedules, etc.). General patterns: (1) Identify device constraints from documentation or experimentation; (2) implement a reusable normalization function (e.g., `def round_to_step(value, step): return round(value / step) * step`); (3) apply it everywhere you send that parameter to the device; and (4) consider adding validation or logging when values are out of range or off-step to expose silent failures. This pattern applies to many domains beyond thermostats: dimmer levels, motor speeds, duty cycles, volume controls, and any actuator with discrete supported steps.",
+        "procedural_memory": [
+            "To diagnose and fix issues where a device ignores certain numeric setpoints due to unsupported precision or increments, follow these steps:",
+            "Step 1: Reproduce the issue systematically. Configure the system in the problematic unit mode (e.g., Celsius). Try a range of values and note which ones take effect and which ones are ignored (e.g., 20°C works, 22°C does not).",
+            "Step 2: Inspect the integration’s code and the device’s API documentation. Check what units the device expects (e.g., Fahrenheit) and what step size or precision it supports (e.g., integers or .5 increments only).",
+            "Step 3: Log or inspect the actual values being sent to the device. For example, trace the set_temperature logic to see how a user’s Celsius value is converted to Fahrenheit and passed to the device (e.g., 22°C → 71.6°F). Compare those to the documented allowed values.",
+            "Step 4: Confirm device behavior for off-step values. Using direct API calls or a low-level client, send both valid (e.g., 71.5°F, 72°F) and invalid (e.g., 71.6°F) values and observe whether the device accepts or silently ignores them.",
+            "Step 5: Implement a normalization/rounding helper that enforces the device’s required step size. For example, for 0.5-degree increments: `def round_to_half(value): return round(value * 2.0) / 2.0`. For a general step: `def round_to_step(value, step): return round(value / step) * step`.",
+            "Step 6: Apply this normalization everywhere temperatures are written to the device. In this case, before assigning to `self.device.t_cool` or `self.device.t_heat` in `set_temperature`, wrap the input temperature: `self.device.t_cool = round(temperature * 2.0) / 2.0`. Do the same in other paths such as `set_operation_mode` when it directly writes `self._target_temperature` to the device.",
+            "Step 7: Retest with the previously failing setpoints. Verify that all Celsius values now result in valid, rounded Fahrenheit values that the device accepts and that the thermostat behavior matches user expectations.",
+            "Step 8: Optionally add tests and documentation. Create unit tests that assert that arbitrary Celsius values are converted and rounded to legal Fahrenheit steps before being passed to the device, and document the rounding behavior (especially if it might cause a visible discrepancy between the requested value and the actual device setpoint)."
+        ]
+    }
+}

@@ -1,0 +1,31 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fixes a Jinja2 syntax/whitespace bug in the StackStorm ChatOps default action template where an extra space in the `{% if execution.web_url -%}` tag broke the template rendering. The fix removes the stray space so the Jinja hyphen-trim syntax `-%}` is valid and the web_url field conditionally renders correctly.",
+        "keywords": [
+            "Jinja2",
+            "template syntax",
+            "whitespace control",
+            "ChatOps",
+            "StackStorm",
+            "Slack CI",
+            "default.j2",
+            "conditional block",
+            "web_url",
+            "master broken",
+            "CI test failure"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the StackStorm ChatOps default action template (`contrib/chatops/actions/templates/default.j2`) contained a subtle Jinja2 syntax/whitespace error. The line controlling conditional output of the execution web URL was written as `{% if execution.web_url -% }`. Due to the extra space between `-%` and `}`, the Jinja closing tag did not conform to the expected `-%}` form, breaking the template’s whitespace-trim behavior and causing the template to fail under Slack CI tests. This effectively broke the master branch. The fix was a one-character change: remove the stray space so the line becomes `{% if execution.web_url -%}`. This restores valid Jinja syntax and correct whitespace trimming, allowing the `web_url` line to render only when present and CI to pass. The discussion also notes that unit tests should be added for this Jinja template to catch such issues earlier.",
+        "semantic_memory": "Templating engines like Jinja2 are sensitive to small syntax and whitespace details, especially around control structures and whitespace-trim markers (e.g., `-%}`). A single stray space can turn an otherwise valid control structure into invalid or unintended syntax, breaking rendering or altering whitespace behavior in subtle ways. In production systems that rely on templates (for chat messages, notifications, etc.), even minor template syntax errors can break critical workflows or CI. Best practices include: (1) adhering strictly to the templating syntax for whitespace control markers (`{%-`, `-%}`) without extra spaces; (2) adding unit or integration tests that render key templates with representative data to catch syntax and formatting regressions; and (3) running template rendering as part of CI so accidental whitespace or formatting changes are immediately detected.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Identify the failing behavior or test.\n- Observe where CI or runtime logs report template rendering errors (e.g., Jinja2 TemplateSyntaxError or malformed output in Slack/ChatOps messages).\n- Pinpoint which template file and which block (conditional, loop, etc.) is involved.",
+            "Step 2: Inspect the template control tags for subtle syntax issues.\n- Look closely at Jinja2 delimiters: `{{ }}`, `{% %}`, `{# #}`.\n- For whitespace control, ensure hyphens are directly adjacent to the percent signs: `{%- ... -%}`, not with extra spaces like `-% }` or `% -}`.\n- Check for stray spaces between `%` and `}` or between `{` and `%` that might break the tag.",
+            "Step 3: Validate the template in isolation.\n- Create a small test harness or script that loads and renders the template with representative context data.\n- Run it locally to reproduce the error and confirm the exact line that fails.\n- If necessary, temporarily simplify the template (remove nested conditionals/loops) to isolate the problematic tag.",
+            "Step 4: Correct the syntax and rerun tests.\n- Fix the control structure to use valid Jinja2 syntax, e.g., change `{% if foo -% }` to `{% if foo -%}`.\n- Re-run unit tests or CI pipelines to confirm that template rendering is successful and the output matches expectations.",
+            "Step 5: Add or improve tests for templates.\n- Create unit tests that render critical templates with typical and edge-case inputs.\n- Assert not only that rendering succeeds (no exceptions) but also that key lines/fields appear or are omitted as expected (e.g., `web_url` appears only when defined).\n- Include these tests in CI so that future whitespace or syntax regressions are caught automatically.",
+            "Step 6: Review and standardize template style.\n- Establish a style guideline for Jinja templates, including where to use whitespace control and how to format control tags.\n- Use code review checklists to explicitly look for Jinja delimiters and whitespace-control correctness.\n- Optionally use linters or template validators, if available, to automate detection of common syntax/whitespace mistakes."
+        ]
+    }
+}

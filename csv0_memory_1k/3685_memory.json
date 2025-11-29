@@ -1,0 +1,32 @@
+{
+    "search_index": {
+        "description_for_embedding": "StackStorm 'st2 pack install aws' was failing on slower systems due to the pack content registration action timing out when handling a very large pack (AWS pack with ~3500 actions). The fix increased the default 'pack register content' action timeout from 180s to 300s to avoid timeouts during pack installation.",
+        "keywords": [
+            "StackStorm",
+            "st2",
+            "pack install",
+            "pack register content",
+            "action timeout",
+            "large pack",
+            "AWS pack",
+            "performance",
+            "CentOS vs Ubuntu",
+            "registration timeout failure"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, users reported intermittent failures when installing the StackStorm AWS pack using `st2 pack install aws`. The AWS pack had grown to around 3581 actions, which caused the internal 'pack register content' step to take longer than the existing timeout allowed. On slower systems, particularly CentOS machines, the registration process exceeded the 180-second default timeout defined in `contrib/packs/actions/load.yaml`, leading to failed pack installs. The immediate mitigation was to increase the default timeout for the pack content loading action from 180 seconds to 300 seconds. A corresponding entry was added to `CHANGELOG.rst` noting that 'pack register content' failures on slower systems were addressed by lifting the action timeout. The deeper, long-term fix was deferred to future work on performance optimization for large packs.",
+        "semantic_memory": "When orchestration or automation platforms register or load large amounts of content (actions, workflows, rules) in one shot, the operation can take significantly longer than typical for smaller packs or faster machines. Timeouts that were reasonable when content sets were small can become insufficient as packs grow or when running on slower hardware or particular OS environments (e.g., CentOS vs Ubuntu). A practical pattern is to (1) detect when operations are failing primarily due to time limits, (2) raise the timeout to reflect realistic worst-case conditions, and (3) plan a separate optimization effort for the underlying performance. This distinguishes between configuration-level mitigations (raising timeouts) and architectural/performance fixes (faster registration algorithms, partial loading, streaming, or batching). It also underscores the importance of testing long-running operations with large data sets to ensure defaults scale over time.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Reproduce the failure in context.\n- Attempt the same operation that users report as failing (e.g., `st2 pack install <large_pack>`).\n- Use a system similar in performance/OS to the affected environment (e.g., CentOS if that’s where issues are reported).",
+            "Step 2: Inspect logs and error messages.\n- Check service logs (e.g., StackStorm actionrunner, api, or related services) for timeout-related errors.\n- Confirm whether the operation is being terminated due to a configured timeout rather than an internal exception (e.g., messages indicating action timeout exceeded).",
+            "Step 3: Measure actual execution time.\n- Manually run the underlying operation (e.g., the pack registration action) with verbose logging.\n- Measure how long it takes under realistic load and system conditions.\n- Compare this time to the configured timeout value.",
+            "Step 4: Identify and locate the timeout configuration.\n- Find where the timeout is defined (YAML/JSON action metadata, service config, or code).\n- In StackStorm, check the action metadata file (e.g., `contrib/packs/actions/load.yaml`) for the `timeout` field.",
+            "Step 5: Adjust the timeout to a safe upper bound.\n- Increase the timeout to a value that comfortably exceeds measured worst-case times (e.g., from 180s to 300s).\n- Keep some margin for slower hardware or transient load spikes.\n- Document the change and rationale (e.g., in CHANGELOG or configuration docs).",
+            "Step 6: Re-test the operation.\n- Re-run the original failing command (e.g., `st2 pack install aws`).\n- Confirm that the process now completes successfully without timing out.\n- Test on both originally problematic and faster systems to ensure no regressions in behavior.",
+            "Step 7: Plan and track long-term performance improvements.\n- Open or reference issues to optimize the underlying process (e.g., improve registration throughput, add batching, or lazy loading).\n- Consider adding metrics and logging around large operations to monitor their duration in production.\n- Evaluate whether separate timeouts are needed for large vs small packs or whether dynamic timeouts should be introduced.",
+            "Step 8: Communicate environment-specific behavior.\n- If behavior differs across OS or environments (e.g., CentOS vs Ubuntu), note this in documentation or issue tracking.\n- Encourage users on slower systems to upgrade to versions with adjusted timeouts or to tune timeout configs accordingly."
+        ]
+    }
+}

@@ -1,0 +1,33 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant ffmpeg component had a bug related to closing/cleanup in the ha-ffmpeg dependency. The fix was to upgrade the ha-ffmpeg library from version 1.1 to 1.2 in both the component’s REQUIREMENTS and the global requirements_all.txt file, pulling in the upstream bugfix for the close() behavior.",
+        "keywords": [
+            "ffmpeg",
+            "ha-ffmpeg",
+            "dependency version bump",
+            "resource close bug",
+            "cleanup bug",
+            "Home Assistant",
+            "requirements_all.txt",
+            "integration requirements",
+            "library upgrade",
+            "runtime error prevention"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Home Assistant ffmpeg integration depended on the Python package ha-ffmpeg version 1.1. A user discovered a bug related to the close behavior (likely improper resource cleanup / closing of ffmpeg processes or streams). The bug itself was not fixed inside the Home Assistant codebase but in the ha-ffmpeg library, released as ha-ffmpeg 1.2. To incorporate this fix, the pull request simply updated the dependency version from 1.1 to 1.2 in two places: (1) homeassistant/components/ffmpeg.py, where REQUIREMENTS was changed from [\"ha-ffmpeg==1.1\"] to [\"ha-ffmpeg==1.2\"], and (2) requirements_all.txt, where the pinned version ha-ffmpeg==1.1 was updated to ha-ffmpeg==1.2. This ensured that Home Assistant 0.37 installs the corrected ha-ffmpeg version, resolving the close bug without any further code changes in the ffmpeg component.",
+        "semantic_memory": "When a bug is caused by behavior in an external dependency (e.g., improper close/cleanup of resources in a library), the correct fix is often to update to a newer version of that dependency that contains the upstream bugfix. Application code does not always need to be modified if the library’s public interface remains compatible; instead, updating the pinned version locks the project to the fixed library behavior. In projects that maintain both per-component dependency declarations and a central requirements file, it is important to keep these in sync to avoid version mismatches. This pattern highlights that: (1) many runtime or resource-handling issues originate in underlying libraries, (2) tracking upstream releases and changelogs is critical, and (3) explicit version pinning must be maintained carefully so that the deployed system actually benefits from upstream fixes.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Reproduce and localize the bug: Identify the feature or component where the error occurs (e.g., ffmpeg integration) and confirm that the incorrect behavior (such as failure to close resources or processes) is reproducible.",
+            "Step 2: Determine if the bug originates in your code or a dependency: Inspect stack traces, logs, and usage of external libraries. If the issue appears to occur within a third-party package (e.g., ha-ffmpeg), check that library’s issue tracker and changelog.",
+            "Step 3: Check upstream library versions: Look at the dependency’s repository or PyPI page to see if a newer version exists that mentions a fix related to your issue (e.g., a fix to close()/cleanup logic).",
+            "Step 4: Test with the updated dependency locally: Temporarily install the newer version of the library (e.g., pip install ha-ffmpeg==1.2) in a dev environment and rerun your failing scenario to verify that the issue is resolved.",
+            "Step 5: Update pinned dependency versions in your codebase: Change any local REQUIREMENTS or dependency declarations (e.g., REQUIREMENTS = [\"ha-ffmpeg==1.1\"] → [\"ha-ffmpeg==1.2\"]) to the tested, fixed version.",
+            "Step 6: Synchronize all requirement definitions: Ensure all relevant requirement files (e.g., requirements_all.txt, component-specific requirements, setup.py/pyproject.toml) are updated consistently to avoid version mismatches between environments.",
+            "Step 7: Run full test suite and targeted tests: Execute both the general test suite and targeted tests around the affected component (e.g., ffmpeg operations involving open/close) to confirm the new library version does not introduce regressions.",
+            "Step 8: Document the change and rationale: In the PR description or commit message, clearly state that the fix is obtained by bumping the dependency version due to an upstream bugfix (e.g., \"pump ha-ffmpeg to 1.2 to fix close bug\"). This helps future maintainers understand why the version constraint exists.",
+            "Step 9: Monitor after deployment: After releasing the change, monitor logs and user feedback to ensure the close/cleanup behavior is stable and that no new issues appear with the updated dependency."
+        ]
+    }
+}

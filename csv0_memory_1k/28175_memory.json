@@ -1,0 +1,32 @@
+{
+    "search_index": {
+        "description_for_embedding": "Eq3 Smart Bluetooth thermostat integration in Home Assistant was experiencing Bluetooth communication issues. The fix was to upgrade the underlying python-eq3bt library from version 0.1.9 to 0.1.11 and update both the component manifest and requirements_all.txt to match.",
+        "keywords": [
+            "Home Assistant",
+            "eq3btsmart",
+            "Eq3 Smart thermostat",
+            "Bluetooth issues",
+            "python-eq3bt",
+            "dependency upgrade",
+            "manifest.json",
+            "requirements_all.txt",
+            "device communication",
+            "integration maintenance"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "Users with Eq3 Smart Bluetooth thermostats in Home Assistant reported Bluetooth communication struggles. The eq3btsmart integration depends on the python-eq3bt library for low-level Bluetooth control. The Python library had newer releases (0.1.11) that fixed these communication problems, while the integration was still pinned to 0.1.9. The pull request updated the dependency version in homeassistant/components/eq3btsmart/manifest.json from python-eq3bt==0.1.9 to python-eq3bt==0.1.11 and synchronized requirements_all.txt accordingly. After running the standard Home Assistant tooling (hassfest, gen_requirements_all) and tests (tox), the updated dependency resolved the Bluetooth issues for the thermostats.",
+        "semantic_memory": "When a Home Assistant integration (or any application module) relies on an external library to communicate with hardware or external services, unexplained runtime issues (e.g., intermittent connectivity, protocol errors, device 'struggles') are often caused by bugs or limitations in that dependency rather than in the integration glue code. A common and low-risk fix, especially if the integration itself has not changed, is to upgrade the pinned version of the dependency to a newer release that includes bug fixes, and ensure all requirement declarations across the project are kept in sync. For Home Assistant specifically, this means updating both the integration manifest and the global requirements_all.txt, and regenerating derived requirement files with the prescribed scripts. Keeping dependencies up-to-date is particularly important for Bluetooth and other hardware-related libraries that must adapt to driver, OS, or firmware changes.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Reproduce and localize the issue.\n- Confirm the hardware/integration (e.g., a specific Bluetooth device) is having communication or reliability issues.\n- Check logs for errors originating from the underlying library (e.g., python-eq3bt) rather than the integration wrapper.",
+            "Step 2: Inspect the dependency versions.\n- Identify which library the integration uses for device communication (check manifest.json or requirements files).\n- Note the currently pinned version in the integration manifest and any global requirements files.",
+            "Step 3: Check upstream library status.\n- Look up the library on PyPI and/or GitHub.\n- Review the changelog and issues for newer versions to see if similar problems have been reported and fixed.\n- Confirm that there is a newer stable version (e.g., python-eq3bt 0.1.11 vs 0.1.9) that addresses the issue.",
+            "Step 4: Update the integration’s dependency specification.\n- In the integration’s manifest.json, update the version pin in the \"requirements\" list to the desired newer version.\n- In any project-wide requirements file (e.g., requirements_all.txt in Home Assistant), update the commented or active requirement line to match the new version.",
+            "Step 5: Regenerate derived requirements (if applicable).\n- Run the project-specific scripts to regenerate requirements aggregations (e.g., `python3 -m script.gen_requirements_all` for Home Assistant).\n- Run hassfest or equivalent tooling (e.g., `python3 -m script.hassfest`) to validate the manifest and integration configuration.",
+            "Step 6: Run tests and basic functional checks.\n- Execute the test suite (e.g., `tox`) and ensure all tests pass.\n- Manually verify that the device/integration now behaves correctly (e.g., thermostats respond reliably via Bluetooth).",
+            "Step 7: Review and document.\n- Ensure there is no dead or commented-out code related to the change.\n- In the PR/commit message, clearly state that the dependency version bump fixes communication issues and reference any related bug reports or upstream changes.",
+            "Step 8: Monitor after deployment.\n- After release, monitor issue trackers or logs for regressions.\n- If new issues appear, coordinate with the upstream library maintainers or consider pinning to a known-good version."
+        ]
+    }
+}

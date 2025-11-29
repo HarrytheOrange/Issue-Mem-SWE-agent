@@ -1,0 +1,60 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant Synology camera component was rewritten to use the external py-synology library instead of hand-rolled HTTP calls. The refactor centralizes all Synology Surveillance Station API interactions in a dedicated client, fixes camera state reporting (is_recording / is_streaming), exposes motion detection status and control, and aligns sync/async usage by moving blocking calls into synchronous entity methods.",
+        "keywords": [
+            "synology camera",
+            "SurveillanceStation",
+            "py-synology",
+            "homeassistant.components.camera.synology",
+            "refactor",
+            "external library",
+            "HTTP API client",
+            "motion detection",
+            "camera state",
+            "is_recording",
+            "is_streaming",
+            "sync vs async",
+            "requirements_all.txt",
+            "REQUIREMENTS"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this pull request, the Home Assistant Synology camera platform was substantially refactored. Originally, the component directly implemented Synology Surveillance Station HTTP API calls using aiohttp inside the integration. It manually queried `query.cgi` to discover API paths, logged in via `SYNO.API.Auth`, listed cameras through `SYNO.SurveillanceStation.Camera`, and proxied MJPEG streams via `SYNO.SurveillanceStation.VideoStream`. The component also mixed async HTTP with logic that needed to run synchronously, and it did not fully expose motion detection status or control.\n\nThe author first introduced in-module classes (`Api`, `Camera`, `MotionSetting`, `SurveillanceStation`) that wrapped Synology's endpoints using the synchronous `requests` library. This added higher-level operations: listing cameras, building video stream URLs, fetching snapshots, enumerating motion settings, and enabling/disabling motion detection. During that phase, they fixed Python < 3.5 compatibility for kwargs merging and resolved a naming conflict with the Home Assistant `Camera` class.\n\nSubsequently, these API classes were extracted into an external library, `py-synology`. The Home Assistant component was modified to declare `REQUIREMENTS = ['py-synology==0.1.1']` and to import `SurveillanceStation` from `synology.surveillance_station` inside `async_setup_platform`. All Synology-specific HTTP and JSON handling left the component and became responsibilities of the library.\n\nThe `SynologyCamera` entity was simplified: it now receives a `SurveillanceStation` instance and a `camera_id`, and it accesses pre-modeled camera objects from the library. Camera state reporting was improved by delegating to library properties: `name`, `is_enabled` (mapped to `is_streaming`), and `is_recording` (based on Synology `recStatus`). Motion detection is now surfaced as `motion_detection_enabled` and controllable through `enable_motion_detection` / `disable_motion_detection`, again via the library.\n\nBecause `py-synology` is synchronous, blocking operations were moved to synchronous Home Assistant hooks: `camera_image()` now directly calls `surveillance.get_camera_image(camera_id)` instead of using an async coroutine wrapped with `run_coroutine_threadsafe`, and `update()` (synchronous) refreshes camera state and motion settings via `surveillance.update()` instead of an `async_update` coroutine. The MJPEG streaming path remains asynchronous but simply proxies the already-computed video stream URL from the library via `async_aiohttp_proxy_web`.\n\nThe PR also added `py-synology==0.1.1` to `requirements_all.txt` under the Synology camera section and cleaned up unused imports. Overall, the incident was not a runtime bug but a structural improvement: it centralized Synology API handling, corrected camera state semantics, exposed motion control, and aligned sync/async patterns with Home Assistant best practices.",
+        "semantic_memory": "This change illustrates several general best practices when integrating external device APIs in a Home Assistant component (or any similar platform):\n\n1. **Encapsulate device APIs in dedicated libraries**: Instead of implementing a full HTTP client inline in a component, move all low-level HTTP calls, URL building, and JSON parsing into a separate, versioned library (here, `py-synology`). The component should depend on a higher-level, domain-specific interface (e.g., `SurveillanceStation.get_all_cameras()`, `get_camera_image()`, `enable_motion_detection()`), which simplifies the component logic and makes the API client reusable and testable.\n\n2. **Align blocking I/O with the framework's sync/async model**: When a third-party library does blocking I/O (e.g., uses `requests`), calls into it must not be placed in async coroutines running on the main event loop. Instead, such calls should be made from synchronous methods that the framework will execute in an executor or call in a safe context. In this PR, camera image retrieval and camera state updates were moved from `async_*` methods to `camera_image()` and `update()` (synchronous) to respect Home Assistant's async architecture.\n\n3. **Expose device features at the entity abstraction level**: The component now maps device-specific properties and operations (recording status, enablement, motion detection configuration) into standard entity attributes and methods (`is_recording`, `is_streaming`, `motion_detection_enabled`, `enable_motion_detection`, `disable_motion_detection`). This improves the fidelity of the integration and makes features available to automations without exposing raw API details.\n\n4. **Error handling on initialization**: API client initialization can fail due to network errors or invalid credentials. Wrapping `SurveillanceStation` construction in a `try/except` that catches request and validation errors allows the platform setup to fail gracefully rather than crashing the whole application.\n\n5. **Dependency declaration and import patterns**: For frameworks like Home Assistant, external dependencies must be declared in both the component's `REQUIREMENTS` variable and the global `requirements_all.txt`. Imports of optional or heavy dependencies should occur inside functions like `async_setup_platform` to let the framework manage installation and loading.\n\n6. **Avoiding naming conflicts and maintaining compatibility**: When introducing new classes that conceptually match existing framework classes (e.g., a `Camera` model inside the Synology API layer), use namespacing or alternative class names to avoid conflicts. Also, be mindful of language-version-specific features (like `**kwargs` dict merging) that may not be available in all supported runtimes.\n\nOverall, the pattern is: use a thin integration layer that speaks in terms of entities and states, backed by a robust, dedicated client library that encapsulates the external API and its quirks.",
+        "procedural_memory": [
+            "When refactoring a device integration to use an external API client library and to fix state/motion handling, follow these steps:",
+            "Step 1: Identify all direct HTTP/API usages in the component.",
+            "  - Search for raw HTTP calls (e.g., aiohttp or requests) and manual URL/path construction to the device's API.",
+            "  - List the key operations: authentication, resource discovery, listing devices, fetching status, snapshots, streaming URLs, and configuration changes.",
+            "Step 2: Encapsulate API logic into a dedicated library (or adopt an existing one).",
+            "  - Design a higher-level client API that matches the domain (e.g., `SurveillanceStation`, `Camera`, `MotionSetting`).",
+            "  - Implement authentication, endpoint discovery, and error handling inside the library.",
+            "  - Provide clear methods for common operations (list devices, get state, get snapshot, get stream URL, read/write settings).",
+            "  - Ensure the library offers stable, documented properties (e.g., `is_recording`, `is_enabled`, `video_stream_url`).",
+            "Step 3: Declare and wire the library as a dependency in the integration.",
+            "  - Add the library and version to the component's `REQUIREMENTS` variable.",
+            "  - Add the library to the central requirements file (e.g., `requirements_all.txt`) under the appropriate component comment.",
+            "  - Import the library only inside setup or other functions where needed (e.g., `from synology.surveillance_station import SurveillanceStation` within `async_setup_platform`).",
+            "Step 4: Replace inline API calls with library calls in the component.",
+            "  - Create an instance of the library client in `async_setup_platform`, passing URL, username, password, timeout, and SSL verification options.",
+            "  - Handle initialization errors with a `try/except` around client construction, catching transport (e.g., `requests.exceptions.RequestException`) and validation (`ValueError`) errors, and abort setup gracefully if necessary.",
+            "  - Retrieve devices via high-level methods (e.g., `surveillance.get_all_cameras()`) instead of manual HTTP requests.",
+            "Step 5: Align sync/async behavior with the framework's expectations.",
+            "  - Determine whether the library performs blocking I/O (e.g., uses `requests`). If it does, do not call it directly in async coroutines running on the event loop.",
+            "  - Move blocking operations into synchronous entity methods: use `camera_image()` for snapshot retrieval and `update()` for state refresh so the framework can offload them to executors.",
+            "  - Keep async methods (such as streaming handlers) only as thin wrappers around async-compatible operations (e.g., proxying an HTTP stream using an aiohttp session and a precomputed URL).",
+            "Step 6: Map library-level state and capabilities to entity properties and methods.",
+            "  - Expose the device name, enabled/streaming status, and recording status via standard entity properties (`name`, `is_streaming`, `is_recording`).",
+            "  - Implement `should_poll()` to indicate whether periodic polling is needed and ensure `update()` refreshes local cached objects from the library client.",
+            "  - If the device supports motion detection, surface it as `motion_detection_enabled` and add methods `enable_motion_detection()` and `disable_motion_detection()` that delegate to the client.",
+            "Step 7: Clean up code and resolve conflicts.",
+            "  - Remove obsolete in-component API classes and unused imports once the external library is in use.",
+            "  - Avoid naming conflicts with framework classes (e.g., use the framework's `Camera` base class and ensure any domain-specific `Camera` class lives only in the external library or under a distinct namespace).",
+            "  - Ensure Python version compatibility (e.g., avoid syntax or patterns not supported by the lowest supported version).",
+            "Step 8: Update tests and run linters.",
+            "  - Update or add tests to validate state reporting, snapshot retrieval, and motion detection enabling/disabling.",
+            "  - Run the project's test suite (e.g., `tox`) and code quality tools (flake8, pylint) to catch style or import issues.",
+            "  - Verify that the integration correctly handles invalid credentials, network errors, and missing cameras at startup, and that it reports entity states accurately over time."
+        ]
+    }
+}

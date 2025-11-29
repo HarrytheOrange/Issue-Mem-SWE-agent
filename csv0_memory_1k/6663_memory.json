@@ -1,0 +1,32 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant DigitalOcean integration crashed when configured droplets did not exist. The fix adds a check for missing droplet IDs in the binary_sensor and switch platforms, logs an error with the droplet name, and aborts setup gracefully instead of causing a traceback.",
+        "keywords": [
+            "Home Assistant",
+            "DigitalOcean",
+            "droplet not found",
+            "get_droplet_id returns None",
+            "binary_sensor digital_ocean",
+            "switch digital_ocean",
+            "external resource validation",
+            "graceful error handling",
+            "platform setup failure",
+            "configuration error"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Home Assistant DigitalOcean integration failed when users configured droplets that did not exist in their DigitalOcean account. The configuration defined droplet names for the digital_ocean binary_sensor and switch platforms, but if no droplets existed (or the specified droplet name was invalid), the underlying digital_ocean.DIGITAL_OCEAN.get_droplet_id(droplet) call returned None. The original code immediately instantiated DigitalOceanBinarySensor or DigitalOceanSwitch entities with this None droplet_id, which later led to a traceback during runtime.\n\nThe fix was to add validation in both homeassistant/components/binary_sensor/digital_ocean.py and homeassistant/components/switch/digital_ocean.py inside setup_platform. For each configured droplet, the code now checks whether get_droplet_id returns None. If it does, the platform logs an error message including the droplet name (\"Droplet %s is not available\") and returns False to abort platform setup gracefully. If a valid droplet_id is found, it proceeds to append the corresponding entity to the dev list. This prevents the traceback and gives the user a clear log message about the misconfigured or missing droplet.",
+        "semantic_memory": "When integrating with external services (like DigitalOcean) and mapping user configuration (e.g., named resources) to internal IDs, it is critical to validate that the external resource actually exists before instantiating entities or proceeding with setup. Functions that resolve names to IDs may legitimately return None to indicate 'not found'; code must treat this as an error condition rather than blindly passing the value downstream. \n\nBest practices include:\n- Performing existence/validity checks immediately after resolving user-specified identifiers from configuration.\n- Failing fast and clearly: log an informative error that includes the problematic identifier and abort the setup of the affected component or platform, rather than allowing a None or invalid ID to propagate and cause obscure tracebacks later.\n- Ensuring platform setup functions return an appropriate failure indicator when required resources are missing, so the host system can react appropriately.\n\nThis pattern generalizes to any integration that depends on external resources (cloud APIs, devices, database entities): always validate resolution calls, handle 'not found' results explicitly, and communicate clearly to the user via logs instead of letting runtime errors emerge later in unrelated parts of the code.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Reproduce the error by configuring the integration with a non-existent or unavailable external resource (e.g., a droplet name that does not exist). Observe the traceback and identify where a None or invalid ID is being used.",
+            "Step 2: Trace the code path from configuration parsing to entity or object instantiation. Look for functions that translate configuration values (like names) into internal IDs (e.g., get_droplet_id, lookup_device, fetch_resource_id).",
+            "Step 3: Check the contract of these lookup functions. Determine what they return when the resource is not found (commonly None, empty string, empty list, or an exception). Confirm whether the calling code handles that case.",
+            "Step 4: At the point immediately after the lookup, add a guard clause to validate the result. If the resource is not found (e.g., droplet_id is None), log a clear error including the problematic identifier: `logger.error(\"Resource %s is not available\", configured_name)`.",
+            "Step 5: Decide on the appropriate failure behavior. For platform/setup functions (like Home Assistant's setup_platform), return a failure indicator (e.g., False or raise the expected setup error) to abort setup gracefully instead of continuing with invalid data. Avoid creating entities or objects based on invalid IDs.",
+            "Step 6: If the lookup succeeds, proceed to create the relevant entities/objects using the valid ID and add them to the list or collection as originally intended.",
+            "Step 7: Run the existing test suite (e.g., `tox` for Home Assistant) and, if necessary, add or update tests to cover the case where the external resource does not exist. Ensure tests verify that setup fails cleanly, logs an appropriate error, and does not raise unexpected tracebacks.",
+            "Step 8: Validate behavior manually in a development environment by configuring valid and invalid resources. Confirm that valid resources work normally, and invalid ones produce clear logs and do not crash the application."
+        ]
+    }
+}

@@ -1,0 +1,59 @@
+{
+    "search_index": {
+        "description_for_embedding": "Refactored a duplicated draw_box() utility for drawing bounding boxes on images into the shared image_processing component in Home Assistant, added type hints and documentation, and fixed a ModuleNotFoundError for PIL by correctly adding and pinning the pillow dependency (lowercase) via the component manifest and requirements generation scripts. Also removed now-redundant pillow pinning from the TensorFlow integration.",
+        "keywords": [
+            "draw_box",
+            "image_processing",
+            "PIL",
+            "pillow",
+            "ModuleNotFoundError: No module named 'PIL'",
+            "Home Assistant",
+            "TensorFlow",
+            "DOODS",
+            "bounding boxes",
+            "requirements_all.txt",
+            "requirements_test_all.txt",
+            "manifest.json",
+            "dependency pinning",
+            "shared utility function",
+            "refactor"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, there were two Home Assistant image-processing integrations (DOODS and TensorFlow) that both implemented an identical draw_box() helper to draw detection bounding boxes on images. The goal was to move this shared functionality into the platform-level image_processing component so it could be reused. The developer created a new draw_box function in homeassistant/components/image_processing/__init__.py and updated the DOODS and TensorFlow integrations to import it from there.\n\nDuring this refactor, the function was improved with type hints, a more detailed docstring, and a small behavioral fix for how label text is drawn relative to the bounding box so it is not obscured by the box line. The function now accepts a typed PIL.ImageDraw drawing context, a normalized (y_min, x_min, y_max, x_max) bounding box tuple, image dimensions, and a typed RGB color tuple. It computes pixel coordinates and uses a configurable line width, offsetting the label text just inside/above the box.\n\nWhen tests were run, they failed with `ModuleNotFoundError: No module named 'PIL'`, because Pillow had not been declared as a dependency for the image_processing component. The developer added `pillow==6.1.0` to the image_processing manifest.json and ensured the global requirements files and test requirements included it. This required updating script/gen_requirements_all.py (to not ignore pillow) and regenerating requirements_all.txt and requirements_test_all.txt. Initially, the dependency was added as `Pillow`, which did not align with the package naming convention in the requirements-generation tooling; this was corrected to lowercase `pillow`, resolving the missing module error.\n\nAdditionally, because pillow is now pinned at the common image_processing component level, the redundant pillow requirement was removed from the TensorFlow component’s manifest.json. After updating the manifests, requirements files, and imports, the tests passed and the refactor was complete: draw_box is centralized, documented, type-annotated, and the dependency graph is clean and correct.",
+        "semantic_memory": "This case illustrates several generalizable patterns and best practices:\n\n1. **Centralizing shared utilities**: When multiple modules implement the same helper (e.g., draw_box for image annotations), it is better to place it in a shared or platform-level module. This reduces duplication, keeps behavior consistent across integrations, and simplifies future maintenance.\n\n2. **Clear contracts with type hints and documentation**: Adding type hints and a precise docstring to a shared utility clarifies its expected inputs and outputs for all callers. In this case, explicitly documenting that boxes are normalized floats `(y_min, x_min, y_max, x_max)` in [0.0, 1.0] relative to image size prevents subtle coordinate bugs.\n\n3. **Dependency declaration and naming consistency**: Frameworks like Home Assistant rely on manifests and generated requirements files to install component dependencies. When adding imports from libraries such as Pillow, you must:\n   - Declare the dependency in the component manifest.json.\n   - Ensure requirements_all/requirements_test_all include the same package name and version.\n   - Use the correct package name spelling/casing (e.g., `pillow` in requirements vs `PIL` in imports) and configure any requirement-generation scripts accordingly.\n\n4. **Avoiding duplicate dependency pinning**: If a common/shared component depends on a library, that is the right place to pin the version. Downstream integrations that rely on the shared component shouldn’t also pin the same library independently; this reduces conflicts and keeps dependency management centralized.\n\n5. **Iterative fix for test failures**: When tests fail due to missing modules, it’s often not enough to add the requirement in one place. Build pipelines may be driven by generated files and scripts. You must understand and update the generation pipeline (e.g., gen_requirements_all.py) so that the dependency is picked up consistently in all environments, including tests.",
+        "procedural_memory": [
+            "How to handle shared image utility refactors and dependency issues in a component-based Python project:",
+            "Step 1: Identify duplicated utility functions",
+            "Scan the codebase for identical or very similar helper functions (e.g., draw_box implementations in multiple components). Confirm their signatures and behavior are equivalent or can be unified.",
+            "Step 2: Choose an appropriate shared location",
+            "Select a platform-level or shared module that all relevant integrations can import from (e.g., a top-level image_processing package). Create or update a module such as image_processing/__init__.py to host the common utility.",
+            "Step 3: Move and improve the shared function",
+            "Copy the implementation into the shared module.",
+            "Add or refine type hints for all parameters and the return type, using standard types (e.g., Tuple[int, int, int]) and library types (e.g., PIL.ImageDraw).",
+            "Write a clear docstring that documents coordinate conventions, units, and any normalization used (e.g., normalized [0,1] bounding boxes vs pixel coordinates).",
+            "If needed, adjust behavior to be more robust or correct (for example, offsetting label text so it is not drawn under the box).",
+            "Step 4: Update all callers",
+            "In each component that previously defined its own copy of the utility, delete the local implementation and import the shared function from the new module: `from homeassistant.components.image_processing import draw_box` (or analogous path).",
+            "Verify that argument ordering and types match the new function signature; adjust callers if necessary.",
+            "Step 5: Add and centralize dependencies",
+            "If the shared utility uses an external library (e.g., Pillow for drawing), add a pinned dependency to the shared component's manifest (e.g., `\"requirements\": [\"pillow==6.1.0\"]`).",
+            "Remove duplicate or now-unnecessary pins of that same dependency from downstream component manifests to avoid conflicts and redundancy.",
+            "Step 6: Integrate with requirements generation tooling",
+            "If the project uses scripts to generate requirements_all.txt and requirements_test_all.txt, ensure the new dependency is not excluded. For Home Assistant, this involved updating script/gen_requirements_all.py to include `\"pillow\"` (correct lowercase) instead of ignoring it.",
+            "Run the generation script (e.g., `python script/gen_requirements_all.py`) so the global and test requirements files are updated.",
+            "Step 7: Resolve ModuleNotFoundError issues",
+            "If tests fail with errors like `ModuleNotFoundError: No module named 'PIL'`, verify:",
+            "- The imported module name (`from PIL import ImageDraw`) matches the installed package name (`pillow`).",
+            "- The dependency is present in the component manifest and in the generated requirements_all/requirements_test_all files, with consistent casing and version pin.",
+            "Fix naming mismatches (e.g., change `Pillow` to `pillow` in requirements) and regenerate requirements as needed.",
+            "Step 8: Run tests and linters",
+            "Run the full test suite (e.g., tox) to confirm that the missing module errors are resolved and that the new shared utility is functioning correctly.",
+            "Address any linting/style issues (imports order, unused imports, spacing) that may arise from the refactor.",
+            "Step 9: Verify behavior visually or via higher-level tests",
+            "For image-related utilities like draw_box, manually verify generated images (or rely on integration tests) to ensure bounding boxes and labels are drawn at the correct positions and with the expected styling after the refactor.",
+            "Step 10: Document the shared API",
+            "Optionally, document the shared utility in component or developer docs so that future image-processing integrations know to reuse it instead of reimplementing their own versions."
+        ]
+    }
+}

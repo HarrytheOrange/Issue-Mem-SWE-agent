@@ -1,0 +1,32 @@
+{
+    "search_index": {
+        "description_for_embedding": "Template switch turn_on/turn_off actions in Home Assistant could not use full script syntax (e.g., sequences and delays) because they used the generic service helper. The fix replaces the service helper with the script helper so template switches can execute script-style configurations in turn_on and turn_off.",
+        "keywords": [
+            "Home Assistant",
+            "template switch",
+            "turn_on",
+            "turn_off",
+            "script sequence",
+            "delay action",
+            "homeassistant.helpers.script.call_from_config",
+            "homeassistant.helpers.service.call_from_config",
+            "configuration.yaml",
+            "automation bug",
+            "YAML script syntax"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, users wanted to use script-like sequences (including delays) in the `turn_on` and `turn_off` sections of Home Assistant's `template` switch platform. For example, they wanted `turn_on` to first delay for one second and then call `light.turn_on`. However, the implementation used `homeassistant.helpers.service.call_from_config`, which expects a single service call configuration and does not support full script syntax (lists of actions, delays, etc.). As a result, multi-step script configurations in template switches either failed or were not executed as intended. The fix was minimal but effective: change the import from `homeassistant.helpers.service.call_from_config` to `homeassistant.helpers.script.call_from_config` in `homeassistant/components/switch/template.py`. The script helper is designed to interpret and execute full script configurations, including sequences and delays. After this change, `turn_on` and `turn_off` support script syntax exactly as desired. There was also discussion about further improving this by caching `Script` objects during `TemplateSwitch` initialization for better validation and efficiency, but that was deferred to a future PR; this PR focused on making the feature work in time for the next release.",
+        "semantic_memory": "When a configuration field is intended to support script-like behavior (multiple actions, delays, conditions) rather than a single service call, it must be wired to the correct helper or execution engine that understands script syntax. In Home Assistant, `homeassistant.helpers.service.call_from_config` is meant for single service call configurations, whereas `homeassistant.helpers.script.call_from_config` is meant for script-style sequences of actions. Using the wrong helper silently constrains what the configuration can express and typically only surfaces as runtime behavior bugs (e.g., sequences not running, delays ignored). Abstractly, this highlights a pattern: APIs often differentiate between simple one-shot actions and rich, multi-step workflows. If you extend a feature to accept more complex configurations, you must ensure the runtime path is updated to use the workflow-aware API. Additionally, where possible, configuration should be validated early (at startup/init), and reusable execution objects (like Script objects) can be created and cached for both performance and upfront validation, instead of creating them ad hoc on each execution.",
+        "procedural_memory": [
+            "When extending a configuration to allow more complex behavior (e.g., script sequences instead of single actions), ensure the execution path uses the correct helper or engine that understands the new configuration structure.",
+            "Step 1: Reproduce the limitation or bug.\n- Create a minimal configuration that uses the desired complex behavior (e.g., a `turn_on` script with a delay and multiple actions).\n- Verify that the behavior does not work as expected (e.g., only the first service runs, or the configuration causes errors).",
+            "Step 2: Inspect the execution code.\n- Locate the component or platform handling the configuration (here, `homeassistant/components/switch/template.py`).\n- Find where the `turn_on`/`turn_off` configuration is executed.\n- Check which helper or API function is responsible for performing the action (e.g., `service.call_from_config`).",
+            "Step 3: Compare expected configuration shape with the helper's capabilities.\n- Review the intended configuration syntax (e.g., does it allow lists of actions, delays, conditions like scripts?).\n- Inspect the helper’s documentation or implementation to determine what structure it expects (single service vs. full script actions).",
+            "Step 4: Select and wire the correct helper.\n- If the configuration is script-like, switch from the single-service helper to the script helper (e.g., from `homeassistant.helpers.service.call_from_config` to `homeassistant.helpers.script.call_from_config`).\n- Update the import and any relevant call sites accordingly.",
+            "Step 5: Run and expand tests.\n- Add or adapt tests to cover complex configurations (e.g., sequences, delays, multi-step scripts in `turn_on` and `turn_off`).\n- Run the full test suite (e.g., `tox` in Home Assistant) to ensure no regressions.",
+            "Step 6: Consider validation and performance improvements.\n- Where possible, create and cache script or workflow objects during entity/platform initialization rather than on each call.\n- Wire configuration validation through the appropriate schema (e.g., `PLATFORM_SCHEMA`) to catch configuration errors at startup instead of at runtime.",
+            "Step 7: Document the new capability.\n- Update examples and documentation to show the now-supported script syntax for the affected fields (e.g., template switch `turn_on`/`turn_off`).\n- Clarify that script-like configurations are supported and any constraints that still apply."
+        ]
+    }
+}

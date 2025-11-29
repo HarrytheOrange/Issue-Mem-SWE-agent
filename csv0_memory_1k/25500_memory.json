@@ -1,0 +1,33 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant xiaomi_miio vacuum integration: Roborock S6 uses a new state code (18) for cleaning. This state was previously unmapped, causing incorrect/unknown state reporting. Fix adds mapping 18 -> STATE_CLEANING in the state code dictionary.",
+        "keywords": [
+            "home-assistant",
+            "xiaomi_miio",
+            "vacuum",
+            "Roborock S6",
+            "state code 18",
+            "STATE_CLEANING",
+            "device state mapping",
+            "enum mapping",
+            "integration bug",
+            "unknown state handling"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In the Home Assistant xiaomi_miio vacuum integration, Roborock S6 devices started reporting a new internal status code (18) to indicate the cleaning state. The existing code mapped several numeric state codes (e.g., 15, 16, 17) to Home Assistant's standardized vacuum states like STATE_RETURNING and STATE_CLEANING, but it did not include 18. As a result, when a Roborock S6 was cleaning, Home Assistant would not recognize this numeric status properly (likely treating it as unknown or incorrect), leading to inaccurate state representation in the UI and automations. The fix was a one-line change: extend the `STATE_CODE_TO_STATE` (or equivalent) mapping in `homeassistant/components/xiaomi_miio/vacuum.py` to include `18: STATE_CLEANING`, alongside the existing entries for 16 and 17. There was discussion about additional new codes (100: charging complete, 101: device offline) seen in the backend library `python-miio`, but the maintainers agreed to keep this PR focused on the confirmed cleaning state for code 18 and not map the other two for now.",
+        "semantic_memory": "When integrating with hardware devices or backend libraries that use numeric codes to represent states (e.g., vacuums, sensors, robots), higher-level applications often maintain a mapping table from those numeric codes to semantic states (like 'cleaning', 'returning', 'docked'). Whenever a new device variant (such as a newer model) introduces new codes or repurposes existing ones, failing to update these mappings leads to incorrect or unknown state reporting. This can break UI representation, automations, and user expectations even though communication with the device technically still works. A robust integration needs: (1) a clearly defined mapping between protocol-level enums/codes and application-level states, (2) a process to keep that mapping in sync with the upstream library or protocol, and (3) graceful handling and logging for unknown/unmapped codes so new or unexpected states are visible during development. It's often preferable to implement conservative mappings for well-understood codes and delay or omit ambiguous ones until their semantics are clear, rather than guessing and potentially misrepresenting device behavior.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Observe symptoms: Notice that a device reports an 'unknown', incorrect, or missing state in the application UI or logs, especially after adding support for a new model or updating a backend library.",
+            "Step 2: Check logs and raw data: Enable debug logging for the integration and capture the raw status payload from the device or backend library. Identify the numeric or enum state code being returned when the device is in the problematic state (e.g., cleaning, charging, offline).",
+            "Step 3: Inspect existing state mappings: Locate the code that maps device/backend status codes to application-level states (e.g., a dictionary like `{15: STATE_RETURNING, 16: STATE_CLEANING, ...}` or an enum translation function). Verify whether the observed code is present in that mapping.",
+            "Step 4: Confirm semantics of the new code: Consult upstream library documentation, protocol docs, or device vendor resources (or logs from known-good apps) to understand what the new code actually represents (e.g., 18 == cleaning for Roborock S6). If unsure, reproduce the device's state transitions while logging codes to infer their meaning.",
+            "Step 5: Update the mapping: Add an entry for the new code to the mapping structure, pointing it to the correct canonical application state (e.g., `18: STATE_CLEANING`). Keep consistent with how similar codes are handled (e.g., multiple codes mapping to the same state if they represent the same behavior).",
+            "Step 6: Avoid premature mapping of ambiguous codes: If you encounter additional new codes whose semantics are unclear or potentially internal (e.g., 'device offline' vs. truly disconnected), defer mapping them until clarified, to avoid misleading states in the application.",
+            "Step 7: Add or update tests: If the project has tests around state translation, add test cases for the new code ensuring it maps to the expected state and verify no regressions for existing codes.",
+            "Step 8: Run the test suite and manually verify: Run automated tests (e.g., tox, pytest) and then manually exercise the device in the real environment to confirm that the UI and automations now show the correct state when the device enters that mode.",
+            "Step 9: Document and monitor: Optionally update integration documentation or release notes to mention support for the new device state. Monitor logs and user feedback for any unexpected behavior related to newly mapped codes."
+        ]
+    }
+}

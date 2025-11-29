@@ -1,0 +1,49 @@
+{
+    "search_index": {
+        "description_for_embedding": "In Home Assistant's Hass.io ingress component, the HTTP client used for proxying requests was incorrectly following redirects itself (default aiohttp behavior). This prevented the endpoint/client from handling redirects as intended. The fix sets `allow_redirects=False` on the aiohttp `websession.request` call so that 3xx responses and Location headers are passed through unchanged, and removes the incorrect attempt to set `allow_redirects` on `aiohttp.web.Response`.",
+        "keywords": [
+            "Home Assistant",
+            "Hass.io",
+            "ingress",
+            "reverse proxy",
+            "HTTP redirect",
+            "allow_redirects",
+            "aiohttp",
+            "proxy not following redirects",
+            "3xx response handling",
+            "hassio ingress bug"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Home Assistant Hass.io ingress component, which acts as a proxy to add-on UIs, was unintentionally following HTTP redirects itself. By default, aiohttp's client session follows redirects, so when an ingress target returned a 3xx status (e.g., for login flows or path changes), the ingress layer would follow the redirect and only return the final response to the browser. This broke the intended behavior where the endpoint (the browser or upstream client) should handle redirects directly.\n\nThe initial attempt to fix this mistakenly added `allow_redirects=False` to the `aiohttp.web.Response` constructor, which doesn't support that argument. A reviewer (OttoWinter) noted that `allow_redirects` is an option for requests, not responses. The final fix moved `allow_redirects=False` to the `self._websession.request(...)` call in `homeassistant/components/hassio/ingress.py` and removed it from the response construction. After this change, ingress no longer follows redirects internally; instead, it forwards the 3xx status and headers (e.g., Location) to the client so the endpoint can handle the redirect as designed.",
+        "semantic_memory": "When building HTTP gateways, reverse proxies, or ingress layers that mediate between clients and backend services, redirect handling must be carefully controlled. Many HTTP client libraries, including aiohttp, follow redirects by default on outbound requests. In a proxy context, this can be undesirable: the proxy should often pass back 3xx responses intact so the actual client (browser or API consumer) can decide how to handle them.\n\nGeneralizable points:\n- Understand default redirect behavior of your HTTP client library. For aiohttp, `ClientSession.request` follows redirects unless `allow_redirects=False` is set.\n- `allow_redirects` typically belongs on the request (client) side, not on the response object. Always check the API docs to know which classes/methods support which arguments.\n- In reverse proxies/ingress controllers, decide whether you want to:\n  - Follow redirects internally (and return only final content), or\n  - Surface redirects (status + Location headers) so the client handles them.\n- Misplaced configuration (e.g., setting redirect options on response objects that don’t support them) will either be ignored or cause runtime errors. Reading library documentation is essential.\n- For authentication flows, SSO, and UIs that rely on browser-handled redirects, over-eager redirect following by intermediaries can break the flow or obscure the redirect chain.\n\nThis case highlights the broader best practice: in proxy/ingress code, explicitly configure redirect behavior and respect the division of responsibility between backend services, proxy layer, and clients.",
+        "procedural_memory": [
+            "To diagnose and fix issues where an ingress/proxy layer is incorrectly following redirects instead of passing them to the client:",
+            "Step 1: Reproduce the behavior",
+            "- Trigger an action that should cause a redirect from the backend (e.g., login, accessing a protected resource, or hitting a path known to 301/302).",
+            "- Use browser dev tools or an HTTP client like curl/Postman to inspect the response chain when going through the ingress/proxy.",
+            "- Look for missing 3xx responses: if you only see the final destination response, your proxy may be following redirects internally.",
+            "Step 2: Confirm the proxy's HTTP client behavior",
+            "- Identify where the proxy/ingress makes outbound requests to the backend (e.g., aiohttp `ClientSession.request`, requests library, etc.).",
+            "- Check the library documentation for default redirect handling and the parameter controlling it (e.g., `allow_redirects` in aiohttp or requests).",
+            "- Inspect the code for any explicit redirect parameters; if none are set, assume defaults apply and verify those defaults.",
+            "Step 3: Verify correct placement of redirect options",
+            "- Ensure redirect-related options are set on the HTTP client request, not on response objects.",
+            "- For aiohttp, apply `allow_redirects=False` to `session.request(...)` or equivalent, not `aiohttp.web.Response`.",
+            "- Review any previous attempts/fixes to ensure that arguments are supported by the target function/class (compare against docs).",
+            "Step 4: Implement the fix",
+            "- Update the outbound request call in the ingress/proxy to explicitly disable following redirects when appropriate. For example (aiohttp):",
+            "  async with session.request(method, url, headers=headers, params=params, data=data, allow_redirects=False) as result:",
+            "- Remove any invalid or unused `allow_redirects` arguments from response constructors or other unsupported locations.",
+            "- Ensure that when the backend returns a 3xx status, your proxy passes through status code, headers (especially Location), and body without transforming it into a non-3xx response.",
+            "Step 5: Test the behavior after the change",
+            "- Re-run the original scenario and verify that the client now sees the 3xx response and Location header.",
+            "- Confirm that login flows, redirects to static resources, or path rewrites now behave as expected from the client's perspective.",
+            "- Use unit/integration tests to assert that 3xx responses from the backend are surfaced unchanged through the ingress/proxy.",
+            "Step 6: Document the redirect policy",
+            "- Document in code comments and project docs whether the proxy/ingress follows redirects or passes them to the client.",
+            "- Note any scenarios where you intentionally follow redirects (e.g., internal service-to-service requests) vs. expose them (client-facing ingress).",
+            "- Reference library documentation for redirect-related parameters so future maintainers avoid misusing them."
+        ]
+    }
+}

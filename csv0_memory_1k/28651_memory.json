@@ -1,0 +1,33 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant's BMW Connected Drive integration updated its bimmer_connected dependency from 0.6.0 to 0.6.2 to pick up an upstream fix that removed a blocking time.sleep call in the library. The PR adjusts the integration manifest and global requirements to use the new version, resolving performance/blocking issues while keeping tests passing.",
+        "keywords": [
+            "Home Assistant",
+            "BMW Connected Drive",
+            "bmw_connected_drive integration",
+            "bimmer_connected==0.6.2",
+            "dependency upgrade",
+            "blocking call",
+            "time.sleep removal",
+            "async compatibility",
+            "requirements_all.txt",
+            "manifest.json"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Home Assistant BMW Connected Drive integration relied on the third-party library bimmer_connected. An upstream change removed a blocking time.sleep call from the bimmer_connected library, which was important for better async behavior and responsiveness in Home Assistant. To incorporate these upstream fixes, the integration's dependency had to be upgraded in Home Assistant. The PR first bumped bimmer_connected from 0.6.0 to 0.6.1, then immediately to 0.6.2 once the time.sleep removal was released. The changes were purely to version pins: the integration’s manifest.json and the global requirements_all.txt were updated to require bimmer_connected==0.6.2. The maintainers verified that the updated library works without the sleep and that local tests pass, allowing the PR to be merged and the improved, non-blocking behavior to propagate into Home Assistant.",
+        "semantic_memory": "When an application integrates with third-party libraries, behavior and performance issues can originate in those dependencies rather than the application code itself. Blocking calls like time.sleep inside a library that is used in an asynchronous or event-driven framework (such as Home Assistant) can degrade performance or block the event loop. The correct fix often happens upstream in the library: remove or refactor blocking calls, and then update the application to depend on the new library version. In ecosystems that pin dependencies (e.g., via manifest files and central requirements lists), you must systematically update all relevant version constraints and regenerate any derived requirement files. It is a best practice to avoid time.sleep or other blocking primitives in code that may run inside async frameworks—use asynchronous sleep or non-blocking constructs instead. Also, tracking upstream release notes and issues is crucial: many bugs can be fixed in the main project simply by bumping to a known good library version that addresses the problem.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Reproduce and localize the issue. Observe symptoms such as slow responses, blocking behavior, or integration errors. Use logs and stack traces to determine whether the problem originates in your code or in a third-party dependency.",
+            "Step 2: Inspect dependency behavior. If the issue appears in a library call (e.g., long delays, blocking time.sleep in logs or code), review the library’s source code, changelog, and issue tracker to see if the problematic behavior is known or recently fixed.",
+            "Step 3: Identify the fixed upstream version. Determine which library release contains the fix (for example, a version where a blocking time.sleep was removed or replaced with a non-blocking mechanism). Confirm via release notes, commit history, or maintainers’ comments.",
+            "Step 4: Update version pins in your project. In all relevant configuration files (such as integration manifest files and central requirements files like requirements_all.txt), change the dependency version to the fixed release (e.g., bimmer_connected==0.6.2). Ensure consistency across all files.",
+            "Step 5: Regenerate derived requirement files. If your project uses scripts to generate consolidated requirement files (e.g., python3 -m script.gen_requirements_all in Home Assistant), run them so that the dependency updates are propagated everywhere.",
+            "Step 6: Run test suites and local checks. Execute unit tests, integration tests, and any project-specific tooling (e.g., tox, hassfest) to validate that the upgraded dependency integrates cleanly and does not introduce regressions.",
+            "Step 7: Verify runtime behavior. Start the application in a development environment and exercise the affected integration or feature (here, BMW Connected Drive) to ensure the previous blocking or erroneous behavior is resolved.",
+            "Step 8: Document the change. In the PR or change log, describe that the fix is achieved via an upstream library upgrade (including version number and key behavior change, such as removal of time.sleep), so future maintainers can trace the origin of the fix.",
+            "Step 9: For future development, avoid blocking calls in shared or async contexts. When writing or reviewing library code intended for async/event-loop-based systems, use asynchronous sleep or non-blocking constructs instead of time.sleep or other blocking primitives."
+        ]
+    }
+}

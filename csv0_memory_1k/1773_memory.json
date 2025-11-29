@@ -1,0 +1,39 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fix for incorrect hardcoded assumption about the number of items gained from a Pokestop in has_space_for_loot(), which caused overly strict bag-space checks. The constant was updated (from 5 to 8) and an accidental typo in update_web_location() was corrected. Discussion suggests the better long-term fix is using a minimal safety margin (e.g., 1) since Pokestops can overfill the bag beyond the max.",
+        "keywords": [
+            "has_space_for_loot",
+            "Pokestop loot count",
+            "inventory capacity check",
+            "hardcoded constant",
+            "magic number",
+            "bag space validation",
+            "PokemonGo bot",
+            "off-by-safety-margin",
+            "update_web_location typo"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Pokémon Go bot assumed that each Pokestop spin yields at most 5 items by using a hardcoded constant in has_space_for_loot(): number_of_things_gained_by_stop = 5. Users provided logs showing spins that yielded 8 and 9 items (e.g., combinations of Pokeballs, Greatballs, Potions, and Revives), proving that 5 was not a correct upper bound. Additionally, players observed that Pokestops can push a bag over its nominal maximum capacity (e.g., 349/350 becoming 353/350 after a spin), meaning a strict pre-check based on the max capacity is not strictly necessary.\n\nThe PR proposed a minimal fix: change the constant in has_space_for_loot() from 5 to 8 to better approximate observed rewards, and in the process accidentally introduced a typo in update_web_location(): `lng = selfnumber_of_things_gained_by_stop.api._position_lng`. A follow-up patch corrected this typo back to `lng = self.api._position_lng`.\n\nIn discussion, maintainers and contributors reasoned that since Pokestops can overfill the bag, the safety margin could be reduced to 1 (or similar), instead of relying on a guessed upper bound like 5 or 8. This would avoid prematurely skipping Pokestops when the bag appears near full but the game would still award items. However, due to merge conflicts and inactivity, the PR was closed without merging, with maintainers stating they would accept a revived version that sets the value to 1 and explains in comments that Pokestops can exceed the max bag capacity.",
+        "semantic_memory": "This case illustrates a common design pitfall: embedding domain assumptions as hardcoded constants in guard logic (\"magic numbers\") when the underlying system behavior is variable or not strictly bounded. When the maximum number of items a user can obtain in one operation (like spinning a Pokestop) is unknown or can change, treating it as a fixed constant can lead to over-conservative checks that block valid actions or degrade UX.\n\nA better approach is to either:\n- Derive limits directly from API responses or configuration, or\n- Use a minimal, well-justified safety margin (e.g., 1 item) that reflects actual system behavior, especially when the external system itself is tolerant (e.g., allows temporary over-capacity).\n\nThis case also highlights that:\n- Inventory/bag capacity checks in bots should mirror the real game's rules, including overfill behaviors on special events (Pokestops, level-ups, rewards), instead of enforcing stricter internal limits.\n- Even small one-line changes should be carefully reviewed and tested; in this PR, a trivial change introduced an unrelated typo bug in a different method, demonstrating how easy it is to corrupt code with careless search/replace or edits.\n- Comments explaining non-obvious domain behavior (\"Pokestops allow going over max item storage, hence the margin is 1\") are important to prevent future contributors from 'fixing' what looks like a suspicious small value.\n\nGeneralizable lessons:\n- Avoid magic numbers for domain-dependent limits; make them configurable or derived.\n- Align guard conditions with the external system's true constraints, not assumptions.\n- When an external system can overfill limits safely, bots/clients may allow that behavior rather than blocking on stricter preconditions.\n- Keep changes localized and be wary of accidental edits elsewhere in the file.",
+        "procedural_memory": [
+            "To diagnose and fix similar issues with hardcoded inventory or reward limits:",
+            "Step 1: Observe real-world behavior",
+            "Collect logs or telemetry from actual runs to see the true range of values returned by the external system (e.g., count items rewarded from many Pokestop spins). Identify cases where behavior exceeds assumed limits (e.g., >5 items gained).",
+            "Step 2: Locate guard logic and magic numbers",
+            "Search the codebase for pre-checks related to inventory, capacity, or rewards (e.g., methods like has_space_for_loot, bag space checks, or max rewards per action). Look for hardcoded constants that represent domain limits (5, 8, etc.).",
+            "Step 3: Validate assumptions against system rules",
+            "Compare the hardcoded assumptions to the actual game/service rules. Determine whether the system enforces strict max limits, allows overfill, or has a higher/variable upper bound.",
+            "Step 4: Decide on a robust strategy",
+            "Based on the rules, choose one of these patterns:\n- Derive the limit from API data or configuration.\n- Use a configurable setting instead of a hardcoded number.\n- Use a minimal safety margin (e.g., 1 item) if the external system is tolerant (e.g., allows over-capacity on rewards).\nAdd relevant comments explaining the reasoning.",
+            "Step 5: Implement the change carefully",
+            "Update the guard logic accordingly (e.g., change number_of_things_gained_by_stop from 5 to a more accurate margin or to 1 if overfill is allowed). Avoid broad search/replace operations that can corrupt unrelated lines; review the diff carefully for unintended edits (as happened with the `selfnumber_of_things_gained_by_stop.api` typo).",
+            "Step 6: Add or update tests",
+            "Write unit/integration tests covering edge cases: near-full inventory (e.g., max-1, max, max+1) and typical rewards. Ensure the bot does not prematurely skip actions (like spinning a Pokestop) when the external system would still award items, and that it handles overfilled inventory states properly.",
+            "Step 7: Document domain-specific behavior",
+            "Add comments or documentation explaining why the chosen margin or behavior is correct (e.g., \"Pokestops can award items that push the bag over its nominal max, so we only require space for 1 item as a minimal guard\"). This helps future maintainers avoid reintroducing overly strict checks.",
+            "Step 8: Monitor after deployment",
+            "After deploying the change, monitor logs for unusual inventory state transitions or errors. Confirm that users no longer see valid actions being skipped due to overly conservative capacity checks and that no new issues (like infinite overfill) have been introduced."
+        ]
+    }
+}

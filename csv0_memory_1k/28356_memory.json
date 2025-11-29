@@ -1,0 +1,34 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant hitron_coda device_tracker failed to work with newer Hitron CGNV4 modem/routers because the old login flow no longer applied. The fix adds a `type: cgnv4` option and implements a two-step authentication: first GET the main page to obtain a pre-session cookie, then POST the login form including that cookie, after which the existing information URL remains unchanged.",
+        "keywords": [
+            "home-assistant",
+            "hitron_coda",
+            "hitron cgnv4",
+            "device_tracker",
+            "router integration",
+            "authentication flow",
+            "pre-session cookie",
+            "login POST",
+            "web scraping",
+            "firmware change",
+            "configuration option",
+            "type cgnv4"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Home Assistant `hitron_coda` device_tracker platform stopped working with newer Hitron CGNV4 modem/routers. Users could no longer authenticate against the router, so device tracking failed. The root cause was a change in the router's web authentication flow: unlike older models, the CGNV4 firmware requires clients to first retrieve a pre-session identifier cookie from the main page (an initial GET), then include that cookie as part of the subsequent login POST request. The existing integration assumed a single POST-based login without this pre-session step and therefore never established a valid session. The fix introduced support for a new configuration parameter, `type: cgnv4`, which switches the integration to a CGNV4-specific login flow. That flow performs an HTTP GET to the main page, captures the pre-session cookie, and reinjects it into the login POST payload and/or headers, after which the previously used information URL continues to function. Documentation and manifest data were updated accordingly, and the contributor resolved a separate Git history/CLA issue by fixing an incorrect commit email.",
+        "semantic_memory": "When device integrations rely on a router or web UI that the vendor controls, firmware updates often change authentication flows while leaving the underlying data endpoints intact. A common pattern is a multi-step login: the client must first perform a GET to retrieve a CSRF token, pre-session cookie, or other session identifier, then include it in the login POST. Old code that assumes a single POST with username/password will silently fail once this anti-CSRF or pre-session step is introduced. A robust integration should mirror the vendor's login sequence, manage cookies and headers explicitly, and ideally be structured to easily support multiple hardware/firmware variants via configuration or feature detection. Adding a type or model switch (e.g., `type: cgnv4`) is a pragmatic way to support differing authentication flows while reusing data-fetching logic that remains stable.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues.",
+            "Step 1: Confirm symptoms and scope\n- Verify that the integration previously worked with older hardware/firmware and that it fails only on a new model or firmware version.\n- Check logs for authentication or connection errors (e.g., 401, 403, redirected login pages, or unexpected HTML instead of JSON/data).",
+            "Step 2: Inspect the vendor's current web login flow\n- Open the router or device's web UI in a browser.\n- Use the browser's developer tools (Network tab) to capture the full sequence of requests when logging in manually.\n- Look for:\n  - An initial GET to the main or login page that returns cookies or hidden form fields.\n  - Any CSRF tokens, session IDs, or pre-session identifiers in cookies, headers, or form fields.\n  - The exact URL, method (POST/GET), and parameters/body for the login request.\n  - Any redirects or additional requests that complete the session.",
+            "Step 3: Compare with existing integration behavior\n- Review the current integration code to see how it authenticates (single POST, no pre-session handling, etc.).\n- Identify mismatches: missing initial GET, missing cookies, missing CSRF token, wrong endpoints, or changed parameters.",
+            "Step 4: Implement the updated authentication sequence\n- Add logic to perform the same HTTP sequence as the browser:\n  - Do an initial GET to the main or login page using an HTTP client that preserves cookies.\n  - Extract the required cookie(s) or token(s) from the response.\n  - Include those cookies/tokens in the subsequent login POST request (headers, cookies, or form fields as required).\n- Reuse the existing data-fetching URLs if they still work once a valid session is established.\n- Ensure the HTTP client maintains session cookies across requests.",
+            "Step 5: Support multiple hardware/firmware variants\n- If older models still use the original login flow, introduce a configuration option (e.g., `type: cgnv4`) or detection logic to choose the appropriate authentication flow.\n- Implement branching in the code so that the correct sequence is used depending on the router type, while sharing as much common data-fetching logic as possible.",
+            "Step 6: Test and validate\n- Test locally against the target hardware/firmware to confirm that authentication now succeeds and that subsequent data retrieval (e.g., connected devices) works.\n- Add or update tests, mocking the HTTP calls to reflect the new multi-step login.\n- Check that existing configurations without the new type parameter continue to work for legacy devices.",
+            "Step 7: Update metadata and documentation\n- Update configuration documentation to describe the new `type` option and when to use it.\n- Ensure the integration manifest and requirements files are updated if any dependencies or metadata changed.\n- If contributing to a shared project, run project-specific validation scripts (e.g., `python3 -m script.hassfest`, `python3 -m script.gen_requirements_all`).",
+            "Step 8: Maintain clean Git history and CLA compliance\n- Ensure your commits use a valid email linked to your GitHub account so CLA checks pass.\n- If necessary, amend commits or rewrite authorship using Git’s tools as per project guidelines."
+        ]
+    }
+}

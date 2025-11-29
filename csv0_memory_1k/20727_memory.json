@@ -1,0 +1,35 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant Foscam camera component attempted to migrate from libpyfoscam==1.0 to pyfoscam==1.2 for bug fixes, but the pyfoscam version available on PyPI was broken. The change updated REQUIREMENTS, imports, and requirements_all.txt, then was fully reverted back to libpyfoscam with matching requirements to restore stability.",
+        "keywords": [
+            "Home Assistant",
+            "Foscam camera",
+            "libpyfoscam",
+            "pyfoscam",
+            "Python dependency regression",
+            "PyPI broken release",
+            "requirements_all.txt",
+            "REQUIREMENTS variable",
+            "camera.foscam",
+            "import path change",
+            "library rollback",
+            "3rd party integration"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Home Assistant Foscam camera integration originally depended on libpyfoscam==1.0 and imported FoscamCamera from libpyfoscam. A contributor attempted to upgrade to a newer library, pyfoscam==1.2, which was described as more up to date and containing critical bug fixes. The PR changed the Foscam camera component's REQUIREMENTS to ['pyfoscam==1.2'], updated the import to `from foscam import FoscamCamera`, and modified requirements_all.txt to include pyfoscam instead of libpyfoscam. After some iteration, they regenerated requirements_all.txt to move the pyfoscam requirement to the correct section. However, it was later discovered that the pyfoscam version available via pip (PyPI) was broken and did not yet include the necessary bug fixes or was otherwise unusable. To avoid breaking users, the maintainer reverted the component back to the known-working dependency: REQUIREMENTS was restored to ['libpyfoscam==1.0'], the import was changed back to `from libpyfoscam import FoscamCamera`, and requirements_all.txt was updated again to remove pyfoscam and reintroduce libpyfoscam. The PR ended with no net functional change to Home Assistant, but documented the failed attempt to upgrade a third-party dependency and the need to wait until pyfoscam on PyPI is fixed. A maintainer also noted process feedback: to use a clean branch for such changes.",
+        "semantic_memory": "This case illustrates a common pattern in dependency management for integrations that rely on third-party Python packages. Even when an upstream library appears newer and claims to contain important bug fixes, the version published on PyPI may lag behind the repository or be broken. Blindly upgrading to a newer package (or switching package names altogether) without validating the published artifact can introduce regressions into downstream projects.\n\nBest practices that emerge from this:\n- Always verify that the exact PyPI version you plan to depend on is functional in your target environment, not just that upstream code or documentation claims bug fixes.\n- When changing dependencies for an integration, ensure consistency across all dependency declarations (module-level REQUIREMENTS, central requirements_all.txt, etc.).\n- Have a clear rollback path: if the new dependency version is broken, revert to the last known good version and restore all related files to a consistent state.\n- Avoid mixing unrelated or auto-generated changes into a feature branch; use clean branches to keep diffs small and reviewable.\n- For device integrations, it can be safer to delay upgrades to upstream libraries until they are confirmed stable, or to pin to specific versions that are known to work.\n\nAbstractly, this is a dependency regression/rollback pattern: attempted upgrade to a better library fails due to broken distribution, requiring a reversion to the previous working library and aligned requirement files.",
+        "procedural_memory": [
+            "When upgrading or switching third-party libraries for an integration, especially device integrations, validate the exact PyPI version before committing to it.",
+            "Step 1: Identify the motivation for the dependency change (e.g., bug fixes, new features) and confirm that the fixes are actually included in a released version on PyPI, not just in the upstream repository.",
+            "Step 2: Create a clean feature branch dedicated solely to the dependency change to keep the change set small and easier to revert if necessary.",
+            "Step 3: Install the target library version from PyPI in a clean environment (e.g., virtualenv) and run minimal functional tests or a small script that exercises the key APIs your integration uses (e.g., FoscamCamera initialization, snapshot retrieval, etc.).",
+            "Step 4: Update all relevant dependency declarations consistently: in-module REQUIREMENTS arrays, centralized requirements files (such as requirements_all.txt), and any other packaging or constraints files used by the project.",
+            "Step 5: Adjust import paths if the new package uses a different top-level module name (e.g., `from libpyfoscam import FoscamCamera` to `from foscam import FoscamCamera`), and run the project’s test suite plus targeted manual tests for the integration.",
+            "Step 6: If you discover that the new dependency version from PyPI is broken or missing required fixes (e.g., runtime errors, missing attributes, incompatible API), immediately plan a rollback: revert REQUIREMENTS and imports to the previous working library and version, and update central requirements files to match.",
+            "Step 7: After rollback, re-run tests to confirm that functionality is restored and no orphaned references to the broken dependency remain.",
+            "Step 8: Optionally, open an issue or PR upstream on the new library to get a fixed version released, and only then reattempt the upgrade using the newly published, validated version.",
+            "Step 9: For future PRs, keep branch history clean: avoid committing multiple unrelated changes (such as intermediate auto-generated requirements) and regenerate global requirements only once the dependency choice is finalized."
+        ]
+    }
+}

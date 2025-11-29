@@ -1,0 +1,30 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant scene.turn_on service previously only accepted entity_id in its schema, preventing the use of area-based targeting. The fix replaces a custom SCENE_SERVICE_SCHEMA with the shared ENTITY_SERVICE_SCHEMA, which adds support for areas (and centralizes validation for entity/area targeting).",
+        "keywords": [
+            "home-assistant",
+            "scene",
+            "scene.turn_on",
+            "service schema",
+            "ENTITY_SERVICE_SCHEMA",
+            "area support",
+            "area_id",
+            "ATTR_ENTITY_ID",
+            "voluptuous",
+            "config validation"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this change, the Home Assistant `scene` integration’s service schema was updated to support areas. Originally, the `scene.turn_on` service used a custom `SCENE_SERVICE_SCHEMA` that required `ATTR_ENTITY_ID` and validated it via `cv.entity_ids`. This meant the service could only be called with explicit `entity_id` lists and did not work with areas (e.g., `area_id`). To align with newer capabilities and shared patterns, the PR removed the custom schema and instead used `ENTITY_SERVICE_SCHEMA` from `homeassistant.helpers.config_validation`. This shared schema supports entity-based and area-based targeting, enabling users to trigger scenes by specifying areas. The imports for `ATTR_ENTITY_ID` and `config_validation` were removed, and the service registration now passes `schema=ENTITY_SERVICE_SCHEMA` when registering `scene.turn_on`.",
+        "semantic_memory": "When a platform or integration adds new addressing modes (such as areas, devices, or groups) for entity targeting, it is better to rely on shared, central validation schemas rather than custom ones. In Home Assistant, `ENTITY_SERVICE_SCHEMA` encapsulates the standard way to declare services that target entities and areas. Using this shared schema not only enables new features (like `area_id` support) automatically but also reduces duplication and the risk of inconsistent behavior between integrations. A broader lesson is: avoid hand-rolled service or API validation when a framework-provided, canonical schema exists; upgrading to the shared schema often brings automatic compatibility improvements (e.g., new fields) and keeps integrations consistent with the platform’s evolution.",
+        "procedural_memory": [
+            "When a service needs to support new targeting modes (e.g., area_id in Home Assistant), first check if the framework provides a canonical validation schema that already supports the new feature.",
+            "Step 1: Identify the current service schema and its limitations.\n- Inspect where the service is registered (e.g., `hass.services.async_register`) and what `schema` argument is used.\n- Look for custom schemas that require only `entity_id` or otherwise restrict parameters.",
+            "Step 2: Look for platform-standard schemas.\n- In Home Assistant, review `homeassistant.helpers.config_validation` for shared schemas such as `ENTITY_SERVICE_SCHEMA` or others related to service calls.\n- Confirm that the shared schema supports the needed parameters (e.g., `entity_id`, `area_id`).",
+            "Step 3: Replace the custom schema with the shared schema.\n- Remove the custom `SCENE_SERVICE_SCHEMA` (or equivalent) definition.\n- Adjust imports: drop unused constants (`ATTR_ENTITY_ID`) and helper modules (`config_validation`), and import the shared schema instead (e.g., `from homeassistant.helpers.config_validation import ENTITY_SERVICE_SCHEMA`).\n- Update the service registration to pass `schema=ENTITY_SERVICE_SCHEMA` (or the appropriate shared schema).",
+            "Step 4: Clean up and keep consistency.\n- Ensure that no other parts of the integration rely on the removed custom schema.\n- Confirm that all services in the integration that target entities use the same standard schema where appropriate.",
+            "Step 5: Verify behavior and tests.\n- Add or update tests to cover calls using the new targeting mode (e.g., calling the service with `area_id` instead of `entity_id`).\n- Run the test suite (e.g., `tox`) and, if available, local manual tests via the developer tools or API to ensure both `entity_id` and `area_id` calls work correctly.",
+            "Step 6: Document any user-facing change.\n- If the service now supports new parameters (like `area_id`), update documentation examples and service description to mention them.\n- Ensure configuration or service docs reflect the new calling patterns."
+        ]
+    }
+}

@@ -1,0 +1,44 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant Homematic integration updated its pyhomematic dependency from 0.1.58 to 0.1.59 across manifest.json, requirements_all.txt, and requirements_test_all.txt to pick up upstream fixes and improvements.",
+        "keywords": [
+            "Homematic",
+            "pyhomematic",
+            "dependency update",
+            "integration manifest",
+            "requirements_all.txt",
+            "requirements_test_all.txt",
+            "Home Assistant",
+            "library version bump"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Homematic integration in Home Assistant was using pyhomematic==0.1.58. A new version, pyhomematic==0.1.59, was released upstream, likely containing bug fixes, device support updates, or other improvements. To align Home Assistant with the latest stable version of its Homematic backend library, the PR updated all references to the pyhomematic version: in the Homematic component's manifest.json and in the global requirements files (requirements_all.txt and requirements_test_all.txt). No functional code in the integration itself was changed; the fix consisted solely of synchronizing the dependency version across the project so that development and test environments use the same upgraded library.",
+        "semantic_memory": "This case exemplifies the importance of keeping third-party dependencies for integrations up to date and consistent across all configuration points. For Home Assistant and similar projects, integration manifests often declare their own requirements, while centralized files (like requirements_all.txt and requirements_test_all.txt) control pinned versions for production and CI. When upgrading a library that backs an integration, all of these declarations must be updated together to avoid mismatches between development, testing, and runtime environments. Regular dependency bump PRs help roll in upstream bug fixes and new device support without local code changes, but they must be accompanied by verification that tests pass and that any compatibility breaking changes are accounted for. The pattern is: detect new upstream version, bump the version in all relevant requirement references, regenerate derived requirement files if necessary, and validate via the project’s standard test suite.",
+        "procedural_memory": [
+            "Step-by-step instructions on how to diagnose and fix similar issues involving outdated third-party integration libraries:",
+            "Step 1: Identify the dependency and integration",
+            "Determine which integration or module is backed by the third-party library (e.g., Homematic uses pyhomematic). Confirm the current pinned version in the codebase (manifest.json, requirements files, setup configs).",
+            "Step 2: Check for new upstream releases",
+            "Visit the library’s repository or package index (e.g., PyPI) to see if newer stable versions are available and whether they include desired bug fixes, security updates, or new features.",
+            "Step 3: Assess compatibility and changelog",
+            "Review the changelog or release notes for breaking changes, deprecations, or new requirements. Decide whether the new version is safe to adopt or if code changes are also needed.",
+            "Step 4: Update integration-specific manifest",
+            "For Home Assistant-like architectures, update the integration’s manifest file to pin the new version. Example: change \"pyhomematic==0.1.58\" to \"pyhomematic==0.1.59\" in homeassistant/components/homematic/manifest.json.",
+            "Step 5: Update global requirements files",
+            "Update any central requirements files used for deployment and testing, such as requirements_all.txt and requirements_test_all.txt, to the same version number so all environments are consistent.",
+            "Step 6: Regenerate derived requirement files (if applicable)",
+            "If the project uses scripts to generate or validate requirements (e.g., python3 -m script.gen_requirements_all or hassfest in Home Assistant), run those scripts to keep generated files in sync.",
+            "Step 7: Run tests locally",
+            "Install the updated dependency in your development environment and run the full local test suite (e.g., tox, pytest) to catch regressions or API incompatibilities introduced by the new library version.",
+            "Step 8: Perform targeted integration tests",
+            "If possible, perform manual or automated functional tests against the integration (e.g., connect to actual Homematic hardware or use mocks) to verify that core workflows still operate correctly.",
+            "Step 9: Open or update the PR",
+            "Create or update a pull request containing only the version bumps and any necessary adaptation changes. Clearly state the new version and the motivation (bug fix, compatibility, new features, etc.).",
+            "Step 10: Coordinate with code owners and reviewers",
+            "Request review from the integration’s code owners or maintainers so they can validate that the update is safe and aligned with project policies.",
+            "Step 11: Monitor after merge",
+            "After the dependency update is merged and released, monitor issue trackers and logs for any new errors related to the updated library and be prepared to roll back or patch if unexpected regressions occur."
+        ]
+    }
+}

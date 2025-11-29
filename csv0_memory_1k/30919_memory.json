@@ -1,0 +1,33 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fix Ring camera integration timeout when fetching recording URL by catching requests.Timeout and degrading gracefully instead of failing the update.",
+        "keywords": [
+            "Ring camera",
+            "recording_url",
+            "timeout",
+            "requests.Timeout",
+            "Home Assistant",
+            "async_add_executor_job",
+            "camera endpoint timeout",
+            "network error handling",
+            "graceful degradation",
+            "homeassistant.components.ring.camera"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In the Home Assistant Ring integration, the camera entity periodically updates its last recording URL using the device's `recording_url` method, executed via `hass.async_add_executor_job`. In production, the Ring camera endpoint often timed out while fetching this URL. Previously, this timeout propagated as an unhandled exception, potentially breaking the camera update cycle and causing instability. The fix imported the `requests` library and wrapped the `recording_url` call in a try/except block catching `requests.Timeout`. On timeout, the code logs a warning including the camera entity ID and sets `video_url` to `None`, which allows the rest of the update logic to continue without crashing. If a valid URL is retrieved, the code behaves as before, updating `_last_video_id` from the current event. This change makes the Ring camera component robust against intermittent API timeouts from the recording endpoint.",
+        "semantic_memory": "When integrating with external services that use HTTP (e.g., device APIs, cloud endpoints), network timeouts are common and should be treated as expected, non-fatal conditions. Calls that may block (especially when offloaded via thread executors in async frameworks) should be wrapped in targeted exception handling, such as catching `requests.Timeout`. Instead of letting these exceptions bubble up and break the main update loop or entity lifecycle, the code should log a clear warning and fail gracefully, typically by skipping the update, keeping the previous state, or setting a safe default (e.g., `None`). This pattern improves system resilience and user experience, especially in home automation contexts where devices may be intermittently reachable. It also demonstrates a best practice for async environments: isolate blocking I/O in executor jobs and handle their failures explicitly.",
+        "procedural_memory": [
+            "When diagnosing intermittent failures in an integration that calls external HTTP APIs (like camera endpoints), check logs for unhandled timeout exceptions (e.g., requests.Timeout) during update or polling operations.",
+            "Step 1: Identify the failing path: Locate the code where the external API is called (e.g., a `recording_url` or similar method) and how it is invoked (direct call vs. run in an executor or background task).",
+            "Step 2: Confirm exception type: Reproduce the issue or inspect logs to determine the specific exception class (e.g., `requests.Timeout`, `requests.ConnectionError`, etc.). Ensure you know which library is raising it.",
+            "Step 3: Import the correct exception: In the module containing the call, import the HTTP client or its exception class (e.g., `import requests` or `from requests import Timeout`) so you can catch the precise error type.",
+            "Step 4: Wrap the external call in a try/except: Enclose the external API call (whether direct or inside `async_add_executor_job`/equivalent) in a `try` block, and `except` the specific timeout exception. For async frameworks, the `try/except` should be around the `await` of the executor job.",
+            "Step 5: Log a clear, non-fatal warning: In the `except` block, log a warning message with enough context to debug later (e.g., entity ID, endpoint name, operation being performed), but do not re-raise if the error is considered expected and recoverable.",
+            "Step 6: Provide a safe fallback value: Assign a sensible fallback (commonly `None`) when the call fails. Ensure downstream logic checks for this value before using it (e.g., only update internal state if the URL is truthy).",
+            "Step 7: Preserve normal behavior on success: Keep the existing logic intact for the success path (e.g., when `video_url` is not `None`, update the internal last video/event ID or state as before).",
+            "Step 8: Test under failure conditions: Write or run tests that simulate a timeout (by mocking the external call to raise `requests.Timeout`) and verify the system logs the warning and continues operating without crashing.",
+            "Step 9: Monitor in production: After deploying the fix, monitor logs to ensure timeouts are now reported as warnings instead of causing tracebacks, and verify that the component remains functional despite intermittent endpoint timeouts."
+        ]
+    }
+}

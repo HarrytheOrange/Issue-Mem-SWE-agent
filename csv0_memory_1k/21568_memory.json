@@ -1,0 +1,31 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant Xeoma camera integration was broken due to a bug in the pyxeoma 1.4.0 library. The fix was to bump the dependency to pyxeoma 1.4.1 in both the component REQUIREMENTS and requirements_all.txt, resolving issue #19306.",
+        "keywords": [
+            "Home Assistant",
+            "camera.xeoma",
+            "pyxeoma",
+            "dependency bug",
+            "library version bump",
+            "requirements_all.txt",
+            "integration failure",
+            "upstream library fix"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Home Assistant Xeoma camera integration was affected by a defect in its underlying Python library, pyxeoma version 1.4.0. Issue #19306 reported that the xeoma camera component was not working correctly, and investigation revealed the root cause was a bug in pyxeoma itself, not in the Home Assistant integration code. The pyxeoma maintainer released version 1.4.1 with the necessary fix. To resolve the issue, the pull request updated the dependency pin from 'pyxeoma==1.4.0' to 'pyxeoma==1.4.1' in two places: the component-specific REQUIREMENTS list in homeassistant/components/camera/xeoma.py and the global requirements_all.txt. This ensured that both development and production installations would consistently use the fixed library version, closing issue #19306.",
+        "semantic_memory": "This case illustrates a common pattern: application-level bugs can be caused by defects in third-party dependencies rather than the application code itself. When an upstream library releases a fix, the consuming project must update its version constraints everywhere they are defined to ensure the corrected version is installed. Pinning versions (e.g., 'lib==1.4.0') provides reproducibility but also means that bugfixes in newer versions will not be adopted until the pins are updated. For multi-layered dependency configurations (component-level REQUIREMENTS and global requirements files), consistency across all definitions is crucial to avoid version skew. A minimal, safe fix is often to bump to a specific patched version that is known to resolve the issue, rather than relaxing the constraint broadly, which could introduce new, untested behavior.",
+        "procedural_memory": [
+            "When an integration or feature suddenly breaks, check whether the underlying third-party library has known bugs or recent releases that address similar issues.",
+            "Step 1: Reproduce the reported issue and confirm that it is not caused by configuration errors or local environment problems.",
+            "Step 2: Identify the underlying dependency (e.g., pyxeoma for the Xeoma camera component) and its currently pinned version in the codebase (component REQUIREMENTS, global requirements files, or lockfiles).",
+            "Step 3: Review the upstream library’s changelog, issue tracker, and release notes to see if a newer version fixes the reported problem.",
+            "Step 4: In a local or test environment, manually install the newer library version and verify that it resolves the issue without introducing regressions.",
+            "Step 5: Update all relevant dependency declarations in the project to the fixed version (e.g., bump 'pyxeoma==1.4.0' to 'pyxeoma==1.4.1' in both the component module and global requirements files).",
+            "Step 6: Run the project’s test suite and any relevant integration tests for the affected component to confirm stability.",
+            "Step 7: Ensure consistency across environments by verifying that CI, production, and developer setups all use the updated version constraints.",
+            "Step 8: Reference the related issue in the commit or pull request (e.g., 'fixes #19306') so the bug tracking system automatically associates the fix.",
+            "Step 9: After merging, monitor user reports and logs for any follow-up issues that might arise from the dependency change."
+        ]
+    }
+}

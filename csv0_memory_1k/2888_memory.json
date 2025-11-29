@@ -1,0 +1,32 @@
+{
+    "search_index": {
+        "description_for_embedding": "Fixed stale and misleading documentation for Optuna's create_trial API, updating parameter requirements and Sphinx formatting after the default trial state changed to TrialState.COMPLETE.",
+        "keywords": [
+            "Optuna",
+            "create_trial",
+            "TrialState.COMPLETE",
+            "documentation bug",
+            "API docs out of date",
+            "Sphinx formatting",
+            "parameter requirements",
+            "multi-objective optimization",
+            "default argument behavior",
+            "docstring consistency"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Optuna project had a documentation bug in the create_trial helper function (optuna/trial/_frozen.py). The implementation had been changed earlier so that the default trial state became TrialState.COMPLETE, but the docstring and note section still reflected older behavior. The docs said that value and values must be specified when state is None or TrialState.COMPLETE, which was both stale and confusing given that the default is now COMPLETE. Additionally, the Sphinx formatting for referring to the TrialState enum was inconsistent (using literal backticks instead of a proper :class: reference). The fix updated the note and parameter descriptions so that they only mention TrialState.COMPLETE as the condition under which value/values are required, removing references to state being None. It also changed \"``TrialState.COMPLETE``\" to \":class:`TrialState.COMPLETE`\" and slightly adjusted spacing for correct Sphinx list formatting. No runtime behavior changed; this was a documentation-only correction to keep the public API docs aligned with the actual behavior introduced in a previous PR (#2429).",
+        "semantic_memory": "This case illustrates the importance of keeping API documentation synchronized with code changes, especially when changing defaults or parameter semantics. When a function's behavior is modified (e.g., changing the default state or required arguments), its docstrings and user-facing documentation must be updated at the same time, or users will rely on incorrect information. For libraries that use Sphinx or similar tools, correct cross-referencing (:class:, :func:, etc.) and formatting are essential for readable, navigable docs. Documentation should reflect the current contract: which parameters are required under which conditions, and which defaults are implied. When code evolves, removing obsolete conditions (like mentioning state=None when that is no longer a meaningful or default value) avoids confusion. The broader best practice is to treat documentation as part of the public API surface and review it whenever behavior, defaults, or type contracts change.",
+        "procedural_memory": [
+            "When code behavior changes (e.g., default values, required arguments), always audit and update the corresponding documentation and docstrings.",
+            "Step 1: Identify the behavior change. For example, note that a function's default parameter (such as state) was changed in an earlier PR or commit.",
+            "Step 2: Search for all usages and mentions of that parameter in documentation and code comments (docstrings, README, Sphinx docs, tutorials). Pay particular attention to sections describing required/optional parameters and default values.",
+            "Step 3: Compare the documented behavior (conditions under which parameters are required, default states, return values) with the actual implementation in code. Note any mismatches or outdated references (e.g., mentions of state=None when the default is now TrialState.COMPLETE).",
+            "Step 4: Update the docstrings and documentation to reflect the real behavior. Clearly specify conditions, such as: \"value must be specified if state is TrialState.COMPLETE\" instead of referencing obsolete states or conditions.",
+            "Step 5: Ensure formatting is correct for the documentation system. For Sphinx, replace generic backticks with proper roles like :class:`TrialState.COMPLETE` and :func:`module.func`, and fix list indentation so bullet lists render properly.",
+            "Step 6: Rebuild or preview the documentation locally (e.g., Sphinx HTML build) to verify that cross-references resolve correctly and the layout/formatting is as expected.",
+            "Step 7: If possible, add or update tests that validate documentation or at least enforce docstring presence and some consistency (e.g., using doctests or custom checks for specific phrases), so regressions are less likely.",
+            "Step 8: In the PR description, link the behavior-changing PR (e.g., the one that changed the default) and explicitly mention that this PR brings the docs in line with that change so reviewers can quickly validate the intent."
+        ]
+    }
+}

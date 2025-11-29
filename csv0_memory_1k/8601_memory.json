@@ -1,0 +1,35 @@
+{
+    "search_index": {
+        "description_for_embedding": "Home Assistant keyboard_remote component crashed or errored on startup when the configured input device was not connected, because it unconditionally accessed /dev/input/by-id (e.g., os.listdir) which may not exist. The fix adds an os.path.isdir check before listing the directory and only logs possible device names/descriptors if the directory exists, preventing FileNotFoundError and allowing graceful handling of missing input devices.",
+        "keywords": [
+            "homeassistant",
+            "keyboard_remote",
+            "/dev/input/by-id",
+            "evdev",
+            "input devices",
+            "FileNotFoundError",
+            "missing device path",
+            "os.listdir",
+            "os.path.isdir",
+            "startup crash",
+            "device-not-connected",
+            "permissions",
+            "linux input subsystem"
+        ]
+    },
+    "agent_memory": {
+        "episodic_memory": "In this incident, the Home Assistant `keyboard_remote` component attempted to open and inspect Linux input device paths when the configured keyboard device was not connected at startup. The component logged extended diagnostic information by listing `/dev/input/by-id` and showing possible device descriptors. However, on some systems or configurations, the `/dev/input/by-id` directory does not exist at all when no input devices are connected (or in restricted environments like containers). The code called `os.listdir('/dev/input/by-id')` unconditionally, which raised a `FileNotFoundError` and caused errors during Home Assistant startup. The fix refactored the initialization logic: when `self.dev` is `None`, it first logs a basic debug message indicating the keyboard is not connected and suggesting checking `/dev/input/event*` permissions. It then defines `id_folder = '/dev/input/by-id/'` and uses `os.path.isdir(id_folder)` to check whether this directory exists before trying to list it. Only if the directory exists does it compute `device_names` from `list_devices()` and log a second debug message with possible device names and descriptors from `os.listdir(id_folder)`. This prevents exceptions when the folder is absent and makes the component fail gracefully while still providing helpful debugging information when appropriate.",
+        "semantic_memory": "This case illustrates a common robustness issue around interacting with the filesystem and hardware device paths: diagnostic or convenience logging that assumes the existence of certain system directories can itself become a source of runtime failures. When software interacts with `/dev`, `/sys`, or other environment-dependent paths, it must treat them as optional and check for existence before accessing them. In particular, calls like `os.listdir`, opening a file, or constructing wrappers around device files (e.g., `InputDevice(file_name)`) should be guarded by `os.path.exists` or `os.path.isdir` when the path may not exist in all deployments (e.g., containers, chroot, minimal systems, or when hardware is disconnected). Another pattern reinforced here is separating core logic (e.g., failing gracefully when a hardware device is missing) from diagnostic logging that enumerates system resources. The system should still start or degrade gracefully even if the environment does not support those diagnostic operations. More generally, when handling hardware or external resources, the code should be defensive: assume resources might be missing, inaccessible, or permission-restricted, and design error handling such that user-facing components continue to run and provide useful debug logs without crashing.",
+        "procedural_memory": [
+            "When diagnosing errors related to filesystem or device path access (e.g., /dev/input/by-id), first reproduce the issue in an environment where the relevant device is disconnected or missing, and observe stack traces for FileNotFoundError or similar exceptions.",
+            "Step 1: Check the stack trace or log output to see which exact path access (e.g., os.listdir, open, InputDevice initialization) is failing and under what conditions (e.g., device not connected, containerized environment).",
+            "Step 2: Inspect the code path that runs when the resource (device, directory, file) is missing. Identify any unconditional filesystem operations that assume existence, such as os.listdir('/dev/input/by-id'), open('/some/path'), or libraries that implicitly open device files.",
+            "Step 3: For each of these operations, decide whether the resource is guaranteed to exist in all supported environments. If not guaranteed, wrap the operation in a conditional check like os.path.exists(path) or os.path.isdir(path) before using it.",
+            "Step 4: Refactor logging or diagnostic code so that helpful information (e.g., listing potential devices) is optional and guarded by existence checks. The system should log a clear base error message even if further diagnostics cannot be gathered.",
+            "Step 5: Ensure that the main control flow handles missing or inaccessible resources gracefully—e.g., set the device reference to None, log a warning/debug message, and avoid crashing the application or blocking startup.",
+            "Step 6: Add or run tests in an environment that simulates missing files or directories (e.g., using temporary directories, monkeypatching, or running in a container without those paths) to confirm that the application no longer raises errors and logs the intended messages.",
+            "Step 7: Document in code comments or component docs that certain diagnostic information may not be available when specific device directories do not exist, clarifying that this is expected and not necessarily an error.",
+            "Step 8: When working with Linux input devices or similar hardware, also consider permission-related failures: log clear suggestions like checking /dev/input/event* permissions, but ensure that attempts to enumerate or inspect those paths are exception-safe."
+        ]
+    }
+}
