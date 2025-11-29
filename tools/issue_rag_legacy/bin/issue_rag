@@ -1,0 +1,129 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+import urllib.error
+import urllib.request
+from typing import Any
+
+
+DEFAULT_SERVICE_URL = "http://host.docker.internal:8000/match"
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="Forward issue descriptions to the host-side issue_rag service."
+    )
+    parser.add_argument("issue", help="Issue description text to match.")
+    parser.add_argument(
+        "--memory-id",
+        action="append",
+        help="Restrict matching to specific memory file stems (e.g., 3126_memory). Can be repeated.",
+    )
+    parser.add_argument(
+        "--top-k",
+        type=int,
+        default=3,
+        help="Number of agent memories to request (default: 3).",
+    )
+    parser.add_argument(
+        "--service-url",
+        type=str,
+        default=None,
+        help="HTTP endpoint for the host issue_rag service (default: ISSUE_RAG_SERVICE_URL, then host.docker.internal).",
+    )
+    parser.add_argument(
+        "--timeout",
+        type=float,
+        default=30.0,
+        help="HTTP timeout in seconds (default: 30).",
+    )
+    return parser
+
+
+class RequestError(RuntimeError):
+    """Raised when the host service cannot be reached."""
+
+
+def call_service(url: str, payload: dict[str, Any], timeout: float) -> dict[str, Any]:
+    data = json.dumps(payload).encode("utf-8")
+    request = urllib.request.Request(
+        url,
+        data=data,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            body = response.read().decode("utf-8")
+    except urllib.error.HTTPError as exc:  # pragma: no cover
+        detail = exc.read().decode("utf-8", errors="ignore")
+        message = detail or exc.reason
+        raise RequestError(f"HTTP {exc.code}: {message}") from exc
+    except urllib.error.URLError as exc:  # pragma: no cover
+        raise RequestError(str(exc)) from exc
+    return json.loads(body)
+
+
+def format_matches(matches: list[dict[str, Any]]) -> None:
+    if not matches:
+        print("No matching agent memories found.")
+        return
+    print("=" * 80)
+    print(f"Found {len(matches)} relevant agent memories (sorted by similarity):")
+    print("=" * 80)
+
+    for index, match in enumerate(matches, start=1):
+        memory_id = match.get("memory_id", "unknown")
+        score = match.get("similarity_score", 0.0)
+        print(f"\n[Memory {index}] memory_id: {memory_id} | similarity_score: {score:.4f}")
+        print("-" * 80)
+        agent_memory = match.get("agent_memory", {})
+        if isinstance(agent_memory, dict):
+            episodic = agent_memory.get("episodic_memory", "")
+            semantic = agent_memory.get("semantic_memory", "")
+            procedural = agent_memory.get("procedural_memory", [])
+            if episodic:
+                print("\nEpisodic Memory:")
+                print(episodic)
+            if semantic:
+                print("\nSemantic Memory:")
+                print(semantic)
+            if procedural and isinstance(procedural, list):
+                print("\nProcedural Memory:")
+                for step in procedural:
+                    if isinstance(step, str):
+                        print(f"  • {step}")
+        else:
+            print(json.dumps(agent_memory, ensure_ascii=False, indent=2))
+        if index != len(matches):
+            print("\n" + "=" * 80)
+    print("\n" + "=" * 80)
+
+
+def main() -> None:
+    args = build_parser().parse_args()
+    issue_text = args.issue.strip()
+    if not issue_text:
+        raise ValueError("Issue description must not be empty.")
+    service_url = args.service_url or os.getenv("ISSUE_RAG_SERVICE_URL") or DEFAULT_SERVICE_URL
+    payload = {
+        "issue": issue_text,
+        "memory_ids": args.memory_id,
+        "top_k": args.top_k,
+    }
+    try:
+        response = call_service(service_url, payload, args.timeout)
+    except RequestError as exc:
+        print(f"issue_rag error: failed to contact {service_url}: {exc}", file=sys.stderr)
+        raise SystemExit(1) from exc
+    matches = response.get("matches", [])
+    format_matches(matches)
+
+
+if __name__ == "__main__":
+    main()
+

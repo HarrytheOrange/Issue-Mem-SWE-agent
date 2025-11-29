@@ -1,0 +1,24 @@
+tools:
+  issue_search_rag:
+    # 修正点：这里必须写 <topk> 而不是 <n>，因为它必须和 arguments 里的 name: topk 对应
+    signature: "issue_search_rag <query> --topk <topk>"
+    docstring: |
+      Search for relevant patches and issues using a local ChromaDB vector search service.
+      Returns the most similar code patches based on the semantic meaning of the query.
+
+      Usage examples:
+      - issue_search_rag "memory leak in database connection"
+      - issue_search_rag "null pointer exception in login handler" --topk 5
+
+      Notes:
+      - Requires the local search service running on port 9012.
+      - Returns repo name, file path, PR number, and a preview of the patch diff.
+    arguments:
+      - name: query
+        type: string
+        description: The natural language description of the issue or bug to search for.
+        required: true
+      - name: topk
+        type: integer
+        description: Number of results to return (between 1 and 10). Default is 3.
+        required: false

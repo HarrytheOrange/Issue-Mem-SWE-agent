@@ -48,6 +48,7 @@ dependencies = [
     "unidiff",
     "simple-parsing",
     "rich-argparse",
+    "fastapi",
     "flask",
     "flask-cors",
     "flask-socketio",
@@ -61,6 +62,8 @@ dependencies = [
     "tabulate",
     "textual>=1.0.0",
     "requests",
+    "sentence-transformers",
+    "uvicorn",
 ]
 
 [project.scripts]
