@@ -7,6 +7,10 @@ trajectories/**
 data/**
 *.env
 !tools/*
+*.bin
+*.sqlite3
+*.json
+*.jsonl
 
 # -------- automatically generated files --------
 

@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Normal wrapper script: finds Python and runs the Python CLI.
+# No inline Python here; easy to modify and maintain.
+
+set -euo pipefail
+
+# Prefer python3, fallback to python
+_pybin="$(command -v python3 || true)"
+if [ -z "$_pybin" ]; then
+  _pybin="$(command -v python || true)"
+fi
+if [ -z "$_pybin" ]; then
+  echo "issue_search_rag: Python interpreter not found (python3/python)." >&2
+  exit 127
+fi
+
+# Resolve the directory of this script and the Python CLI path
+script_dir="$(cd "$(dirname "$0")" && pwd)"
+pycli="$script_dir/issue_search_rag.py"
+
+if [ ! -f "$pycli" ]; then
+  echo "issue_search_rag: Python CLI not found at $pycli" >&2
+  exit 1
+fi
+
+exec "$_pybin" "$pycli" "$@"

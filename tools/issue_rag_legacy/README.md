@@ -15,22 +15,19 @@ tools:
     ISSUE_RAG_MEMORY_DIR: /mnt/csv0_memory_1k
 ```
 
-2. Run SWE-agent with docker volume mount:
+2. Run SWE-agent with a Linux docker volume mount (adjust the host path):
 ```bash
 sweagent run \
   --config config/gpt5nano.yaml \
-  --env.deployment.docker_args='["-v", "C:/Users/Admin/Documents/GitHub/Issue-Mem-SWE-agent/csv0_memory_1k:/mnt/csv0_memory_1k"]' \
+  --env.deployment.docker_args='["-v", "/home/you/csv0_memory_1k:/mnt/csv0_memory_1k"]' \
   ...
 ```
-
-**Note**: Adjust the Windows path format for your system. Use forward slashes or escaped backslashes in the docker_args.
 
 ### Option 2: Copy to Bundle (For Small Files)
 
 If the memory files are small, you can copy them to the bundle directory:
 ```bash
-# On Windows (PowerShell)
-Copy-Item -Path csv0_memory_1k -Destination tools\issue_rag\csv0_memory_1k -Recurse
+cp -r /path/to/csv0_memory_1k tools/issue_rag/csv0_memory_1k
 ```
 
 The tool will automatically find `csv0_memory_1k` in the bundle directory.
