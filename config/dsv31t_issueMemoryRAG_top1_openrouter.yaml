@@ -24,7 +24,7 @@ agent:
       3. Edit the sourcecode of the repo to resolve the issue
       4. Rerun your reproduce script and confirm that the error is fixed!
       5. Think about edgecases and make sure your fix handles them as well
-      Before starting, use `issue_search_rag "<query>" --topk 1` to fetch the most similar patch from the local dataset in /home/harry/Issue-Mem-SWE-agent/data. You can only use topk=1. This provides grounding examples and relevant code changes to guide your approach. Make sure the host-side search service is running and reachable via the URL defined by the `ISSUE_SEARCH_RAG_URL` environment variable.
+      Before starting, use `issue_memory_rag "<query>" --topk 1` to fetch the most similar structured memory from the local dataset in /home/harry/Issue-Mem-SWE-agent/data. You can only use topk=1. This provides grounding examples and relevant experience-based guidance to steer your approach. Make sure the host-side search service is running and reachable via the URL defined by the `ISSUE_MEMORY_RAG_URL` environment variable.
       Your thinking should be thorough and so it's fine if it's very long.
     next_step_template: |-
       OBSERVATION:
@@ -39,13 +39,13 @@ agent:
       PIP_PROGRESS_BAR: 'off'
       TQDM_DISABLE: '1'
       GIT_PAGER: cat
-      ISSUE_SEARCH_RAG_URL: http://host.docker.internal:9012/search
-      ISSUE_SEARCH_RAG_DEFAULT_TOPK: '1'
+      ISSUE_MEMORY_RAG_URL: http://host.docker.internal:9013/search
+      ISSUE_MEMORY_RAG_DEFAULT_TOPK: '1'
     bundles:
       - path: tools/registry
       - path: tools/edit_anthropic
       - path: tools/review_on_submit_m
-      - path: tools/issue_search_rag
+      - path: tools/issue_memory_rag
     registry_variables:
       USE_FILEMAP: 'true'
       SUBMIT_REVIEW_MESSAGES:
@@ -72,8 +72,11 @@ agent:
     - type: cache_control
       last_n_messages: 2
   model:
-    name: deepseek/deepseek-v3-1-terminus
-    api_base: https://ark.cn-beijing.volces.com/api/v1
+    name: deepseek/deepseek-v3.1-terminus
+    api_base: https://openrouter.ai/api/v1
+    api_key: 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
+    completion_kwargs:
+      custom_llm_provider: openai
     temperature: 1.0
     top_p: null
     max_input_tokens: 131072
