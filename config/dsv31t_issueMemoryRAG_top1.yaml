@@ -74,7 +74,6 @@ agent:
   model:
     name: deepseek/deepseek-v3-1-terminus
     api_base: https://ark.cn-beijing.volces.com/api/v1
-    api_key: 1a6d8e05-0978-496b-87c1-fd4fb3885e7c
     temperature: 1.0
     top_p: null
     max_input_tokens: 131072
