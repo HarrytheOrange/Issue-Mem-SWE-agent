@@ -1,0 +1,24 @@
+tools:
+  issue_memory_rag:
+    signature: "issue_memory_rag <query> --topk <topk>"
+    docstring: |
+      Search structured issue memories using the dedicated ChromaDB service.
+      Returns the most relevant past fixes/experiences (episodic, semantic, procedural) for the query.
+
+      Usage examples:
+      - issue_memory_rag "improve logging UX"
+      - issue_memory_rag "optimize SQL pagination" --topk 5
+
+      Notes:
+      - Set ISSUE_MEMORY_RAG_URL if the service runs outside the current container (defaults to http://127.0.0.1:9013/search).
+      - Set ISSUE_MEMORY_RAG_DEFAULT_TOPK to override the default top-k value (range 1-10, defaults to 3).
+      - Requires the memory search service running on port 9013.
+    arguments:
+      - name: query
+        type: string
+        description: Natural language description of the issue to match against past memories.
+        required: true
+      - name: topk
+        type: integer
+        description: Number of results to return (between 1 and 10). Default is 3.
+        required: false
