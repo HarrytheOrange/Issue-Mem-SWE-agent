@@ -66,22 +66,14 @@ def print_memory_entry(item: Dict[str, Any]) -> None:
     print(f"   Keywords:     {item.get('keywords', 'N/A')}")
     print(f"   Similarity:   {item.get('similarity_score', 0):.4f}")
 
-    description = item.get("description") or ""
+    description = item.get("description") or item.get("document") or ""
     if description:
         print("   Description:")
         print(textwrap.indent(_truncate(description), "      "))
 
-    episodic = item.get("episodic_memory") or ""
-    if episodic:
-        print("   Episodic Memory:")
-        print(textwrap.indent(_truncate(episodic), "      "))
-
-    semantic = item.get("semantic_memory") or ""
-    if semantic:
-        print("   Semantic Memory:")
-        print(textwrap.indent(_truncate(semantic), "      "))
-
     procedural = item.get("procedural_memory") or ""
+    if not procedural and description:
+        procedural = description
     if procedural:
         print("   Procedural Steps:")
         print(textwrap.indent(_truncate(procedural), "      "))

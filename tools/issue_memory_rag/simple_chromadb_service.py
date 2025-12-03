@@ -20,8 +20,8 @@ app = Flask(__name__)
 
 # 数据与模型路径
 MODEL_PATH: Final[Path] = Path("/home/harry/Issue-Mem-SWE-agent/data/issue_pr_v0/embedding")
-DB_DIR: Final[Path] = Path("/home/harry/Issue-Mem-SWE-agent/data/issue_memories_csv0_1k")
-COLLECTION_NAME: Final[str] = "issue_memories_csv0_1k"
+DB_DIR: Final[Path] = Path("/home/harry/Issue-Mem-SWE-agent/data/issue_memories_verified_top5_v0")
+COLLECTION_NAME: Final[str] = "issue_memories_verified_top5_v0"
 
 # 全局变量
 chroma_client = None
