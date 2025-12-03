@@ -4,7 +4,10 @@ import asyncio
 import copy
 import json
 import logging
+import os
 import time
+import urllib.error
+import urllib.request
 from pathlib import Path, PurePosixPath
 from typing import Annotated, Any, Literal
 
@@ -57,6 +60,40 @@ from sweagent.utils.log import get_logger
 from sweagent.utils.patch_formatter import PatchFormatter
 
 
+class IssueSearchRAGContextConfig(BaseModel):
+    """Configuration for injecting issue_search_rag results into templates."""
+
+    enabled: bool = False
+    field_name: str = "issue_rag_context"
+    topk: int = Field(default=1, ge=1, le=10)
+    service_url: str | None = None
+    service_url_env: str = "ISSUE_SEARCH_RAG_URL"
+    default_service_url: str = "http://host.docker.internal:9012/search"
+    timeout: float = Field(default=20.0, gt=0)
+    max_patch_chars: int = Field(default=4000, ge=256)
+    failure_message: str = "No retrieved issue/PR example available."
+
+    def resolve_service_url(self) -> str:
+        return self.service_url or os.environ.get(self.service_url_env, self.default_service_url)
+
+
+class IssueMemoryRAGContextConfig(BaseModel):
+    """Configuration for injecting issue_memory_rag results into templates."""
+
+    enabled: bool = False
+    field_name: str = "issue_memory_context"
+    topk: int = Field(default=1, ge=1, le=10)
+    service_url: str | None = None
+    service_url_env: str = "ISSUE_MEMORY_RAG_URL"
+    default_service_url: str = "http://host.docker.internal:9013/search"
+    timeout: float = Field(default=20.0, gt=0)
+    max_section_chars: int = Field(default=1200, ge=128)
+    failure_message: str = "No retrieved experience memory available."
+
+    def resolve_service_url(self) -> str:
+        return self.service_url or os.environ.get(self.service_url_env, self.default_service_url)
+
+
 class TemplateConfig(BaseModel):
     """This configuration is used to define almost all message templates that are
     formatted by the agent and sent to the LM.
@@ -91,6 +128,9 @@ class TemplateConfig(BaseModel):
     """Paths to demonstrations. If path is not absolute, it is assumed to be
     relative to the SWE_AGENT_CONFIG_ROOT (if set) or the SWE-agent repository root
     """
+
+    issue_search_rag_context: IssueSearchRAGContextConfig | None = None
+    issue_memory_rag_context: IssueMemoryRAGContextConfig | None = None
 
     put_demos_in_history: bool = False
     """If True, add demonstration to history instead of as a single message"""
@@ -481,6 +521,7 @@ class DefaultAgent(AbstractAgent):
         self.history = []
         self._trajectory = []
         self.info = AgentInfo()
+        self._template_extra_fields: dict[str, Any] = {}
 
         self._chook = CombinedAgentHook()
 
@@ -600,6 +641,7 @@ class DefaultAgent(AbstractAgent):
         assert self._env is not None
         assert self._problem_statement is not None
         self._env.set_env_variables({"PROBLEM_STATEMENT": self._problem_statement.get_problem_statement_for_env()})
+        self._prepare_template_extra_fields()
         self.add_system_message_to_history()
         self.add_demonstrations_to_history()
         self.add_instance_template_to_history(state=self.tools.get_state(self._env))
@@ -655,6 +697,127 @@ class DefaultAgent(AbstractAgent):
                 },
             )
 
+    def _prepare_template_extra_fields(self) -> None:
+        """Populate extra template variables such as issue_search_rag context."""
+        self._template_extra_fields = {}
+        memory_config = self.templates.issue_memory_rag_context
+        if memory_config and memory_config.enabled:
+            memory_context = self._get_issue_memory_rag_context(memory_config)
+            self._template_extra_fields[memory_config.field_name] = memory_context
+
+        search_config = self.templates.issue_search_rag_context
+        if search_config and search_config.enabled:
+            context = self._get_issue_search_rag_context(search_config)
+            self._template_extra_fields[search_config.field_name] = context
+
+    def _get_issue_memory_rag_context(self, config: IssueMemoryRAGContextConfig) -> str:
+        """Fetch structured memory snippets via the local memory RAG service."""
+        assert self._problem_statement is not None
+        query = self._problem_statement.get_problem_statement()
+        request_body = json.dumps({"query": query, "topk": config.topk}).encode("utf-8")
+        req = urllib.request.Request(
+            config.resolve_service_url(),
+            data=request_body,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=config.timeout) as resp:
+                payload = json.load(resp)
+        except Exception as exc:  # noqa: BLE001 - want a single fallback path
+            self.logger.warning("issue_memory_rag request failed: %s", exc)
+            return config.failure_message
+
+        if not payload.get("success"):
+            self.logger.warning("issue_memory_rag returned error: %s", payload.get("error"))
+            return config.failure_message
+
+        results = payload.get("results") or []
+        if not results:
+            return config.failure_message
+
+        def _clip(text: str) -> str:
+            text = text.strip()
+            max_chars = config.max_section_chars
+            if max_chars and len(text) > max_chars:
+                return text[: max_chars] + "\n... [truncated] ..."
+            return text
+
+        summaries: list[str] = []
+        for idx, item in enumerate(results[: config.topk], start=1):
+            score = item.get("similarity_score")
+            try:
+                score_str = f"{float(score):.4f}"
+            except (TypeError, ValueError):
+                score_str = "N/A"
+            description_raw = item.get("description") or item.get("document") or ""
+            if not isinstance(description_raw, str):
+                description_raw = str(description_raw)
+            description = description_raw.strip()
+            procedural_raw = item.get("procedural_memory") or ""
+            if not isinstance(procedural_raw, str):
+                procedural_raw = str(procedural_raw)
+            procedural = procedural_raw.strip()
+            parts = [
+                f"Memory #{idx} (similarity {score_str})",
+                f"- Source: {item.get('source_file', 'N/A')}",
+            ]
+            if description:
+                parts.append("Summary:\n" + _clip(description))
+            if procedural:
+                parts.append("Procedural Notes:\n" + _clip(procedural))
+            summaries.append("\n".join(parts))
+
+        return "\n\n".join(summaries)
+
+    def _get_issue_search_rag_context(self, config: IssueSearchRAGContextConfig) -> str:
+        """Fetch the closest issue/PR pair via the local RAG service."""
+        assert self._problem_statement is not None
+        query = self._problem_statement.get_problem_statement()
+        request_body = json.dumps({"query": query, "topk": config.topk}).encode("utf-8")
+        req = urllib.request.Request(
+            config.resolve_service_url(),
+            data=request_body,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=config.timeout) as resp:
+                payload = json.load(resp)
+        except Exception as exc:  # noqa: BLE001 - want a single fallback path
+            self.logger.warning("issue_search_rag request failed: %s", exc)
+            return config.failure_message
+
+        if not payload.get("success"):
+            self.logger.warning("issue_search_rag returned error: %s", payload.get("error"))
+            return config.failure_message
+
+        results = payload.get("results") or []
+        if not results:
+            return config.failure_message
+
+        best = results[0]
+        patch = (best.get("patch") or "").strip()
+        if config.max_patch_chars and len(patch) > config.max_patch_chars:
+            patch = patch[: config.max_patch_chars] + "\n... [truncated] ..."
+
+        score = best.get("similarity_score")
+        try:
+            score_str = f"{float(score):.4f}"
+        except (TypeError, ValueError):
+            score_str = "N/A"
+
+        lines = [
+            "Closest retrieved issue/PR example:",
+            f"- Repo: {best.get('repo', 'N/A')}",
+            f"- File: {best.get('file', 'N/A')}",
+            f"- PR: {best.get('pr_number', 'N/A')}",
+            f"- Similarity: {score_str}",
+            "Patch:",
+            patch or "(empty patch)",
+        ]
+        return "\n".join(lines)
+
     def _get_format_dict(self, **kwargs) -> dict[str, Any]:
         """Get the dictionary of key value pairs used to format the templates
 
@@ -670,6 +833,7 @@ class DefaultAgent(AbstractAgent):
             problem_statement=self._problem_statement.get_problem_statement(),
             repo=self._env.repo.repo_name if self._env.repo is not None else "",
             **self._problem_statement.get_extra_fields(),
+            **self._template_extra_fields,
         )
 
     def _add_templated_messages_to_history(

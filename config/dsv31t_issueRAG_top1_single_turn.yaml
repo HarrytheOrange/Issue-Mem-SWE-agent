@@ -5,6 +5,9 @@ agent:
   templates:
     system_template: |-
       You are a helpful assistant that can interact with a computer to solve tasks.
+
+      A single retrieved issue/PR example is provided for grounding:
+      {{issue_rag_context}}
     instance_template: |-
       <uploaded_files>
       {{working_dir}}
@@ -24,8 +27,14 @@ agent:
       3. Edit the sourcecode of the repo to resolve the issue
       4. Rerun your reproduce script and confirm that the error is fixed!
       5. Think about edgecases and make sure your fix handles them as well
-      Before starting, use `issue_rag "<issue text>"` to automatically retrieve relevant prior experiences from similar issues. This will provide episodic, semantic, and procedural memories that can guide your approach.
       Your thinking should be thorough and so it's fine if it's very long.
+    issue_search_rag_context:
+      enabled: true
+      field_name: issue_rag_context
+      service_url: http://127.0.0.1:9012/search
+      topk: 1
+      max_patch_chars: 30000
+      failure_message: "No retrieved issue/PR example was found; continue without it."
     next_step_template: |-
       OBSERVATION:
       {{observation}}
@@ -39,10 +48,13 @@ agent:
       PIP_PROGRESS_BAR: 'off'
       TQDM_DISABLE: '1'
       GIT_PAGER: cat
+      ISSUE_SEARCH_RAG_URL: http://host.docker.internal:9012/search
+      ISSUE_SEARCH_RAG_DEFAULT_TOPK: '1'
     bundles:
       - path: tools/registry
       - path: tools/edit_anthropic
       - path: tools/review_on_submit_m
+      - path: tools/issue_search_rag
     registry_variables:
       USE_FILEMAP: 'true'
       SUBMIT_REVIEW_MESSAGES:
@@ -69,10 +81,12 @@ agent:
     - type: cache_control
       last_n_messages: 2
   model:
-    name: openai/gpt-5.1
+    name: deepseek/deepseek-v3-1-terminus
+    api_base: https://ark.cn-beijing.volces.com/api/v1
     temperature: 1.0
     top_p: null
-    max_input_tokens: 400000
-    max_output_tokens: 400000
-    custom_input_cost_per_1k_tokens: 0.05
-    custom_output_cost_per_1k_tokens: 0.40
+    max_input_tokens: 131072
+    max_output_tokens: 131072
+    litellm_model_registry: config/deepseek_registry.json
+    custom_input_cost_per_1k_tokens: 0.000216
+    custom_output_cost_per_1k_tokens: 0.0008
