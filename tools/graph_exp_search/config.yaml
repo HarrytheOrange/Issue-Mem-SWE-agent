@@ -1,0 +1,20 @@
+tools:
+  exp_search:
+    signature: "exp_search <query>"
+    docstring: |
+      Semantic search client for the local bug-fix experience database.
+      Sends a natural language query to the backend service and retrieves the Top-K most relevant experience summaries.
+
+      Usage examples:
+      - exp_search "NullPointerException when user login with empty password"
+      - exp_search "tensor shape mismatch in forward pass"
+
+      Notes:
+      - Returns a list of candidates containing: ID, Macro Category, and a brief Description.
+      - You must capture the 'ID' from the output to use with the 'exp_read' tool.
+    arguments:
+      - name: query
+        type: string
+        description: |
+          A natural language description of the bug, error message, or traceback summary.
+        required: true
