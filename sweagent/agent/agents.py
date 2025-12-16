@@ -7,6 +7,7 @@ import logging
 import os
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path, PurePosixPath
 from typing import Annotated, Any, Literal
@@ -94,6 +95,77 @@ class IssueMemoryRAGContextConfig(BaseModel):
         return self.service_url or os.environ.get(self.service_url_env, self.default_service_url)
 
 
+class ExperienceSubagentContextConfig(BaseModel):
+    """Configuration for running an LLM-driven experience search subagent (exp_search/exp_read)."""
+
+    enabled: bool = False
+    """If True, run the subagent at setup time and expose its output as a template variable."""
+
+    field_name: str = "experience_subagent_context"
+    """Template variable name to inject the subagent output into."""
+
+    inject_as_message: bool = False
+    """If True, also inject the retrieved context as an extra message at the end of setup."""
+
+    message_template: str = (
+        "Retrieved relevant historical fix experiences (use as guidance, not as ground truth):\n\n"
+        "{{experience_context}}"
+    )
+    """Template for the injected startup message. Available variables: `experience_context`."""
+
+    # exp_search/exp_read service configuration
+    search_url: str | None = None
+    search_url_env: str = "GRAPH_EXP_SEARCH_URL"
+    default_search_url: str = "http://172.30.182.85:9030/search"
+
+    read_url: str | None = None
+    read_url_env: str = "GRAPH_EXP_READ_URL"
+    default_read_url: str = "http://172.30.182.85:9030/get_experience"
+
+    timeout: float = Field(default=10.0, gt=0)
+
+    # retrieval / loop controls
+    top_k: int = Field(default=10, ge=1, le=50)
+    max_rounds: int = Field(default=3, ge=0, le=1000)
+    """Maximum number of search rounds. If set to 0, search until the model decides to stop (with safety guards)."""
+    read_k_per_round: int = Field(default=2, ge=0, le=10)
+    """Maximum number of experiences to read and include in the returned context (cap is applied)."""
+
+    output_mode: Literal["summary", "raw"] = "summary"
+    """If 'raw', return concatenated exp_read contents (up to read_k_per_round). If 'summary', return an LLM summary."""
+
+    debug: bool = False
+    """If True, log the retrieval loop (queries, decisions, selections) for debugging."""
+
+    # output sizing
+    max_chars_per_experience: int = Field(default=2000, ge=256)
+    max_total_chars: int = Field(default=8000, ge=1024)
+
+    # LLM controls
+    decision_temperature: float | None = Field(default=0.0, ge=0.0, le=2.0)
+    summary_temperature: float | None = Field(default=0.2, ge=0.0, le=2.0)
+
+    failure_message: str = "No retrieved experience available."
+    """Returned when the subagent believes there are no relevant experiences for the query."""
+
+    error_message: str = "Experience retrieval failed; continue without it."
+    """Returned when retrieval fails due to service/model/config errors."""
+
+    def resolve_search_url(self, *, tool_env_vars: dict[str, Any] | None = None) -> str:
+        if self.search_url:
+            return self.search_url
+        if tool_env_vars and self.search_url_env in tool_env_vars:
+            return str(tool_env_vars[self.search_url_env])
+        return os.environ.get(self.search_url_env, self.default_search_url)
+
+    def resolve_read_url(self, *, tool_env_vars: dict[str, Any] | None = None) -> str:
+        if self.read_url:
+            return self.read_url
+        if tool_env_vars and self.read_url_env in tool_env_vars:
+            return str(tool_env_vars[self.read_url_env])
+        return os.environ.get(self.read_url_env, self.default_read_url)
+
+
 class TemplateConfig(BaseModel):
     """This configuration is used to define almost all message templates that are
     formatted by the agent and sent to the LM.
@@ -131,6 +203,7 @@ class TemplateConfig(BaseModel):
 
     issue_search_rag_context: IssueSearchRAGContextConfig | None = None
     issue_memory_rag_context: IssueMemoryRAGContextConfig | None = None
+    experience_subagent_context: ExperienceSubagentContextConfig | None = None
 
     put_demos_in_history: bool = False
     """If True, add demonstration to history instead of as a single message"""
@@ -645,6 +718,20 @@ class DefaultAgent(AbstractAgent):
         self.add_system_message_to_history()
         self.add_demonstrations_to_history()
         self.add_instance_template_to_history(state=self.tools.get_state(self._env))
+
+        exp_config = self.templates.experience_subagent_context
+        if exp_config and exp_config.enabled and exp_config.inject_as_message:
+            exp_context = self._template_extra_fields.get(exp_config.field_name, "")
+            if exp_context and exp_context != exp_config.failure_message:
+                injected = Template(exp_config.message_template).render(experience_context=exp_context)
+                self._append_history(
+                    {
+                        "role": "user",
+                        "content": injected,
+                        "agent": self.name,
+                        "message_type": "experience_subagent_context",
+                    }
+                )
         self._chook.on_setup_done()
 
     def add_system_message_to_history(self) -> None:
@@ -709,6 +796,445 @@ class DefaultAgent(AbstractAgent):
         if search_config and search_config.enabled:
             context = self._get_issue_search_rag_context(search_config)
             self._template_extra_fields[search_config.field_name] = context
+
+        exp_config = self.templates.experience_subagent_context
+        if exp_config and exp_config.enabled:
+            exp_context = self._get_experience_subagent_context(exp_config)
+            self._template_extra_fields[exp_config.field_name] = exp_context
+
+    def _exp_post_json(self, url: str, payload: dict[str, Any], *, timeout: float) -> dict[str, Any] | None:
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            data=data,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                return json.load(resp)
+        except Exception as exc:  # noqa: BLE001 - single fallback path
+            self.logger.warning("experience_subagent POST failed (%s): %s", url, exc)
+            return None
+
+    def _exp_get_json(self, url: str, *, timeout: float, params: dict[str, str]) -> dict[str, Any] | None:
+        query = urllib.parse.urlencode(params)
+        full_url = f"{url}?{query}"
+        try:
+            with urllib.request.urlopen(full_url, timeout=timeout) as resp:
+                return json.load(resp)
+        except Exception as exc:  # noqa: BLE001 - single fallback path
+            self.logger.warning("experience_subagent GET failed (%s): %s", full_url, exc)
+            return None
+
+    def _query_model_text(self, messages: list[dict[str, Any]], *, temperature: float | None) -> str | None:
+        """Query the model and return assistant text; return None on failure.
+
+        Requeries (a few times) if tool calls are returned or the reply is empty.
+        """
+        # Many models will not tool-call unless prompted, but SWE-agent may always send tools.
+        # We requery with a stronger instruction if tool calls are emitted.
+        for attempt in range(3):
+            try:
+                out = self.model.query(messages, temperature=temperature)  # type: ignore[arg-type]
+            except TypeError:
+                try:
+                    out = self.model.query(messages)  # type: ignore[arg-type]
+                except Exception as exc:  # noqa: BLE001 - best-effort subagent
+                    self.logger.warning("experience_subagent model query failed: %s", exc)
+                    return None
+            except Exception as exc:  # noqa: BLE001 - best-effort subagent
+                self.logger.warning("experience_subagent model query failed: %s", exc)
+                return None
+            if isinstance(out, list):
+                out = out[0]
+            tool_calls = out.get("tool_calls") if isinstance(out, dict) else None
+            text = (out.get("message") if isinstance(out, dict) else "") or ""
+            if tool_calls:
+                # Requery, explicitly forbidding tool calls.
+                messages = messages + [
+                    {
+                        "role": "user",
+                        "content": "Do NOT call any tools/functions. Reply with plain text only.",
+                    }
+                ]
+                continue
+            if text.strip():
+                return text
+            messages = messages + [
+                {
+                    "role": "user",
+                    "content": "Your last reply was empty. Reply with plain text only.",
+                }
+            ]
+        return None
+
+    def _safe_json_loads(self, text: str) -> dict[str, Any] | None:
+        text = text.strip()
+        if not text:
+            return None
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            # Common failure: model wraps in ```json ... ```
+            fence_prefix = "```"
+            if fence_prefix in text:
+                stripped = text
+                stripped = stripped.replace("```json", "```").replace("```JSON", "```")
+                parts = stripped.split("```")
+                for part in parts:
+                    part = part.strip()
+                    if part.startswith("{") and part.endswith("}"):
+                        try:
+                            return json.loads(part)
+                        except json.JSONDecodeError:
+                            continue
+            return None
+
+    def _clip(self, text: str, *, max_chars: int) -> str:
+        text = (text or "").strip()
+        if max_chars > 0 and len(text) > max_chars:
+            return text[:max_chars] + "\n... [truncated] ..."
+        return text
+
+    def _parse_tool_call_arguments(self, tool_call: dict[str, Any]) -> dict[str, Any]:
+        fn = tool_call.get("function") or {}
+        args = fn.get("arguments", {})
+        if isinstance(args, dict):
+            return args
+        if isinstance(args, str):
+            try:
+                parsed = json.loads(args)
+            except json.JSONDecodeError:
+                return {}
+            return parsed if isinstance(parsed, dict) else {}
+        return {}
+
+    def _try_run_experience_subagent_tool(self, step: StepOutput) -> str | None:
+        """Handle the host-side `experience_subagent` tool call if present."""
+        tool_calls = step.tool_calls or []
+        if not tool_calls or len(tool_calls) != 1:
+            return None
+        tool_call = tool_calls[0]
+        fn = tool_call.get("function") or {}
+        if fn.get("name") != "experience_subagent":
+            return None
+
+        args = self._parse_tool_call_arguments(tool_call)
+        query = args.get("query")
+        if not isinstance(query, str):
+            query = ""
+
+        base_cfg = (
+            self.templates.experience_subagent_context.model_copy(deep=True)
+            if self.templates.experience_subagent_context is not None
+            else ExperienceSubagentContextConfig()
+        )
+
+        def _override_int(field_name: str) -> None:
+            value = args.get(field_name)
+            if isinstance(value, int):
+                setattr(base_cfg, field_name, value)
+
+        _override_int("max_rounds")
+        _override_int("top_k")
+        _override_int("read_k_per_round")
+
+        return self._get_experience_subagent_context(base_cfg, query=query)
+
+    def _get_experience_subagent_context(self, config: ExperienceSubagentContextConfig, *, query: str | None = None) -> str:
+        """Run an LLM-driven loop over exp_search/exp_read.
+
+        - In `summary` mode: return an LLM summary of retrieved experiences.
+        - In `raw` mode: return concatenated exp_read contents (up to `read_k_per_round`).
+        """
+        assert self._problem_statement is not None
+        problem = self._problem_statement.get_problem_statement()
+        search_url = config.resolve_search_url(tool_env_vars=self.tools.config.env_variables)
+        read_url = config.resolve_read_url(tool_env_vars=self.tools.config.env_variables)
+
+        read_limit = min(max(0, int(config.read_k_per_round)), 3)  # hard cap for prompt size and determinism
+        if read_limit <= 0:
+            self.info["experience_subagent"] = {  # type: ignore
+                "debug": {"read_limit": read_limit},
+                "outcome": "error",
+                "exit_reason": "read_limit_zero",
+            }
+            return config.error_message
+
+        debug_enabled = bool(config.debug) or bool(os.environ.get("SWE_AGENT_EXPERIENCE_SUBAGENT_DEBUG"))
+        debug: dict[str, Any] = {
+            "rounds": [],
+            "search_url": search_url,
+            "read_url": read_url,
+            "top_k": config.top_k,
+            "max_rounds": config.max_rounds,
+            "read_limit": min(max(0, int(config.read_k_per_round)), 3),
+            "output_mode": config.output_mode,
+        }
+        current_query = query.strip() if isinstance(query, str) and query.strip() else problem
+        seen_queries: set[str] = {current_query}
+        max_rounds = config.max_rounds if config.max_rounds > 0 else 1000
+        selected_ids_final: list[str] = []
+        exit_reason: str = "unknown"
+        outcome: Literal["ok", "not_found", "error"] = "error"
+
+        for i_round in range(max_rounds):
+            if debug_enabled:
+                self.logger.info("[experience_subagent] round=%d query=%s", i_round, current_query)
+            search_payload = {"query": current_query, "top_k": config.top_k}
+            search_resp = self._exp_post_json(search_url, search_payload, timeout=config.timeout)
+            if not search_resp or not search_resp.get("success"):
+                exit_reason = "search_failed"
+                outcome = "error"
+                break
+
+            results = search_resp.get("results") or []
+            candidates: list[dict[str, Any]] = []
+            for item in results:
+                if not isinstance(item, dict):
+                    continue
+                uid = str(item.get("id") or "").strip()
+                if not uid:
+                    continue
+                preview = item.get("bug_description") or item.get("content_preview") or ""
+                if not isinstance(preview, str):
+                    preview = str(preview)
+                score = item.get("score", item.get("similarity_score", None))
+                candidates.append(
+                    {
+                        "id": uid,
+                        "score": score,
+                        "preview": self._clip(preview, max_chars=400),
+                    }
+                )
+
+            if not candidates:
+                exit_reason = "no_candidates"
+                outcome = "not_found"
+                break
+
+            decision_messages: list[dict[str, Any]] = [
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a retrieval controller for software bug-fix experiences. "
+                        "You can ONLY select candidate IDs from the provided list. "
+                        "Decide whether the current candidates are relevant enough to read. "
+                        "If yes, set stop=true and select up to max_ids_to_read. "
+                        "If not, set stop=false and propose a refined next_query. "
+                        "If you believe no relevant experience can be found, set stop=true and return an empty selected_ids. "
+                        "Return STRICT JSON only; do not call any tools/functions."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": json.dumps(
+                        {
+                            "problem_statement": problem,
+                            "current_query": current_query,
+                            "previous_queries": sorted(seen_queries),
+                            "candidates": candidates,
+                            "constraints": {
+                                "max_ids_to_read": read_limit,
+                                "must_return_json": True,
+                            },
+                            "output_schema": {
+                                "selected_ids": ["string"],
+                                "next_query": "string",
+                                "stop": "boolean",
+                                "rationale": "string",
+                            },
+                        },
+                        ensure_ascii=False,
+                    ),
+                },
+            ]
+
+            decision_text = self._query_model_text(decision_messages, temperature=config.decision_temperature)
+            if decision_text is None:
+                exit_reason = "model_query_failed"
+                outcome = "error"
+                break
+            decision = self._safe_json_loads(decision_text)
+            if decision is None:
+                # One correction attempt: ask for strict JSON only.
+                correction_messages = decision_messages + [
+                    {
+                        "role": "user",
+                        "content": "Your previous output was not valid JSON. Reply with STRICT JSON only (no prose, no markdown).",
+                    }
+                ]
+                decision_text = self._query_model_text(correction_messages, temperature=config.decision_temperature)
+                if decision_text is None:
+                    exit_reason = "model_query_failed"
+                    outcome = "error"
+                    break
+                decision = self._safe_json_loads(decision_text)
+            decision = decision or {}
+            if not decision:
+                exit_reason = "decision_invalid_json"
+                outcome = "error"
+                break
+
+            selected_ids_raw = decision.get("selected_ids") or []
+            if isinstance(selected_ids_raw, str):
+                selected_ids = [selected_ids_raw]
+            elif isinstance(selected_ids_raw, list):
+                selected_ids = [str(x) for x in selected_ids_raw]
+            else:
+                selected_ids = []
+            selected_ids = [s.strip() for s in selected_ids if s and s.strip()]
+            selected_ids = selected_ids[:read_limit]
+
+            next_query = decision.get("next_query")
+            if not isinstance(next_query, str):
+                next_query = ""
+            stop = bool(decision.get("stop", False))
+            rationale = decision.get("rationale")
+            if not isinstance(rationale, str):
+                rationale = ""
+
+            debug["rounds"].append(
+                {
+                    "round": i_round,
+                    "query": current_query,
+                    "selected_ids": selected_ids,
+                    "next_query": next_query,
+                    "stop": stop,
+                    "rationale": rationale,
+                    "n_candidates": len(candidates),
+                }
+            )
+            if debug_enabled:
+                self.logger.info(
+                    "[experience_subagent] decision stop=%s selected_ids=%s next_query=%s",
+                    stop,
+                    selected_ids,
+                    next_query,
+                )
+
+            if stop:
+                selected_ids_final = selected_ids
+                exit_reason = "stop"
+                outcome = "ok" if selected_ids_final else "not_found"
+                break
+
+            next_query = next_query.strip()
+            if not next_query:
+                exit_reason = "no_next_query"
+                outcome = "not_found"
+                break
+            if next_query in seen_queries:
+                exit_reason = "repeated_query"
+                outcome = "not_found"
+                break
+            seen_queries.add(next_query)
+            current_query = next_query
+
+        if not selected_ids_final:
+            self.info["experience_subagent"] = {  # type: ignore
+                "debug": debug,
+                "outcome": outcome,
+                "exit_reason": exit_reason,
+                "selected_ids_final": selected_ids_final,
+            }
+            return config.failure_message if outcome == "not_found" else config.error_message
+
+        collected: list[dict[str, str]] = []
+        total_chars = 0
+        for uid in selected_ids_final:
+            read_resp = self._exp_get_json(read_url, timeout=config.timeout, params={"id": uid})
+            if not read_resp or not read_resp.get("success"):
+                continue
+            data = read_resp.get("data") or {}
+            if not isinstance(data, dict):
+                continue
+            fix_exp = data.get("fix_experience") or ""
+            if not isinstance(fix_exp, str):
+                fix_exp = str(fix_exp)
+            repo = data.get("repo") or ""
+            if not isinstance(repo, str):
+                repo = str(repo)
+            clipped = self._clip(fix_exp, max_chars=config.max_chars_per_experience)
+            remaining = max(config.max_total_chars - total_chars, 0)
+            if remaining <= 0:
+                break
+            clipped = clipped[:remaining]
+            total_chars += len(clipped)
+            collected.append({"id": uid, "repo": repo, "fix_experience": clipped})
+
+        if not collected:
+            self.info["experience_subagent"] = {  # type: ignore
+                "debug": debug,
+                "outcome": "error",
+                "exit_reason": "read_failed_or_empty",
+                "selected_ids_final": selected_ids_final,
+            }
+            return config.error_message
+
+        # Store debug info for the trajectory.
+        self.info["experience_subagent"] = {  # type: ignore
+            "debug": debug,
+            "n_collected": len(collected),
+            "outcome": "ok",
+            "exit_reason": exit_reason,
+            "selected_ids_final": selected_ids_final,
+        }
+
+        if config.output_mode == "raw":
+            blocks: list[str] = []
+            for idx, item in enumerate(collected, start=1):
+                header = f"Experience #{idx} (id={item.get('id','')}, repo={item.get('repo','')})"
+                blocks.append(header + "\n" + (item.get("fix_experience") or "").strip())
+            return "\n\n---\n\n".join(blocks).strip()
+
+        payload_items = [
+            {"id": item.get("id", ""), "repo": item.get("repo", ""), "fix_experience": item.get("fix_experience", "")}
+            for item in collected
+        ]
+
+        summary_messages: list[dict[str, Any]] = [
+            {
+                "role": "system",
+                "content": (
+                    "You are a senior software engineer. Summarize the retrieved historical fix experiences into "
+                    "actionable guidance for solving the given problem. Focus on transferable patterns, checks, "
+                    "and pitfalls. Keep it concise but concrete."
+                ),
+            },
+            {
+                "role": "user",
+                "content": json.dumps(
+                    {
+                        "problem_statement": problem,
+                        "retrieved_experiences": payload_items,
+                        "requested_output": {
+                            "format": "plain_text",
+                            "include": [
+                                "Which experiences seem most relevant and why",
+                                "Concrete steps / heuristics to apply",
+                                "Potential pitfalls / edge cases",
+                            ],
+                        },
+                    },
+                    ensure_ascii=False,
+                ),
+            },
+        ]
+        summary_text = self._query_model_text(summary_messages, temperature=config.summary_temperature)
+        if summary_text is None or not summary_text.strip():
+            self.info["experience_subagent"] = {  # type: ignore
+                "debug": debug,
+                "n_collected": len(collected),
+                "outcome": "error",
+                "exit_reason": "summary_model_query_failed",
+                "selected_ids_final": selected_ids_final,
+            }
+            return config.error_message
+        summary = summary_text.strip()
+
+        return summary
 
     def _get_issue_memory_rag_context(self, config: IssueMemoryRAGContextConfig) -> str:
         """Fetch structured memory snippets via the local memory RAG service."""
@@ -1120,6 +1646,20 @@ class DefaultAgent(AbstractAgent):
             return step
 
         assert self._env is not None
+        tool_calls = step.tool_calls or []
+        is_exp_subagent_call = (
+            len(tool_calls) == 1 and ((tool_calls[0].get("function") or {}).get("name") == "experience_subagent")
+        )
+        if is_exp_subagent_call:
+            self._chook.on_action_started(step=step)
+            execution_t0 = time.perf_counter()
+            step.observation = self._try_run_experience_subagent_tool(step) or "experience_subagent failed."
+            step.execution_time = time.perf_counter() - execution_t0
+            self._total_execution_time += step.execution_time
+            self._chook.on_action_executed(step=step)
+            step.state = self.tools.get_state(env=self._env)
+            return self.handle_submission(step)
+
         self._chook.on_action_started(step=step)
         execution_t0 = time.perf_counter()
         run_action: str = self.tools.guard_multiline_input(step.action).strip()

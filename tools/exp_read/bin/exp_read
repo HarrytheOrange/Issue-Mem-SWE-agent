@@ -1,4 +1,3 @@
 #!/bin/bash
-# Wrapper for exp_read.py
 script_dir="$(cd "$(dirname "$0")" && pwd)"
 python3 "$script_dir/exp_read.py" "$@"

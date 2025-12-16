@@ -1,0 +1,33 @@
+tools:
+  experience_subagent:
+    signature: "experience_subagent <query> <max_rounds> <top_k> <read_k_per_round>"
+    docstring: |
+      Run an LLM-driven subagent that iteratively searches and reads historical bug-fix experiences
+      (backed by the exp_search/exp_read services) and returns a compact guidance summary.
+      
+      This tool is executed by the SWE-agent host process (Python), not inside the sandbox container.
+      
+      Usage examples:
+      - experience_subagent "TypeError in Django query compilation"
+      - experience_subagent "segfault in numpy ufunc" --max_rounds 2 --top_k 8 --read_k_per_round 2
+    arguments:
+      - name: query
+        type: string
+        description: Natural language query for retrieving relevant fix experiences. If empty, the current problem statement is used.
+        required: true
+      - name: max_rounds
+        type: integer
+        description: Maximum number of iterative search rounds (default from config if omitted).
+        required: false
+        argument_format: "--max_rounds {{value}}"
+      - name: top_k
+        type: integer
+        description: Number of candidates to retrieve per search round (default from config if omitted).
+        required: false
+        argument_format: "--top_k {{value}}"
+      - name: read_k_per_round
+        type: integer
+        description: Number of experiences to read per round (default from config if omitted).
+        required: false
+        argument_format: "--read_k_per_round {{value}}"
+

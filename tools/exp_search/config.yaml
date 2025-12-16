@@ -1,0 +1,21 @@
+tools:
+  exp_search:
+    signature: "exp_search <query>"
+    docstring: |
+      Semantic search client for the local bug-fix experience database.
+      Sends a natural language query to the backend ChromaDB service and retrieves the Top-K most relevant bug reports and fix summaries.
+
+      Usage examples:
+      - exp_search "IndexError when accessing array out of bounds"
+      - exp_search "memory leak in data processing loop"
+
+      Notes:
+      - Returns a list of candidates containing: Unique ID and a Content Preview.
+      - The 'unique_id' is a concatenation of the repo name and issue ID.
+      - You must capture the 'ID' from the output to use with the 'exp_read' tool.
+    arguments:
+      - name: query
+        type: string
+        description: |
+          A natural language description of the bug, traceback, or error context you are investigating.
+        required: true

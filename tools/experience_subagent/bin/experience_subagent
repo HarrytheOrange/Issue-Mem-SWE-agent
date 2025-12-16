@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "experience_subagent is executed by the SWE-agent host process (not inside the sandbox container)." >&2
+echo "If you see this message, host-side interception failed. Please report this." >&2
+exit 2
+
+

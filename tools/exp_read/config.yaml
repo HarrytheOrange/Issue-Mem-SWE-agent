@@ -1,0 +1,20 @@
+tools:
+  exp_read:
+    signature: "exp_read <id>"
+    docstring: |
+      Detail reader for a specific bug-fix experience.
+      Retrieves the full 'Fix Experience' content based on the unique identifier obtained from the search step.
+
+      Usage examples:
+      - exp_read "pandas12345"
+      - exp_read "scikit-learn987"
+
+      Notes:
+      - The 'id' argument must be an exact string match obtained from the output of 'exp_search'.
+      - Returns the detailed expert narrative on how the bug was analyzed and fixed.
+    arguments:
+      - name: id
+        type: string
+        description: |
+          The unique identifier string (repo + issue_id) of the experience entry to retrieve.
+        required: true
