@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-from __future__ import annotations
-
 import argparse
 import json
 import os
@@ -9,14 +7,13 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Dict, Optional, Tuple
 
 BASE_URL = "http://172.30.182.85:9030/get_experience"
 
-_ENV_OPENAI_API_BASE_URL = "OPENAI_API_BASE_URL"
-_ENV_OPENAI_BASE_URL = "OPENAI_BASE_URL"
-_ENV_OPENAI_API_KEY = "OPENAI_API_KEY"
-_ENV_OPENAI_MODEL = "OPENAI_MODEL"
+DEEPSEEK_API_KEY = "1a6d8e05-0978-496b-87c1-fd4fb3885e7c"
+DEEPSEEK_MODEL = "deepseek-v3-1-terminus"
+DEEPSEEK_BASE_URL = "https://ark.cn-beijing.volces.com/api/v1"
 
 
 def _first_env(*names: str) -> Optional[str]:
@@ -39,8 +36,8 @@ def _find_dotenv(start_dir: Path, *, max_levels: int = 6) -> Optional[Path]:
     return None
 
 
-def _parse_dotenv(dotenv_path: Path) -> dict[str, str]:
-    values: dict[str, str] = {}
+def _parse_dotenv(dotenv_path: Path) -> Dict[str, str]:
+    values: Dict[str, str] = {}
     for raw_line in dotenv_path.read_text(encoding="utf-8", errors="replace").splitlines():
         line = raw_line.strip()
         if not line or line.startswith("#"):
@@ -60,7 +57,7 @@ def _parse_dotenv(dotenv_path: Path) -> dict[str, str]:
     return values
 
 
-def _first_from_maps(keys: tuple[str, ...], primary: dict[str, str], secondary: dict[str, str]) -> Optional[str]:
+def _first_from_maps(keys: Tuple[str, ...], primary: Dict[str, str], secondary: Dict[str, str]) -> Optional[str]:
     for k in keys:
         v = primary.get(k)
         if v:
@@ -72,34 +69,10 @@ def _first_from_maps(keys: tuple[str, ...], primary: dict[str, str], secondary: 
     return None
 
 
-def _resolve_llm_config() -> tuple[str, str, str] | None:
-    dotenv_values: dict[str, str] = {}
-    dotenv_path = _find_dotenv(Path.cwd())
-    if dotenv_path is None:
-        root_hint = os.environ.get("ROOT")
-        candidates = [Path("/repo"), Path("/testbed")]
-        if root_hint:
-            candidates.insert(0, Path(root_hint))
-        for candidate_dir in candidates:
-            if candidate_dir.is_dir():
-                dotenv_path = _find_dotenv(candidate_dir, max_levels=2)
-                if dotenv_path is not None:
-                    break
-    if dotenv_path is not None:
-        try:
-            dotenv_values = _parse_dotenv(dotenv_path)
-        except Exception:
-            dotenv_values = {}
-
-    env_values: dict[str, str] = dict(os.environ)
-
-    api_base = _first_from_maps((_ENV_OPENAI_API_BASE_URL, _ENV_OPENAI_BASE_URL), dotenv_values, env_values)
-    api_key = _first_from_maps((_ENV_OPENAI_API_KEY, "DEEPSEEK_API_KEY"), dotenv_values, env_values)
-    model = _first_from_maps((_ENV_OPENAI_MODEL,), dotenv_values, env_values)
-
-    if not api_base or not api_key or not model:
+def _resolve_llm_config() -> Optional[Tuple[str, str, str]]:
+    if not DEEPSEEK_BASE_URL or not DEEPSEEK_API_KEY or not DEEPSEEK_MODEL:
         return None
-    return api_base.rstrip("/"), api_key, model
+    return DEEPSEEK_BASE_URL.rstrip("/"), DEEPSEEK_API_KEY, DEEPSEEK_MODEL
 
 
 def _truncate(text: str, max_chars: int) -> str:
@@ -108,7 +81,9 @@ def _truncate(text: str, max_chars: int) -> str:
     return text[: max_chars - 3] + "..."
 
 
-def _post_json(url: str, payload: dict[str, Any], headers: dict[str, str], *, timeout: int) -> Optional[dict[str, Any]]:
+def _post_json(
+    url: str, payload: Dict[str, Any], headers: Dict[str, str], *, timeout: int
+) -> Optional[Dict[str, Any]]:
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(url, data=data, headers=headers, method="POST")
     try:
@@ -125,7 +100,7 @@ def _post_json(url: str, payload: dict[str, Any], headers: dict[str, str], *, ti
         return None
 
 
-def _llm_says_helpful(problem_statement: str, document: str) -> bool:
+def _llm_says_helpful(problem_statement: str, document: str, *, unique_id: Optional[str] = None) -> bool:
     cfg = _resolve_llm_config()
     if cfg is None:
         return False
@@ -144,7 +119,7 @@ def _llm_says_helpful(problem_statement: str, document: str) -> bool:
         "Candidate fix-experience document:\n"
         f"{_truncate(document, 12000)}\n"
     )
-    payload: dict[str, Any] = {
+    payload: Dict[str, Any] = {
         "model": model,
         "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
         "temperature": 0,
@@ -158,18 +133,20 @@ def _llm_says_helpful(problem_statement: str, document: str) -> bool:
         content = (resp.get("choices") or [{}])[0].get("message", {}).get("content", "")  # type: ignore[union-attr]
     except Exception:
         return False
-    decision = str(content).strip().upper()
+    decision_raw = str(content).strip()
+    decision = decision_raw.upper()
+    print(f"LLM_DECISION: {decision}", file=sys.stderr)
     if decision.startswith("HELPFUL"):
         return True
     return False
 
 
-def get_details(unique_id: str) -> Optional[dict[str, Any]]:
+def get_details(unique_id: str) -> Optional[Dict[str, Any]]:
     params = urllib.parse.urlencode({"id": unique_id})
     url = f"{BASE_URL}?{params}"
     try:
         with urllib.request.urlopen(url, timeout=10) as resp:
-            data: dict[str, Any] = json.load(resp)
+            data: Dict[str, Any] = json.load(resp)
             return data
     except urllib.error.HTTPError as e:
         if e.code == 404:
@@ -198,7 +175,7 @@ def main() -> int:
         return 0
 
     problem_statement = os.environ.get("PROBLEM_STATEMENT", "")
-    if not _llm_says_helpful(problem_statement, fix_experience):
+    if not _llm_says_helpful(problem_statement, fix_experience, unique_id=args.id):
         print("NOT_HELPFUL")
         return 0
 

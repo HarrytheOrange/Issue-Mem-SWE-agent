@@ -5,15 +5,8 @@ tools:
       Fetch the full bug-fix experience for a single candidate, but only return it if it looks relevant to the CURRENT SWE problem.
 
       This tool automatically reads the original SWE problem statement from the environment variable `PROBLEM_STATEMENT`
-      (the agent must NOT provide it as an argument), and uses an OpenAI-compatible chat model to judge relevance.
+      (the agent must NOT provide it as an argument), and uses a chat model to judge relevance.
       If the experience is likely helpful, the full narrative is returned. Otherwise, it returns: `NOT_HELPFUL`.
-
-      Filtering reads model config directly from `.env` (searched from the current working directory upward), and falls back to environment variables.
-      Required keys (from `.env` or env):
-      - `OPENAI_API_BASE_URL` (or `OPENAI_BASE_URL`)
-      - `OPENAI_API_KEY` (or `DEEPSEEK_API_KEY`)
-      - `OPENAI_MODEL`
-      If any are missing, this tool returns: `NOT_HELPFUL`.
 
       Output sketch:
         FIX EXPERIENCE:

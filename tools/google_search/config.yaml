@@ -1,0 +1,15 @@
+tools:
+  google_search:
+    signature: 'google_search "<query>" [--topk <topk>] [--backend auto|serper|serpapi] [--json]'
+    docstring: "Search the web (Google) via an API and return top results."
+    arguments:
+      - name: query
+        type: string
+        description: "Search query"
+        required: true
+      - name: topk
+        type: integer
+        description: "Number of results to return (default: 5)"
+        required: false
+
+

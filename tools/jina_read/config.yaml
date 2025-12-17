@@ -1,0 +1,15 @@
+tools:
+  jina_read:
+    signature: 'jina_read <url> [--max-chars <max_chars>]'
+    docstring: "Fetch a cleaned, readable version of a web page via Jina Reader."
+    arguments:
+      - name: url
+        type: string
+        description: "Target URL (http/https)"
+        required: true
+      - name: max_chars
+        type: integer
+        description: "Max characters to print (default: 8000). Use 0 to disable truncation."
+        required: false
+
+

@@ -83,7 +83,19 @@ class ToolConfig(BaseModel):
     bundles: list[Bundle] = Field(default_factory=list)
     """The tool bundles to load."""
 
-    propagate_env_variables: list[str] = []
+    propagate_env_variables: list[str] = [
+        # Web search providers
+        "SERPER_API_KEY",
+        "GOOGLE_SERPER_API_KEY",
+        "SERPER_KEY",
+        "SERPAPI_API_KEY",
+        "GOOGLE_SERPAPI_API_KEY",
+        "SERPAPI_KEY",
+        # Jina Reader
+        "JINA_API_KEY",
+        "JINA_KEY",
+        "JINA_AI_API_KEY",
+    ]
     """Environment variables to propagate to the environment.
     This is useful if you want to propagate API keys or similar from your own environment to the
     environment in which the tools run.
@@ -255,9 +267,11 @@ class ToolHandler:
 
     def reset(self, env: SWEEnv) -> None:
         self.logger.info("Resetting tools")
-        env_variables = self.config.env_variables.copy() | {
-            var: os.getenv(var) for var in self.config.propagate_env_variables
-        }
+        env_variables = self.config.env_variables.copy()
+        for var in self.config.propagate_env_variables:
+            value = os.getenv(var)
+            if value:
+                env_variables[var] = value
         env.set_env_variables(env_variables)
         env.write_file("/root/.swe-agent-env", json.dumps(self.config.registry_variables))
         env.write_file("/root/state.json", "{}")
