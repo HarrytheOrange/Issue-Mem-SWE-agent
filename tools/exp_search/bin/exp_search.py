@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import os
 import sys
 import urllib.error
 import urllib.request
@@ -8,6 +9,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 SERVER_URL = "http://172.30.182.85:9030/search"
+TOPK_ENV = "GRAPH_EXP_SEARCH_TOP_K"
 DATA_FILE = (
     Path(__file__)
     .resolve()
@@ -59,7 +61,21 @@ def search_experience(query: str, top_k: int = 10) -> Optional[Dict[str, Any]]:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Search bug fix experiences.")
     parser.add_argument("query", help="Description of the bug")
-    parser.add_argument("--top_k", type=int, default=10, help="Number of results")
+    env_topk = os.environ.get(TOPK_ENV)
+    topk_default = 10
+    if env_topk:
+        try:
+            parsed = int(env_topk)
+            if parsed > 0:
+                topk_default = parsed
+        except ValueError:
+            pass
+    parser.add_argument(
+        "--top_k",
+        type=int,
+        default=topk_default,
+        help=f"Number of results (default: {topk_default})",
+    )
     args = parser.parse_args()
 
     print(f"🔎 Searching for: '{args.query}'...")
