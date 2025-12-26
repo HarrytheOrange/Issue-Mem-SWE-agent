@@ -1,0 +1,84 @@
+diff --git a/xarray/core/merge.py b/xarray/core/merge.py
+index 10c7804d..afe98155 100644
+--- a/xarray/core/merge.py
++++ b/xarray/core/merge.py
+@@ -387,6 +387,9 @@ def coerce_pandas_values(objects: Iterable["CoercibleMapping"]) -> List["Dataset
+     for obj in objects:
+         if isinstance(obj, Dataset):
+             variables: "DatasetLike" = obj
++        elif isinstance(obj, DataArray):
++            # Convert DataArray to Dataset
++            variables = obj.to_dataset()
+         else:
+             variables = {}
+             if isinstance(obj, PANDAS_TYPES):
+@@ -805,6 +808,8 @@ def dataset_merge_method(
+ ) -> _MergeResult:
+     """Guts of the Dataset.merge method.
+     """
++    from .dataarray import DataArray
++    
+     # we are locked into supporting overwrite_vars for the Dataset.merge
+     # method due for backwards compatibility
+     # TODO: consider deprecating it?
+@@ -817,6 +822,23 @@ def dataset_merge_method(
+     if not overwrite_vars:
+         objs = [dataset, other]
+         priority_arg = None
++    elif isinstance(other, DataArray):
++        # For DataArray, we can't use set(other) since DataArray doesn't support iteration
++        # Convert to dataset and check if overwrite_vars matches the variable names
++        other_as_dataset = other.to_dataset()
++        if overwrite_vars == set(other_as_dataset):
++            objs = [dataset, other]
++            priority_arg = 1
++        else:
++            other_overwrite: Dict[Hashable, CoercibleValue] = {}
++            other_no_overwrite: Dict[Hashable, CoercibleValue] = {}
++            for k, v in other_as_dataset.items():
++                if k in overwrite_vars:
++                    other_overwrite[k] = v
++                else:
++                    other_no_overwrite[k] = v
++            objs = [dataset, other_no_overwrite, other_overwrite]
++            priority_arg = 2
+     elif overwrite_vars == set(other):
+         objs = [dataset, other]
+         priority_arg = 1
+diff --git a/xarray/tests/test_merge.py b/xarray/tests/test_merge.py
+index c1e6c7a5..ba4c2bd8 100644
+--- a/xarray/tests/test_merge.py
++++ b/xarray/tests/test_merge.py
+@@ -253,3 +253,32 @@ class TestMergeMethod:
+         with pytest.raises(xr.MergeError):
+             ds3 = xr.Dataset({"a": ("y", [2, 3]), "y": [1, 2]})
+             ds1.merge(ds3, compat="no_conflicts")
++
++    def test_merge_dataarray(self):
++        # Test merging DataArray into Dataset using dataset method
++        ds = xr.Dataset({"a": 0})
++        da = xr.DataArray(1, name="b")
++        
++        # Test basic merge
++        expected = xr.merge([ds, da])
++        actual = ds.merge(da)
++        assert expected.identical(actual)
++        
++        # Test merge with coordinates
++        ds_coords = xr.Dataset({"a": ("x", [1, 2, 3])}, coords={"x": [0, 1, 2]})
++        da_coords = xr.DataArray([4, 5, 6], dims=["x"], coords={"x": [0, 1, 2]}, name="b")
++        expected_coords = xr.merge([ds_coords, da_coords])
++        actual_coords = ds_coords.merge(da_coords)
++        assert expected_coords.identical(actual_coords)
++        
++        # Test merge with overwrite_vars
++        ds_overwrite = xr.Dataset({"a": 0, "b": 10})
++        da_overwrite = xr.DataArray(1, name="b")
++        expected_overwrite = xr.Dataset({"a": 0, "b": 1})
++        actual_overwrite = ds_overwrite.merge(da_overwrite, overwrite_vars=["b"])
++        assert expected_overwrite.identical(actual_overwrite)
++        
++        # Test merge with unnamed DataArray should fail
++        da_unnamed = xr.DataArray(1)
++        with pytest.raises(ValueError, match="unable to convert unnamed DataArray"):
++            ds.merge(da_unnamed)

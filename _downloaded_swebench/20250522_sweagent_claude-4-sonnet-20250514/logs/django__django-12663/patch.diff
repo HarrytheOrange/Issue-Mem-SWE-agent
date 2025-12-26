@@ -1,0 +1,34 @@
+diff --git a/django/db/models/fields/__init__.py b/django/db/models/fields/__init__.py
+index caa03665ea..dc6cbe7d0d 100644
+--- a/django/db/models/fields/__init__.py
++++ b/django/db/models/fields/__init__.py
+@@ -21,7 +21,7 @@ from django.utils.dateparse import (
+     parse_date, parse_datetime, parse_duration, parse_time,
+ )
+ from django.utils.duration import duration_microseconds, duration_string
+-from django.utils.functional import Promise, cached_property
++from django.utils.functional import LazyObject, Promise, cached_property
+ from django.utils.ipv6 import clean_ipv6_address
+ from django.utils.itercompat import is_iterable
+ from django.utils.text import capfirst
+@@ -1768,6 +1768,20 @@ class IntegerField(Field):
+         value = super().get_prep_value(value)
+         if value is None:
+             return None
++        # Handle LazyObject instances by unwrapping them
++        if isinstance(value, LazyObject):
++            # Force evaluation of the lazy object by accessing an attribute
++            # This will trigger _setup() if the object is not yet initialized
++            value = value.__reduce__()[1][0]
++            # Check again if the unwrapped value is None
++            if value is None:
++                return None
++        # Handle model instances by extracting their primary key
++        if hasattr(value, '_meta'):
++            value = value.pk
++            # Check if the primary key is None
++            if value is None:
++                return None
+         try:
+             return int(value)
+         except (TypeError, ValueError) as e:

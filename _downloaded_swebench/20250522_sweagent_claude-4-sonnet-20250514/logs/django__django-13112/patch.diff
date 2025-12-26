@@ -1,0 +1,42 @@
+diff --git a/django/db/models/utils.py b/django/db/models/utils.py
+index 989667dc8c..b2481ef9b6 100644
+--- a/django/db/models/utils.py
++++ b/django/db/models/utils.py
+@@ -9,6 +9,8 @@ def make_model_tuple(model):
+             model_tuple = model
+         elif isinstance(model, str):
+             app_label, model_name = model.split(".")
++            # Normalize app_label to match the canonical case in the app registry
++            app_label = _get_canonical_app_label(app_label)
+             model_tuple = app_label, model_name.lower()
+         else:
+             model_tuple = model._meta.app_label, model._meta.model_name
+@@ -21,6 +23,28 @@ def make_model_tuple(model):
+         )
+ 
+ 
++def _get_canonical_app_label(app_label):
++    """
++    Get the canonical app label for a given app label, handling case-insensitive lookup.
++    This is needed to handle mixed-case app names properly.
++    """
++    from django.apps import apps
++    
++    try:
++        # First try exact match
++        app_config = apps.get_app_config(app_label)
++        return app_config.label
++    except LookupError:
++        # If exact match fails, try case-insensitive search
++        # This handles cases where the app is registered with mixed case
++        # but the reference uses different case
++        for app_config in apps.get_app_configs():
++            if app_config.label.lower() == app_label.lower():
++                return app_config.label
++        # If still not found, return original (might be a forward reference)
++        return app_label
++
++
+ def resolve_callables(mapping):
+     """
+     Generate key/value pairs for the given mapping where the values are

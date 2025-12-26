@@ -1,0 +1,19 @@
+diff --git a/django/db/models/query.py b/django/db/models/query.py
+index b48d0df9c0..2ea29b574f 100644
+--- a/django/db/models/query.py
++++ b/django/db/models/query.py
+@@ -211,6 +211,14 @@ class QuerySet:
+     @query.setter
+     def query(self, value):
+         self._query = value
++        # If the query has values_select set, it was likely created with values()
++        # or values_list(), so we need to set the appropriate iterable class.
++        # Since we can't distinguish between different types of values queries
++        # from the query object alone, we default to ValuesIterable which handles
++        # the most common case of values().
++        if getattr(value, 'values_select', None):
++            self._iterable_class = ValuesIterable
++            self._fields = value.values_select
+ 
+     def as_manager(cls):
+         # Address the circular dependency between `Queryset` and `Manager`.

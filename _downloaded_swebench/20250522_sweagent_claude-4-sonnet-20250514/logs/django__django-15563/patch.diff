@@ -1,0 +1,48 @@
+diff --git a/django/db/models/sql/subqueries.py b/django/db/models/sql/subqueries.py
+index 04063f73bc..e1c4981bf4 100644
+--- a/django/db/models/sql/subqueries.py
++++ b/django/db/models/sql/subqueries.py
+@@ -134,7 +134,42 @@ class UpdateQuery(Query):
+             query = UpdateQuery(model)
+             query.values = values
+             if self.related_ids is not None:
+-                query.add_filter("pk__in", self.related_ids)
++                # For multiple inheritance, we need to use the correct foreign key
++                # values that point to the parent model, not the child model's PKs
++                if model in self.get_meta().parents:
++                    # Direct parent - use the link field directly
++                    link_field = self.get_meta().parents[model]
++                    if link_field:
++                        subquery = self.chain(klass=Query)
++                        subquery.clear_select_clause()
++                        subquery.add_fields([link_field.attname])
++                        subquery.add_filter("pk__in", self.related_ids)
++                        query.add_filter("pk__in", subquery)
++                    else:
++                        query.add_filter("pk__in", self.related_ids)
++                else:
++                    # Indirect parent - need to follow the inheritance chain
++                    # Get the path to the ancestor model
++                    path = self.get_meta().get_path_to_parent(model)
++                    if path:
++                        # Create a subquery that follows the inheritance path
++                        subquery = self.chain(klass=Query)
++                        subquery.clear_select_clause()
++                        
++                        # Build the field path to the target foreign key
++                        field_path = []
++                        for path_info in path:
++                            field_path.append(path_info.join_field.name)
++                        
++                        # The last field in the path is what we want to select
++                        target_field = '__'.join(field_path)
++                        subquery.add_fields([target_field])
++                        subquery.add_filter("pk__in", self.related_ids)
++                        
++                        query.add_filter("pk__in", subquery)
++                    else:
++                        # Fallback to the original behavior
++                        query.add_filter("pk__in", self.related_ids)
+             result.append(query)
+         return result
+ 

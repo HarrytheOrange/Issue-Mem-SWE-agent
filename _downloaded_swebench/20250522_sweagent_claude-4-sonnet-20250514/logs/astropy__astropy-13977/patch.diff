@@ -1,0 +1,55 @@
+diff --git a/astropy/units/quantity.py b/astropy/units/quantity.py
+index b98abfafb0..e07c19d76b 100644
+--- a/astropy/units/quantity.py
++++ b/astropy/units/quantity.py
+@@ -640,7 +640,23 @@ class Quantity(np.ndarray):
+         # input to that expected (e.g., radian for np.sin), or to get
+         # consistent units between two inputs (e.g., in np.add) --
+         # and the unit of the result (or tuple of units for nout > 1).
+-        converters, unit = converters_and_unit(function, method, *inputs)
++        try:
++            converters, unit = converters_and_unit(function, method, *inputs)
++        except TypeError as e:
++            # Only catch TypeError related to unsupported operand types,
++            # not other TypeErrors like UnitTypeError which should be propagated
++            if "Unsupported operand type(s) for ufunc" in str(e):
++                # Check if any of the other inputs have __array_ufunc__ method
++                # If so, return NotImplemented to allow them to handle the operation
++                # via their reflected methods (e.g., __radd__, __rmul__, etc.).
++                for inp in inputs:
++                    if inp is not self and hasattr(inp, '__array_ufunc__'):
++                        return NotImplemented
++                # If no other input has __array_ufunc__, re-raise the original error
++                raise
++            else:
++                # Re-raise other TypeErrors
++                raise
+ 
+         out = kwargs.get("out", None)
+         # Avoid loop back by turning any Quantity output into array views.
+@@ -667,7 +683,13 @@ class Quantity(np.ndarray):
+         arrays = []
+         for input_, converter in zip(inputs, converters):
+             input_ = getattr(input_, "value", input_)
+-            arrays.append(converter(input_) if converter else input_)
++            try:
++                arrays.append(converter(input_) if converter else input_)
++            except (ValueError, TypeError):
++                # If we cannot convert the input (e.g., incompatible input types),
++                # return NotImplemented to allow other objects to handle the operation
++                # via their reflected methods (e.g., __radd__, __rmul__, etc.).
++                return NotImplemented
+ 
+         # Call our superclass's __array_ufunc__
+         result = super().__array_ufunc__(function, method, *arrays, **kwargs)
+diff --git a/pyproject.toml b/pyproject.toml
+index 486d6b9b3b..1c5f74f3a1 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -1,5 +1,5 @@
+ [build-system]
+-requires = ["setuptools",
++requires = ["setuptools==68.0.0",
+             "setuptools_scm>=6.2",
+             "wheel",
+             "cython==0.29.30",

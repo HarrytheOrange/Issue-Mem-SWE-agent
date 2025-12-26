@@ -1,0 +1,52 @@
+diff --git a/lib/matplotlib/offsetbox.py b/lib/matplotlib/offsetbox.py
+index 1dee8a23d9..952776ce51 100644
+--- a/lib/matplotlib/offsetbox.py
++++ b/lib/matplotlib/offsetbox.py
+@@ -1505,7 +1505,7 @@ class DraggableBase:
+         if not ref_artist.pickable():
+             ref_artist.set_picker(True)
+         self.got_artist = False
+-        self.canvas = self.ref_artist.figure.canvas
++        self._canvas = self.ref_artist.figure.canvas
+         self._use_blit = use_blit and self.canvas.supports_blit
+         self.cids = [
+             self.canvas.callbacks._connect_picklable(
+@@ -1580,6 +1580,38 @@ class DraggableBase:
+     def finalize_offset(self):
+         pass
+ 
++    def __getstate__(self):
++        # Exclude canvas from pickling as it may not be picklable (e.g., Qt backends)
++        state = self.__dict__.copy()
++        # Remove both canvas and _canvas to avoid pickling issues
++        state.pop('canvas', None)
++        state.pop('_canvas', None)
++        return state
++
++    def __setstate__(self, state):
++        self.__dict__.update(state)
++        # Restore canvas from ref_artist
++        # Note: We defer canvas restoration because during unpickling,
++        # the figure/axes references might not be fully restored yet.
++        # The canvas will be restored on first access if needed.
++        self._canvas = None
++
++    @property
++    def canvas(self):
++        """Get the canvas, restoring it from ref_artist if needed."""
++        if self._canvas is None and self.ref_artist:
++            # Try to get the figure from the ref_artist
++            if hasattr(self.ref_artist, 'figure') and self.ref_artist.figure:
++                self._canvas = self.ref_artist.figure.canvas
++            elif hasattr(self.ref_artist, 'axes') and self.ref_artist.axes and self.ref_artist.axes.figure:
++                self._canvas = self.ref_artist.axes.figure.canvas
++        return self._canvas
++
++    @canvas.setter
++    def canvas(self, value):
++        """Set the canvas."""
++        self._canvas = value
++
+ 
+ class DraggableOffsetBox(DraggableBase):
+     def __init__(self, ref_artist, offsetbox, use_blit=False):

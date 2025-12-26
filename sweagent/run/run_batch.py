@@ -399,6 +399,16 @@ class RunBatch:
                 self.logger.warning(f"Found existing trajectory with no exit status: {log_path}. Removing.")
                 log_path.unlink()
                 return False
+            # If the trajectory ended due to repeated format/blocklist/bash-syntax errors,
+            # it's often worth retrying on reruns instead of skipping.
+            if isinstance(exit_status, str) and "exit_format" in exit_status:
+                self.logger.info("Found existing exit_format trajectory: %s. Redoing.", log_path)
+                return False
+            # If the trajectory ended due to an uncaught error, it's often worth retrying on reruns
+            # (e.g., transient environment issues).
+            if isinstance(exit_status, str) and "exit_error" in exit_status:
+                self.logger.info("Found existing %s trajectory: %s. Redoing.", exit_status, log_path)
+                return False
         except Exception as e:
             self.logger.error(f"Failed to check existing trajectory: {log_path}: {e}. Removing.")
             # If we can't check the trajectory, we will redo it

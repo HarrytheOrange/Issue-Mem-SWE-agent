@@ -1,0 +1,55 @@
+diff --git a/sklearn/model_selection/_split.py b/sklearn/model_selection/_split.py
+index 24394f869..8783444f1 100644
+--- a/sklearn/model_selection/_split.py
++++ b/sklearn/model_selection/_split.py
+@@ -620,7 +620,7 @@ class StratifiedKFold(_BaseKFold):
+         super().__init__(n_splits, shuffle, random_state)
+ 
+     def _make_test_folds(self, X, y=None):
+-        rng = self.random_state
++        rng = check_random_state(self.random_state)
+         y = np.asarray(y)
+         type_of_target_y = type_of_target(y)
+         allowed_target_types = ('binary', 'multiclass')
+@@ -657,9 +657,27 @@ class StratifiedKFold(_BaseKFold):
+             for count in y_counts]
+ 
+         test_folds = np.zeros(n_samples, dtype=np.int)
++        
++        # If shuffle is True, we need to shuffle the indices within each class
++        # before assigning them to folds
++        if self.shuffle:
++            # Create shuffled indices for each class
++            class_indices = {}
++            for cls in unique_y:
++                cls_indices = np.where(y == cls)[0]
++                rng.shuffle(cls_indices)
++                class_indices[cls] = cls_indices
++        
+         for test_fold_indices, per_cls_splits in enumerate(zip(*per_cls_cvs)):
+             for cls, (_, test_split) in zip(unique_y, per_cls_splits):
+-                cls_test_folds = test_folds[y == cls]
++                if self.shuffle:
++                    # Use shuffled indices
++                    cls_indices = class_indices[cls]
++                    cls_test_folds = test_folds[cls_indices]
++                else:
++                    # Use original order
++                    cls_test_folds = test_folds[y == cls]
++                    
+                 # the test split can be too big because we used
+                 # KFold(...).split(X[:max(c, n_splits)]) when data is not 100%
+                 # stratifiable for all the classes
+@@ -667,7 +685,11 @@ class StratifiedKFold(_BaseKFold):
+                 # If this is the case, let's trim it:
+                 test_split = test_split[test_split < len(cls_test_folds)]
+                 cls_test_folds[test_split] = test_fold_indices
+-                test_folds[y == cls] = cls_test_folds
++                
++                if self.shuffle:
++                    test_folds[cls_indices] = cls_test_folds
++                else:
++                    test_folds[y == cls] = cls_test_folds
+ 
+         return test_folds
+ 

@@ -1,0 +1,29 @@
+diff --git a/src/_pytest/compat.py b/src/_pytest/compat.py
+index d238061b4..a50dfecd4 100644
+--- a/src/_pytest/compat.py
++++ b/src/_pytest/compat.py
+@@ -67,8 +67,23 @@ def num_mock_patch_args(function):
+     mock_modules = [sys.modules.get("mock"), sys.modules.get("unittest.mock")]
+     if any(mock_modules):
+         sentinels = [m.DEFAULT for m in mock_modules if m is not None]
++        
++        def _is_in_sentinels(new_value):
++            """Check if new_value is in sentinels, handling array-like objects."""
++            try:
++                import warnings
++                with warnings.catch_warnings():
++                    warnings.simplefilter("ignore")
++                    return new_value in sentinels
++            except ValueError:
++                # This handles the case where new_value is an array-like object
++                # (e.g., numpy array) that raises ValueError when used with 'in'
++                # due to ambiguous truth value. In such cases, we can safely
++                # assume it's not a sentinel value.
++                return False
++        
+         return len(
+-            [p for p in patchings if not p.attribute_name and p.new in sentinels]
++            [p for p in patchings if not p.attribute_name and _is_in_sentinels(p.new)]
+         )
+     return len(patchings)
+ 

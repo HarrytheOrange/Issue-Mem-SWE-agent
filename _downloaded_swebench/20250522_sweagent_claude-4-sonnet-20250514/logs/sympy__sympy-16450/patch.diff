@@ -1,0 +1,47 @@
+diff --git a/sympy/simplify/simplify.py b/sympy/simplify/simplify.py
+index c6b511f206..cc48079ca3 100644
+--- a/sympy/simplify/simplify.py
++++ b/sympy/simplify/simplify.py
+@@ -251,8 +251,40 @@ def posify(eq):
+             eq[i] = e.subs(reps)
+         return f(eq), {r: s for s, r in reps.items()}
+ 
+-    reps = {s: Dummy(s.name, positive=True)
+-                 for s in eq.free_symbols if s.is_positive is None}
++    def _get_posify_assumptions(symbol):
++        """Get assumptions from symbol that are compatible with positive=True"""
++        
++        # Assumptions that are incompatible with positive=True
++        incompatible = {
++            'imaginary', 'zero', 'negative', 'nonpositive', 'infinite'
++        }
++        
++        # Assumptions that are automatically derived from positive=True
++        # so we don't need to explicitly set them
++        auto_derived = {
++            'positive', 'real', 'complex', 'hermitian', 'nonnegative', 
++            'nonzero'
++        }
++        
++        # Get the original assumptions from the symbol
++        original_assumptions = symbol._assumptions._generator
++        
++        # Filter out incompatible and auto-derived assumptions
++        preservable = {}
++        for key, value in original_assumptions.items():
++            if key not in incompatible and key not in auto_derived:
++                preservable[key] = value
++        
++        # Always add positive=True
++        preservable['positive'] = True
++        
++        return preservable
++
++    reps = {}
++    for s in eq.free_symbols:
++        if s.is_positive is None:
++            assumptions = _get_posify_assumptions(s)
++            reps[s] = Dummy(s.name, **assumptions)
+     eq = eq.subs(reps)
+     return eq, {r: s for s, r in reps.items()}
+ 

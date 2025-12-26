@@ -1,8 +1,13 @@
 from pathlib import Path
 
 import pytest
+from swerex.deployment.config import DummyDeploymentConfig
 
+from sweagent.agent.problem_statement import TextProblemStatement
+from sweagent.environment.swe_env import EnvironmentConfig
+from sweagent.run.batch_instances import BatchInstance
 from sweagent.run.run import main
+from sweagent.run.run_batch import RunBatch
 
 
 @pytest.mark.slow
@@ -86,6 +91,21 @@ def test_empty_instances_expert(test_data_sources_path: Path, tmp_path: Path):
     ]
     with pytest.raises(ValueError, match="No instances to run"):
         main(cmd)
+
+
+def test_should_skip_redoes_submitted_exit_error(tmp_path: Path):
+    instance_id = "dummy__instance-1"
+    instance = BatchInstance(
+        env=EnvironmentConfig(deployment=DummyDeploymentConfig()),
+        problem_statement=TextProblemStatement(text="test", id=instance_id),
+    )
+
+    traj_dir = tmp_path / instance_id
+    traj_dir.mkdir(parents=True, exist_ok=True)
+    (traj_dir / f"{instance_id}.traj").write_text('{"info": {"exit_status": "submitted (exit_error)"}}')
+
+    rb = RunBatch(instances=[instance], agent_config=object(), output_dir=tmp_path)
+    assert rb.should_skip(instance) is False
 
 
 # This doesn't work because we need to retrieve environment variables from the environment

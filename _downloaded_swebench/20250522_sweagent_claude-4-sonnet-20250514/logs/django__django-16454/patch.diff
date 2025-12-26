@@ -1,0 +1,53 @@
+diff --git a/django/core/management/base.py b/django/core/management/base.py
+index abc6f79a15..82952be4f8 100644
+--- a/django/core/management/base.py
++++ b/django/core/management/base.py
+@@ -17,6 +17,25 @@ from django.db import DEFAULT_DB_ALIAS, connections
+ ALL_CHECKS = "__all__"
+ 
+ 
++class _CommandSubParsersAction(argparse._SubParsersAction):
++    """
++    Custom subparsers action that ensures CommandParser arguments are passed
++    to subparsers.
++    """
++    
++    def __init__(self, *args, **kwargs):
++        # Extract and store the custom CommandParser arguments
++        self._missing_args_message = kwargs.pop('missing_args_message', None)
++        self._called_from_command_line = kwargs.pop('called_from_command_line', None)
++        super().__init__(*args, **kwargs)
++    
++    def add_parser(self, name, **kwargs):
++        # Pass the custom CommandParser arguments to subparsers
++        kwargs.setdefault('missing_args_message', self._missing_args_message)
++        kwargs.setdefault('called_from_command_line', self._called_from_command_line)
++        return super().add_parser(name, **kwargs)
++
++
+ class CommandError(Exception):
+     """
+     Exception class indicating a problem while executing a management
+@@ -71,6 +90,22 @@ class CommandParser(ArgumentParser):
+         else:
+             raise CommandError("Error: %s" % message)
+ 
++    def add_subparsers(self, **kwargs):
++        # Ensure subparsers inherit the custom CommandParser arguments
++        # Register our custom action class temporarily
++        original_parsers_class = self._registries['action'].get('parsers')
++        self._registries['action']['parsers'] = _CommandSubParsersAction
++        
++        try:
++            # Pass the custom arguments to the subparsers action
++            kwargs.setdefault('missing_args_message', self.missing_args_message)
++            kwargs.setdefault('called_from_command_line', self.called_from_command_line)
++            return super().add_subparsers(**kwargs)
++        finally:
++            # Restore the original parsers class
++            if original_parsers_class is not None:
++                self._registries['action']['parsers'] = original_parsers_class
++
+ 
+ def handle_default_options(options):
+     """

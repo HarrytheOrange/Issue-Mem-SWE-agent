@@ -1,0 +1,64 @@
+diff --git a/sphinx/util/docfields.py b/sphinx/util/docfields.py
+index 3a3367ebe..f72f929c9 100644
+--- a/sphinx/util/docfields.py
++++ b/sphinx/util/docfields.py
+@@ -216,6 +216,50 @@ class DocFieldTransformer:
+ 
+         self.typemap = directive.get_field_type_map()
+ 
++    def _split_fieldarg(self, fieldarg: str) -> Tuple[str, str]:
++        """
++        Split fieldarg into type and name, handling parentheses and brackets correctly.
++        
++        Examples:
++        - "dict(str, str) opc_meta" -> ("dict(str, str)", "opc_meta")
++        - "str param_name" -> ("str", "param_name")
++        - "List[Tuple[str, int]] complex_param" -> ("List[Tuple[str, int]]", "complex_param")
++        """
++        if not fieldarg.strip():
++            raise ValueError("Empty fieldarg")
++        
++        # Find the last space that's not inside parentheses/brackets
++        paren_depth = 0
++        bracket_depth = 0
++        last_space_pos = -1
++        
++        for i, char in enumerate(fieldarg):
++            if char == '(':
++                paren_depth += 1
++            elif char == ')':
++                paren_depth -= 1
++            elif char == '[':
++                bracket_depth += 1
++            elif char == ']':
++                bracket_depth -= 1
++            elif char.isspace() and paren_depth == 0 and bracket_depth == 0:
++                last_space_pos = i
++        
++        if last_space_pos == -1:
++            # No space found outside parentheses/brackets, fall back to original behavior
++            parts = fieldarg.split(None, 1)
++            if len(parts) != 2:
++                raise ValueError("No space found to split type and name")
++            return parts[0], parts[1]
++        
++        argtype = fieldarg[:last_space_pos].strip()
++        argname = fieldarg[last_space_pos + 1:].strip()
++        
++        if not argtype or not argname:
++            raise ValueError("Empty type or name after split")
++        
++        return argtype, argname
++
+     def transform_all(self, node: addnodes.desc_content) -> None:
+         """Transform all field list children of a node."""
+         # don't traverse, only handle field lists that are immediate children
+@@ -298,7 +342,7 @@ class DocFieldTransformer:
+             # also support syntax like ``:param type name:``
+             if typedesc.is_typed:
+                 try:
+-                    argtype, argname = fieldarg.split(None, 1)
++                    argtype, argname = self._split_fieldarg(fieldarg)
+                 except ValueError:
+                     pass
+                 else:

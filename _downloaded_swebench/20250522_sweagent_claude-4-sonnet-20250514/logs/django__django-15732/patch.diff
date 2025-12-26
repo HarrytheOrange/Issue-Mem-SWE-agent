@@ -1,0 +1,22 @@
+diff --git a/django/db/backends/base/schema.py b/django/db/backends/base/schema.py
+index f2ca8c8df9..12856d7706 100644
+--- a/django/db/backends/base/schema.py
++++ b/django/db/backends/base/schema.py
+@@ -568,6 +568,17 @@ class BaseDatabaseSchemaEditor:
+             exclude=meta_constraint_names | meta_index_names,
+             **constraint_kwargs,
+         )
++        # If we're looking for unique constraints, exclude primary key constraints
++        if constraint_kwargs.get("unique"):
++            # Get primary key constraint names to exclude them
++            pk_constraint_names = self._constraint_names(
++                model,
++                columns,
++                primary_key=True,
++            )
++            # Filter out primary key constraints from the list
++            constraint_names = [name for name in constraint_names if name not in pk_constraint_names]
++        
+         if len(constraint_names) != 1:
+             raise ValueError(
+                 "Found wrong number (%s) of constraints for %s(%s)"

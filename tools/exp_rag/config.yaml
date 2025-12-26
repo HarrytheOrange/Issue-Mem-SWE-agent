@@ -1,0 +1,23 @@
+tools:
+  exp_rag:
+    signature: "exp_rag <query>"
+    docstring: |
+      Integrated RAG (Retrieval-Augmented Generation) client for the local bug-fix experience database.
+      This tool combines search and retrieval into a single step. It performs a semantic search based on your query and immediately returns the **full detailed content** of the Top-3 most relevant bug fix experiences.
+
+      Use this tool to quickly gain insights from historical fixes without needing to search and read separately.
+
+      Usage examples:
+      - exp_rag "AttributeError: 'NoneType' object has no attribute 'get'"
+      - exp_rag "race condition in database connection pool"
+
+      Notes:
+      - Returns the full 'fix_experience' text for the top 3 matches.
+      - Includes Repository name, Issue ID, and the detailed solution/analysis.
+      - You do NOT need to use 'exp_read' after this; all necessary information is provided in the output.
+    arguments:
+      - name: query
+        type: string
+        description: |
+          A natural language description of the bug, traceback, error message, or issue context you are investigating.
+        required: true

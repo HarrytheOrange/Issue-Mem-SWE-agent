@@ -1,0 +1,40 @@
+diff --git a/sympy/printing/pycode.py b/sympy/printing/pycode.py
+index b669a2c783..61551022df 100644
+--- a/sympy/printing/pycode.py
++++ b/sympy/printing/pycode.py
+@@ -136,6 +136,26 @@ def _get_statement(self, codestring):
+ 
+     def _get_comment(self, text):
+         return "  # {}".format(text)
++    
++    def _precedence(self, item):
++        """Override precedence for Python-specific cases"""
++        from sympy.core.mod import Mod
++        from sympy.printing.precedence import PRECEDENCE
++        
++        # In Python, % has lower precedence than unary minus, so Mod should have
++        # lower precedence than negative Mul to ensure proper parenthesization
++        if isinstance(item, Mod):
++            return PRECEDENCE["Add"]  # Use Add precedence (40) which is lower than Mul (50)
++        
++        # Use default precedence for everything else
++        return precedence(item)
++    
++    def parenthesize(self, item, level, strict=False):
++        """Override parenthesize to use custom precedence"""
++        if (self._precedence(item) < level) or ((not strict) and self._precedence(item) <= level):
++            return "(%s)" % self._print(item)
++        else:
++            return self._print(item)
+ 
+     def _expand_fold_binary_op(self, op, args):
+         """
+@@ -233,7 +253,7 @@ def _print_ComplexInfinity(self, expr):
+         return self._print_NaN(expr)
+ 
+     def _print_Mod(self, expr):
+-        PREC = precedence(expr)
++        PREC = self._precedence(expr)
+         return ('{} % {}'.format(*map(lambda x: self.parenthesize(x, PREC), expr.args)))
+ 
+     def _print_Piecewise(self, expr):

@@ -1,0 +1,119 @@
+diff --git a/django/db/models/sql/datastructures.py b/django/db/models/sql/datastructures.py
+index 1edf040e82..aaec79fe88 100644
+--- a/django/db/models/sql/datastructures.py
++++ b/django/db/models/sql/datastructures.py
+@@ -162,7 +162,12 @@ class Join:
+         return hash(self.identity)
+ 
+     def equals(self, other):
+-        # Ignore filtered_relation in equality check.
++        # If both joins have filtered_relation, include it in equality check.
++        # This ensures that multiple FilteredRelation objects with different
++        # conditions but same relation don't get reused.
++        if self.filtered_relation is not None and other.filtered_relation is not None:
++            return self.identity == other.identity
++        # Otherwise, ignore filtered_relation in equality check.
+         return self.identity[:-1] == other.identity[:-1]
+ 
+     def demote(self):
+diff --git a/django/db/models/sql/query.py b/django/db/models/sql/query.py
+index 54f3258eac..4b8173d3a5 100644
+--- a/django/db/models/sql/query.py
++++ b/django/db/models/sql/query.py
+@@ -804,14 +804,19 @@ class Query(BaseExpression):
+             return alias, False
+ 
+         # Create a new alias for this table.
+-        if alias_list:
++        if filtered_relation is not None:
++            # Always use the filtered relation's alias when provided
++            alias = filtered_relation.alias
++            if alias_list:
++                alias_list.append(alias)
++            else:
++                self.table_map[table_name] = [alias]
++        elif alias_list:
+             alias = "%s%d" % (self.alias_prefix, len(self.alias_map) + 1)
+             alias_list.append(alias)
+         else:
+             # The first occurrence of a table uses the table name directly.
+-            alias = (
+-                filtered_relation.alias if filtered_relation is not None else table_name
+-            )
++            alias = table_name
+             self.table_map[table_name] = [alias]
+         self.alias_refcount[alias] = 1
+         return alias, True
+diff --git a/tests/filtered_relation/tests.py b/tests/filtered_relation/tests.py
+index 790a90d9e2..9a45c0c512 100644
+--- a/tests/filtered_relation/tests.py
++++ b/tests/filtered_relation/tests.py
+@@ -164,6 +164,68 @@ class FilteredRelationTests(TestCase):
+             [self.author1, self.author2],
+         )
+ 
++    def test_multiple_filtered_relations_different_conditions(self):
++        """
++        Test that multiple FilteredRelation objects with different conditions
++        but for the same relation create separate joins.
++        """
++        qs = Author.objects.alias(
++            available_books=FilteredRelation(
++                "book",
++                condition=Q(book__state=Book.AVAILABLE)
++            ),
++            rented_books=FilteredRelation(
++                "book", 
++                condition=Q(book__state=Book.RENTED)
++            )
++        ).annotate(
++            available_count=Count("available_books"),
++            rented_count=Count("rented_books")
++        )
++        
++        # Check that both aliases appear in the SQL
++        sql_str = str(qs.query)
++        self.assertIn('available_books', sql_str)
++        self.assertIn('rented_books', sql_str)
++        
++        # Check that we have 2 JOIN clauses
++        join_count = sql_str.upper().count('JOIN')
++        self.assertEqual(join_count, 2)
++
++    def test_multiple_filtered_relations_with_case_when(self):
++        """
++        Test the exact scenario from the PR description using Case/When.
++        """
++        qs = Author.objects.alias(
++            available_books=FilteredRelation(
++                "book",
++                condition=Q(book__state=Book.AVAILABLE)
++            ),
++            rented_books=FilteredRelation(
++                "book", 
++                condition=Q(book__state=Book.RENTED)
++            )
++        ).annotate(
++            available_title=F("available_books__title"),
++            rented_title=F("rented_books__title"),
++            final_title=Case(
++                When(
++                    available_title__isnull=True,
++                    then=F("rented_title"),
++                ),
++                default=F("available_title")
++            )
++        )
++        
++        # Check that both aliases appear in the SQL
++        sql_str = str(qs.query)
++        self.assertIn('available_books', sql_str)
++        self.assertIn('rented_books', sql_str)
++        
++        # Check that we have 2 JOIN clauses
++        join_count = sql_str.upper().count('JOIN')
++        self.assertEqual(join_count, 2)
++
+     def test_with_join(self):
+         self.assertSequenceEqual(
+             Author.objects.annotate(

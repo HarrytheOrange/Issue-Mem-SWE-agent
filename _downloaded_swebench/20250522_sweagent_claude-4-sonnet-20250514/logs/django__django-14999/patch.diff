@@ -1,0 +1,70 @@
+diff --git a/django/db/migrations/operations/models.py b/django/db/migrations/operations/models.py
+index 982816be3a..e97d12093f 100644
+--- a/django/db/migrations/operations/models.py
++++ b/django/db/migrations/operations/models.py
+@@ -320,6 +320,9 @@ class RenameModel(ModelOperation):
+         new_model = to_state.apps.get_model(app_label, self.new_name)
+         if self.allow_migrate_model(schema_editor.connection.alias, new_model):
+             old_model = from_state.apps.get_model(app_label, self.old_name)
++            # If the db_table is the same, this should be a noop
++            if old_model._meta.db_table == new_model._meta.db_table:
++                return
+             # Move the main table
+             schema_editor.alter_db_table(
+                 new_model,
+diff --git a/tests/migrations/test_operations.py b/tests/migrations/test_operations.py
+index 11961a1f40..6d8c323f76 100644
+--- a/tests/migrations/test_operations.py
++++ b/tests/migrations/test_operations.py
+@@ -891,6 +891,51 @@ class OperationTests(OperationTestBase):
+         ponyrider = PonyRider.objects.create()
+         ponyrider.riders.add(jockey)
+ 
++    def test_rename_model_with_db_table_noop(self):
++        """
++        RenameModel operations should be a noop when the model has a custom
++        db_table that doesn't change.
++        """
++        app_label = "test_rename_model_with_db_table_noop"
++        project_state = self.set_up_test_model(app_label, related_model=True, 
++                                               db_table='custom_pony_table')
++        
++        # Test the state alteration
++        operation = migrations.RenameModel("Pony", "Horse")
++        new_state = project_state.clone()
++        operation.state_forwards(app_label, new_state)
++        
++        # Verify the db_table is the same
++        old_model = project_state.apps.get_model(app_label, 'Pony')
++        new_model = new_state.apps.get_model(app_label, 'Horse')
++        self.assertEqual(old_model._meta.db_table, 'custom_pony_table')
++        self.assertEqual(new_model._meta.db_table, 'custom_pony_table')
++        
++        # Test database operation is a noop
++        with CaptureQueriesContext(connection) as context:
++            with connection.schema_editor() as editor:
++                operation.database_forwards(app_label, editor, project_state, new_state)
++        
++        # Should only have transaction/pragma queries, no table operations
++        table_operations = [
++            q for q in context.captured_queries 
++            if any(keyword in q['sql'].upper() for keyword in ['ALTER TABLE', 'CREATE TABLE', 'DROP TABLE', 'INSERT INTO'])
++        ]
++        self.assertEqual(len(table_operations), 0, 
++                        f"Expected no table operations, but got: {table_operations}")
++        
++        # Test backwards operation is also a noop
++        with CaptureQueriesContext(connection) as context:
++            with connection.schema_editor() as editor:
++                operation.database_backwards(app_label, editor, new_state, project_state)
++        
++        table_operations = [
++            q for q in context.captured_queries 
++            if any(keyword in q['sql'].upper() for keyword in ['ALTER TABLE', 'CREATE TABLE', 'DROP TABLE', 'INSERT INTO'])
++        ]
++        self.assertEqual(len(table_operations), 0, 
++                        f"Expected no table operations in backwards, but got: {table_operations}")
++
+     def test_add_field(self):
+         """
+         Tests the AddField operation.

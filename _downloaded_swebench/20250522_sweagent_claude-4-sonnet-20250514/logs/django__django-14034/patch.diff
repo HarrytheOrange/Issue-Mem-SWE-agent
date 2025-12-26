@@ -1,0 +1,28 @@
+diff --git a/django/forms/fields.py b/django/forms/fields.py
+index 65d6a9ec82..413cf4e121 100644
+--- a/django/forms/fields.py
++++ b/django/forms/fields.py
+@@ -1022,11 +1022,22 @@ class MultiValueField(Field):
+         if self.disabled and not isinstance(value, list):
+             value = self.widget.decompress(value)
+         if not value or isinstance(value, (list, tuple)):
+-            if not value or not [v for v in value if v not in self.empty_values]:
++            if not value:
++                # No data provided at all (None, '', [], etc.)
+                 if self.required:
+                     raise ValidationError(self.error_messages['required'], code='required')
+                 else:
+                     return self.compress([])
++            elif not [v for v in value if v not in self.empty_values]:
++                # All values in the list are empty
++                if self.required:
++                    raise ValidationError(self.error_messages['required'], code='required')
++                elif not self.require_all_fields and isinstance(value, (list, tuple)):
++                    # For require_all_fields=False, we should still validate individual
++                    # field requirements when a data structure is provided
++                    pass  # Continue to individual field validation
++                else:
++                    return self.compress([])
+         else:
+             raise ValidationError(self.error_messages['invalid'], code='invalid')
+         for i, field in enumerate(self.fields):

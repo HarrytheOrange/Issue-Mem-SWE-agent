@@ -1,0 +1,79 @@
+diff --git a/sympy/sets/contains.py b/sympy/sets/contains.py
+index b2d4268d12..b5ab95d41b 100644
+--- a/sympy/sets/contains.py
++++ b/sympy/sets/contains.py
+@@ -44,5 +44,45 @@ def binary_symbols(self):
+             if i.is_Boolean or i.is_Symbol or
+             isinstance(i, (Eq, Ne))])
+ 
+-    def as_set(self):
+-        raise NotImplementedError()
++    def _eval_as_set(self):
++        """
++        Return the set of values for which this Contains condition is true.
++        
++        For Contains(x, S), this returns S if x is the only free symbol,
++        otherwise raises NotImplementedError.
++        """
++        from sympy.sets.sets import Set
++        
++        # Get the variable and the set
++        x, s = self.args
++        
++        # If the set is not actually a Set, we can't proceed
++        if not isinstance(s, Set):
++            raise NotImplementedError("as_set is only implemented for Contains with Set arguments")
++        
++        # Check if x is the only free symbol in this expression
++        free_symbols = self.free_symbols
++        if len(free_symbols) == 1 and x in free_symbols:
++            # For Contains(x, S), the set of values where this is true is S itself
++            return s
++        elif len(free_symbols) == 0:
++            # If there are no free symbols, this is a constant boolean
++            # We should evaluate it and return appropriate set
++            if self == S.true:
++                from sympy.sets.sets import UniversalSet
++                return UniversalSet
++            elif self == S.false:
++                return S.EmptySet
++            else:
++                # Try to evaluate the Contains expression
++                evaluated = self.doit()
++                if evaluated == S.true:
++                    from sympy.sets.sets import UniversalSet
++                    return UniversalSet
++                elif evaluated == S.false:
++                    return S.EmptySet
++                else:
++                    raise NotImplementedError("Cannot determine truth value of Contains expression")
++        else:
++            # Multiple free symbols - not implemented yet
++            raise NotImplementedError("as_set is not implemented for Contains with multiple free symbols")
+diff --git a/sympy/sets/tests/test_contains.py b/sympy/sets/tests/test_contains.py
+index 1973fed19c..ee3096be23 100644
+--- a/sympy/sets/tests/test_contains.py
++++ b/sympy/sets/tests/test_contains.py
+@@ -41,10 +41,19 @@ def test_binary_symbols():
+ def test_as_set():
+     x = Symbol('x')
+     y = Symbol('y')
+-    # Contains is a BooleanFunction whose value depends on an arg's
+-    # containment in a Set -- rewriting as a Set is not yet implemented
++    # Contains.as_set() should return the set for which the condition is true
++    assert Contains(x, S.Reals).as_set() == S.Reals
++    assert Contains(x, S.Integers).as_set() == S.Integers
++    assert Contains(x, FiniteSet(1, 2, 3)).as_set() == FiniteSet(1, 2, 3)
++    assert Contains(x, Interval(0, 1)).as_set() == Interval(0, 1)
++    
++    # Test with multiple free symbols should raise NotImplementedError
+     raises(NotImplementedError, lambda:
+-           Contains(x, FiniteSet(y)).as_set())
++           Contains(x + y, S.Reals).as_set())
++    
++    # Test constant cases
++    assert Contains(1, S.Reals).as_set() == S.UniversalSet
++    assert Contains(1, S.EmptySet).as_set() == S.EmptySet
+ 
+ def test_type_error():
+     # Pass in a parameter not of type "set"

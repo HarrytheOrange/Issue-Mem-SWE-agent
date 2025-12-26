@@ -1,0 +1,925 @@
+diff --git a/debug_axisinfo.py b/debug_axisinfo.py
+new file mode 100644
+index 0000000000..1c737cc7ae
+--- /dev/null
++++ b/debug_axisinfo.py
+@@ -0,0 +1,79 @@
++import matplotlib.pyplot as plt
++import numpy as np
++
++def print_datalim(*ax):
++    for i, ax_ in enumerate(ax):
++        print(f"ax{i+1} dataLim: {ax_.dataLim.intervaly}", end=' / ')
++    print()
++
++df1_index = ['16 May', '17 May']  # == df2_index
++df1_values = [-22.717708333333402, 26.584999999999937]
++df2_values = [-0.08501399999999998, -2.9833019999999966]
++
++fig, ax1 = plt.subplots()
++
++ax1.stackplot(df1_index, df1_values)
++print("After stackplot on ax1:")
++print_datalim(ax1)
++
++ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
++print("After creating twinx:")
++print_datalim(ax1, ax2)
++
++# Set up the converter and units
++import matplotlib.units as munits
++new_converter = munits.registry.get_converter(df1_index)
++ax2.xaxis.converter = new_converter
++default = ax2.xaxis.converter.default_units(df1_index, ax2.xaxis)
++
++print("\nBefore _update_axisinfo:")
++print_datalim(ax1, ax2)
++
++# Let's trace what happens step by step in _update_axisinfo
++if ax2.xaxis.converter is None:
++    print("Converter is None, returning")
++else:
++    print("Getting axisinfo...")
++    info = ax2.xaxis.converter.axisinfo(default, ax2.xaxis)
++    print(f"Info: {info}")
++    
++    if info is None:
++        print("Info is None, returning")
++    else:
++        print("Info is not None, processing...")
++        
++        # Check each part of the info processing
++        if info.majloc is not None and ax2.xaxis.major.locator != info.majloc and ax2.xaxis.isDefault_majloc:
++            print("Setting major locator...")
++            ax2.xaxis.set_major_locator(info.majloc)
++            print("After setting major locator:")
++            print_datalim(ax1, ax2)
++            
++        if info.minloc is not None and ax2.xaxis.minor.locator != info.minloc and ax2.xaxis.isDefault_minloc:
++            print("Setting minor locator...")
++            ax2.xaxis.set_minor_locator(info.minloc)
++            print("After setting minor locator:")
++            print_datalim(ax1, ax2)
++            
++        if info.majfmt is not None and ax2.xaxis.major.formatter != info.majfmt and ax2.xaxis.isDefault_majfmt:
++            print("Setting major formatter...")
++            ax2.xaxis.set_major_formatter(info.majfmt)
++            print("After setting major formatter:")
++            print_datalim(ax1, ax2)
++            
++        if info.minfmt is not None and ax2.xaxis.minor.formatter != info.minfmt and ax2.xaxis.isDefault_minfmt:
++            print("Setting minor formatter...")
++            ax2.xaxis.set_minor_formatter(info.minfmt)
++            print("After setting minor formatter:")
++            print_datalim(ax1, ax2)
++            
++        if info.label is not None and ax2.xaxis.isDefault_label:
++            print("Setting label...")
++            ax2.xaxis.set_label_text(info.label)
++            print("After setting label:")
++            print_datalim(ax1, ax2)
++            
++        print("Calling set_default_intervals...")
++        ax2.xaxis.set_default_intervals()
++        print("After set_default_intervals:")
++        print_datalim(ax1, ax2)
+\ No newline at end of file
+diff --git a/debug_callback_object.py b/debug_callback_object.py
+new file mode 100644
+index 0000000000..6356a70805
+--- /dev/null
++++ b/debug_callback_object.py
+@@ -0,0 +1,42 @@
++import matplotlib.pyplot as plt
++import numpy as np
++
++def print_datalim(*ax):
++    for i, ax_ in enumerate(ax):
++        print(f"ax{i+1} dataLim: {ax_.dataLim.intervaly}", end=' / ')
++    print()
++
++df1_index = ['16 May', '17 May']  # == df2_index
++df1_values = [-22.717708333333402, 26.584999999999937]
++df2_values = [-0.08501399999999998, -2.9833019999999966]
++
++fig, ax1 = plt.subplots()
++
++ax1.stackplot(df1_index, df1_values)
++print("After stackplot on ax1:")
++print_datalim(ax1)
++
++ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
++print("After creating twinx:")
++print_datalim(ax1, ax2)
++
++# Check what the callback object is
++callback_ref = ax1.xaxis.callbacks.callbacks['units'][0]
++callback_obj = callback_ref()
++print(f"Callback object: {callback_obj}")
++print(f"Callback object type: {type(callback_obj)}")
++
++# Check if it's a method and what object it belongs to
++if hasattr(callback_obj, '__self__'):
++    print(f"Callback belongs to: {callback_obj.__self__}")
++    print(f"Callback method name: {callback_obj.__name__}")
++    
++# Let's also check ax2
++callback_ref2 = ax2.xaxis.callbacks.callbacks['units'][0]
++callback_obj2 = callback_ref2()
++print(f"ax2 Callback object: {callback_obj2}")
++print(f"ax2 Callback object type: {type(callback_obj2)}")
++
++if hasattr(callback_obj2, '__self__'):
++    print(f"ax2 Callback belongs to: {callback_obj2.__self__}")
++    print(f"ax2 Callback method name: {callback_obj2.__name__}")
+\ No newline at end of file
+diff --git a/debug_callbacks.py b/debug_callbacks.py
+new file mode 100644
+index 0000000000..df2df50a2e
+--- /dev/null
++++ b/debug_callbacks.py
+@@ -0,0 +1,53 @@
++import matplotlib.pyplot as plt
++import numpy as np
++from matplotlib.category import UnitData
++
++def print_datalim(*ax):
++    for i, ax_ in enumerate(ax):
++        print(f"ax{i+1} dataLim: {ax_.dataLim.intervaly}", end=' / ')
++    print()
++
++df1_index = ['16 May', '17 May']  # == df2_index
++df1_values = [-22.717708333333402, 26.584999999999937]
++df2_values = [-0.08501399999999998, -2.9833019999999966]
++
++fig, ax1 = plt.subplots()
++
++ax1.stackplot(df1_index, df1_values)
++print("After stackplot on ax1:")
++print_datalim(ax1)
++
++ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
++print("After creating twinx:")
++print_datalim(ax1, ax2)
++
++# Check what callbacks are registered
++print(f"ax1.xaxis callbacks: {ax1.xaxis.callbacks.callbacks}")
++print(f"ax2.xaxis callbacks: {ax2.xaxis.callbacks.callbacks}")
++
++# Get the new converter
++import matplotlib.units as munits
++new_converter = munits.registry.get_converter(df1_index)
++ax2.xaxis.converter = new_converter
++
++# Create UnitData
++unit_data = UnitData(df1_index)
++
++# Set units on both axes manually
++ax1.xaxis.units = unit_data
++ax2.xaxis.units = unit_data
++
++# Call _update_axisinfo on both
++ax1.xaxis._update_axisinfo()
++ax2.xaxis._update_axisinfo()
++
++print("Before callbacks.process on ax1.xaxis:")
++print_datalim(ax1, ax2)
++
++ax1.xaxis.callbacks.process('units')
++print("After callbacks.process on ax1.xaxis:")
++print_datalim(ax1, ax2)
++
++ax2.xaxis.callbacks.process('units')
++print("After callbacks.process on ax2.xaxis:")
++print_datalim(ax1, ax2)
+\ No newline at end of file
+diff --git a/debug_converter.py b/debug_converter.py
+new file mode 100644
+index 0000000000..42275ceacd
+--- /dev/null
++++ b/debug_converter.py
+@@ -0,0 +1,40 @@
++import matplotlib.pyplot as plt
++import numpy as np
++
++def print_datalim(*ax):
++    for i, ax_ in enumerate(ax):
++        print(f"ax{i+1} dataLim: {ax_.dataLim.intervaly}", end=' / ')
++    print()
++
++df1_index = ['16 May', '17 May']  # == df2_index
++df1_values = [-22.717708333333402, 26.584999999999937]
++df2_values = [-0.08501399999999998, -2.9833019999999966]
++
++fig, ax1 = plt.subplots()
++
++ax1.stackplot(df1_index, df1_values)
++print("After stackplot on ax1:")
++print_datalim(ax1)
++
++ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
++print("After creating twinx:")
++print_datalim(ax1, ax2)
++
++# Get the new converter
++import matplotlib.units as munits
++new_converter = munits.registry.get_converter(df1_index)
++
++print("Before setting converter:")
++print_datalim(ax1, ax2)
++
++# Set the converter
++ax2.xaxis.converter = new_converter
++print("After setting converter:")
++print_datalim(ax1, ax2)
++
++# Get default units
++default = ax2.xaxis.converter.default_units(df1_index, ax2.xaxis)
++print(f"Default units: {default}")
++
++print("After getting default units:")
++print_datalim(ax1, ax2)
+\ No newline at end of file
+diff --git a/debug_detailed.py b/debug_detailed.py
+new file mode 100644
+index 0000000000..a2982f9f36
+--- /dev/null
++++ b/debug_detailed.py
+@@ -0,0 +1,57 @@
++import matplotlib.pyplot as plt
++import numpy as np
++
++def print_datalim(*ax):
++    for i, ax_ in enumerate(ax):
++        print(f"ax{i+1} dataLim: {ax_.dataLim.intervaly}", end=' / ')
++    print()
++
++df1_index = ['16 May', '17 May']  # == df2_index
++df1_values = [-22.717708333333402, 26.584999999999937]
++df2_values = [-0.08501399999999998, -2.9833019999999966]
++
++fig, ax1 = plt.subplots()
++
++ax1.stackplot(df1_index, df1_values)
++print("After stackplot on ax1:")
++print_datalim(ax1)
++
++ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
++print("After creating twinx:")
++print_datalim(ax1, ax2)
++
++# Let's trace what happens step by step during plot
++print("\nCalling ax2.plot step by step:")
++
++# First, let's see what _get_lines does
++lines = list(ax2._get_lines(df1_index, df2_values))
++print("After _get_lines:")
++print_datalim(ax1, ax2)
++
++# Now add the line
++for line in lines:
++    print("Before add_line:")
++    print_datalim(ax1, ax2)
++    ax2.add_line(line)
++    print("After add_line:")
++    print_datalim(ax1, ax2)
++
++# Now request autoscale
++print("Before _request_autoscale_view('x'):")
++print_datalim(ax1, ax2)
++ax2._request_autoscale_view("x")
++print("After _request_autoscale_view('x'):")
++print_datalim(ax1, ax2)
++
++print("Before _request_autoscale_view('y'):")
++print_datalim(ax1, ax2)
++ax2._request_autoscale_view("y")
++print("After _request_autoscale_view('y'):")
++print_datalim(ax1, ax2)
++
++# Now let's see what happens when we access viewLim
++print("Before accessing ax2.viewLim:")
++print_datalim(ax1, ax2)
++_ = ax2.viewLim
++print("After accessing ax2.viewLim:")
++print_datalim(ax1, ax2)
+\ No newline at end of file
+diff --git a/debug_intervals.py b/debug_intervals.py
+new file mode 100644
+index 0000000000..0d408a9754
+--- /dev/null
++++ b/debug_intervals.py
+@@ -0,0 +1,39 @@
++import matplotlib.pyplot as plt
++import numpy as np
++
++def print_datalim(*ax):
++    for i, ax_ in enumerate(ax):
++        print(f"ax{i+1} dataLim: {ax_.dataLim.intervaly}", end=' / ')
++    print()
++
++def print_mutated(*ax):
++    for i, ax_ in enumerate(ax):
++        print(f"ax{i+1} dataLim.mutatedy(): {ax_.dataLim.mutatedy()}, viewLim.mutatedy(): {ax_.viewLim.mutatedy()}")
++
++df1_index = ['16 May', '17 May']  # == df2_index
++df1_values = [-22.717708333333402, 26.584999999999937]
++df2_values = [-0.08501399999999998, -2.9833019999999966]
++
++fig, ax1 = plt.subplots()
++
++ax1.stackplot(df1_index, df1_values)
++print("After stackplot on ax1:")
++print_datalim(ax1)
++print_mutated(ax1)
++
++ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
++print("\nAfter creating twinx:")
++print_datalim(ax1, ax2)
++print_mutated(ax1, ax2)
++
++# Let's see what happens when we call set_default_intervals on ax1.yaxis
++print("\nCalling ax1.yaxis.set_default_intervals():")
++ax1.yaxis.set_default_intervals()
++print_datalim(ax1, ax2)
++print_mutated(ax1, ax2)
++
++# Let's see what happens when we call set_default_intervals on ax2.yaxis
++print("\nCalling ax2.yaxis.set_default_intervals():")
++ax2.yaxis.set_default_intervals()
++print_datalim(ax1, ax2)
++print_mutated(ax1, ax2)
+\ No newline at end of file
+diff --git a/debug_issue.py b/debug_issue.py
+new file mode 100644
+index 0000000000..b7b371cb05
+--- /dev/null
++++ b/debug_issue.py
+@@ -0,0 +1,49 @@
++import matplotlib.pyplot as plt
++import numpy as np
++
++def print_datalim(*ax):
++    for i, ax_ in enumerate(ax):
++        print(f"ax{i+1} dataLim: {ax_.dataLim.intervaly}", end=' / ')
++    print()
++
++def print_shared_axes(*ax):
++    for i, ax_ in enumerate(ax):
++        shared = ax_._shared_axes["x"].get_siblings(ax_)
++        print(f"ax{i+1} shared x-axes: {len(shared)}")
++
++df1_index = ['16 May', '17 May']  # == df2_index
++df1_values = [-22.717708333333402, 26.584999999999937]
++df2_values = [-0.08501399999999998, -2.9833019999999966]
++
++fig, ax1 = plt.subplots()
++
++print("Initial state:")
++print_datalim(ax1)
++print_shared_axes(ax1)
++
++ax1.stackplot(df1_index, df1_values)
++print("\nAfter stackplot on ax1:")
++print_datalim(ax1)
++print_shared_axes(ax1)
++
++ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
++print("\nAfter creating twinx:")
++print_datalim(ax1, ax2)
++print_shared_axes(ax1, ax2)
++
++# Let's see what happens when we access viewLim
++print("\nAccessing ax1.viewLim:")
++_ = ax1.viewLim
++print_datalim(ax1, ax2)
++
++print("\nAccessing ax2.viewLim:")
++_ = ax2.viewLim
++print_datalim(ax1, ax2)
++
++ax2.plot(df1_index, df2_values)
++print("\nAfter plot on ax2:")
++print_datalim(ax1, ax2)
++
++print("\nAccessing ax1.viewLim again:")
++_ = ax1.viewLim
++print_datalim(ax1, ax2)
+\ No newline at end of file
+diff --git a/debug_set_units.py b/debug_set_units.py
+new file mode 100644
+index 0000000000..1b1f3dd2ce
+--- /dev/null
++++ b/debug_set_units.py
+@@ -0,0 +1,40 @@
++import matplotlib.pyplot as plt
++import numpy as np
++from matplotlib.category import UnitData
++
++def print_datalim(*ax):
++    for i, ax_ in enumerate(ax):
++        print(f"ax{i+1} dataLim: {ax_.dataLim.intervaly}", end=' / ')
++    print()
++
++df1_index = ['16 May', '17 May']  # == df2_index
++df1_values = [-22.717708333333402, 26.584999999999937]
++df2_values = [-0.08501399999999998, -2.9833019999999966]
++
++fig, ax1 = plt.subplots()
++
++ax1.stackplot(df1_index, df1_values)
++print("After stackplot on ax1:")
++print_datalim(ax1)
++
++ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
++print("After creating twinx:")
++print_datalim(ax1, ax2)
++
++# Get the new converter
++import matplotlib.units as munits
++new_converter = munits.registry.get_converter(df1_index)
++ax2.xaxis.converter = new_converter
++
++print("Before set_units:")
++print_datalim(ax1, ax2)
++
++# Create UnitData
++unit_data = UnitData(df1_index)
++print("After creating UnitData:")
++print_datalim(ax1, ax2)
++
++# Call set_units
++ax2.xaxis.set_units(unit_data)
++print("After set_units:")
++print_datalim(ax1, ax2)
+\ No newline at end of file
+diff --git a/debug_set_units_detailed.py b/debug_set_units_detailed.py
+new file mode 100644
+index 0000000000..5ada65a210
+--- /dev/null
++++ b/debug_set_units_detailed.py
+@@ -0,0 +1,63 @@
++import matplotlib.pyplot as plt
++import numpy as np
++from matplotlib.category import UnitData
++
++def print_datalim(*ax):
++    for i, ax_ in enumerate(ax):
++        print(f"ax{i+1} dataLim: {ax_.dataLim.intervaly}", end=' / ')
++    print()
++
++df1_index = ['16 May', '17 May']  # == df2_index
++df1_values = [-22.717708333333402, 26.584999999999937]
++df2_values = [-0.08501399999999998, -2.9833019999999966]
++
++fig, ax1 = plt.subplots()
++
++ax1.stackplot(df1_index, df1_values)
++print("After stackplot on ax1:")
++print_datalim(ax1)
++
++ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
++print("After creating twinx:")
++print_datalim(ax1, ax2)
++
++# Get the new converter
++import matplotlib.units as munits
++new_converter = munits.registry.get_converter(df1_index)
++ax2.xaxis.converter = new_converter
++
++# Create UnitData
++unit_data = UnitData(df1_index)
++
++print("Before set_units:")
++print_datalim(ax1, ax2)
++
++# Manually trace what happens in set_units
++u = unit_data
++if u == ax2.xaxis.units:
++    print("Units are the same, returning")
++else:
++    print("Units are different, processing shared axes...")
++    shared_axes = ax2.xaxis._get_shared_axis()
++    print(f"Shared axes: {len(shared_axes)}")
++    
++    for i, axis in enumerate(shared_axes):
++        print(f"Processing axis {i}: {axis}")
++        print(f"Before setting units on axis {i}:")
++        print_datalim(ax1, ax2)
++        
++        axis.units = u
++        print(f"After setting units on axis {i}:")
++        print_datalim(ax1, ax2)
++        
++        axis._update_axisinfo()
++        print(f"After _update_axisinfo on axis {i}:")
++        print_datalim(ax1, ax2)
++        
++        axis.callbacks.process('units')
++        print(f"After callbacks.process on axis {i}:")
++        print_datalim(ax1, ax2)
++        
++        axis.stale = True
++        print(f"After setting stale on axis {i}:")
++        print_datalim(ax1, ax2)
+\ No newline at end of file
+diff --git a/debug_stackplot_children.py b/debug_stackplot_children.py
+new file mode 100644
+index 0000000000..a0f35cbfef
+--- /dev/null
++++ b/debug_stackplot_children.py
+@@ -0,0 +1,29 @@
++import matplotlib.pyplot as plt
++import numpy as np
++
++df1_index = ['16 May', '17 May']  # == df2_index
++df1_values = [-22.717708333333402, 26.584999999999937]
++
++fig, ax1 = plt.subplots()
++
++print("Children before stackplot:")
++for i, child in enumerate(ax1._children):
++    print(f"  {i}: {type(child)} - {child}")
++
++result = ax1.stackplot(df1_index, df1_values)
++print(f"\nStackplot returned: {result}")
++for i, item in enumerate(result):
++    print(f"  {i}: {type(item)} - {item}")
++
++print("\nChildren after stackplot:")
++for i, child in enumerate(ax1._children):
++    print(f"  {i}: {type(child)} - {child}")
++    
++# Check if the stackplot children are patches
++import matplotlib.patches as mpatches
++import matplotlib.collections as mcoll
++
++for i, child in enumerate(ax1._children):
++    print(f"Child {i} is Patch: {isinstance(child, mpatches.Patch)}")
++    print(f"Child {i} is Collection: {isinstance(child, mcoll.Collection)}")
++    print(f"Child {i} is PolyCollection: {isinstance(child, mcoll.PolyCollection)}")
+\ No newline at end of file
+diff --git a/debug_units.py b/debug_units.py
+new file mode 100644
+index 0000000000..f94f6a32db
+--- /dev/null
++++ b/debug_units.py
+@@ -0,0 +1,39 @@
++import matplotlib.pyplot as plt
++import numpy as np
++
++def print_datalim(*ax):
++    for i, ax_ in enumerate(ax):
++        print(f"ax{i+1} dataLim: {ax_.dataLim.intervaly}", end=' / ')
++    print()
++
++def print_units(*ax):
++    for i, ax_ in enumerate(ax):
++        print(f"ax{i+1} xaxis units: {ax_.xaxis.units}, yaxis units: {ax_.yaxis.units}")
++
++df1_index = ['16 May', '17 May']  # == df2_index
++df1_values = [-22.717708333333402, 26.584999999999937]
++df2_values = [-0.08501399999999998, -2.9833019999999966]
++
++fig, ax1 = plt.subplots()
++
++ax1.stackplot(df1_index, df1_values)
++print("After stackplot on ax1:")
++print_datalim(ax1)
++print_units(ax1)
++
++ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
++print("\nAfter creating twinx:")
++print_datalim(ax1, ax2)
++print_units(ax1, ax2)
++
++# Let's see what happens when we call update_units on ax2.yaxis
++print("\nCalling ax2.yaxis.update_units(df2_values):")
++ax2.yaxis.update_units(df2_values)
++print_datalim(ax1, ax2)
++print_units(ax1, ax2)
++
++# Let's see what happens when we call update_units on ax2.xaxis
++print("\nCalling ax2.xaxis.update_units(df1_index):")
++ax2.xaxis.update_units(df1_index)
++print_datalim(ax1, ax2)
++print_units(ax1, ax2)
+\ No newline at end of file
+diff --git a/debug_update_units.py b/debug_update_units.py
+new file mode 100644
+index 0000000000..be5735c340
+--- /dev/null
++++ b/debug_update_units.py
+@@ -0,0 +1,59 @@
++import matplotlib.pyplot as plt
++import numpy as np
++
++def print_datalim(*ax):
++    for i, ax_ in enumerate(ax):
++        print(f"ax{i+1} dataLim: {ax_.dataLim.intervaly}", end=' / ')
++    print()
++
++df1_index = ['16 May', '17 May']  # == df2_index
++df1_values = [-22.717708333333402, 26.584999999999937]
++df2_values = [-0.08501399999999998, -2.9833019999999966]
++
++fig, ax1 = plt.subplots()
++
++ax1.stackplot(df1_index, df1_values)
++print("After stackplot on ax1:")
++print_datalim(ax1)
++
++ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
++print("After creating twinx:")
++print_datalim(ax1, ax2)
++
++# Let's trace what happens step by step in update_units
++print("\nBefore ax2.xaxis.update_units:")
++print_datalim(ax1, ax2)
++
++# Check if converter is different
++converter = ax2.xaxis.converter
++print(f"ax2.xaxis.converter before: {converter}")
++
++# Get the new converter
++import matplotlib.units as munits
++new_converter = munits.registry.get_converter(df1_index)
++print(f"New converter: {new_converter}")
++
++# Check if they're different
++neednew = ax2.xaxis.converter != new_converter
++print(f"neednew: {neednew}")
++
++# Set the converter
++ax2.xaxis.converter = new_converter
++print("After setting converter:")
++print_datalim(ax1, ax2)
++
++# Get default units
++default = ax2.xaxis.converter.default_units(df1_index, ax2.xaxis)
++print(f"Default units: {default}")
++
++# Set units
++if default is not None and ax2.xaxis.units is None:
++    print("Setting units...")
++    ax2.xaxis.set_units(default)
++    print("After setting units:")
++    print_datalim(ax1, ax2)
++elif neednew:
++    print("Calling _update_axisinfo...")
++    ax2.xaxis._update_axisinfo()
++    print("After _update_axisinfo:")
++    print_datalim(ax1, ax2)
+\ No newline at end of file
+diff --git a/debug_zero_case.py b/debug_zero_case.py
+new file mode 100644
+index 0000000000..964fff8c69
+--- /dev/null
++++ b/debug_zero_case.py
+@@ -0,0 +1,20 @@
++import matplotlib.pyplot as plt
++import matplotlib.collections as mcoll
++
++fig, ax = plt.subplots()
++
++# Create a collection with a single point (zero width/height)
++point_collection = mcoll.LineCollection([[(0, 0), (0, 0)]])
++ax.add_collection(point_collection)
++
++# Check what get_datalim returns
++datalim = point_collection.get_datalim(ax.transData)
++print(f"Collection datalim: {datalim}")
++print(f"Collection datalim width: {datalim.width}")
++print(f"Collection datalim height: {datalim.height}")
++print(f"Collection datalim points: {datalim.get_points()}")
++
++# Check if it's null
++print(f"Is null: {datalim.width == 0 and datalim.height == 0}")
++
++plt.close()
+\ No newline at end of file
+diff --git a/lib/matplotlib/axes/_base.py b/lib/matplotlib/axes/_base.py
+index 5203e3232c..4cd0d4f5b8 100644
+--- a/lib/matplotlib/axes/_base.py
++++ b/lib/matplotlib/axes/_base.py
+@@ -2411,6 +2411,20 @@ class _AxesBase(martist.Artist):
+         xys = trf_to_data.transform(vertices)
+         self.update_datalim(xys, updatex=updatex, updatey=updatey)
+ 
++    def _update_collection_limits(self, collection):
++        """Update the data limits for the given collection."""
++        # Get the data limits from the collection
++        datalim = collection.get_datalim(self.transData)
++        # Check if it's a null bbox (infinite bounds)
++        if (np.isinf(datalim.x0) or np.isinf(datalim.y0) or 
++            np.isinf(datalim.x1) or np.isinf(datalim.y1)):
++            # Null bbox, nothing to update
++            return
++        
++        # Update the axes data limits with the collection's limits
++        self.dataLim.update_from_data_xy(datalim.get_points(),
++                                         self.ignore_existing_data_limits)
++
+     def add_table(self, tab):
+         """
+         Add a `.Table` to the Axes; return the table.
+@@ -2472,6 +2486,8 @@ class _AxesBase(martist.Artist):
+                     self._update_patch_limits(artist)
+                 elif isinstance(artist, mimage.AxesImage):
+                     self._update_image_limits(artist)
++                elif isinstance(artist, mcoll.Collection):
++                    self._update_collection_limits(artist)
+ 
+     def update_datalim(self, xys, updatex=True, updatey=True):
+         """
+diff --git a/reproduce_bug.py b/reproduce_bug.py
+new file mode 100644
+index 0000000000..ea708a6696
+--- /dev/null
++++ b/reproduce_bug.py
+@@ -0,0 +1,27 @@
++import matplotlib.pyplot as plt
++
++def print_datalim(*ax):
++    for ax_ in ax:
++        print(ax_.dataLim.intervaly, end=' / ')
++    print()
++
++df1_index = ['16 May', '17 May']  # == df2_index
++df1_values = [-22.717708333333402, 26.584999999999937]
++df2_values = [-0.08501399999999998, -2.9833019999999966]
++
++fig, ax1 = plt.subplots()
++
++ax1.stackplot(df1_index, df1_values)
++print("After stackplot on ax1:")
++print_datalim(ax1)
++
++ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
++print("After creating twinx:")
++print_datalim(ax1, ax2)
++
++ax2.plot(df1_index, df2_values)
++print("After plot on ax2:")
++print_datalim(ax1, ax2)
++
++print("\nExpected: ax1 dataLims should remain unchanged")
++print("Actual: ax1 dataLims get changed to ±inf")
+\ No newline at end of file
+diff --git a/test_edge_cases.py b/test_edge_cases.py
+new file mode 100644
+index 0000000000..35e06d5f45
+--- /dev/null
++++ b/test_edge_cases.py
+@@ -0,0 +1,63 @@
++import matplotlib.pyplot as plt
++import numpy as np
++import matplotlib.collections as mcoll
++import matplotlib.transforms as mtransforms
++
++def print_datalim(*ax):
++    for i, ax_ in enumerate(ax):
++        print(f"ax{i+1} dataLim: {ax_.dataLim.intervaly}", end=' / ')
++    print()
++
++# Test edge case: Collection with null data limits
++print("=== Test: Collection with null data limits ===")
++fig, ax = plt.subplots()
++
++# Create a collection with no data
++empty_collection = mcoll.LineCollection([])
++ax.add_collection(empty_collection)
++
++print("Before relim:")
++print_datalim(ax)
++
++ax.relim()
++print("After relim:")
++print_datalim(ax)
++
++plt.close()
++
++# Test edge case: Collection with zero width/height
++print("\n=== Test: Collection with zero width/height ===")
++fig, ax = plt.subplots()
++
++# Create a collection with a single point (zero width/height)
++point_collection = mcoll.LineCollection([[(0, 0), (0, 0)]])
++ax.add_collection(point_collection)
++
++print("Before relim:")
++print_datalim(ax)
++
++ax.relim()
++print("After relim:")
++print_datalim(ax)
++
++plt.close()
++
++# Test edge case: Mixed artists (lines, patches, collections)
++print("\n=== Test: Mixed artists ===")
++fig, ax = plt.subplots()
++
++# Add different types of artists
++ax.plot([1, 2, 3], [1, 2, 3], label='line')
++ax.add_patch(plt.Rectangle((0.5, 0.5), 1, 1))
++ax.stackplot([1, 2, 3], [0.5, 1.5, 2.5])
++
++print("Before relim:")
++print_datalim(ax)
++
++ax.relim()
++print("After relim:")
++print_datalim(ax)
++
++plt.close()
++
++print("\nEdge case tests completed!")
+\ No newline at end of file
+diff --git a/test_fix.py b/test_fix.py
+new file mode 100644
+index 0000000000..d8f56279aa
+--- /dev/null
++++ b/test_fix.py
+@@ -0,0 +1,80 @@
++import matplotlib.pyplot as plt
++import numpy as np
++
++def print_datalim(*ax):
++    for i, ax_ in enumerate(ax):
++        print(f"ax{i+1} dataLim: {ax_.dataLim.intervaly}", end=' / ')
++    print()
++
++# Test 1: Original bug case
++print("=== Test 1: Original bug case ===")
++df1_index = ['16 May', '17 May']
++df1_values = [-22.717708333333402, 26.584999999999937]
++df2_values = [-0.08501399999999998, -2.9833019999999966]
++
++fig, ax1 = plt.subplots()
++ax1.stackplot(df1_index, df1_values)
++print("After stackplot on ax1:")
++print_datalim(ax1)
++
++ax2 = ax1.twinx()
++print("After creating twinx:")
++print_datalim(ax1, ax2)
++
++ax2.plot(df1_index, df2_values)
++print("After plot on ax2:")
++print_datalim(ax1, ax2)
++
++plt.close()
++
++# Test 2: Reverse order (plot first, then stackplot)
++print("\n=== Test 2: Reverse order ===")
++fig, ax1 = plt.subplots()
++ax1.plot(df1_index, df2_values)
++print("After plot on ax1:")
++print_datalim(ax1)
++
++ax2 = ax1.twinx()
++print("After creating twinx:")
++print_datalim(ax1, ax2)
++
++ax2.stackplot(df1_index, df1_values)
++print("After stackplot on ax2:")
++print_datalim(ax1, ax2)
++
++plt.close()
++
++# Test 3: Multiple stackplots
++print("\n=== Test 3: Multiple stackplots ===")
++fig, ax1 = plt.subplots()
++ax1.stackplot(df1_index, df1_values)
++ax1.stackplot(df1_index, [x/2 for x in df1_values])
++print("After two stackplots on ax1:")
++print_datalim(ax1)
++
++ax2 = ax1.twinx()
++ax2.plot(df1_index, df2_values)
++print("After plot on ax2:")
++print_datalim(ax1, ax2)
++
++plt.close()
++
++# Test 4: Numeric data (should not trigger the bug)
++print("\n=== Test 4: Numeric data ===")
++x_numeric = [1, 2, 3]
++y1_numeric = [10, 20, 15]
++y2_numeric = [5, 8, 6]
++
++fig, ax1 = plt.subplots()
++ax1.stackplot(x_numeric, y1_numeric)
++print("After stackplot on ax1 (numeric):")
++print_datalim(ax1)
++
++ax2 = ax1.twinx()
++ax2.plot(x_numeric, y2_numeric)
++print("After plot on ax2 (numeric):")
++print_datalim(ax1, ax2)
++
++plt.close()
++
++print("\nAll tests completed!")
+\ No newline at end of file

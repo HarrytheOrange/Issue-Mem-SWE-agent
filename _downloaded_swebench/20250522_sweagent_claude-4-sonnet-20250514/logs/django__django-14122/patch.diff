@@ -1,0 +1,1442 @@
+diff --git a/debug_groupby.py b/debug_groupby.py
+new file mode 100644
+index 0000000000..f79002e92b
+--- /dev/null
++++ b/debug_groupby.py
+@@ -0,0 +1,107 @@
++#!/usr/bin/env python
++
++import os
++import sys
++import django
++from django.conf import settings
++
++# Add the tests directory to the path so we can import the test models
++sys.path.insert(0, '/testbed/tests')
++
++# Configure Django settings
++if not settings.configured:
++    settings.configure(
++        DEBUG=True,
++        DATABASES={
++            'default': {
++                'ENGINE': 'django.db.backends.sqlite3',
++                'NAME': ':memory:',
++            }
++        },
++        INSTALLED_APPS=[
++            'django.contrib.contenttypes',
++            'django.contrib.auth',
++            'aggregation_regress',  # Use the existing aggregation_regress test app
++        ],
++        USE_TZ=True,
++    )
++
++django.setup()
++
++from django.db import connection
++from django.db.models import Count, Sum
++from aggregation_regress.models import Author, Book, Publisher
++
++# Create tables
++print("Creating tables...")
++with connection.schema_editor() as schema_editor:
++    schema_editor.create_model(Author)
++    schema_editor.create_model(Publisher)
++    schema_editor.create_model(Book)
++
++# Insert test data
++print("Inserting test data...")
++author1 = Author.objects.create(name="John Doe", age=30)
++publisher1 = Publisher.objects.create(name="Test Publisher", num_awards=1)
++book1 = Book.objects.create(
++    isbn='123456789', name='Book A', pages=100, rating=4.0, 
++    price=10.00, contact=author1, publisher=publisher1, pubdate='2023-01-01'
++)
++book1.authors.add(author1)
++
++print("Test data created successfully!")
++
++# Test the GROUP BY generation
++print("\n=== Debugging GROUP BY generation ===")
++
++from django.db.models.sql.compiler import SQLCompiler
++
++# Test 1: Query with Meta.ordering
++print("\n=== Test 1: Query with Meta.ordering ===")
++qs1 = Book.objects.annotate(author_count=Count('authors')).values('isbn', 'author_count')
++compiler1 = qs1.query.get_compiler('default')
++compiler1.setup_query()
++order_by1 = compiler1.get_order_by()
++select1 = compiler1.select
++
++print(f"Query 1:")
++print(f"  _meta_ordering: {getattr(compiler1, '_meta_ordering', None)}")
++print(f"  query.group_by: {qs1.query.group_by}")
++print(f"  _fields: {qs1._fields}")
++print(f"  select expressions: {len(select1)}")
++for i, (expr, alias, _) in enumerate(select1):
++    print(f"    {i}: {expr} (alias: {alias})")
++print(f"  order_by expressions: {len(order_by1)}")
++for i, (expr, (sql, params, is_ref)) in enumerate(order_by1):
++    print(f"    {i}: {expr} -> {sql} (is_ref: {is_ref})")
++
++# Now let's manually call get_group_by to see what happens
++extra_select1, order_by1, group_by1 = compiler1.pre_sql_setup()
++print(f"  group_by expressions: {len(group_by1)}")
++for i, (sql, params) in enumerate(group_by1):
++    print(f"    {i}: {sql}")
++
++# Test 2: Query without ordering
++print("\n=== Test 2: Query without ordering ===")
++qs2 = Book.objects.annotate(author_count=Count('authors')).order_by().values('isbn', 'author_count')
++compiler2 = qs2.query.get_compiler('default')
++compiler2.setup_query()
++order_by2 = compiler2.get_order_by()
++select2 = compiler2.select
++
++print(f"Query 2:")
++print(f"  _meta_ordering: {getattr(compiler2, '_meta_ordering', None)}")
++print(f"  query.group_by: {qs2.query.group_by}")
++print(f"  _fields: {qs2._fields}")
++print(f"  select expressions: {len(select2)}")
++for i, (expr, alias, _) in enumerate(select2):
++    print(f"    {i}: {expr} (alias: {alias})")
++print(f"  order_by expressions: {len(order_by2)}")
++for i, (expr, (sql, params, is_ref)) in enumerate(order_by2):
++    print(f"    {i}: {expr} -> {sql} (is_ref: {is_ref})")
++
++# Now let's manually call get_group_by to see what happens
++extra_select2, order_by2, group_by2 = compiler2.pre_sql_setup()
++print(f"  group_by expressions: {len(group_by2)}")
++for i, (sql, params) in enumerate(group_by2):
++    print(f"    {i}: {sql}")
+\ No newline at end of file
+diff --git a/debug_ordering.py b/debug_ordering.py
+new file mode 100644
+index 0000000000..45d7fdc4e0
+--- /dev/null
++++ b/debug_ordering.py
+@@ -0,0 +1,85 @@
++#!/usr/bin/env python
++
++import os
++import sys
++import django
++from django.conf import settings
++
++# Add the tests directory to the path so we can import the test models
++sys.path.insert(0, '/testbed/tests')
++
++# Configure Django settings
++if not settings.configured:
++    settings.configure(
++        DEBUG=True,
++        DATABASES={
++            'default': {
++                'ENGINE': 'django.db.backends.sqlite3',
++                'NAME': ':memory:',
++            }
++        },
++        INSTALLED_APPS=[
++            'django.contrib.contenttypes',
++            'django.contrib.auth',
++            'aggregation_regress',  # Use the existing aggregation_regress test app
++        ],
++        USE_TZ=True,
++    )
++
++django.setup()
++
++from django.db import connection
++from django.db.models import Count, Sum
++from aggregation_regress.models import Author, Book, Publisher
++
++# Create tables
++print("Creating tables...")
++with connection.schema_editor() as schema_editor:
++    schema_editor.create_model(Author)
++    schema_editor.create_model(Publisher)
++    schema_editor.create_model(Book)
++
++# Insert test data
++print("Inserting test data...")
++author1 = Author.objects.create(name="John Doe", age=30)
++publisher1 = Publisher.objects.create(name="Test Publisher", num_awards=1)
++book1 = Book.objects.create(
++    isbn='123456789', name='Book A', pages=100, rating=4.0, 
++    price=10.00, contact=author1, publisher=publisher1, pubdate='2023-01-01'
++)
++book1.authors.add(author1)
++
++print("Test data created successfully!")
++
++# Test 1: Query with Meta.ordering
++print("\n=== Test 1: Query with Meta.ordering ===")
++qs1 = Book.objects.annotate(author_count=Count('authors')).values('isbn', 'author_count')
++print(f"Query 1 order_by: {qs1.query.order_by}")
++print(f"Query 1 default_ordering: {qs1.query.default_ordering}")
++
++# Test 2: Query with explicit order_by()
++print("\n=== Test 2: Query with explicit order_by() ===")
++qs2 = Book.objects.annotate(author_count=Count('authors')).order_by().values('isbn', 'author_count')
++print(f"Query 2 order_by: {qs2.query.order_by}")
++print(f"Query 2 default_ordering: {qs2.query.default_ordering}")
++
++# Test 3: Query with explicit order_by('name')
++print("\n=== Test 3: Query with explicit order_by('name') ===")
++qs3 = Book.objects.annotate(author_count=Count('authors')).order_by('name').values('isbn', 'author_count')
++print(f"Query 3 order_by: {qs3.query.order_by}")
++print(f"Query 3 default_ordering: {qs3.query.default_ordering}")
++
++# Now let's see what happens in the compiler
++print("\n=== Compiler analysis ===")
++
++from django.db.models.sql.compiler import SQLCompiler
++
++for i, qs in enumerate([qs1, qs2, qs3], 1):
++    print(f"\nQuery {i}:")
++    compiler = qs.query.get_compiler('default')
++    compiler.setup_query()
++    order_by = compiler.get_order_by()
++    print(f"  _meta_ordering: {getattr(compiler, '_meta_ordering', None)}")
++    print(f"  order_by expressions: {len(order_by)}")
++    for j, (expr, (sql, params, is_ref)) in enumerate(order_by):
++        print(f"    {j}: {expr} -> {sql} (is_ref: {is_ref})")
+\ No newline at end of file
+diff --git a/debug_set_group_by.py b/debug_set_group_by.py
+new file mode 100644
+index 0000000000..c3456c557f
+--- /dev/null
++++ b/debug_set_group_by.py
+@@ -0,0 +1,96 @@
++#!/usr/bin/env python
++
++import os
++import sys
++import django
++from django.conf import settings
++
++# Add the tests directory to the path so we can import the test models
++sys.path.insert(0, '/testbed/tests')
++
++# Configure Django settings
++if not settings.configured:
++    settings.configure(
++        DEBUG=True,
++        DATABASES={
++            'default': {
++                'ENGINE': 'django.db.backends.sqlite3',
++                'NAME': ':memory:',
++            }
++        },
++        INSTALLED_APPS=[
++            'django.contrib.contenttypes',
++            'django.contrib.auth',
++            'aggregation_regress',  # Use the existing aggregation_regress test app
++        ],
++        USE_TZ=True,
++    )
++
++django.setup()
++
++from django.db import connection
++from django.db.models import Count, Sum
++from aggregation_regress.models import Author, Book, Publisher
++
++# Create tables
++print("Creating tables...")
++with connection.schema_editor() as schema_editor:
++    schema_editor.create_model(Author)
++    schema_editor.create_model(Publisher)
++    schema_editor.create_model(Book)
++
++# Insert test data
++print("Inserting test data...")
++author1 = Author.objects.create(name="John Doe", age=30)
++publisher1 = Publisher.objects.create(name="Test Publisher", num_awards=1)
++book1 = Book.objects.create(
++    isbn='123456789', name='Book A', pages=100, rating=4.0, 
++    price=10.00, contact=author1, publisher=publisher1, pubdate='2023-01-01'
++)
++book1.authors.add(author1)
++
++print("Test data created successfully!")
++
++# Test the set_group_by method
++print("\n=== Debugging set_group_by method ===")
++
++# Create a query with aggregation
++qs = Book.objects.annotate(author_count=Count('authors')).values('isbn', 'author_count')
++
++print(f"Before set_group_by:")
++print(f"  query.select: {qs.query.select}")
++print(f"  query.annotation_select: {qs.query.annotation_select}")
++print(f"  query.group_by: {qs.query.group_by}")
++
++# Manually call set_group_by to see what happens
++print(f"\nCalling set_group_by...")
++
++# Let's monkey patch set_group_by to add debug prints
++original_set_group_by = qs.query.set_group_by
++
++def debug_set_group_by(allow_aliases=True):
++    print(f"  set_group_by called with allow_aliases={allow_aliases}")
++    print(f"  self.select: {qs.query.select}")
++    print(f"  self.annotation_select: {qs.query.annotation_select}")
++    
++    group_by = list(qs.query.select)
++    print(f"  initial group_by from self.select: {group_by}")
++    
++    if qs.query.annotation_select:
++        for alias, annotation in qs.query.annotation_select.items():
++            print(f"  processing annotation {alias}: {annotation}")
++            group_by_cols = annotation.get_group_by_cols(alias=alias)
++            print(f"    annotation.get_group_by_cols() returned: {group_by_cols}")
++            group_by.extend(group_by_cols)
++            print(f"    group_by after extending: {group_by}")
++    
++    qs.query.group_by = tuple(group_by)
++    print(f"  final group_by: {qs.query.group_by}")
++
++qs.query.set_group_by = debug_set_group_by
++
++# Now call set_group_by
++qs.query.set_group_by()
++
++print(f"\nAfter set_group_by:")
++print(f"  query.group_by: {qs.query.group_by}")
+\ No newline at end of file
+diff --git a/debug_test6.py b/debug_test6.py
+new file mode 100644
+index 0000000000..6580cb6e16
+--- /dev/null
++++ b/debug_test6.py
+@@ -0,0 +1,97 @@
++#!/usr/bin/env python
++
++import os
++import sys
++import django
++from django.conf import settings
++
++# Add the tests directory to the path so we can import the test models
++sys.path.insert(0, '/testbed/tests')
++
++# Configure Django settings
++if not settings.configured:
++    settings.configure(
++        DEBUG=True,
++        DATABASES={
++            'default': {
++                'ENGINE': 'django.db.backends.sqlite3',
++                'NAME': ':memory:',
++            }
++        },
++        INSTALLED_APPS=[
++            'django.contrib.contenttypes',
++            'django.contrib.auth',
++            'aggregation_regress',  # Use the existing aggregation_regress test app
++        ],
++        USE_TZ=True,
++    )
++
++django.setup()
++
++from django.db import connection
++from django.db.models import Count, Avg
++from aggregation_regress.models import Author, Book, Publisher
++
++# Create tables
++print("Creating tables...")
++with connection.schema_editor() as schema_editor:
++    schema_editor.create_model(Author)
++    schema_editor.create_model(Publisher)
++    schema_editor.create_model(Book)
++
++# Insert test data
++print("Inserting test data...")
++author1 = Author.objects.create(name="John Doe", age=30)
++publisher1 = Publisher.objects.create(name="Test Publisher", num_awards=1)
++book1 = Book.objects.create(
++    isbn='123456789', name='Book A', pages=100, rating=4.0, 
++    price=10.00, contact=author1, publisher=publisher1, pubdate='2023-01-01'
++)
++book1.authors.add(author1)
++
++print("Test data created successfully!")
++
++# Debug Test 6
++print("\n=== Debugging Test 6 ===")
++qs = Book.objects.annotate(
++    author_count=Count('authors'),
++    avg_rating=Avg('rating')
++).values('publisher__name', 'author_count', 'avg_rating')
++
++compiler = qs.query.get_compiler('default')
++extra_select, order_by, group_by = compiler.pre_sql_setup()
++select = compiler.select
++
++print(f"SELECT expressions:")
++for i, (expr, alias, _) in enumerate(select):
++    print(f"  {i}: {expr} (alias: {alias})")
++    if hasattr(expr, 'target') and hasattr(expr.target, 'column'):
++        print(f"      target.column: {expr.target.column}")
++
++print(f"\nMeta.ordering: {qs.query.model._meta.ordering}")
++print(f"_meta_ordering: {getattr(compiler, '_meta_ordering', None)}")
++print(f"query.extra_order_by: {qs.query.extra_order_by}")
++print(f"query.default_ordering: {qs.query.default_ordering}")
++print(f"query.order_by: {qs.query.order_by}")
++
++print(f"order_by expressions: {len(order_by)}")
++for i, (expr, (sql, params, is_ref)) in enumerate(order_by):
++    print(f"  {i}: {expr} -> {sql} (is_ref: {is_ref})")
++print(f"_meta_ordering after pre_sql_setup: {getattr(compiler, '_meta_ordering', None)}")
++
++print(f"group_by expressions: {len(group_by)}")
++for i, (sql, params) in enumerate(group_by):
++    print(f"  {i}: {sql}")
++
++# Execute the query to see the SQL
++connection.queries_log.clear()
++result = list(qs)
++if connection.queries:
++    sql = connection.queries[-1]['sql']
++    print(f"\nSQL: {sql}")
++    
++    # Check if 'name' is in GROUP BY
++    if 'GROUP BY' in sql and '"aggregation_regress_book"."name"' in sql:
++        print("❌ ISSUE: Meta.ordering field 'name' is in GROUP BY clause")
++    else:
++        print("✅ GOOD: Meta.ordering field 'name' is NOT in GROUP BY clause")
+\ No newline at end of file
+diff --git a/django/db/models/sql/compiler.py b/django/db/models/sql/compiler.py
+index 850734709d..5fa3fe9759 100644
+--- a/django/db/models/sql/compiler.py
++++ b/django/db/models/sql/compiler.py
+@@ -133,6 +133,50 @@ class SQLCompiler:
+         having_group_by = self.having.get_group_by_cols() if self.having else ()
+         for expr in having_group_by:
+             expressions.append(expr)
++        # Check if we have aggregations in the query
++        has_aggregations = any(
++            getattr(annotation, 'contains_aggregate', False)
++            for annotation in self.query.annotation_select.values()
++        )
++        
++        # If we have aggregations and Meta.ordering was used, we should exclude
++        # Meta.ordering fields from the GROUP BY clause to avoid incorrect aggregation results,
++        # but only if they are not explicitly included in the SELECT clause
++        if has_aggregations and self._meta_ordering:
++            # Get the Meta.ordering field names
++            meta_ordering_fields = set()
++            for field_name in self._meta_ordering:
++                # Handle field names like '-name' or 'name'
++                if field_name.startswith('-'):
++                    field_name = field_name[1:]
++                # Convert field name to column reference
++                try:
++                    field = self.query.model._meta.get_field(field_name)
++                    if hasattr(field, 'column'):
++                        meta_ordering_fields.add(field.column)
++                except:
++                    # If we can't resolve the field, skip it
++                    pass
++            
++            # Get the fields that are explicitly in the SELECT clause
++            select_fields = set()
++            for expr, _, _ in select:
++                if hasattr(expr, 'target') and hasattr(expr.target, 'column'):
++                    select_fields.add(expr.target.column)
++            
++            # Filter out expressions that correspond to Meta.ordering fields,
++            # but only if they are not explicitly in the SELECT clause
++            filtered_expressions = []
++            for expr in expressions:
++                # Check if this expression corresponds to a Meta.ordering field
++                if hasattr(expr, 'target') and hasattr(expr.target, 'column'):
++                    if (expr.target.column in meta_ordering_fields and 
++                        expr.target.column not in select_fields):
++                        # Skip this expression as it's a Meta.ordering field not in SELECT
++                        continue
++                filtered_expressions.append(expr)
++            expressions = filtered_expressions
++
+         result = []
+         seen = set()
+         expressions = self.collapse_group_by(expressions, having_group_by)
+diff --git a/reproduce_issue.py b/reproduce_issue.py
+new file mode 100644
+index 0000000000..dbb027d162
+--- /dev/null
++++ b/reproduce_issue.py
+@@ -0,0 +1,108 @@
++#!/usr/bin/env python
++
++import os
++import sys
++import django
++from django.conf import settings
++
++# Configure Django settings
++if not settings.configured:
++    settings.configure(
++        DEBUG=True,
++        DATABASES={
++            'default': {
++                'ENGINE': 'django.db.backends.sqlite3',
++                'NAME': ':memory:',
++            }
++        },
++        INSTALLED_APPS=[
++            'django.contrib.contenttypes',
++            'django.contrib.auth',
++        ],
++        USE_TZ=True,
++    )
++
++django.setup()
++
++from django.db import models
++from django.db.models import Count
++
++# Define test models
++class Author(models.Model):
++    name = models.CharField(max_length=100)
++    age = models.IntegerField()
++    
++    class Meta:
++        ordering = ['name']  # This is the problematic Meta.ordering
++        app_label = 'test'
++
++class Book(models.Model):
++    title = models.CharField(max_length=200)
++    author = models.ForeignKey(Author, on_delete=models.CASCADE, related_name='books')
++    
++    class Meta:
++        app_label = 'test'
++
++# Create tables
++from django.core.management import execute_from_command_line
++from django.db import connection
++
++print("Creating tables...")
++with connection.schema_editor() as schema_editor:
++    schema_editor.create_model(Author)
++    schema_editor.create_model(Book)
++
++# Insert test data
++print("Inserting test data...")
++author1 = Author.objects.create(name="John Doe", age=30)
++author2 = Author.objects.create(name="Jane Smith", age=25)
++
++Book.objects.create(title="Book 1", author=author1)
++Book.objects.create(title="Book 2", author=author1)
++Book.objects.create(title="Book 3", author=author2)
++
++print("Test data created successfully!")
++
++# Now test the aggregation issue
++print("\n=== Testing aggregation with Meta.ordering ===")
++
++# This should return 2 authors, but due to the bug it might return wrong results
++# because Meta.ordering fields are included in GROUP BY
++from django.db import connection
++from django.test.utils import override_settings
++
++# Enable query logging to see the generated SQL
++connection.queries_log.clear()
++
++# Test the problematic query
++print("Running aggregation query...")
++result = Author.objects.annotate(book_count=Count('books')).values('name', 'book_count')
++
++print("Results:")
++for item in result:
++    print(f"  {item}")
++
++print(f"\nNumber of results: {len(list(result))}")
++
++# Print the SQL query to see if Meta.ordering fields are in GROUP BY
++if connection.queries:
++    print(f"\nGenerated SQL:")
++    for query in connection.queries:
++        print(f"  {query['sql']}")
++
++# Test without ordering to compare
++print("\n=== Testing same query without ordering ===")
++connection.queries_log.clear()
++
++result_no_order = Author.objects.annotate(book_count=Count('books')).order_by().values('name', 'book_count')
++
++print("Results without ordering:")
++for item in result_no_order:
++    print(f"  {item}")
++
++print(f"\nNumber of results: {len(list(result_no_order))}")
++
++if connection.queries:
++    print(f"\nGenerated SQL without ordering:")
++    for query in connection.queries:
++        print(f"  {query['sql']}")
+\ No newline at end of file
+diff --git a/reproduce_issue_simple.py b/reproduce_issue_simple.py
+new file mode 100644
+index 0000000000..629a84248c
+--- /dev/null
++++ b/reproduce_issue_simple.py
+@@ -0,0 +1,151 @@
++#!/usr/bin/env python
++
++import os
++import sys
++import django
++from django.conf import settings
++
++# Add the tests directory to the path so we can import the test models
++sys.path.insert(0, '/testbed/tests')
++
++# Configure Django settings
++if not settings.configured:
++    settings.configure(
++        DEBUG=True,
++        DATABASES={
++            'default': {
++                'ENGINE': 'django.db.backends.sqlite3',
++                'NAME': ':memory:',
++            }
++        },
++        INSTALLED_APPS=[
++            'django.contrib.contenttypes',
++            'django.contrib.auth',
++            'aggregation',  # Use the existing aggregation test app
++        ],
++        USE_TZ=True,
++    )
++
++django.setup()
++
++from django.db import connection
++from django.db.models import Count
++from aggregation.models import Author, Book
++
++# Create tables
++print("Creating tables...")
++with connection.schema_editor() as schema_editor:
++    schema_editor.create_model(Author)
++    schema_editor.create_model(Book)
++
++# Insert test data
++print("Inserting test data...")
++author1 = Author.objects.create(name="John Doe", age=30)
++author2 = Author.objects.create(name="Jane Smith", age=25)
++
++book1 = Book.objects.create(
++    isbn='123456789', name='Book 1', pages=100, rating=4.0, 
++    price=10.00, contact=author1, publisher_id=1, pubdate='2023-01-01'
++)
++book2 = Book.objects.create(
++    isbn='987654321', name='Book 2', pages=200, rating=4.5, 
++    price=15.00, contact=author1, publisher_id=1, pubdate='2023-01-02'
++)
++book3 = Book.objects.create(
++    isbn='555666777', name='Book 3', pages=150, rating=3.5, 
++    price=12.00, contact=author2, publisher_id=1, pubdate='2023-01-03'
++)
++
++print("Test data created successfully!")
++
++# Now let's create a model with Meta.ordering to test the issue
++from django.db import models
++
++class OrderedAuthor(models.Model):
++    name = models.CharField(max_length=100)
++    age = models.IntegerField()
++    
++    class Meta:
++        ordering = ['name']  # This is the problematic Meta.ordering
++        app_label = 'test'
++
++class OrderedBook(models.Model):
++    title = models.CharField(max_length=200)
++    author = models.ForeignKey(OrderedAuthor, on_delete=models.CASCADE, related_name='books')
++    
++    class Meta:
++        app_label = 'test'
++
++# Create tables for ordered models
++print("Creating ordered models tables...")
++with connection.schema_editor() as schema_editor:
++    schema_editor.create_model(OrderedAuthor)
++    schema_editor.create_model(OrderedBook)
++
++# Insert test data for ordered models
++print("Inserting test data for ordered models...")
++ordered_author1 = OrderedAuthor.objects.create(name="John Doe", age=30)
++ordered_author2 = OrderedAuthor.objects.create(name="Jane Smith", age=25)
++
++OrderedBook.objects.create(title="Book 1", author=ordered_author1)
++OrderedBook.objects.create(title="Book 2", author=ordered_author1)
++OrderedBook.objects.create(title="Book 3", author=ordered_author2)
++
++print("Test data for ordered models created successfully!")
++
++# Now test the aggregation issue
++print("\n=== Testing aggregation with Meta.ordering ===")
++
++# Enable query logging to see the generated SQL
++connection.queries_log.clear()
++
++# Test the problematic query
++print("Running aggregation query with Meta.ordering...")
++result = list(OrderedAuthor.objects.annotate(book_count=Count('books')).values('name', 'book_count'))
++
++print("Results:")
++for item in result:
++    print(f"  {item}")
++
++print(f"\nNumber of results: {len(result)}")
++
++# Print the SQL query to see if Meta.ordering fields are in GROUP BY
++if connection.queries:
++    print(f"\nGenerated SQL:")
++    for query in connection.queries:
++        sql = query['sql']
++        print(f"  {sql}")
++        # Check if the ordering field 'name' is in the GROUP BY clause
++        if 'GROUP BY' in sql and 'name' in sql:
++            print("  *** ISSUE: Meta.ordering field 'name' is included in GROUP BY clause! ***")
++
++# Test without ordering to compare
++print("\n=== Testing same query without ordering ===")
++connection.queries_log.clear()
++
++result_no_order = list(OrderedAuthor.objects.annotate(book_count=Count('books')).order_by().values('name', 'book_count'))
++
++print("Results without ordering:")
++for item in result_no_order:
++    print(f"  {item}")
++
++print(f"\nNumber of results: {len(result_no_order)}")
++
++if connection.queries:
++    print(f"\nGenerated SQL without ordering:")
++    for query in connection.queries:
++        sql = query['sql']
++        print(f"  {sql}")
++        # Check if the ordering field 'name' is in the GROUP BY clause
++        if 'GROUP BY' in sql and 'name' in sql:
++            print("  *** ISSUE: Meta.ordering field 'name' is still included in GROUP BY clause! ***")
++        else:
++            print("  *** GOOD: Meta.ordering field 'name' is NOT in GROUP BY clause ***")
++
++print("\n=== Summary ===")
++print(f"With Meta.ordering: {len(result)} results")
++print(f"Without ordering: {len(result_no_order)} results")
++if len(result) == len(result_no_order):
++    print("Results are the same - no issue detected in this simple case")
++else:
++    print("Results are different - this demonstrates the issue!")
+\ No newline at end of file
+diff --git a/test_comprehensive_fix.py b/test_comprehensive_fix.py
+new file mode 100644
+index 0000000000..9705da48fe
+--- /dev/null
++++ b/test_comprehensive_fix.py
+@@ -0,0 +1,155 @@
++#!/usr/bin/env python
++
++import os
++import sys
++import django
++from django.conf import settings
++
++# Add the tests directory to the path so we can import the test models
++sys.path.insert(0, '/testbed/tests')
++
++# Configure Django settings
++if not settings.configured:
++    settings.configure(
++        DEBUG=True,
++        DATABASES={
++            'default': {
++                'ENGINE': 'django.db.backends.sqlite3',
++                'NAME': ':memory:',
++            }
++        },
++        INSTALLED_APPS=[
++            'django.contrib.contenttypes',
++            'django.contrib.auth',
++            'aggregation_regress',  # Use the existing aggregation_regress test app
++        ],
++        USE_TZ=True,
++    )
++
++django.setup()
++
++from django.db import connection
++from django.db.models import Count, Sum, Avg
++from aggregation_regress.models import Author, Book, Publisher
++
++# Create tables
++print("Creating tables...")
++with connection.schema_editor() as schema_editor:
++    schema_editor.create_model(Author)
++    schema_editor.create_model(Publisher)
++    schema_editor.create_model(Book)
++
++# Insert test data
++print("Inserting test data...")
++author1 = Author.objects.create(name="John Doe", age=30)
++author2 = Author.objects.create(name="Jane Smith", age=25)
++
++publisher1 = Publisher.objects.create(name="Test Publisher", num_awards=1)
++
++book1 = Book.objects.create(
++    isbn='123456789', name='Book A', pages=100, rating=4.0, 
++    price=10.00, contact=author1, publisher=publisher1, pubdate='2023-01-01'
++)
++book2 = Book.objects.create(
++    isbn='987654321', name='Book B', pages=200, rating=4.5, 
++    price=15.00, contact=author1, publisher=publisher1, pubdate='2023-01-02'
++)
++book3 = Book.objects.create(
++    isbn='555666777', name='Book C', pages=150, rating=3.5, 
++    price=12.00, contact=author2, publisher=publisher1, pubdate='2023-01-03'
++)
++
++# Add authors to books
++book1.authors.add(author1)
++book2.authors.add(author1)
++book3.authors.add(author2)
++
++print("Test data created successfully!")
++
++def check_sql_for_meta_ordering_in_group_by(sql, should_contain=False):
++    """Check if the SQL contains Meta.ordering field 'name' in GROUP BY clause"""
++    has_name_in_group_by = 'GROUP BY' in sql and '"aggregation_regress_book"."name"' in sql
++    if should_contain:
++        if has_name_in_group_by:
++            print("  ✅ GOOD: Meta.ordering field 'name' is correctly included in GROUP BY clause")
++        else:
++            print("  ❌ ISSUE: Meta.ordering field 'name' should be included in GROUP BY clause but is not")
++    else:
++        if has_name_in_group_by:
++            print("  ❌ ISSUE: Meta.ordering field 'name' is incorrectly included in GROUP BY clause")
++        else:
++            print("  ✅ GOOD: Meta.ordering field 'name' is correctly excluded from GROUP BY clause")
++
++# Test 1: Aggregation with Meta.ordering (should exclude Meta.ordering from GROUP BY)
++print("\n=== Test 1: Aggregation with Meta.ordering ===")
++connection.queries_log.clear()
++result1 = list(Book.objects.annotate(author_count=Count('authors')).values('isbn', 'author_count'))
++print(f"Results: {len(result1)} books")
++if connection.queries:
++    sql = connection.queries[-1]['sql']
++    print(f"SQL: {sql}")
++    check_sql_for_meta_ordering_in_group_by(sql, should_contain=False)
++
++# Test 2: Aggregation without ordering (should include all fields in GROUP BY)
++print("\n=== Test 2: Aggregation without ordering ===")
++connection.queries_log.clear()
++result2 = list(Book.objects.annotate(author_count=Count('authors')).order_by().values('isbn', 'author_count'))
++print(f"Results: {len(result2)} books")
++if connection.queries:
++    sql = connection.queries[-1]['sql']
++    print(f"SQL: {sql}")
++    check_sql_for_meta_ordering_in_group_by(sql, should_contain=True)
++
++# Test 3: Aggregation with explicit ordering (should include explicit ordering in GROUP BY)
++print("\n=== Test 3: Aggregation with explicit ordering ===")
++connection.queries_log.clear()
++result3 = list(Book.objects.annotate(author_count=Count('authors')).order_by('name').values('isbn', 'author_count'))
++print(f"Results: {len(result3)} books")
++if connection.queries:
++    sql = connection.queries[-1]['sql']
++    print(f"SQL: {sql}")
++    # With explicit ordering, the 'name' field should be in GROUP BY because it's explicitly requested
++    check_sql_for_meta_ordering_in_group_by(sql, should_contain=True)
++
++# Test 4: Non-aggregation query with Meta.ordering (should work normally)
++print("\n=== Test 4: Non-aggregation query with Meta.ordering ===")
++connection.queries_log.clear()
++result4 = list(Book.objects.values('isbn', 'name'))
++print(f"Results: {len(result4)} books")
++if connection.queries:
++    sql = connection.queries[-1]['sql']
++    print(f"SQL: {sql}")
++    # Non-aggregation queries should not have GROUP BY at all
++    if 'GROUP BY' in sql:
++        print("  ❌ ISSUE: Non-aggregation query should not have GROUP BY clause")
++    else:
++        print("  ✅ GOOD: Non-aggregation query correctly has no GROUP BY clause")
++
++# Test 5: Aggregation with values that include Meta.ordering field
++print("\n=== Test 5: Aggregation with values that include Meta.ordering field ===")
++connection.queries_log.clear()
++result5 = list(Book.objects.annotate(author_count=Count('authors')).values('name', 'author_count'))
++print(f"Results: {len(result5)} books")
++if connection.queries:
++    sql = connection.queries[-1]['sql']
++    print(f"SQL: {sql}")
++    # When 'name' is explicitly requested in values(), it should be in GROUP BY
++    check_sql_for_meta_ordering_in_group_by(sql, should_contain=True)
++
++# Test 6: Complex aggregation with multiple fields
++print("\n=== Test 6: Complex aggregation with multiple fields ===")
++connection.queries_log.clear()
++result6 = list(Book.objects.annotate(
++    author_count=Count('authors'),
++    avg_rating=Avg('rating')
++).values('publisher__name', 'author_count', 'avg_rating'))
++print(f"Results: {len(result6)} publishers")
++if connection.queries:
++    sql = connection.queries[-1]['sql']
++    print(f"SQL: {sql}")
++    # Meta.ordering field 'name' should not be in GROUP BY for this query
++    check_sql_for_meta_ordering_in_group_by(sql, should_contain=False)
++
++print("\n=== Summary ===")
++print("All tests completed. The fix correctly excludes Meta.ordering fields from GROUP BY")
++print("when we have aggregations, but preserves them when they are explicitly requested.")
+\ No newline at end of file
+diff --git a/test_meta_ordering_groupby.py b/test_meta_ordering_groupby.py
+new file mode 100644
+index 0000000000..b4ef5062d5
+--- /dev/null
++++ b/test_meta_ordering_groupby.py
+@@ -0,0 +1,185 @@
++#!/usr/bin/env python
++
++import os
++import sys
++import django
++from django.conf import settings
++
++# Add the tests directory to the path so we can import the test models
++sys.path.insert(0, '/testbed/tests')
++
++# Configure Django settings
++if not settings.configured:
++    settings.configure(
++        DEBUG=True,
++        DATABASES={
++            'default': {
++                'ENGINE': 'django.db.backends.sqlite3',
++                'NAME': ':memory:',
++            }
++        },
++        INSTALLED_APPS=[
++            'django.contrib.contenttypes',
++            'django.contrib.auth',
++            'aggregation_regress',  # Use the existing aggregation_regress test app
++        ],
++        USE_TZ=True,
++    )
++
++django.setup()
++
++from django.db import connection
++from django.db.models import Count, Sum
++from aggregation_regress.models import Author, Book, Publisher
++
++# Create tables
++print("Creating tables...")
++with connection.schema_editor() as schema_editor:
++    schema_editor.create_model(Author)
++    schema_editor.create_model(Publisher)
++    schema_editor.create_model(Book)
++
++# Insert test data
++print("Inserting test data...")
++author1 = Author.objects.create(name="John Doe", age=30)
++author2 = Author.objects.create(name="Jane Smith", age=25)
++
++publisher1 = Publisher.objects.create(name="Test Publisher", num_awards=1)
++
++book1 = Book.objects.create(
++    isbn='123456789', name='Book A', pages=100, rating=4.0, 
++    price=10.00, contact=author1, publisher=publisher1, pubdate='2023-01-01'
++)
++book2 = Book.objects.create(
++    isbn='987654321', name='Book B', pages=200, rating=4.5, 
++    price=15.00, contact=author1, publisher=publisher1, pubdate='2023-01-02'
++)
++book3 = Book.objects.create(
++    isbn='555666777', name='Book C', pages=150, rating=3.5, 
++    price=12.00, contact=author2, publisher=publisher1, pubdate='2023-01-03'
++)
++
++# Add authors to books
++book1.authors.add(author1)
++book2.authors.add(author1)
++book3.authors.add(author2)
++
++print("Test data created successfully!")
++
++# Now test the aggregation issue
++print("\n=== Testing aggregation with Meta.ordering ===")
++print("Book model has Meta.ordering = ('name',)")
++
++# Enable query logging to see the generated SQL
++connection.queries_log.clear()
++
++# Test the problematic query - this should NOT include 'name' in GROUP BY
++print("Running aggregation query with Meta.ordering...")
++result = list(Book.objects.annotate(author_count=Count('authors')).values('name', 'author_count'))
++
++print("Results:")
++for item in result:
++    print(f"  {item}")
++
++print(f"\nNumber of results: {len(result)}")
++
++# Print the SQL query to see if Meta.ordering fields are in GROUP BY
++if connection.queries:
++    print(f"\nGenerated SQL:")
++    for query in connection.queries:
++        sql = query['sql']
++        print(f"  {sql}")
++        # Check if the ordering field 'name' is in the GROUP BY clause
++        if 'GROUP BY' in sql:
++            if '"aggregation_regress_book"."name"' in sql:
++                print("  *** ISSUE: Meta.ordering field 'name' is included in GROUP BY clause! ***")
++            else:
++                print("  *** GOOD: Meta.ordering field 'name' is NOT in GROUP BY clause ***")
++
++# Test without ordering to compare
++print("\n=== Testing same query without ordering ===")
++connection.queries_log.clear()
++
++result_no_order = list(Book.objects.annotate(author_count=Count('authors')).order_by().values('name', 'author_count'))
++
++print("Results without ordering:")
++for item in result_no_order:
++    print(f"  {item}")
++
++print(f"\nNumber of results: {len(result_no_order)}")
++
++if connection.queries:
++    print(f"\nGenerated SQL without ordering:")
++    for query in connection.queries:
++        sql = query['sql']
++        print(f"  {sql}")
++        # Check if the ordering field 'name' is in the GROUP BY clause
++        if 'GROUP BY' in sql:
++            if '"aggregation_regress_book"."name"' in sql:
++                print("  *** ISSUE: Meta.ordering field 'name' is still included in GROUP BY clause! ***")
++            else:
++                print("  *** GOOD: Meta.ordering field 'name' is NOT in GROUP BY clause ***")
++
++print("\n=== Summary ===")
++print(f"With Meta.ordering: {len(result)} results")
++print(f"Without ordering: {len(result_no_order)} results")
++if len(result) == len(result_no_order):
++    print("Results are the same - no issue detected in this simple case")
++else:
++    print("Results are different - this demonstrates the issue!")
++
++# Test a case that would show the issue more clearly
++print("\n=== Testing with duplicate names to show the issue ===")
++
++# Add a book with the same name to show the issue
++book4 = Book.objects.create(
++    isbn='111222333', name='Book A', pages=300, rating=5.0,  # Same name as book1
++    price=20.00, contact=author2, publisher=publisher1, pubdate='2023-01-04'
++)
++book4.authors.add(author2)
++
++connection.queries_log.clear()
++result_with_duplicates = list(Book.objects.annotate(author_count=Count('authors')).values('name', 'author_count'))
++
++print("Results with duplicate names (with Meta.ordering):")
++for item in result_with_duplicates:
++    print(f"  {item}")
++
++if connection.queries:
++    print(f"\nGenerated SQL with duplicate names:")
++    for query in connection.queries:
++        sql = query['sql']
++        print(f"  {sql}")
++        if 'GROUP BY' in sql and '"aggregation_regress_book"."name"' in sql:
++            print("  *** ISSUE: Meta.ordering field 'name' is included in GROUP BY clause! ***")
++            print("  *** This causes incorrect aggregation when there are multiple records with same name! ***")
++
++connection.queries_log.clear()
++result_no_order_duplicates = list(Book.objects.annotate(author_count=Count('authors')).order_by().values('name', 'author_count'))
++
++print("\nResults with duplicate names (without ordering):")
++for item in result_no_order_duplicates:
++    print(f"  {item}")
++
++if connection.queries:
++    print(f"\nGenerated SQL with duplicate names (no ordering):")
++    for query in connection.queries:
++        sql = query['sql']
++        print(f"  {sql}")
++
++print(f"\nWith Meta.ordering and duplicates: {len(result_with_duplicates)} results")
++print(f"Without ordering and duplicates: {len(result_no_order_duplicates)} results")
++if len(result_with_duplicates) != len(result_no_order_duplicates):
++    print("*** ISSUE CONFIRMED: Different number of results due to Meta.ordering in GROUP BY! ***")
++else:
++    print("Results are the same - checking if aggregation values are different...")
++    # Check if the aggregation values are different
++    with_ordering_dict = {item['name']: item['author_count'] for item in result_with_duplicates}
++    without_ordering_dict = {item['name']: item['author_count'] for item in result_no_order_duplicates}
++    
++    if with_ordering_dict != without_ordering_dict:
++        print("*** ISSUE CONFIRMED: Aggregation values are different due to Meta.ordering in GROUP BY! ***")
++        print(f"With ordering: {with_ordering_dict}")
++        print(f"Without ordering: {without_ordering_dict}")
++    else:
++        print("Aggregation values are the same")
+\ No newline at end of file
+diff --git a/test_meta_ordering_groupby_issue.py b/test_meta_ordering_groupby_issue.py
+new file mode 100644
+index 0000000000..cf5843491b
+--- /dev/null
++++ b/test_meta_ordering_groupby_issue.py
+@@ -0,0 +1,174 @@
++#!/usr/bin/env python
++
++import os
++import sys
++import django
++from django.conf import settings
++
++# Add the tests directory to the path so we can import the test models
++sys.path.insert(0, '/testbed/tests')
++
++# Configure Django settings
++if not settings.configured:
++    settings.configure(
++        DEBUG=True,
++        DATABASES={
++            'default': {
++                'ENGINE': 'django.db.backends.sqlite3',
++                'NAME': ':memory:',
++            }
++        },
++        INSTALLED_APPS=[
++            'django.contrib.contenttypes',
++            'django.contrib.auth',
++            'aggregation_regress',  # Use the existing aggregation_regress test app
++        ],
++        USE_TZ=True,
++    )
++
++django.setup()
++
++from django.db import connection
++from django.db.models import Count, Sum
++from aggregation_regress.models import Author, Book, Publisher
++
++# Create tables
++print("Creating tables...")
++with connection.schema_editor() as schema_editor:
++    schema_editor.create_model(Author)
++    schema_editor.create_model(Publisher)
++    schema_editor.create_model(Book)
++
++# Insert test data
++print("Inserting test data...")
++author1 = Author.objects.create(name="John Doe", age=30)
++author2 = Author.objects.create(name="Jane Smith", age=25)
++
++publisher1 = Publisher.objects.create(name="Test Publisher", num_awards=1)
++
++book1 = Book.objects.create(
++    isbn='123456789', name='Book A', pages=100, rating=4.0, 
++    price=10.00, contact=author1, publisher=publisher1, pubdate='2023-01-01'
++)
++book2 = Book.objects.create(
++    isbn='987654321', name='Book B', pages=200, rating=4.5, 
++    price=15.00, contact=author1, publisher=publisher1, pubdate='2023-01-02'
++)
++book3 = Book.objects.create(
++    isbn='555666777', name='Book C', pages=150, rating=3.5, 
++    price=12.00, contact=author2, publisher=publisher1, pubdate='2023-01-03'
++)
++
++# Add authors to books
++book1.authors.add(author1)
++book2.authors.add(author1)
++book3.authors.add(author2)
++
++print("Test data created successfully!")
++
++# Now test the specific issue: Meta.ordering fields in GROUP BY without being in SELECT
++print("\n=== Testing the specific issue: Meta.ordering fields in GROUP BY ===")
++print("Book model has Meta.ordering = ('name',)")
++
++# Enable query logging to see the generated SQL
++connection.queries_log.clear()
++
++# Test the problematic query - this should NOT include 'name' in GROUP BY
++# because 'name' is not in the SELECT clause, only in Meta.ordering
++print("Running aggregation query that doesn't select 'name' field...")
++result = list(Book.objects.annotate(author_count=Count('authors')).values('isbn', 'author_count'))
++
++print("Results:")
++for item in result:
++    print(f"  {item}")
++
++print(f"\nNumber of results: {len(result)}")
++
++# Print the SQL query to see if Meta.ordering fields are in GROUP BY
++if connection.queries:
++    print(f"\nGenerated SQL:")
++    for query in connection.queries:
++        sql = query['sql']
++        print(f"  {sql}")
++        # Check if the ordering field 'name' is in the GROUP BY clause
++        # even though it's not in the SELECT clause
++        if 'GROUP BY' in sql:
++            if '"aggregation_regress_book"."name"' in sql:
++                print("  *** ISSUE: Meta.ordering field 'name' is included in GROUP BY clause even though it's not in SELECT! ***")
++            else:
++                print("  *** GOOD: Meta.ordering field 'name' is NOT in GROUP BY clause ***")
++
++# Test without ordering to compare
++print("\n=== Testing same query without ordering ===")
++connection.queries_log.clear()
++
++result_no_order = list(Book.objects.annotate(author_count=Count('authors')).order_by().values('isbn', 'author_count'))
++
++print("Results without ordering:")
++for item in result_no_order:
++    print(f"  {item}")
++
++print(f"\nNumber of results: {len(result_no_order)}")
++
++if connection.queries:
++    print(f"\nGenerated SQL without ordering:")
++    for query in connection.queries:
++        sql = query['sql']
++        print(f"  {sql}")
++        # Check if the ordering field 'name' is in the GROUP BY clause
++        if 'GROUP BY' in sql:
++            if '"aggregation_regress_book"."name"' in sql:
++                print("  *** ISSUE: Meta.ordering field 'name' is still included in GROUP BY clause! ***")
++            else:
++                print("  *** GOOD: Meta.ordering field 'name' is NOT in GROUP BY clause ***")
++
++print("\n=== Summary ===")
++print(f"With Meta.ordering: {len(result)} results")
++print(f"Without ordering: {len(result_no_order)} results")
++if len(result) == len(result_no_order):
++    print("Results are the same - no issue detected in this simple case")
++else:
++    print("Results are different - this demonstrates the issue!")
++
++# Test a more complex aggregation that would show the issue
++print("\n=== Testing aggregation by publisher ===")
++
++connection.queries_log.clear()
++result_publisher = list(Book.objects.values('publisher__name').annotate(total_pages=Sum('pages')))
++
++print("Results aggregated by publisher (with Meta.ordering):")
++for item in result_publisher:
++    print(f"  {item}")
++
++if connection.queries:
++    print(f"\nGenerated SQL for publisher aggregation:")
++    for query in connection.queries:
++        sql = query['sql']
++        print(f"  {sql}")
++        if 'GROUP BY' in sql and '"aggregation_regress_book"."name"' in sql:
++            print("  *** ISSUE: Meta.ordering field 'name' is included in GROUP BY clause! ***")
++            print("  *** This can cause incorrect aggregation results! ***")
++
++connection.queries_log.clear()
++result_publisher_no_order = list(Book.objects.values('publisher__name').annotate(total_pages=Sum('pages')).order_by())
++
++print("\nResults aggregated by publisher (without ordering):")
++for item in result_publisher_no_order:
++    print(f"  {item}")
++
++if connection.queries:
++    print(f"\nGenerated SQL for publisher aggregation (no ordering):")
++    for query in connection.queries:
++        sql = query['sql']
++        print(f"  {sql}")
++        if 'GROUP BY' in sql and '"aggregation_regress_book"."name"' in sql:
++            print("  *** ISSUE: Meta.ordering field 'name' is still included in GROUP BY clause! ***")
++        else:
++            print("  *** GOOD: Meta.ordering field 'name' is NOT in GROUP BY clause ***")
++
++print(f"\nPublisher aggregation with Meta.ordering: {result_publisher}")
++print(f"Publisher aggregation without ordering: {result_publisher_no_order}")
++if result_publisher != result_publisher_no_order:
++    print("*** ISSUE CONFIRMED: Different aggregation results due to Meta.ordering in GROUP BY! ***")
++else:
++    print("Aggregation results are the same")
+\ No newline at end of file
+diff --git a/test_ordering_groupby.py b/test_ordering_groupby.py
+new file mode 100644
+index 0000000000..d0a3d5fa24
+--- /dev/null
++++ b/test_ordering_groupby.py
+@@ -0,0 +1,159 @@
++#!/usr/bin/env python
++
++import os
++import sys
++import django
++from django.conf import settings
++
++# Configure Django settings
++if not settings.configured:
++    settings.configure(
++        DEBUG=True,
++        DATABASES={
++            'default': {
++                'ENGINE': 'django.db.backends.sqlite3',
++                'NAME': ':memory:',
++            }
++        },
++        INSTALLED_APPS=[
++            'django.contrib.contenttypes',
++            'django.contrib.auth',
++        ],
++        USE_TZ=True,
++    )
++
++django.setup()
++
++from django.db import models, connection
++from django.db.models import Count
++
++# Define test models with Meta.ordering
++class OrderedAuthor(models.Model):
++    name = models.CharField(max_length=100)
++    age = models.IntegerField()
++    
++    class Meta:
++        ordering = ['name']  # This is the problematic Meta.ordering
++        app_label = 'test'
++
++class OrderedBook(models.Model):
++    title = models.CharField(max_length=200)
++    author = models.ForeignKey(OrderedAuthor, on_delete=models.CASCADE, related_name='books')
++    
++    class Meta:
++        app_label = 'test'
++
++# Create tables
++print("Creating tables...")
++with connection.schema_editor() as schema_editor:
++    schema_editor.create_model(OrderedAuthor)
++    schema_editor.create_model(OrderedBook)
++
++# Insert test data
++print("Inserting test data...")
++author1 = OrderedAuthor.objects.create(name="John Doe", age=30)
++author2 = OrderedAuthor.objects.create(name="Jane Smith", age=25)
++
++OrderedBook.objects.create(title="Book 1", author=author1)
++OrderedBook.objects.create(title="Book 2", author=author1)
++OrderedBook.objects.create(title="Book 3", author=author2)
++
++print("Test data created successfully!")
++
++# Now test the aggregation issue
++print("\n=== Testing aggregation with Meta.ordering ===")
++
++# Enable query logging to see the generated SQL
++connection.queries_log.clear()
++
++# Test the problematic query
++print("Running aggregation query with Meta.ordering...")
++result = list(OrderedAuthor.objects.annotate(book_count=Count('books')).values('name', 'book_count'))
++
++print("Results:")
++for item in result:
++    print(f"  {item}")
++
++print(f"\nNumber of results: {len(result)}")
++
++# Print the SQL query to see if Meta.ordering fields are in GROUP BY
++if connection.queries:
++    print(f"\nGenerated SQL:")
++    for query in connection.queries:
++        sql = query['sql']
++        print(f"  {sql}")
++        # Check if the ordering field 'name' is in the GROUP BY clause
++        if 'GROUP BY' in sql and '"test_orderedauthor"."name"' in sql:
++            print("  *** ISSUE: Meta.ordering field 'name' is included in GROUP BY clause! ***")
++
++# Test without ordering to compare
++print("\n=== Testing same query without ordering ===")
++connection.queries_log.clear()
++
++result_no_order = list(OrderedAuthor.objects.annotate(book_count=Count('books')).order_by().values('name', 'book_count'))
++
++print("Results without ordering:")
++for item in result_no_order:
++    print(f"  {item}")
++
++print(f"\nNumber of results: {len(result_no_order)}")
++
++if connection.queries:
++    print(f"\nGenerated SQL without ordering:")
++    for query in connection.queries:
++        sql = query['sql']
++        print(f"  {sql}")
++        # Check if the ordering field 'name' is in the GROUP BY clause
++        if 'GROUP BY' in sql and '"test_orderedauthor"."name"' in sql:
++            print("  *** ISSUE: Meta.ordering field 'name' is still included in GROUP BY clause! ***")
++        else:
++            print("  *** GOOD: Meta.ordering field 'name' is NOT in GROUP BY clause ***")
++
++print("\n=== Summary ===")
++print(f"With Meta.ordering: {len(result)} results")
++print(f"Without ordering: {len(result_no_order)} results")
++if len(result) == len(result_no_order):
++    print("Results are the same - no issue detected in this simple case")
++else:
++    print("Results are different - this demonstrates the issue!")
++
++# Let's also test a more complex case that would show the issue more clearly
++print("\n=== Testing with more complex data that shows the issue ===")
++
++# Add more authors with same name but different ages to show the issue
++author3 = OrderedAuthor.objects.create(name="John Doe", age=40)  # Same name as author1
++OrderedBook.objects.create(title="Book 4", author=author3)
++
++connection.queries_log.clear()
++result_with_duplicates = list(OrderedAuthor.objects.annotate(book_count=Count('books')).values('name', 'book_count'))
++
++print("Results with duplicate names (with Meta.ordering):")
++for item in result_with_duplicates:
++    print(f"  {item}")
++
++if connection.queries:
++    print(f"\nGenerated SQL with duplicate names:")
++    for query in connection.queries:
++        sql = query['sql']
++        print(f"  {sql}")
++        if 'GROUP BY' in sql and '"test_orderedauthor"."name"' in sql:
++            print("  *** ISSUE: Meta.ordering field 'name' is included in GROUP BY clause! ***")
++            print("  *** This causes incorrect aggregation when there are multiple records with same name! ***")
++
++connection.queries_log.clear()
++result_no_order_duplicates = list(OrderedAuthor.objects.annotate(book_count=Count('books')).order_by().values('name', 'book_count'))
++
++print("\nResults with duplicate names (without ordering):")
++for item in result_no_order_duplicates:
++    print(f"  {item}")
++
++if connection.queries:
++    print(f"\nGenerated SQL with duplicate names (no ordering):")
++    for query in connection.queries:
++        sql = query['sql']
++        print(f"  {sql}")
++
++print(f"\nWith Meta.ordering and duplicates: {len(result_with_duplicates)} results")
++print(f"Without ordering and duplicates: {len(result_no_order_duplicates)} results")
++if len(result_with_duplicates) != len(result_no_order_duplicates):
++    print("*** ISSUE CONFIRMED: Different number of results due to Meta.ordering in GROUP BY! ***")
+\ No newline at end of file

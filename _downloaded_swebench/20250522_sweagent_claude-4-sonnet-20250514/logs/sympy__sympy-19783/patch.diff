@@ -1,0 +1,52 @@
+diff --git a/sympy/physics/quantum/dagger.py b/sympy/physics/quantum/dagger.py
+index 17da3cfd2c..b610eb1699 100644
+--- a/sympy/physics/quantum/dagger.py
++++ b/sympy/physics/quantum/dagger.py
+@@ -85,5 +85,14 @@ def __new__(cls, arg):
+             return obj
+         return Expr.__new__(cls, arg)
+ 
++    def __mul__(self, other):
++        from sympy.physics.quantum.operator import IdentityOperator
++        from sympy.core.mul import Mul
++        
++        if isinstance(other, IdentityOperator):
++            return self
++        
++        return Mul(self, other)
++
+ adjoint.__name__ = "Dagger"
+ adjoint._sympyrepr = lambda a, b: "Dagger(%s)" % b._print(a.args[0])
+diff --git a/sympy/physics/quantum/operator.py b/sympy/physics/quantum/operator.py
+index 306bfee64f..dbe3234ddf 100644
+--- a/sympy/physics/quantum/operator.py
++++ b/sympy/physics/quantum/operator.py
+@@ -306,9 +306,13 @@ def _print_contents_latex(self, printer, *args):
+         return r'{\mathcal{I}}'
+ 
+     def __mul__(self, other):
++        from sympy.physics.quantum.dagger import Dagger
+ 
+         if isinstance(other, Operator):
+             return other
++        
++        if isinstance(other, Dagger):
++            return other
+ 
+         return Mul(self, other)
+ 
+diff --git a/sympy/physics/quantum/tests/test_operator.py b/sympy/physics/quantum/tests/test_operator.py
+index 7c8574fe14..7b050d8926 100644
+--- a/sympy/physics/quantum/tests/test_operator.py
++++ b/sympy/physics/quantum/tests/test_operator.py
+@@ -102,6 +102,10 @@ def test_identity():
+     assert qapply(I * O) == O
+     assert qapply(O * I) == O
+ 
++    # Test multiplication with Dagger objects
++    assert Dagger(O) * I == Dagger(O)
++    assert I * Dagger(O) == Dagger(O)
++
+     for n in [2, 3, 5]:
+         assert represent(IdentityOperator(n)) == eye(n)
+ 

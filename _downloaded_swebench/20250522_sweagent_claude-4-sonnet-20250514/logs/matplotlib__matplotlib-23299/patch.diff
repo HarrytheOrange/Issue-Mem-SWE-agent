@@ -1,0 +1,75 @@
+diff --git a/lib/matplotlib/__init__.py b/lib/matplotlib/__init__.py
+index c268a56724..d791695fd0 100644
+--- a/lib/matplotlib/__init__.py
++++ b/lib/matplotlib/__init__.py
+@@ -674,7 +674,14 @@ class RcParams(MutableMapping, dict):
+             val = dict.__getitem__(self, key)
+             if val is rcsetup._auto_backend_sentinel:
+                 from matplotlib import pyplot as plt
+-                plt.switch_backend(rcsetup._auto_backend_sentinel)
++                # Resolve the backend without closing existing figures
++                resolved_backend = plt._resolve_backend_sentinel()
++                # Update both rcParams and rcParamsOrig with the resolved backend
++                dict.__setitem__(self, key, resolved_backend)
++                rcParamsOrig = globals().get("rcParamsOrig")
++                if rcParamsOrig is not None:
++                    dict.__setitem__(rcParamsOrig, key, resolved_backend)
++                return resolved_backend
+ 
+         return dict.__getitem__(self, key)
+ 
+diff --git a/lib/matplotlib/pyplot.py b/lib/matplotlib/pyplot.py
+index e3c66ea67c..534aec5515 100644
+--- a/lib/matplotlib/pyplot.py
++++ b/lib/matplotlib/pyplot.py
+@@ -322,6 +322,50 @@ def switch_backend(newbackend):
+     install_repl_displayhook()
+ 
+ 
++def _resolve_backend_sentinel():
++    """
++    Resolve the _auto_backend_sentinel to an actual backend name without
++    closing existing figures.
++    
++    This function is used when we need to determine what backend would be
++    selected without actually switching to it (which would close figures).
++    """
++    from matplotlib import rcsetup, cbook
++    
++    current_framework = cbook._get_running_interactive_framework()
++    mapping = {'qt': 'qtagg',
++               'gtk3': 'gtk3agg', 
++               'gtk4': 'gtk4agg',
++               'wx': 'wxagg',
++               'tk': 'tkagg',
++               'macosx': 'macosx',
++               'headless': 'agg'}
++
++    best_guess = mapping.get(current_framework, None)
++    if best_guess is not None:
++        candidates = [best_guess]
++    else:
++        candidates = []
++    candidates += [
++        "macosx", "qtagg", "gtk4agg", "gtk3agg", "tkagg", "wxagg"]
++
++    # Don't try to fallback on the cairo-based backends as they each have
++    # an additional dependency (pycairo) over the agg-based backend, and
++    # are of worse quality.
++    for candidate in candidates:
++        try:
++            # Just try to import the backend module to see if it's available
++            # without actually switching to it
++            importlib.import_module(cbook._backend_module_name(candidate))
++        except ImportError:
++            continue
++        else:
++            return candidate
++    else:
++        # Agg should always be available
++        return "agg"
++
++
+ def _warn_if_gui_out_of_main_thread():
+     if (_get_required_interactive_framework(_get_backend_mod())
+             and threading.current_thread() is not threading.main_thread()):

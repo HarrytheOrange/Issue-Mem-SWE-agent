@@ -1,0 +1,50 @@
+diff --git a/django/db/models/fields/json.py b/django/db/models/fields/json.py
+index fafc1beee8..e99778370c 100644
+--- a/django/db/models/fields/json.py
++++ b/django/db/models/fields/json.py
+@@ -479,6 +479,37 @@ class KeyTransformGte(KeyTransformNumericLookupMixin, lookups.GreaterThanOrEqual
+     pass
+ 
+ 
++class KeyTransformIn(lookups.In):
++    def process_rhs(self, compiler, connection):
++        if self.rhs_is_direct_value():
++            # Handle direct values (lists)
++            rhs, rhs_params = super().process_rhs(compiler, connection)
++            
++            # Apply database-specific transformations similar to KeyTransformExact
++            if connection.vendor == 'oracle':
++                func = []
++                for value in rhs_params:
++                    value = json.loads(value)
++                    function = 'JSON_QUERY' if isinstance(value, (list, dict)) else 'JSON_VALUE'
++                    func.append("%s('%s', '$.value')" % (
++                        function,
++                        json.dumps({'value': value}),
++                    ))
++                rhs = rhs % tuple(func)
++                rhs_params = []
++            elif connection.vendor == 'sqlite':
++                func = ["JSON_EXTRACT(%s, '$')" if value != 'null' else '%s' for value in rhs_params]
++                rhs = rhs % tuple(func)
++            elif connection.vendor == 'mysql':
++                func = ["JSON_EXTRACT(%s, '$')" for _ in rhs_params]
++                rhs = rhs % tuple(func)
++                
++            return rhs, rhs_params
++        else:
++            # Handle subqueries
++            return super().process_rhs(compiler, connection)
++
++
+ KeyTransform.register_lookup(KeyTransformExact)
+ KeyTransform.register_lookup(KeyTransformIExact)
+ KeyTransform.register_lookup(KeyTransformIsNull)
+@@ -494,6 +525,7 @@ KeyTransform.register_lookup(KeyTransformLt)
+ KeyTransform.register_lookup(KeyTransformLte)
+ KeyTransform.register_lookup(KeyTransformGt)
+ KeyTransform.register_lookup(KeyTransformGte)
++KeyTransform.register_lookup(KeyTransformIn)
+ 
+ 
+ class KeyTransformFactory:

@@ -1,0 +1,41 @@
+diff --git a/astropy/coordinates/sky_coordinate.py b/astropy/coordinates/sky_coordinate.py
+index ab475f7d0d..56a67b31ec 100644
+--- a/astropy/coordinates/sky_coordinate.py
++++ b/astropy/coordinates/sky_coordinate.py
+@@ -871,6 +871,25 @@ class SkyCoord(ShapedLikeNDArray):
+         Overrides getattr to return coordinates that this can be transformed
+         to, based on the alias attr in the primary transform graph.
+         """
++        # Check if the attribute is a descriptor (property, method, etc.) in the class hierarchy.
++        # If it is, it means the descriptor exists but raised AttributeError internally.
++        # In this case, we should not handle it here but let the original error propagate.
++        for cls in type(self).__mro__:
++            if attr in cls.__dict__:
++                class_attr = cls.__dict__[attr]
++                # Check if it's a descriptor (has __get__, __set__, or __delete__)
++                if hasattr(class_attr, '__get__') or hasattr(class_attr, '__set__') or hasattr(class_attr, '__delete__'):
++                    # This is a descriptor that exists but raised AttributeError.
++                    # Try to call it again to get the original error message.
++                    try:
++                        class_attr.__get__(self, type(self))
++                    except AttributeError as original_error:
++                        # Re-raise the original error
++                        raise original_error
++                    except Exception:
++                        # If it raises a different exception, fall through to normal handling
++                        pass
++        
+         if "_sky_coord_frame" in self.__dict__:
+             if self._is_name(attr):
+                 return self  # Should this be a deepcopy of self?
+diff --git a/pyproject.toml b/pyproject.toml
+index 486d6b9b3b..1c5f74f3a1 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -1,5 +1,5 @@
+ [build-system]
+-requires = ["setuptools",
++requires = ["setuptools==68.0.0",
+             "setuptools_scm>=6.2",
+             "wheel",
+             "cython==0.29.30",

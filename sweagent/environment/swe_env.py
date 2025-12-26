@@ -1,7 +1,10 @@
 import asyncio
+import json
 import logging
+import os
+import platform
 import shlex
-from pathlib import PurePath
+from pathlib import Path, PurePath
 from typing import Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -19,6 +22,31 @@ from swerex.runtime.abstract import Command as RexCommand
 from sweagent.environment.hooks.abstract import CombinedEnvHooks, EnvHook
 from sweagent.environment.repo import Repo, RepoConfig
 from sweagent.utils.log import get_logger
+
+
+def _is_wsl() -> bool:
+    if os.environ.get("WSL_INTEROP") or os.environ.get("WSL_DISTRO_NAME"):
+        return True
+    return "microsoft" in platform.release().lower()
+
+
+def _docker_error_looks_like_credentials_issue(err: Exception) -> bool:
+    msg = str(err).lower()
+    return (
+        "error getting credentials" in msg
+        or "docker-credential" in msg
+        or "utilacceptvsock" in msg
+        or "credsstore" in msg
+    )
+
+
+def _ensure_no_creds_docker_config() -> Path:
+    docker_config_dir = Path.home() / ".cache" / "sweagent" / "docker-config-no-creds"
+    docker_config_dir.mkdir(parents=True, exist_ok=True)
+    config_path = docker_config_dir / "config.json"
+    if not config_path.exists():
+        config_path.write_text(json.dumps({"auths": {}}, indent=2) + "\n")
+    return docker_config_dir
 
 
 class EnvironmentConfig(BaseModel):
@@ -180,7 +208,23 @@ class SWEEnv:
         If cached_image is provided, it will use that image name instead of the default.
         """
         self._chook.on_start_deployment()
-        asyncio.run(self.deployment.start())
+        try:
+            asyncio.run(self.deployment.start())
+        except Exception as e:
+            if (
+                os.environ.get("DOCKER_CONFIG") is None
+                and _is_wsl()
+                and _docker_error_looks_like_credentials_issue(e)
+            ):
+                docker_config_dir = _ensure_no_creds_docker_config()
+                os.environ["DOCKER_CONFIG"] = str(docker_config_dir)
+                self.logger.warning(
+                    "Docker pull failed due to credential helper issues on WSL; retrying with DOCKER_CONFIG=%s",
+                    docker_config_dir,
+                )
+                asyncio.run(self.deployment.start())
+            else:
+                raise
         asyncio.run(
             self.deployment.runtime.create_session(
                 CreateBashSessionRequest(startup_source=["/root/.bashrc"], startup_timeout=10)

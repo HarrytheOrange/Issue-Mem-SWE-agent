@@ -1,0 +1,61 @@
+diff --git a/django/db/backends/postgresql/operations.py b/django/db/backends/postgresql/operations.py
+index 8d19872bea..22c6e4ff00 100644
+--- a/django/db/backends/postgresql/operations.py
++++ b/django/db/backends/postgresql/operations.py
+@@ -44,10 +44,14 @@ class DatabaseOperations(BaseDatabaseOperations):
+         return "DATE_TRUNC('%s', %s)" % (lookup_type, field_name)
+ 
+     def _prepare_tzname_delta(self, tzname):
+-        if '+' in tzname:
+-            return tzname.replace('+', '-')
+-        elif '-' in tzname:
+-            return tzname.replace('-', '+')
++        # Only reverse signs for numeric offset strings (e.g., '+1000', '-0500'),
++        # not for named timezone strings (e.g., 'Etc/GMT-10', 'America/New_York').
++        if tzname and len(tzname) > 1 and tzname[0] in '+-' and tzname[1:].replace(':', '').isdigit():
++            # This is a numeric offset string, reverse the sign for PostgreSQL
++            if tzname.startswith('+'):
++                return '-' + tzname[1:]
++            elif tzname.startswith('-'):
++                return '+' + tzname[1:]
+         return tzname
+ 
+     def _convert_field_to_tz(self, field_name, tzname):
+diff --git a/tests/backends/postgresql/tests.py b/tests/backends/postgresql/tests.py
+index 7f27c69ffb..e018b49f83 100644
+--- a/tests/backends/postgresql/tests.py
++++ b/tests/backends/postgresql/tests.py
+@@ -282,3 +282,33 @@ class Tests(TestCase):
+             [q['sql'] for q in connection.queries],
+             [copy_expert_sql, 'COPY django_session TO STDOUT'],
+         )
++
++    def test_prepare_tzname_delta(self):
++        """
++        Test that _prepare_tzname_delta only reverses signs for numeric offset
++        strings, not for named timezone strings like 'Etc/GMT-10'.
++        """
++        ops = connection.ops
++        
++        # Numeric offset strings should have signs reversed
++        self.assertEqual(ops._prepare_tzname_delta('+1000'), '-1000')
++        self.assertEqual(ops._prepare_tzname_delta('-0500'), '+0500')
++        self.assertEqual(ops._prepare_tzname_delta('+0000'), '-0000')
++        self.assertEqual(ops._prepare_tzname_delta('+05:30'), '-05:30')
++        self.assertEqual(ops._prepare_tzname_delta('-10:00'), '+10:00')
++        
++        # Named timezone strings should remain unchanged
++        self.assertEqual(ops._prepare_tzname_delta('Etc/GMT-10'), 'Etc/GMT-10')
++        self.assertEqual(ops._prepare_tzname_delta('Etc/GMT+5'), 'Etc/GMT+5')
++        self.assertEqual(ops._prepare_tzname_delta('America/New_York'), 'America/New_York')
++        self.assertEqual(ops._prepare_tzname_delta('Europe/London'), 'Europe/London')
++        self.assertEqual(ops._prepare_tzname_delta('UTC'), 'UTC')
++        
++        # Edge cases should remain unchanged
++        self.assertEqual(ops._prepare_tzname_delta(''), '')
++        self.assertEqual(ops._prepare_tzname_delta('+'), '+')
++        self.assertEqual(ops._prepare_tzname_delta('-'), '-')
++        self.assertEqual(ops._prepare_tzname_delta('+abc'), '+abc')
++        self.assertEqual(ops._prepare_tzname_delta('-xyz'), '-xyz')
++        self.assertEqual(ops._prepare_tzname_delta('GMT'), 'GMT')
++        self.assertEqual(ops._prepare_tzname_delta('Z'), 'Z')

@@ -1,0 +1,26 @@
+diff --git a/sklearn/metrics/_ranking.py b/sklearn/metrics/_ranking.py
+index 0cdead923..a8e020979 100644
+--- a/sklearn/metrics/_ranking.py
++++ b/sklearn/metrics/_ranking.py
+@@ -1083,7 +1083,20 @@ def roc_curve(
+     # to make sure that the curve starts at (0, 0)
+     tps = np.r_[0, tps]
+     fps = np.r_[0, fps]
+-    thresholds = np.r_[thresholds[0] + 1, thresholds]
++    
++    # Calculate the first threshold using the original logic
++    first_threshold = thresholds[0] + 1
++    
++    # For probability estimates (scores in [0, 1]), ensure the first threshold doesn't 
++    # exceed 1 when the max score is < 1. This prevents thresholds > 1 for probability
++    # estimates while preserving backward compatibility when max score is exactly 1.0.
++    y_score_array = np.asarray(y_score)
++    if (np.all(y_score_array >= 0) and np.all(y_score_array <= 1) and 
++        thresholds[0] < 1.0 and first_threshold > 1.0):
++        # Use a threshold slightly above 1 to ensure no instances are predicted
++        first_threshold = 1.0 + np.finfo(np.float64).eps
++    
++    thresholds = np.r_[first_threshold, thresholds]
+ 
+     if fps[-1] <= 0:
+         warnings.warn(

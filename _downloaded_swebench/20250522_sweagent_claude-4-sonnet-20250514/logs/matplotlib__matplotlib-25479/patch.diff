@@ -1,0 +1,36 @@
+diff --git a/lib/matplotlib/pyplot.py b/lib/matplotlib/pyplot.py
+index 58ce4c03fa..18354f377e 100644
+--- a/lib/matplotlib/pyplot.py
++++ b/lib/matplotlib/pyplot.py
+@@ -2263,14 +2263,15 @@ def get_cmap(
+ get_cmap.__doc__ = cm._get_cmap.__doc__  # type: ignore
+ 
+ 
+-def set_cmap(cmap: Colormap | str) -> None:
++def set_cmap(cmap: Colormap | str | None) -> None:
+     """
+     Set the default colormap, and applies it to the current image if any.
+ 
+     Parameters
+     ----------
+-    cmap : `~matplotlib.colors.Colormap` or str
++    cmap : `~matplotlib.colors.Colormap` or str or None
+         A colormap instance or the name of a registered colormap.
++        If None, use the default colormap from rcParams.
+ 
+     See Also
+     --------
+@@ -2278,9 +2279,12 @@ def set_cmap(cmap: Colormap | str) -> None:
+     matplotlib.cm.register_cmap
+     matplotlib.cm.get_cmap
+     """
++    # Store the original name if it's a string, to preserve registered names
++    cmap_name = cmap if isinstance(cmap, str) else None
+     cmap = get_cmap(cmap)
+ 
+-    rc('image', cmap=cmap.name)
++    # Use the original name if it was a string, otherwise use the colormap's name
++    rc('image', cmap=cmap_name if cmap_name is not None else cmap.name)
+     im = gci()
+ 
+     if im is not None:

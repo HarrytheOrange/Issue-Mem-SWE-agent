@@ -1,0 +1,32 @@
+diff --git a/django/core/serializers/python.py b/django/core/serializers/python.py
+index 36048601af..fa7c7a9834 100644
+--- a/django/core/serializers/python.py
++++ b/django/core/serializers/python.py
+@@ -79,7 +79,26 @@ class Serializer(base.Serializer):
+                     return self._value_from_field(value, value._meta.pk)
+ 
+                 def queryset_iterator(obj, field):
+-                    return getattr(obj, field.name).only("pk").iterator()
++                    manager = getattr(obj, field.name)
++                    queryset = manager.all()
++                    # Build the only() fields list - include pk and any select_related fields
++                    # to avoid conflicts between deferred loading and select_related
++                    only_fields = ["pk"]
++                    if queryset.query.select_related:
++                        # select_related can be True (select all) or a dict of field names
++                        if isinstance(queryset.query.select_related, dict):
++                            for field_name in queryset.query.select_related.keys():
++                                only_fields.append(field_name)
++                        # If select_related is True, we can't use only() as it would conflict
++                        # with the automatic selection of all related fields
++                        elif queryset.query.select_related is True:
++                            return queryset.iterator()
++                    
++                    # Check if prefetch_related is used, which requires chunk_size for iterator()
++                    if queryset._prefetch_related_lookups:
++                        return queryset.only(*only_fields).iterator(chunk_size=2000)
++                    else:
++                        return queryset.only(*only_fields).iterator()
+ 
+             m2m_iter = getattr(obj, "_prefetched_objects_cache", {}).get(
+                 field.name,

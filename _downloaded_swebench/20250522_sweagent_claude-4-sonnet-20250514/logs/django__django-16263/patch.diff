@@ -1,0 +1,165 @@
+diff --git a/django/db/models/sql/query.py b/django/db/models/sql/query.py
+index 9735ce10c8..f80a14cb1d 100644
+--- a/django/db/models/sql/query.py
++++ b/django/db/models/sql/query.py
+@@ -450,17 +450,44 @@ class Query(BaseExpression):
+         #
+         # Existing annotations would cause incorrect results as get_aggregation()
+         # must produce just one result and thus must not use GROUP BY. But we
+-        # aren't smart enough to remove the existing annotations from the
+-        # query, so those would force us to use GROUP BY.
++        # can be smart about removing unused annotations from count queries.
+         #
+         # If the query has limit or distinct, or uses set operations, then
+         # those operations must be done in a subquery so that the query
+         # aggregates on the limit and/or distinct results instead of applying
+         # the distinct and limit after the aggregation.
++        
++        # For count queries, check if existing annotations are actually referenced
++        # Only apply this optimization if all existing annotations are simple aggregates
++        # (not subqueries or complex expressions that might affect grouping)
++        is_count_query = (
++            len(added_aggregate_names) == 1 and 
++            "__count" in added_aggregate_names and
++            isinstance(self.annotations.get("__count"), Count) and
++            all(
++                hasattr(annotation, 'empty_result_set_value') and 
++                getattr(annotation, 'contains_aggregate', True) and
++                not getattr(annotation, 'contains_subquery', False)
++                for annotation in existing_annotations
++            )
++        )
++        
++        if is_count_query:
++            # For count queries, only consider annotations that are actually referenced
++            referenced_annotations = self._get_referenced_annotations(
++                set(alias for alias in self.annotations.keys() if alias not in added_aggregate_names)
++            )
++            relevant_existing_annotations = [
++                annotation for alias, annotation in self.annotations.items()
++                if alias not in added_aggregate_names and alias in referenced_annotations
++            ]
++        else:
++            relevant_existing_annotations = existing_annotations
++        
+         if (
+             isinstance(self.group_by, tuple)
+             or self.is_sliced
+-            or existing_annotations
++            or relevant_existing_annotations
+             or self.distinct
+             or self.combinator
+         ):
+@@ -484,7 +511,7 @@ class Query(BaseExpression):
+                 # used.
+                 has_existing_aggregate_annotations = any(
+                     annotation
+-                    for annotation in existing_annotations
++                    for annotation in relevant_existing_annotations
+                     if getattr(annotation, "contains_aggregate", True)
+                 )
+                 if inner_query.default_cols and has_existing_aggregate_annotations:
+@@ -545,12 +572,102 @@ class Query(BaseExpression):
+ 
+         return dict(zip(outer_query.annotation_select, result))
+ 
++    def _get_referenced_annotations(self, annotations_to_check=None):
++        """
++        Return a set of annotation aliases that are referenced in the query's
++        WHERE clause, ORDER BY clause, or by other annotations.
++        """
++        if annotations_to_check is None:
++            annotations_to_check = set(self.annotations.keys())
++        
++        referenced = set()
++        
++        # Check WHERE clause - look for direct alias references
++        where_aliases = set(self._gen_col_aliases([self.where]))
++        referenced.update(where_aliases & annotations_to_check)
++        
++        # Also check if WHERE clause contains expressions that match annotations
++        # This handles cases like author_count__gt=1 which creates HAVING clauses
++        def find_matching_annotations(expr, annotations_dict):
++            """Find annotation aliases whose expressions match the given expression."""
++            matches = set()
++            for alias, annotation in annotations_dict.items():
++                if alias in annotations_to_check and str(expr) == str(annotation):
++                    matches.add(alias)
++            return matches
++        
++        def check_expression_tree(expr):
++            """Recursively check an expression tree for annotation matches."""
++            matches = set()
++            if hasattr(expr, 'children'):
++                for child in expr.children:
++                    matches.update(check_expression_tree(child))
++            elif hasattr(expr, 'lhs'):
++                # This is likely a lookup like GreaterThan
++                matches.update(find_matching_annotations(expr.lhs, self.annotations))
++                if hasattr(expr, 'rhs'):
++                    matches.update(check_expression_tree(expr.rhs))
++            elif hasattr(expr, 'source_expressions'):
++                for source_expr in expr.source_expressions:
++                    matches.update(check_expression_tree(source_expr))
++            else:
++                matches.update(find_matching_annotations(expr, self.annotations))
++            return matches
++        
++        referenced.update(check_expression_tree(self.where))
++        
++        # Check ORDER BY clause
++        order_by_aliases = set(self._gen_col_aliases(self.order_by))
++        referenced.update(order_by_aliases & annotations_to_check)
++        
++        # Check if annotations reference each other
++        # We need to do this iteratively until no new references are found
++        changed = True
++        while changed:
++            changed = False
++            for alias, annotation in self.annotations.items():
++                if alias in referenced:
++                    continue
++                # Check if this annotation references any already referenced annotations
++                annotation_aliases = set(self._gen_col_aliases([annotation]))
++                if annotation_aliases & referenced:
++                    referenced.add(alias)
++                    changed = True
++        
++        return referenced
++
+     def get_count(self, using):
+         """
+         Perform a COUNT() query using the current filter constraints.
+         """
+         obj = self.clone()
+-        obj.add_annotation(Count("*"), alias="__count", is_summary=True)
++        
++        # For count queries, if there are unused annotations that introduce JOINs,
++        # we need to count distinct primary keys to avoid counting duplicate rows
++        referenced_annotations = obj._get_referenced_annotations()
++        unused_annotations = set(obj.annotations.keys()) - referenced_annotations
++        
++        # Check if any unused annotations introduce JOINs
++        has_unused_joins = False
++        for alias in unused_annotations:
++            annotation = obj.annotations[alias]
++            annotation_aliases = set(obj._gen_col_aliases([annotation]))
++            if any(
++                isinstance(obj.alias_map.get(col_alias), Join)
++                for col_alias in annotation_aliases
++                if col_alias in obj.alias_map
++            ):
++                has_unused_joins = True
++                break
++        
++        if has_unused_joins and not referenced_annotations:
++            # If we have unused annotations with JOINs but no referenced annotations,
++            # we can use COUNT(DISTINCT pk) to get the correct count
++            pk_col = obj.model._meta.pk.get_col(obj.get_initial_alias())
++            obj.add_annotation(Count(pk_col, distinct=True), alias="__count", is_summary=True)
++        else:
++            obj.add_annotation(Count("*"), alias="__count", is_summary=True)
++        
+         return obj.get_aggregation(using, ["__count"])["__count"]
+ 
+     def has_filters(self):

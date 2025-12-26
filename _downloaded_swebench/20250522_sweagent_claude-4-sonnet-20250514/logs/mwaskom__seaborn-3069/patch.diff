@@ -1,0 +1,49 @@
+diff --git a/seaborn/_core/plot.py b/seaborn/_core/plot.py
+index 4f0290a4..402ba140 100644
+--- a/seaborn/_core/plot.py
++++ b/seaborn/_core/plot.py
+@@ -1475,7 +1475,7 @@ class Plotter:
+ 
+                 axes_df = self._filter_subplot_data(df, view)
+ 
+-                with pd.option_context("mode.use_inf_as_null", True):
++                with pd.option_context("mode.use_inf_as_na", True):
+                     if keep_na:
+                         # The simpler thing to do would be x.dropna().reindex(x.index).
+                         # But that doesn't work with the way that the subset iteration
+@@ -1626,13 +1626,34 @@ class Plotter:
+                 self._figure.legends.append(legend)
+ 
+     def _finalize_figure(self, p: Plot) -> None:
++        from seaborn._core.scales import Nominal
+ 
+         for sub in self._subplots:
+             ax = sub["ax"]
+             for axis in "xy":
+                 axis_key = sub[axis]
+ 
+-                # Axis limits
++                # Check if this axis uses a Nominal scale
++                scale = self._scales.get(axis_key)
++                is_nominal = isinstance(scale, Nominal)
++
++                # Apply categorical axis behaviors for Nominal scales
++                if is_nominal:
++                    # 1. Set axis limits to +/- 0.5 from first and last tick
++                    axis_obj = getattr(ax, f"{axis}axis")
++                    ticks = axis_obj.get_ticklocs()
++                    if len(ticks) > 0:
++                        lo, hi = ticks[0] - 0.5, ticks[-1] + 0.5
++                        ax.set(**{f"{axis}lim": (lo, hi)})
++                    
++                    # 2. Disable grid for this axis
++                    axis_obj.grid(False)
++                    
++                    # 3. Invert y-axis if this is the y-axis
++                    if axis == "y":
++                        ax.invert_yaxis()
++
++                # Axis limits (existing logic for explicit limits)
+                 if axis_key in p._limits:
+                     convert_units = getattr(ax, f"{axis}axis").convert_units
+                     a, b = p._limits[axis_key]

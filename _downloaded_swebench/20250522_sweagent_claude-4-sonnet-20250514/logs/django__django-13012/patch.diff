@@ -1,0 +1,102 @@
+diff --git a/django/db/models/expressions.py b/django/db/models/expressions.py
+index c1a76584f0..a8f8b427ca 100644
+--- a/django/db/models/expressions.py
++++ b/django/db/models/expressions.py
+@@ -866,6 +866,9 @@ class ExpressionWrapper(Expression):
+     def as_sql(self, compiler, connection):
+         return self.expression.as_sql(compiler, connection)
+ 
++    def get_group_by_cols(self, alias=None):
++        return self.expression.get_group_by_cols(alias)
++
+     def __repr__(self):
+         return "{}({})".format(self.__class__.__name__, self.expression)
+ 
+diff --git a/tests/expressions/tests.py b/tests/expressions/tests.py
+index 72bca4f205..296ab45212 100644
+--- a/tests/expressions/tests.py
++++ b/tests/expressions/tests.py
+@@ -1806,6 +1806,83 @@ class ReprTests(SimpleTestCase):
+         )
+ 
+ 
++class ExpressionWrapperTests(TestCase):
++    @classmethod
++    def setUpTestData(cls):
++        cls.company = Company.objects.create(
++            name="Test Company", num_employees=10, num_chairs=5,
++            ceo=Employee.objects.create(firstname="John", lastname="Doe", salary=100)
++        )
++
++    def test_expression_wrapper_constant_group_by(self):
++        """
++        Test that ExpressionWrapper with constant values doesn't include
++        the constant in the GROUP BY clause.
++        """
++        # Test with integer constant
++        expr = ExpressionWrapper(Value(3), output_field=IntegerField())
++        queryset = Company.objects.annotate(
++            expr_res=expr
++        ).values('expr_res', 'name').annotate(total_employees=Sum('num_employees'))
++        
++        sql_str = str(queryset.query)
++        # The constant should not appear in GROUP BY clause
++        if 'GROUP BY' in sql_str:
++            group_by_part = sql_str.split('GROUP BY')[1]
++            self.assertNotIn('3', group_by_part, 
++                           "Constant '3' should not appear in GROUP BY clause")
++        
++        # Test with string constant
++        expr = ExpressionWrapper(Value('hello'), output_field=CharField())
++        queryset = Company.objects.annotate(
++            expr_res=expr
++        ).values('expr_res', 'name').annotate(total_employees=Sum('num_employees'))
++        
++        sql_str = str(queryset.query)
++        # The constant should not appear in GROUP BY clause
++        if 'GROUP BY' in sql_str:
++            group_by_part = sql_str.split('GROUP BY')[1]
++            self.assertNotIn('hello', group_by_part, 
++                           "Constant 'hello' should not appear in GROUP BY clause")
++
++    def test_expression_wrapper_field_reference_group_by(self):
++        """
++        Test that ExpressionWrapper with field references correctly includes
++        the field in the GROUP BY clause.
++        """
++        expr = ExpressionWrapper(F('num_chairs'), output_field=IntegerField())
++        queryset = Company.objects.annotate(
++            expr_res=expr
++        ).values('expr_res', 'name').annotate(total_employees=Sum('num_employees'))
++        
++        sql_str = str(queryset.query)
++        # The field reference should appear in GROUP BY clause
++        if 'GROUP BY' in sql_str:
++            group_by_part = sql_str.split('GROUP BY')[1]
++            self.assertIn('num_chairs', group_by_part, 
++                         "Field reference 'num_chairs' should appear in GROUP BY clause")
++
++    def test_expression_wrapper_complex_expression_group_by(self):
++        """
++        Test that ExpressionWrapper with complex expressions (field + constant)
++        correctly includes the expression in GROUP BY but not the constant separately.
++        """
++        expr = ExpressionWrapper(F('num_chairs') + Value(10), output_field=IntegerField())
++        queryset = Company.objects.annotate(
++            expr_res=expr
++        ).values('expr_res', 'name').annotate(total_employees=Sum('num_employees'))
++        
++        sql_str = str(queryset.query)
++        # The expression should appear in GROUP BY clause
++        if 'GROUP BY' in sql_str:
++            group_by_part = sql_str.split('GROUP BY')[1]
++            self.assertIn('num_chairs', group_by_part, 
++                         "Expression with field reference should appear in GROUP BY clause")
++            # The constant 10 should not appear separately in GROUP BY
++            self.assertNotIn(', 10', group_by_part, 
++                           "Constant '10' should not appear separately in GROUP BY clause")
++
++
+ class CombinableTests(SimpleTestCase):
+     bitwise_msg = 'Use .bitand() and .bitor() for bitwise logical operations.'
+ 

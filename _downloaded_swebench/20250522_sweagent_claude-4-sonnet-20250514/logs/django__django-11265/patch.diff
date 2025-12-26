@@ -1,0 +1,31 @@
+diff --git a/django/db/models/sql/query.py b/django/db/models/sql/query.py
+index d69c24419b..35c78d7366 100644
+--- a/django/db/models/sql/query.py
++++ b/django/db/models/sql/query.py
+@@ -1666,7 +1666,26 @@ class Query(BaseExpression):
+             filter_expr = (filter_lhs, OuterRef(filter_rhs.name))
+         # Generate the inner query.
+         query = Query(self.model)
++        # Copy annotations and filtered relations from the original query
++        # so that they are available in the subquery for exclude operations
++        query.annotations = self.annotations.copy()
++        for alias, filtered_relation in self._filtered_relations.items():
++            # Clone the filtered relation to avoid modifying the original
++            cloned_filtered_relation = filtered_relation.clone()
++            query.add_filtered_relation(cloned_filtered_relation, alias)
+         query.add_filter(filter_expr)
++        
++        # Before trimming, extract FilteredRelation conditions and add them to WHERE clause
++        # This ensures they are preserved even if the joins are optimized away
++        for alias, filtered_relation in query._filtered_relations.items():
++            if alias in query.alias_map:
++                join = query.alias_map[alias]
++                if hasattr(join, 'filtered_relation') and join.filtered_relation:
++                    # Build the condition from the FilteredRelation and add it to WHERE
++                    condition_q = join.filtered_relation.condition
++                    where_clause = query.build_filtered_relation_q(condition_q, reuse=set())
++                    query.where.add(where_clause, AND)
++        
+         query.clear_ordering(True)
+         # Try to have as simple as possible subquery -> trim leading joins from
+         # the subquery.

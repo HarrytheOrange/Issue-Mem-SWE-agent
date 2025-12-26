@@ -1,0 +1,20 @@
+diff --git a/django/template/defaultfilters.py b/django/template/defaultfilters.py
+index 1c844580c6..d551a3a005 100644
+--- a/django/template/defaultfilters.py
++++ b/django/template/defaultfilters.py
+@@ -679,7 +679,14 @@ def add(value, arg):
+     except (ValueError, TypeError):
+         try:
+             return value + arg
+-        except Exception:
++        except Exception as e:
++            # If the error is specifically about __proxy__ objects (lazy strings),
++            # try converting both to strings and concatenating
++            if '__proxy__' in str(e):
++                try:
++                    return str(value) + str(arg)
++                except Exception:
++                    return ''
+             return ''
+ 
+ 

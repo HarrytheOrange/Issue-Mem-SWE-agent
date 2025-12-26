@@ -1,0 +1,4 @@
+#!/bin/bash
+script_dir="$(cd "$(dirname "$0")" && pwd)"
+# 默认 top_k 为 3，但允许用户通过命令行参数覆盖
+python3 "$script_dir/exp_rag.py" "$@"

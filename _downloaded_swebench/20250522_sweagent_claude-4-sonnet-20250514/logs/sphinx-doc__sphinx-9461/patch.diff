@@ -1,0 +1,212 @@
+diff --git a/setup.py b/setup.py
+index 4a1d5aeed..3faa58e79 100644
+--- a/setup.py
++++ b/setup.py
+@@ -15,22 +15,22 @@ if sys.version_info < (3, 6):
+     sys.exit(1)
+ 
+ install_requires = [
+-    'sphinxcontrib-applehelp',
+-    'sphinxcontrib-devhelp',
++    'sphinxcontrib-applehelp<=1.0.7',
++    'sphinxcontrib-devhelp<=1.0.5',
+     'sphinxcontrib-jsmath',
+-    'sphinxcontrib-htmlhelp>=2.0.0',
+-    'sphinxcontrib-serializinghtml>=1.1.5',
+-    'sphinxcontrib-qthelp',
+-    'Jinja2>=2.3',
++    'sphinxcontrib-htmlhelp>=2.0.0,<=2.0.4',
++    'sphinxcontrib-serializinghtml>=1.1.5,<=1.1.9',
++    'sphinxcontrib-qthelp<=1.0.6',
++    'Jinja2<3.0',
+     'Pygments>=2.0',
+     'docutils>=0.14,<0.18',
+     'snowballstemmer>=1.1',
+     'babel>=1.3',
+-    'alabaster>=0.7,<0.8',
++    'alabaster>=0.7,<0.7.12',
+     'imagesize',
+     'requests>=2.5.0',
+     'setuptools',
+-    'packaging',
++    'packaging', 'markupsafe<=2.0.1',
+ ]
+ 
+ extras_require = {
+diff --git a/sphinx/ext/autodoc/__init__.py b/sphinx/ext/autodoc/__init__.py
+index 1cecb1f79..0f8088084 100644
+--- a/sphinx/ext/autodoc/__init__.py
++++ b/sphinx/ext/autodoc/__init__.py
+@@ -2673,12 +2673,22 @@ class PropertyDocumenter(DocstringStripSignatureMixin, ClassLevelDocumenter):  #
+     def add_directive_header(self, sig: str) -> None:
+         super().add_directive_header(sig)
+         sourcename = self.get_sourcename()
+-        if inspect.isabstractmethod(self.object):
++        # Check if it's an abstract method (handle wrapped properties)
++        obj_to_check = self.object
++        if isinstance(self.object, (classmethod, staticmethod)) and hasattr(self.object, '__func__'):
++            obj_to_check = self.object.__func__
++        
++        if inspect.isabstractmethod(obj_to_check):
+             self.add_line('   :abstractmethod:', sourcename)
+ 
+-        if safe_getattr(self.object, 'fget', None) and self.config.autodoc_typehints != 'none':
++        # Get the actual property object (handle wrapped properties)
++        prop_obj = self.object
++        if isinstance(self.object, (classmethod, staticmethod)) and hasattr(self.object, '__func__'):
++            prop_obj = self.object.__func__
++        
++        if safe_getattr(prop_obj, 'fget', None) and self.config.autodoc_typehints != 'none':
+             try:
+-                signature = inspect.signature(self.object.fget,
++                signature = inspect.signature(prop_obj.fget,
+                                               type_aliases=self.config.autodoc_type_aliases)
+                 if signature.return_annotation is not Parameter.empty:
+                     objrepr = stringify_typehint(signature.return_annotation)
+diff --git a/sphinx/ext/autodoc/importer.py b/sphinx/ext/autodoc/importer.py
+index 1a8ea0973..0b8c02694 100644
+--- a/sphinx/ext/autodoc/importer.py
++++ b/sphinx/ext/autodoc/importer.py
+@@ -107,7 +107,14 @@ def import_object(modname: str, objpath: List[str], objtype: str = '',
+             parent = obj
+             logger.debug('[autodoc] getattr(_, %r)', attrname)
+             mangled_name = mangle(obj, attrname)
+-            obj = attrgetter(obj, mangled_name)
++            
++            # For properties (especially classmethod/staticmethod wrapped ones),
++            # use __dict__ access to avoid executing the property
++            if (hasattr(obj, '__dict__') and mangled_name in obj.__dict__ and
++                objtype == 'property'):
++                obj = obj.__dict__[mangled_name]
++            else:
++                obj = attrgetter(obj, mangled_name)
+ 
+             try:
+                 logger.debug('[autodoc] => %r', obj)
+@@ -212,8 +219,14 @@ def get_object_members(subject: Any, objpath: List[str], attrgetter: Callable,
+     # other members
+     for name in dir(subject):
+         try:
+-            value = attrgetter(subject, name)
+             directly_defined = name in obj_dict
++            if directly_defined:
++                # For directly defined members, use the value from __dict__ to avoid
++                # executing properties (especially classmethod/staticmethod wrapped properties)
++                value = obj_dict[name]
++            else:
++                # For inherited members, use attrgetter
++                value = attrgetter(subject, name)
+             name = unmangle(subject, name)
+             if name and name not in members:
+                 members[name] = Attribute(name, directly_defined, value)
+diff --git a/sphinx/util/inspect.py b/sphinx/util/inspect.py
+index 23dd9e930..9a967bed9 100644
+--- a/sphinx/util/inspect.py
++++ b/sphinx/util/inspect.py
+@@ -390,7 +390,14 @@ def isproperty(obj: Any) -> bool:
+         if isinstance(obj, cached_property):
+             return True
+ 
+-    return isinstance(obj, property)
++    if isinstance(obj, property):
++        return True
++    
++    # Check for classmethod/staticmethod wrapped properties (Python 3.9+)
++    if isinstance(obj, (classmethod, staticmethod)) and hasattr(obj, '__func__'):
++        return isinstance(obj.__func__, property)
++    
++    return False
+ 
+ 
+ def isgenericalias(obj: Any) -> bool:
+@@ -836,10 +843,15 @@ def getdoc(obj: Any, attrgetter: Callable = safe_getattr,
+     * partial functions
+     * inherited docstring
+     * inherited decorated methods
++    * classmethod/staticmethod wrapped properties
+     """
+     doc = attrgetter(obj, '__doc__', None)
+     if ispartial(obj) and doc == obj.__class__.__doc__:
+         return getdoc(obj.func)
++    elif isinstance(obj, (classmethod, staticmethod)) and hasattr(obj, '__func__'):
++        # For classmethod/staticmethod wrapped properties, get docstring from the wrapped function
++        if isinstance(obj.__func__, property):
++            return getdoc(obj.__func__, attrgetter, allow_inherited, cls, name)
+     elif doc is None and allow_inherited:
+         if cls and name:
+             # Check a docstring of the attribute or method from super classes.
+diff --git a/tests/roots/test-ext-autodoc/target/classmethod_properties.py b/tests/roots/test-ext-autodoc/target/classmethod_properties.py
+new file mode 100644
+index 000000000..ee33fd7f3
+--- /dev/null
++++ b/tests/roots/test-ext-autodoc/target/classmethod_properties.py
+@@ -0,0 +1,19 @@
++class TestClass:
++    """A test class with various property types."""
++    
++    @property
++    def regular_property(self) -> str:
++        """A regular property."""
++        return "regular"
++    
++    @classmethod
++    @property
++    def class_property(cls) -> str:
++        """A class property."""
++        return "class"
++        
++    @staticmethod
++    @property
++    def static_property() -> str:
++        """A static property."""
++        return "static"
+\ No newline at end of file
+diff --git a/tests/test_ext_autodoc_autoproperty.py b/tests/test_ext_autodoc_autoproperty.py
+index ee25aa8b7..1a086e3de 100644
+--- a/tests/test_ext_autodoc_autoproperty.py
++++ b/tests/test_ext_autodoc_autoproperty.py
+@@ -26,3 +26,31 @@ def test_properties(app):
+         '   docstring',
+         '',
+     ]
++
++
++@pytest.mark.sphinx('html', testroot='ext-autodoc')
++def test_classmethod_properties(app):
++    actual = do_autodoc(app, 'property', 'target.classmethod_properties.TestClass.class_property')
++    assert list(actual) == [
++        '',
++        '.. py:property:: TestClass.class_property',
++        '   :module: target.classmethod_properties',
++        '   :type: str',
++        '',
++        '   A class property.',
++        '',
++    ]
++
++
++@pytest.mark.sphinx('html', testroot='ext-autodoc')
++def test_staticmethod_properties(app):
++    actual = do_autodoc(app, 'property', 'target.classmethod_properties.TestClass.static_property')
++    assert list(actual) == [
++        '',
++        '.. py:property:: TestClass.static_property',
++        '   :module: target.classmethod_properties',
++        '   :type: str',
++        '',
++        '   A static property.',
++        '',
++    ]
+diff --git a/tox.ini b/tox.ini
+index a363e187f..3b8bc12d0 100644
+--- a/tox.ini
++++ b/tox.ini
+@@ -27,7 +27,7 @@ setenv =
+     PYTHONWARNINGS = all,ignore::ImportWarning:importlib._bootstrap_external,ignore::DeprecationWarning:site,ignore::DeprecationWarning:distutils,ignore::DeprecationWarning:pip._vendor.packaging.version
+     PYTEST_ADDOPTS = {env:PYTEST_ADDOPTS:} --color yes
+ commands=
+-    python -X dev -m pytest --durations 25 {posargs}
++    python -X dev -m pytest -rA --durations 25 {posargs}
+ 
+ [testenv:flake8]
+ basepython = python3

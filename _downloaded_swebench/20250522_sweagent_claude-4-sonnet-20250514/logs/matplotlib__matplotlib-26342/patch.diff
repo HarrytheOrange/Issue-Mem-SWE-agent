@@ -1,0 +1,33 @@
+diff --git a/lib/matplotlib/contour.py b/lib/matplotlib/contour.py
+index 3f84250b64..39ab51c7a9 100644
+--- a/lib/matplotlib/contour.py
++++ b/lib/matplotlib/contour.py
+@@ -1459,6 +1459,28 @@ class ContourSet(ContourLabeler, mcoll.Collection):
+ 
+         return (conmin, segmin, imin, xmin, ymin, d2min)
+ 
++    def set_paths(self, paths):
++        """
++        Set the paths for this ContourSet.
++
++        Parameters
++        ----------
++        paths : list of Path
++            A list of matplotlib.path.Path objects representing the contour paths.
++            The number of paths should match the number of contour levels.
++        """
++        if not isinstance(paths, (list, tuple)):
++            raise TypeError("paths must be a list or tuple of Path objects")
++        
++        # Validate that all elements are Path objects
++        for i, path in enumerate(paths):
++            if not isinstance(path, Path):
++                raise TypeError(f"paths[{i}] must be a Path object, got {type(path)}")
++        
++        # Set the new paths
++        self._paths = list(paths)
++        self.stale = True
++
+     def draw(self, renderer):
+         paths = self._paths
+         n_paths = len(paths)

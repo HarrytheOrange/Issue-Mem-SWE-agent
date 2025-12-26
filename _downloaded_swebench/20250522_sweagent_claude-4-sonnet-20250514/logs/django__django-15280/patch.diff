@@ -1,0 +1,868 @@
+diff --git a/debug_issue.py b/debug_issue.py
+new file mode 100644
+index 0000000000..db032b3cb3
+--- /dev/null
++++ b/debug_issue.py
+@@ -0,0 +1,142 @@
++#!/usr/bin/env python
++"""
++Debug script to understand the deferred fields issue with prefetch_related.
++"""
++import os
++import sys
++import django
++from django.conf import settings
++
++# Configure Django settings
++if not settings.configured:
++    settings.configure(
++        DEBUG=True,
++        DATABASES={
++            'default': {
++                'ENGINE': 'django.db.backends.sqlite3',
++                'NAME': ':memory:',
++            }
++        },
++        INSTALLED_APPS=[
++            'django.contrib.contenttypes',
++            'django.contrib.auth',
++            '__main__',  # This module
++        ],
++        SECRET_KEY='test-secret-key',
++    )
++
++django.setup()
++
++from django.db import models
++from django.db.models import Prefetch
++from django.db import connection
++
++
++class User(models.Model):
++    email = models.EmailField()
++    kind = models.CharField(
++        max_length=10, choices=[("ADMIN", "Admin"), ("REGULAR", "Regular")]
++    )
++    
++    class Meta:
++        app_label = '__main__'
++
++
++class Profile(models.Model):
++    full_name = models.CharField(max_length=255)
++    user = models.OneToOneField(User, on_delete=models.CASCADE)
++    
++    class Meta:
++        app_label = '__main__'
++
++
++def debug_issue():
++    """Debug the issue step by step."""
++    from django.db import connection
++    
++    # Create tables manually for this test
++    user_sql = """
++    CREATE TABLE "__main___user" (
++        "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
++        "email" varchar(254) NOT NULL,
++        "kind" varchar(10) NOT NULL
++    )
++    """
++    
++    profile_sql = """
++    CREATE TABLE "__main___profile" (
++        "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
++        "full_name" varchar(255) NOT NULL,
++        "user_id" integer NOT NULL UNIQUE REFERENCES "__main___user" ("id") DEFERRABLE INITIALLY DEFERRED
++    )
++    """
++    
++    with connection.cursor() as cursor:
++        try:
++            cursor.execute(user_sql)
++            cursor.execute(profile_sql)
++        except Exception as e:
++            # Tables might already exist
++            pass
++    
++    # Create test data
++    user = User.objects.create(
++        email="test@example.com",
++        kind="ADMIN",
++    )
++    Profile.objects.create(user=user, full_name="Test Tester")
++    
++    print("=== Testing individual querysets ===")
++    
++    # Test 1: Main queryset only
++    print("\n1. Main queryset with only('email'):")
++    main_qs = User.objects.only("email")
++    main_user = main_qs.first()
++    print(f"   Deferred fields: {main_user.get_deferred_fields()}")
++    print(f"   Fields in __dict__: {set(main_user.__dict__.keys()) & {'email', 'kind'}}")
++    
++    # Test 2: Prefetch queryset only
++    print("\n2. Prefetch queryset with only('kind'):")
++    prefetch_qs = User.objects.only("kind")
++    prefetch_user = prefetch_qs.first()
++    print(f"   Deferred fields: {prefetch_user.get_deferred_fields()}")
++    print(f"   Fields in __dict__: {set(prefetch_user.__dict__.keys()) & {'email', 'kind'}}")
++    
++    print("\n=== Testing prefetch_related ===")
++    
++    # Test 3: The problematic case
++    print("\n3. Combined queryset with prefetch_related:")
++    queryset = User.objects.only("email").prefetch_related(
++        Prefetch(
++            "profile",
++            queryset=Profile.objects.prefetch_related(
++                Prefetch("user", queryset=User.objects.only("kind"))
++            ),
++        )
++    )
++    
++    print("   Executing main queryset...")
++    user = queryset.first()
++    print(f"   Main user deferred fields: {user.get_deferred_fields()}")
++    print(f"   Main user fields in __dict__: {set(user.__dict__.keys()) & {'email', 'kind'}}")
++    
++    print(f"   Profile user deferred fields: {user.profile.user.get_deferred_fields()}")
++    print(f"   Profile user fields in __dict__: {set(user.profile.user.__dict__.keys()) & {'email', 'kind'}}")
++    
++    # Check if they are the same object
++    print(f"   Are they the same object? {user is user.profile.user}")
++    print(f"   Are they equal? {user == user.profile.user}")
++    print(f"   Main user id: {id(user)}")
++    print(f"   Profile user id: {id(user.profile.user)}")
++    
++    # Test accessing the kind field
++    print("\n   Accessing user.profile.user.kind...")
++    queries_before = len(connection.queries)
++    kind = user.profile.user.kind
++    queries_after = len(connection.queries)
++    print(f"   Queries executed: {queries_after - queries_before}")
++    print(f"   Kind value: {kind}")
++
++
++if __name__ == "__main__":
++    debug_issue()
+\ No newline at end of file
+diff --git a/detailed_trace.py b/detailed_trace.py
+new file mode 100644
+index 0000000000..3278ed1bb9
+--- /dev/null
++++ b/detailed_trace.py
+@@ -0,0 +1,155 @@
++#!/usr/bin/env python
++"""
++Detailed trace script to understand exactly when object replacement happens.
++"""
++import os
++import sys
++import django
++from django.conf import settings
++
++# Configure Django settings
++if not settings.configured:
++    settings.configure(
++        DEBUG=True,
++        DATABASES={
++            'default': {
++                'ENGINE': 'django.db.backends.sqlite3',
++                'NAME': ':memory:',
++            }
++        },
++        INSTALLED_APPS=[
++            'django.contrib.contenttypes',
++            'django.contrib.auth',
++            '__main__',  # This module
++        ],
++        SECRET_KEY='test-secret-key',
++    )
++
++django.setup()
++
++from django.db import models
++from django.db.models import Prefetch
++from django.db import connection
++
++
++class User(models.Model):
++    email = models.EmailField()
++    kind = models.CharField(
++        max_length=10, choices=[("ADMIN", "Admin"), ("REGULAR", "Regular")]
++    )
++    
++    class Meta:
++        app_label = '__main__'
++
++
++class Profile(models.Model):
++    full_name = models.CharField(max_length=255)
++    user = models.OneToOneField(User, on_delete=models.CASCADE)
++    
++    class Meta:
++        app_label = '__main__'
++
++
++# Monkey patch to trace object creation and caching
++original_from_db = User.from_db
++created_objects = {}
++
++@classmethod
++def traced_from_db(cls, db, field_names, values):
++    obj = original_from_db(db, field_names, values)
++    obj_id = id(obj)
++    created_objects[obj.pk] = (obj_id, field_names, obj.get_deferred_fields())
++    print(f"User.from_db: pk={obj.pk}, id={obj_id}, field_names={field_names}, deferred={obj.get_deferred_fields()}")
++    return obj
++
++User.from_db = traced_from_db
++
++# Monkey patch set_cached_value to trace caching
++from django.db.models.fields.mixins import FieldCacheMixin
++original_set_cached_value = FieldCacheMixin.set_cached_value
++
++def traced_set_cached_value(self, instance, value):
++    instance_class = instance.__class__.__name__ if hasattr(instance, '__class__') else type(instance).__name__
++    value_class = value.__class__.__name__ if hasattr(value, '__class__') else type(value).__name__
++    instance_pk = getattr(instance, 'pk', None)
++    value_pk = getattr(value, 'pk', None)
++    print(f"set_cached_value: field={self.name}, instance={instance_class}(pk={instance_pk}), value={value_class}(pk={value_pk}, id={id(value)})")
++    return original_set_cached_value(self, instance, value)
++
++FieldCacheMixin.set_cached_value = traced_set_cached_value
++
++
++def detailed_trace():
++    """Detailed trace of the issue."""
++    from django.db import connection
++    
++    # Create tables manually for this test
++    user_sql = """
++    CREATE TABLE "__main___user" (
++        "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
++        "email" varchar(254) NOT NULL,
++        "kind" varchar(10) NOT NULL
++    )
++    """
++    
++    profile_sql = """
++    CREATE TABLE "__main___profile" (
++        "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
++        "full_name" varchar(255) NOT NULL,
++        "user_id" integer NOT NULL UNIQUE REFERENCES "__main___user" ("id") DEFERRABLE INITIALLY DEFERRED
++    )
++    """
++    
++    with connection.cursor() as cursor:
++        try:
++            cursor.execute(user_sql)
++            cursor.execute(profile_sql)
++        except Exception as e:
++            # Tables might already exist
++            pass
++    
++    # Create test data
++    user = User.objects.create(
++        email="test@example.com",
++        kind="ADMIN",
++    )
++    Profile.objects.create(user=user, full_name="Test Tester")
++    
++    print("=== Detailed trace of prefetch_related execution ===")
++    
++    queryset = User.objects.only("email").prefetch_related(
++        Prefetch(
++            "profile",
++            queryset=Profile.objects.prefetch_related(
++                Prefetch("user", queryset=User.objects.only("kind"))
++            ),
++        )
++    )
++    
++    print("\nExecuting main queryset...")
++    user = queryset.first()
++    
++    print(f"\nAfter main queryset execution:")
++    print(f"Main user object: pk={user.pk}, id={id(user)}")
++    print(f"Main user deferred fields: {user.get_deferred_fields()}")
++    
++    print(f"\nAccessing profile...")
++    profile = user.profile
++    
++    print(f"\nAccessing profile.user...")
++    profile_user = profile.user
++    
++    print(f"\nAfter accessing profile.user:")
++    print(f"Profile user object: pk={profile_user.pk}, id={id(profile_user)}")
++    print(f"Profile user deferred fields: {profile_user.get_deferred_fields()}")
++    
++    print(f"\nObject identity check:")
++    print(f"user is profile_user: {user is profile_user}")
++    
++    print(f"\nCreated objects summary:")
++    for pk, (obj_id, field_names, deferred) in created_objects.items():
++        print(f"  pk={pk}, id={obj_id}, field_names={field_names}, deferred={deferred}")
++
++
++if __name__ == "__main__":
++    detailed_trace()
+\ No newline at end of file
+diff --git a/django/db/models/fields/related_descriptors.py b/django/db/models/fields/related_descriptors.py
+index d5aa968400..b2c5f39bec 100644
+--- a/django/db/models/fields/related_descriptors.py
++++ b/django/db/models/fields/related_descriptors.py
+@@ -193,6 +193,45 @@ class ForwardManyToOneDescriptor:
+                     remote_field.set_cached_value(rel_obj, instance)
+             self.field.set_cached_value(instance, rel_obj)
+ 
++        # Check if the related object might have been fetched with different
++        # field selections in a prefetch operation. If so, try to find a version
++        # with more complete field information.
++        if rel_obj is not None and hasattr(rel_obj, '_state') and hasattr(instance, '_state'):
++            # Look for the related object in the instance's field cache
++            # This handles cases where prefetch_related has fetched the object
++            # with different field selections
++            cache_name = self.field.get_cache_name()
++            if cache_name in instance._state.fields_cache:
++                cached_rel_obj = instance._state.fields_cache[cache_name]
++                if (hasattr(cached_rel_obj, 'pk') and hasattr(rel_obj, 'pk') and
++                    cached_rel_obj.pk == rel_obj.pk and cached_rel_obj is not rel_obj):
++                    
++                    # We have two different instances of the same object.
++                    # Merge field information to prevent deferred field issues.
++                    cached_fields = set(cached_rel_obj.__dict__.keys())
++                    rel_obj_fields = set(rel_obj.__dict__.keys())
++                    
++                    # Use the object with more fields, or merge them
++                    if len(cached_fields) > len(rel_obj_fields):
++                        # Copy missing fields from rel_obj to cached_rel_obj
++                        for field_name in rel_obj_fields - cached_fields:
++                            try:
++                                setattr(cached_rel_obj, field_name, getattr(rel_obj, field_name))
++                            except:
++                                pass
++                        rel_obj = cached_rel_obj
++                    else:
++                        # Copy missing fields from cached_rel_obj to rel_obj
++                        for field_name in cached_fields - rel_obj_fields:
++                            try:
++                                setattr(rel_obj, field_name, getattr(cached_rel_obj, field_name))
++                            except:
++                                pass
++                    
++                    # Update both caches to use the merged object
++                    self.field.set_cached_value(instance, rel_obj)
++                    instance._state.fields_cache[cache_name] = rel_obj
++
+         if rel_obj is None and not self.field.null:
+             raise self.RelatedObjectDoesNotExist(
+                 "%s has no %s." % (self.field.model.__name__, self.field.name)
+diff --git a/final_trace.py b/final_trace.py
+new file mode 100644
+index 0000000000..cb02369022
+--- /dev/null
++++ b/final_trace.py
+@@ -0,0 +1,222 @@
++#!/usr/bin/env python
++"""
++Final trace script to understand exactly when object replacement happens.
++"""
++import os
++import sys
++import django
++from django.conf import settings
++
++# Configure Django settings
++if not settings.configured:
++    settings.configure(
++        DEBUG=True,
++        DATABASES={
++            'default': {
++                'ENGINE': 'django.db.backends.sqlite3',
++                'NAME': ':memory:',
++            }
++        },
++        INSTALLED_APPS=[
++            'django.contrib.contenttypes',
++            'django.contrib.auth',
++            '__main__',  # This module
++        ],
++        SECRET_KEY='test-secret-key',
++    )
++
++django.setup()
++
++from django.db import models
++from django.db.models import Prefetch
++from django.db import connection
++
++
++class User(models.Model):
++    email = models.EmailField()
++    kind = models.CharField(
++        max_length=10, choices=[("ADMIN", "Admin"), ("REGULAR", "Regular")]
++    )
++    
++    class Meta:
++        app_label = '__main__'
++
++
++class Profile(models.Model):
++    full_name = models.CharField(max_length=255)
++    user = models.OneToOneField(User, on_delete=models.CASCADE)
++    
++    class Meta:
++        app_label = '__main__'
++
++
++# Monkey patch to trace object creation and caching
++original_from_db = User.from_db
++created_objects = {}
++
++@classmethod
++def traced_from_db(cls, db, field_names, values):
++    obj = original_from_db(db, field_names, values)
++    obj_id = id(obj)
++    created_objects[obj.pk] = (obj_id, field_names, obj.get_deferred_fields())
++    print(f"User.from_db: pk={obj.pk}, id={obj_id}, field_names={field_names}, deferred={obj.get_deferred_fields()}")
++    return obj
++
++User.from_db = traced_from_db
++
++# Monkey patch __set__ method to trace assignment
++from django.db.models.fields.related_descriptors import ForwardManyToOneDescriptor
++original_set = ForwardManyToOneDescriptor.__set__
++
++def traced_set(self, instance, value):
++    instance_class = instance.__class__.__name__ if hasattr(instance, '__class__') else type(instance).__name__
++    value_class = value.__class__.__name__ if hasattr(value, '__class__') else type(value).__name__
++    instance_pk = getattr(instance, 'pk', None)
++    value_pk = getattr(value, 'pk', None)
++    print(f"ForwardManyToOneDescriptor.__set__: field={self.field.name}, instance={instance_class}(pk={instance_pk}), value={value_class}(pk={value_pk}, id={id(value)})")
++    result = original_set(self, instance, value)
++    print(f"  After __set__, cached value id: {id(self.field.get_cached_value(instance))}")
++    return result
++
++ForwardManyToOneDescriptor.__set__ = traced_set
++
++# Monkey patch __get__ method to trace access
++original_get = ForwardManyToOneDescriptor.__get__
++
++def traced_get(self, instance, cls=None):
++    if instance is None:
++        return self
++    
++    instance_class = instance.__class__.__name__ if hasattr(instance, '__class__') else type(instance).__name__
++    instance_pk = getattr(instance, 'pk', None)
++    print(f"ForwardManyToOneDescriptor.__get__: field={self.field.name}, instance={instance_class}(pk={instance_pk})")
++    
++    # Check what's in the field cache
++    try:
++        cached_value = self.field.get_cached_value(instance)
++        print(f"  Cached value: pk={getattr(cached_value, 'pk', None)}, id={id(cached_value)}")
++    except:
++        print(f"  No cached value")
++    
++    result = original_get(self, instance, cls)
++    
++    if hasattr(result, 'pk'):
++        print(f"  Returning: pk={result.pk}, id={id(result)}, deferred={result.get_deferred_fields()}")
++    
++    return result
++
++ForwardManyToOneDescriptor.__get__ = traced_get
++
++# Monkey patch prefetch_one_level to trace object assignment
++from django.db.models.query import prefetch_one_level as original_prefetch_one_level
++
++def traced_prefetch_one_level(instances, prefetcher, lookup, level):
++    print(f"\nprefetch_one_level called: level={level}")
++    
++    # Call the original function but trace the assignment
++    rel_qs, rel_obj_attr, instance_attr, single, cache_name, is_descriptor = (
++        prefetcher.get_prefetch_queryset(instances, lookup.get_current_queryset(level)))
++    
++    all_related_objects = list(rel_qs)
++    print(f"all_related_objects: {len(all_related_objects)} objects")
++    for i, obj in enumerate(all_related_objects):
++        if hasattr(obj, 'pk') and obj.__class__.__name__ == 'User':
++            print(f"  Object {i}: pk={obj.pk}, id={id(obj)}, deferred={obj.get_deferred_fields()}")
++    
++    rel_obj_cache = {}
++    for rel_obj in all_related_objects:
++        rel_attr_val = rel_obj_attr(rel_obj)
++        rel_obj_cache.setdefault(rel_attr_val, []).append(rel_obj)
++    
++    print(f"rel_obj_cache: {rel_obj_cache}")
++    
++    for obj in instances:
++        instance_attr_val = instance_attr(obj)
++        vals = rel_obj_cache.get(instance_attr_val, [])
++        print(f"For instance {obj.__class__.__name__}(pk={getattr(obj, 'pk', None)}, id={id(obj)}), vals: {len(vals)} objects")
++        
++        if single:
++            val = vals[0] if vals else None
++            if val and hasattr(val, 'pk') and val.__class__.__name__ == 'User':
++                print(f"  Assigning val: pk={val.pk}, id={id(val)}, deferred={val.get_deferred_fields()}")
++            
++            print(f"  cache_name: {cache_name}, is_descriptor: {is_descriptor}")
++            if is_descriptor:
++                print(f"  Before assignment, obj.__dict__: {obj.__dict__}")
++                setattr(obj, cache_name, val)
++                print(f"  After assignment, obj.__dict__: {obj.__dict__}")
++                print(f"  Assigned via setattr(obj, {cache_name}, val)")
++            else:
++                print(f"  Assigning to field cache: obj._state.fields_cache[{cache_name}] = val")
++                print(f"  Before assignment, field cache: {obj._state.fields_cache.get(cache_name, 'NOT_FOUND')}")
++                obj._state.fields_cache[cache_name] = val
++                print(f"  After assignment, field cache: {obj._state.fields_cache.get(cache_name, 'NOT_FOUND')}")
++                if hasattr(obj._state.fields_cache.get(cache_name), 'pk'):
++                    cached_obj = obj._state.fields_cache[cache_name]
++                    print(f"    Cached object: pk={cached_obj.pk}, id={id(cached_obj)}")
++    
++    return all_related_objects, []
++
++# Replace the function
++import django.db.models.query
++django.db.models.query.prefetch_one_level = traced_prefetch_one_level
++
++
++def final_trace():
++    """Final trace of the issue."""
++    from django.db import connection
++    
++    # Create tables manually for this test
++    user_sql = """
++    CREATE TABLE "__main___user" (
++        "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
++        "email" varchar(254) NOT NULL,
++        "kind" varchar(10) NOT NULL
++    )
++    """
++    
++    profile_sql = """
++    CREATE TABLE "__main___profile" (
++        "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
++        "full_name" varchar(255) NOT NULL,
++        "user_id" integer NOT NULL UNIQUE REFERENCES "__main___user" ("id") DEFERRABLE INITIALLY DEFERRED
++    )
++    """
++    
++    with connection.cursor() as cursor:
++        try:
++            cursor.execute(user_sql)
++            cursor.execute(profile_sql)
++        except Exception as e:
++            # Tables might already exist
++            pass
++    
++    # Create test data
++    user = User.objects.create(
++        email="test@example.com",
++        kind="ADMIN",
++    )
++    Profile.objects.create(user=user, full_name="Test Tester")
++    
++    print("=== Final trace of prefetch_related execution ===")
++    
++    queryset = User.objects.only("email").prefetch_related(
++        Prefetch(
++            "profile",
++            queryset=Profile.objects.prefetch_related(
++                Prefetch("user", queryset=User.objects.only("kind"))
++            ),
++        )
++    )
++    
++    print("\nExecuting main queryset...")
++    user = queryset.first()
++    
++    print(f"\nFinal result:")
++    print(f"Main user object: pk={user.pk}, id={id(user)}")
++    print(f"Profile user object: pk={user.profile.user.pk}, id={id(user.profile.user)}")
++    print(f"Are they the same? {user is user.profile.user}")
++
++
++if __name__ == "__main__":
++    final_trace()
+\ No newline at end of file
+diff --git a/reproduce_issue.py b/reproduce_issue.py
+new file mode 100644
+index 0000000000..b5230425bf
+--- /dev/null
++++ b/reproduce_issue.py
+@@ -0,0 +1,141 @@
++#!/usr/bin/env python
++"""
++Script to reproduce the deferred fields issue with prefetch_related.
++"""
++import os
++import sys
++import django
++from django.conf import settings
++from django.test.utils import get_runner
++
++# Configure Django settings
++if not settings.configured:
++    settings.configure(
++        DEBUG=True,
++        DATABASES={
++            'default': {
++                'ENGINE': 'django.db.backends.sqlite3',
++                'NAME': ':memory:',
++            }
++        },
++        INSTALLED_APPS=[
++            'django.contrib.contenttypes',
++            'django.contrib.auth',
++            '__main__',  # This module
++        ],
++        SECRET_KEY='test-secret-key',
++    )
++
++django.setup()
++
++from django.db import models
++from django.db.models import Prefetch
++from django.test import TestCase
++from django.test.utils import override_settings
++
++
++class User(models.Model):
++    email = models.EmailField()
++    kind = models.CharField(
++        max_length=10, choices=[("ADMIN", "Admin"), ("REGULAR", "Regular")]
++    )
++    
++    class Meta:
++        app_label = '__main__'
++
++
++class Profile(models.Model):
++    full_name = models.CharField(max_length=255)
++    user = models.OneToOneField(User, on_delete=models.CASCADE)
++    
++    class Meta:
++        app_label = '__main__'
++
++
++def test_only_related_queryset():
++    """Test case that reproduces the issue."""
++    from django.db import connection
++    from django.core.management import execute_from_command_line
++    
++    # Create tables using Django's migration system
++    from django.core.management.commands.migrate import Command as MigrateCommand
++    from django.core.management.commands.makemigrations import Command as MakeMigrationsCommand
++    from django.core.management import call_command
++    
++    # Create tables manually for this test
++    user_sql = """
++    CREATE TABLE "__main___user" (
++        "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
++        "email" varchar(254) NOT NULL,
++        "kind" varchar(10) NOT NULL
++    )
++    """
++    
++    profile_sql = """
++    CREATE TABLE "__main___profile" (
++        "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
++        "full_name" varchar(255) NOT NULL,
++        "user_id" integer NOT NULL UNIQUE REFERENCES "__main___user" ("id") DEFERRABLE INITIALLY DEFERRED
++    )
++    """
++    
++    with connection.cursor() as cursor:
++        try:
++            cursor.execute(user_sql)
++            cursor.execute(profile_sql)
++        except Exception as e:
++            # Tables might already exist
++            pass
++    
++    # Create test data
++    user = User.objects.create(
++        email="test@example.com",
++        kind="ADMIN",
++    )
++    Profile.objects.create(user=user, full_name="Test Tester")
++    
++    # Test the problematic queryset
++    queryset = User.objects.only("email").prefetch_related(
++        Prefetch(
++            "profile",
++            queryset=Profile.objects.prefetch_related(
++                Prefetch("user", queryset=User.objects.only("kind"))
++            ),
++        )
++    )
++    
++    print("Executing main queryset...")
++    # Track queries
++    initial_queries = len(connection.queries)
++    user = queryset.first()
++    queries_after_first = len(connection.queries)
++    
++    print(f"Queries executed during main queryset: {queries_after_first - initial_queries}")
++    for i, query in enumerate(connection.queries[initial_queries:queries_after_first], 1):
++        print(f"  {i}. {query['sql']}")
++    
++    print(f"\nDeferred fields on user.profile.user: {user.profile.user.get_deferred_fields()}")
++    
++    print("\nAccessing user.profile.user.kind...")
++    # This should not execute any queries since kind was fetched in the prefetch
++    queries_before_access = len(connection.queries)
++    kind = user.profile.user.kind
++    queries_after_access = len(connection.queries)
++    
++    print(f"Queries executed when accessing kind: {queries_after_access - queries_before_access}")
++    if queries_after_access > queries_before_access:
++        for i, query in enumerate(connection.queries[queries_before_access:queries_after_access], 1):
++            print(f"  {i}. {query['sql']}")
++    
++    print(f"Kind value: {kind}")
++    
++    return queries_after_access - queries_before_access == 0
++
++
++if __name__ == "__main__":
++    success = test_only_related_queryset()
++    if success:
++        print("\n✅ Test passed - no extra queries executed!")
++    else:
++        print("\n❌ Test failed - extra queries were executed!")
++        sys.exit(1)
+\ No newline at end of file
+diff --git a/trace_issue.py b/trace_issue.py
+new file mode 100644
+index 0000000000..8ab92d44ce
+--- /dev/null
++++ b/trace_issue.py
+@@ -0,0 +1,123 @@
++#!/usr/bin/env python
++"""
++Trace script to understand exactly where the object reuse happens.
++"""
++import os
++import sys
++import django
++from django.conf import settings
++
++# Configure Django settings
++if not settings.configured:
++    settings.configure(
++        DEBUG=True,
++        DATABASES={
++            'default': {
++                'ENGINE': 'django.db.backends.sqlite3',
++                'NAME': ':memory:',
++            }
++        },
++        INSTALLED_APPS=[
++            'django.contrib.contenttypes',
++            'django.contrib.auth',
++            '__main__',  # This module
++        ],
++        SECRET_KEY='test-secret-key',
++    )
++
++django.setup()
++
++from django.db import models
++from django.db.models import Prefetch
++from django.db import connection
++
++
++class User(models.Model):
++    email = models.EmailField()
++    kind = models.CharField(
++        max_length=10, choices=[("ADMIN", "Admin"), ("REGULAR", "Regular")]
++    )
++    
++    class Meta:
++        app_label = '__main__'
++
++
++class Profile(models.Model):
++    full_name = models.CharField(max_length=255)
++    user = models.OneToOneField(User, on_delete=models.CASCADE)
++    
++    class Meta:
++        app_label = '__main__'
++
++
++# Monkey patch to trace object creation
++original_from_db = User.from_db
++
++@classmethod
++def traced_from_db(cls, db, field_names, values):
++    obj = original_from_db(db, field_names, values)
++    print(f"User.from_db called: id={obj.pk}, field_names={field_names}, deferred={obj.get_deferred_fields()}")
++    return obj
++
++User.from_db = traced_from_db
++
++
++def trace_issue():
++    """Trace the issue step by step."""
++    from django.db import connection
++    
++    # Create tables manually for this test
++    user_sql = """
++    CREATE TABLE "__main___user" (
++        "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
++        "email" varchar(254) NOT NULL,
++        "kind" varchar(10) NOT NULL
++    )
++    """
++    
++    profile_sql = """
++    CREATE TABLE "__main___profile" (
++        "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
++        "full_name" varchar(255) NOT NULL,
++        "user_id" integer NOT NULL UNIQUE REFERENCES "__main___user" ("id") DEFERRABLE INITIALLY DEFERRED
++    )
++    """
++    
++    with connection.cursor() as cursor:
++        try:
++            cursor.execute(user_sql)
++            cursor.execute(profile_sql)
++        except Exception as e:
++            # Tables might already exist
++            pass
++    
++    # Create test data
++    user = User.objects.create(
++        email="test@example.com",
++        kind="ADMIN",
++    )
++    Profile.objects.create(user=user, full_name="Test Tester")
++    
++    print("=== Tracing prefetch_related execution ===")
++    
++    queryset = User.objects.only("email").prefetch_related(
++        Prefetch(
++            "profile",
++            queryset=Profile.objects.prefetch_related(
++                Prefetch("user", queryset=User.objects.only("kind"))
++            ),
++        )
++    )
++    
++    print("\nExecuting main queryset...")
++    user = queryset.first()
++    
++    print(f"\nMain user object: id={id(user)}, pk={user.pk}")
++    print(f"Main user deferred fields: {user.get_deferred_fields()}")
++    
++    print(f"\nProfile user object: id={id(user.profile.user)}, pk={user.profile.user.pk}")
++    print(f"Profile user deferred fields: {user.profile.user.get_deferred_fields()}")
++
++
++if __name__ == "__main__":
++    trace_issue()
+\ No newline at end of file

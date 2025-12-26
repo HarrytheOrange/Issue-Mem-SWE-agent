@@ -1,0 +1,28 @@
+diff --git a/requests/sessions.py b/requests/sessions.py
+index a023e4ec..ccc6e4c7 100644
+--- a/requests/sessions.py
++++ b/requests/sessions.py
+@@ -59,6 +59,23 @@ def merge_setting(request_setting, session_setting, dict_class=OrderedDict):
+         if v is None:
+             del merged_setting[k]
+ 
++    # Remove keys that are set to None in session_setting, but only if
++    # they weren't overridden by request_setting.
++    for (k, v) in session_setting.items():
++        if v is None and k in merged_setting:
++            # Check if this key was overridden in request_setting
++            # We need to handle case-insensitive comparison
++            key_in_request = False
++            if hasattr(request_setting, 'get'):  # dict-like object
++                # For case-insensitive dicts, use direct containment check
++                if hasattr(request_setting, '_store'):  # CaseInsensitiveDict
++                    key_in_request = k in request_setting
++                else:  # Regular dict - check all keys case-insensitively
++                    key_in_request = any(k.lower() == req_k.lower() for req_k in request_setting.keys())
++            
++            if not key_in_request:
++                del merged_setting[k]
++
+     return merged_setting
+ 
+ 

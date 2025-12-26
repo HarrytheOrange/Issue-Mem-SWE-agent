@@ -1,0 +1,44 @@
+diff --git a/django/db/models/deletion.py b/django/db/models/deletion.py
+index 3a462f1c4c..39f572ee26 100644
+--- a/django/db/models/deletion.py
++++ b/django/db/models/deletion.py
+@@ -220,7 +220,7 @@ class Collector:
+                     sub_objs = self.related_objects(related, batch)
+                     if self.can_fast_delete(sub_objs, from_field=field):
+                         self.fast_deletes.append(sub_objs)
+-                    elif sub_objs:
++                    elif sub_objs.exists():
+                         field.remote_field.on_delete(self, field, sub_objs, self.using)
+             for field in model._meta.private_fields:
+                 if hasattr(field, 'bulk_related_objects'):
+@@ -232,9 +232,29 @@ class Collector:
+         """
+         Get a QuerySet of objects related to `objs` via the relation `related`.
+         """
+-        return related.related_model._base_manager.using(self.using).filter(
++        qs = related.related_model._base_manager.using(self.using).filter(
+             **{"%s__in" % related.field.name: objs}
+         )
++        
++        # Optimize the queryset to only fetch required fields for deletion.
++        # We need the primary key for deletion and any foreign key fields
++        # that might be needed for dependency tracking or signals.
++        model = related.related_model
++        only_fields = [model._meta.pk.name]
++        
++        # Add foreign key fields that might be needed for cascading deletes
++        # and dependency tracking
++        for field in model._meta.get_fields():
++            if field.many_to_one:
++                only_fields.append(field.name)
++        
++        # Only apply the optimization if there are fields to optimize
++        # (i.e., if there are fields other than the ones we're selecting)
++        all_field_names = [f.name for f in model._meta.get_fields() if f.concrete]
++        if len(only_fields) < len(all_field_names):
++            return qs.only(*only_fields)
++        else:
++            return qs
+ 
+     def instances_with_model(self):
+         for model, instances in self.data.items():

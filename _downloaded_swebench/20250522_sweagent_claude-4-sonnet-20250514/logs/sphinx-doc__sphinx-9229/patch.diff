@@ -1,0 +1,1043 @@
+diff --git a/debug_test.py b/debug_test.py
+new file mode 100644
+index 000000000..5ddf4b20c
+--- /dev/null
++++ b/debug_test.py
+@@ -0,0 +1,17 @@
++#!/usr/bin/env python3
++
++import sys
++sys.path.insert(0, '/testbed')
++
++from tests.test_ext_autodoc import do_autodoc
++from sphinx.testing.util import SphinxTestApp
++
++# Create a test app
++app = SphinxTestApp(buildername='html', testroot='ext-autodoc')
++
++options = {"members": None, "undoc-members": None}
++actual = do_autodoc(app, 'module', 'target.genericalias', options)
++
++print("Actual output:")
++for line in actual:
++    print(repr(line))
+\ No newline at end of file
+diff --git a/setup.py b/setup.py
+index b669afc00..0986baec3 100644
+--- a/setup.py
++++ b/setup.py
+@@ -15,22 +15,22 @@ if sys.version_info < (3, 6):
+     sys.exit(1)
+ 
+ install_requires = [
+-    'sphinxcontrib-applehelp',
+-    'sphinxcontrib-devhelp',
++    'sphinxcontrib-applehelp<=1.0.7',
++    'sphinxcontrib-devhelp<=1.0.5',
+     'sphinxcontrib-jsmath',
+-    'sphinxcontrib-htmlhelp',
+-    'sphinxcontrib-serializinghtml',
+-    'sphinxcontrib-qthelp',
+-    'Jinja2>=2.3',
++    'sphinxcontrib-htmlhelp<=2.0.4',
++    'sphinxcontrib-serializinghtml<=1.1.9',
++    'sphinxcontrib-qthelp<=1.0.6',
++    'Jinja2<3.0',
+     'Pygments>=2.0',
+     'docutils>=0.14,<0.18',
+     'snowballstemmer>=1.1',
+     'babel>=1.3',
+-    'alabaster>=0.7,<0.8',
++    'alabaster>=0.7,<0.7.12',
+     'imagesize',
+     'requests>=2.5.0',
+     'setuptools',
+-    'packaging',
++    'packaging', 'markupsafe<=2.0.1',
+ ]
+ 
+ extras_require = {
+diff --git a/sphinx/ext/autodoc/__init__.py b/sphinx/ext/autodoc/__init__.py
+index 1f4c98284..28076ffdd 100644
+--- a/sphinx/ext/autodoc/__init__.py
++++ b/sphinx/ext/autodoc/__init__.py
+@@ -1796,10 +1796,54 @@ class GenericAliasMixin(DataDocumenterMixinBase):
+         return (inspect.isgenericalias(self.object) or
+                 super().should_suppress_directive_header())
+ 
++    def get_doc(self, ignore: int = None) -> Optional[List[List[str]]]:
++        if ignore is not None:
++            warnings.warn("The 'ignore' argument to autodoc.%s.get_doc() is deprecated."
++                          % self.__class__.__name__,
++                          RemovedInSphinx50Warning, stacklevel=2)
++
++        if inspect.isgenericalias(self.object):
++            # Check if there's a custom docstring (module comment or attribute comment)
++            comment = None
++            if hasattr(self, 'get_module_comment'):
++                comment = self.get_module_comment(self.objpath[-1])
++            elif hasattr(self, 'get_attribute_comment'):
++                comment = self.get_attribute_comment(self.parent, self.objpath[-1])
++            
++            if comment:
++                # Custom docstring found, return it and don't show alias
++                return [comment]
++            
++            # Check for other types of docstrings
++            doc = super().get_doc()  # type: ignore
++            if doc:
++                # Custom docstring found, return it and don't show alias
++                return doc
++            else:
++                # No custom docstring, return empty list and let update_content add alias
++                return []
++        else:
++            return super().get_doc()  # type: ignore
++
+     def update_content(self, more_content: StringList) -> None:
+         if inspect.isgenericalias(self.object):
+-            more_content.append(_('alias of %s') % restify(self.object), '')
+-            more_content.append('', '')
++            # Check if there's a custom docstring (module comment)
++            has_custom_doc = False
++            if hasattr(self, 'get_module_comment'):
++                comment = self.get_module_comment(self.objpath[-1])
++                if comment:
++                    has_custom_doc = True
++            
++            # Check for other types of docstrings
++            if not has_custom_doc:
++                doc = super().get_doc()  # type: ignore
++                if doc:
++                    has_custom_doc = True
++            
++            # Only add alias text if no custom docstring was found
++            if not has_custom_doc:
++                more_content.append(_('alias of %s') % restify(self.object), '')
++                more_content.append('', '')
+ 
+         super().update_content(more_content)
+ 
+@@ -1814,11 +1858,51 @@ class NewTypeMixin(DataDocumenterMixinBase):
+         return (inspect.isNewType(self.object) or
+                 super().should_suppress_directive_header())
+ 
++    def get_doc(self, ignore: int = None) -> Optional[List[List[str]]]:
++        if ignore is not None:
++            warnings.warn("The 'ignore' argument to autodoc.%s.get_doc() is deprecated."
++                          % self.__class__.__name__,
++                          RemovedInSphinx50Warning, stacklevel=2)
++
++        if inspect.isNewType(self.object):
++            # Check if there's a custom docstring (module comment)
++            if hasattr(self, 'get_module_comment'):
++                comment = self.get_module_comment(self.objpath[-1])
++                if comment:
++                    # Custom docstring found, return it and don't show alias
++                    return [comment]
++            
++            # Check for other types of docstrings
++            doc = super().get_doc()  # type: ignore
++            if doc:
++                # Custom docstring found, return it and don't show alias
++                return doc
++            else:
++                # No custom docstring, return empty list and let update_content add alias
++                return []
++        else:
++            return super().get_doc()  # type: ignore
++
+     def update_content(self, more_content: StringList) -> None:
+         if inspect.isNewType(self.object):
+-            supertype = restify(self.object.__supertype__)
+-            more_content.append(_('alias of %s') % supertype, '')
+-            more_content.append('', '')
++            # Check if there's a custom docstring (module comment)
++            has_custom_doc = False
++            if hasattr(self, 'get_module_comment'):
++                comment = self.get_module_comment(self.objpath[-1])
++                if comment:
++                    has_custom_doc = True
++            
++            # Check for other types of docstrings
++            if not has_custom_doc:
++                doc = super().get_doc()  # type: ignore
++                if doc:
++                    has_custom_doc = True
++            
++            # Only add alias text if no custom docstring was found
++            if not has_custom_doc:
++                supertype = restify(self.object.__supertype__)
++                more_content.append(_('alias of %s') % supertype, '')
++                more_content.append('', '')
+ 
+         super().update_content(more_content)
+ 
+@@ -1999,6 +2083,10 @@ class DataDocumenter(GenericAliasMixin, NewTypeMixin, TypeVarMixin,
+         return None
+ 
+     def get_doc(self, ignore: int = None) -> Optional[List[List[str]]]:
++        # For generic aliases and NewTypes, let the mixins handle the docstring logic
++        if inspect.isgenericalias(self.object) or inspect.isNewType(self.object):
++            return super().get_doc(ignore)
++        
+         # Check the variable has a docstring-comment
+         comment = self.get_module_comment(self.objpath[-1])
+         if comment:
+@@ -2572,6 +2660,18 @@ class AttributeDocumenter(GenericAliasMixin, NewTypeMixin, SlotsMixin,  # type:
+         return None
+ 
+     def get_doc(self, ignore: int = None) -> Optional[List[List[str]]]:
++        # For generic aliases and NewTypes, let the mixins handle the docstring logic
++        if inspect.isgenericalias(self.object) or inspect.isNewType(self.object):
++            try:
++                # Disable `autodoc_inherit_docstring` temporarily to avoid to obtain
++                # a docstring from the value which descriptor returns unexpectedly.
++                # ref: https://github.com/sphinx-doc/sphinx/issues/7805
++                orig = self.config.autodoc_inherit_docstrings
++                self.config.autodoc_inherit_docstrings = False  # type: ignore
++                return super().get_doc(ignore)
++            finally:
++                self.config.autodoc_inherit_docstrings = orig  # type: ignore
++        
+         # Check the attribute has a docstring-comment
+         comment = self.get_attribute_comment(self.parent, self.objpath[-1])
+         if comment:
+diff --git a/test_docstrings.py b/test_docstrings.py
+new file mode 100644
+index 000000000..32742f8ef
+--- /dev/null
++++ b/test_docstrings.py
+@@ -0,0 +1,37 @@
++#!/usr/bin/env python3
++
++from pathlib import Path
++from typing import Any, Callable, Dict, Union
++import sys
++sys.path.insert(0, '/testbed')
++
++from sphinx.util import inspect
++
++# Test the types
++ScaffoldOpts = Dict[str, Any]
++FileContents = Union[str, None]
++FileOp = Callable[[Path, FileContents, ScaffoldOpts], Union[Path, None]]
++
++print("ScaffoldOpts:")
++print(f"  __doc__: {repr(ScaffoldOpts.__doc__)}")
++
++print("\nFileContents:")
++print(f"  __doc__: {repr(FileContents.__doc__)}")
++
++print("\nFileOp:")
++print(f"  __doc__: {repr(FileOp.__doc__)}")
++
++# Test a generic alias without custom docstring
++PlainDict = Dict[str, Any]
++print(f"\nPlainDict (no custom docstring):")
++print(f"  __doc__: {repr(PlainDict.__doc__)}")
++
++# Test what the default docstring is for Dict
++print(f"\nDict:")
++print(f"  __doc__: {repr(Dict.__doc__)}")
++
++print(f"\nUnion:")
++print(f"  __doc__: {repr(Union.__doc__)}")
++
++print(f"\nCallable:")
++print(f"  __doc__: {repr(Callable.__doc__)}")
+\ No newline at end of file
+diff --git a/test_explicit.py b/test_explicit.py
+new file mode 100644
+index 000000000..1d6694b94
+--- /dev/null
++++ b/test_explicit.py
+@@ -0,0 +1,81 @@
++#!/usr/bin/env python3
++
++import tempfile
++import os
++import sys
++from pathlib import Path
++
++# Create a temporary directory for our test
++with tempfile.TemporaryDirectory() as tmpdir:
++    tmpdir = Path(tmpdir)
++    
++    # Create the test file with mixed content
++    test_file = tmpdir / "test_file.py"
++    test_file.write_text('''# file.py
++from typing import Any, Dict, Union
++
++# Type aliases without custom docstrings
++PlainDict = Dict[str, Any]
++PlainUnion = Union[str, None]
++
++# Type alias with custom docstring
++CustomDict = Dict[str, int]
++"""This is a custom docstring for CustomDict."""
++''')
++    
++    # Create conf.py
++    conf_py = tmpdir / "conf.py"
++    conf_py.write_text(f'''
++import sys
++sys.path.insert(0, r'{tmpdir}')
++
++extensions = ['sphinx.ext.autodoc']
++''')
++    
++    # Create index.rst that explicitly documents specific items
++    index_rst = tmpdir / "index.rst"
++    index_rst.write_text('''
++Test Documentation
++==================
++
++.. autodata:: test_file.PlainDict
++
++.. autodata:: test_file.PlainUnion
++
++.. autodata:: test_file.CustomDict
++''')
++    
++    # Change to the temp directory
++    os.chdir(tmpdir)
++    
++    # Import sphinx and test autodoc
++    from sphinx.application import Sphinx
++    from sphinx.util.docutils import docutils_namespace
++    
++    with docutils_namespace():
++        app = Sphinx(
++            srcdir=str(tmpdir),
++            confdir=str(tmpdir),
++            outdir=str(tmpdir / "_build"),
++            doctreedir=str(tmpdir / "_doctrees"),
++            buildername="html",
++            confoverrides={}
++        )
++        
++        # Build the documentation
++        app.build()
++        
++        # Read the generated HTML
++        html_file = tmpdir / "_build" / "index.html"
++        if html_file.exists():
++            content = html_file.read_text()
++            print("Generated HTML content:")
++            print("=" * 50)
++            # Extract just the relevant parts
++            import re
++            data_sections = re.findall(r'<dl class="py data">.*?</dl>', content, re.DOTALL)
++            for section in data_sections:
++                print(section)
++                print("-" * 30)
++        else:
++            print("HTML file not found")
+\ No newline at end of file
+diff --git a/test_file.py b/test_file.py
+new file mode 100644
+index 000000000..bdbd0f1c5
+--- /dev/null
++++ b/test_file.py
+@@ -0,0 +1,41 @@
++# file.py
++from pathlib import Path
++from typing import Any, Callable, Dict, Union
++
++# Signatures for the documentation purposes
++
++ScaffoldOpts = Dict[str, Any]
++"""Dictionary with PyScaffold's options, see ``pyscaffold.api.create_project``.
++Should be treated as immutable (if required, copy before changing).
++
++Please notice some behaviours given by the options **SHOULD** be observed. For example,
++files should be overwritten when the **force** option is ``True``. Similarly when
++**pretend** is ``True``, no operation should be really performed, but any action should
++be logged as if realized.
++"""
++
++FileContents = Union[str, None]
++"""When the file content is ``None``, the file should not be written to
++disk (empty files are represented by an empty string ``""`` as content).
++"""
++
++FileOp = Callable[[Path, FileContents, ScaffoldOpts], Union[Path, None]]
++"""Signature of functions considered file operations::
++
++    Callable[[Path, FileContents, ScaffoldOpts], Union[Path, None]]
++
++- **path** (:obj:`pathlib.Path`): file path potentially to be written to/changed
++  in the disk.
++- **contents** (:obj:`FileContents`): usually a string that represents a text content
++  of the file. :obj:`None` indicates the file should not be written.
++- **opts** (:obj:`ScaffoldOpts`): a dict with PyScaffold's options.
++
++If the file is written (or more generally changed, such as new access permissions),
++by convention they should return the :obj:`file path <pathlib.Path>`.
++If no file was touched, :obj:`None` should be returned. Please notice a **FileOp**
++might return :obj:`None` if a pre-existing file in the disk is not modified.
++
++.. note::
++    A **FileOp** usually has side effects (e.g. write a file to the disk), see
++    :obj:`FileFileContents` and :obj:`ScaffoldOpts` for other conventions.
++"""
+\ No newline at end of file
+diff --git a/test_getdoc.py b/test_getdoc.py
+new file mode 100644
+index 000000000..92dd45bb8
+--- /dev/null
++++ b/test_getdoc.py
+@@ -0,0 +1,29 @@
++#!/usr/bin/env python3
++
++from pathlib import Path
++from typing import Any, Callable, Dict, Union
++import sys
++sys.path.insert(0, '/testbed')
++
++from sphinx.util.inspect import getdoc
++
++# Test the types from our test file
++exec(open('/testbed/test_file.py').read())
++
++print("ScaffoldOpts:")
++print(f"  __doc__: {repr(ScaffoldOpts.__doc__)}")
++print(f"  getdoc: {repr(getdoc(ScaffoldOpts))}")
++
++print("\nFileContents:")
++print(f"  __doc__: {repr(FileContents.__doc__)}")
++print(f"  getdoc: {repr(getdoc(FileContents))}")
++
++print("\nFileOp:")
++print(f"  __doc__: {repr(FileOp.__doc__)}")
++print(f"  getdoc: {repr(getdoc(FileOp))}")
++
++# Test a generic alias without custom docstring
++PlainDict = Dict[str, Any]
++print(f"\nPlainDict (no custom docstring):")
++print(f"  __doc__: {repr(PlainDict.__doc__)}")
++print(f"  getdoc: {repr(getdoc(PlainDict))}")
+\ No newline at end of file
+diff --git a/test_inconsistency.py b/test_inconsistency.py
+new file mode 100644
+index 000000000..226875017
+--- /dev/null
++++ b/test_inconsistency.py
+@@ -0,0 +1,121 @@
++#!/usr/bin/env python3
++
++import tempfile
++import os
++import sys
++from pathlib import Path
++
++# Create a temporary directory for our test
++with tempfile.TemporaryDirectory() as tmpdir:
++    tmpdir = Path(tmpdir)
++    
++    # Create the test file exactly as described in the issue
++    test_file = tmpdir / "test_file.py"
++    test_file.write_text('''# file.py
++from pathlib import Path
++from typing import Any, Callable, Dict, Union
++
++# Signatures for the documentation purposes
++
++ScaffoldOpts = Dict[str, Any]
++"""Dictionary with PyScaffold's options, see ``pyscaffold.api.create_project``.
++Should be treated as immutable (if required, copy before changing).
++
++Please notice some behaviours given by the options **SHOULD** be observed. For example,
++files should be overwritten when the **force** option is ``True``. Similarly when
++**pretend** is ``True``, no operation should be really performed, but any action should
++be logged as if realized.
++"""
++
++FileContents = Union[str, None]
++"""When the file content is ``None``, the file should not be written to
++disk (empty files are represented by an empty string ``""`` as content).
++"""
++
++FileOp = Callable[[Path, FileContents, ScaffoldOpts], Union[Path, None]]
++"""Signature of functions considered file operations::
++
++    Callable[[Path, FileContents, ScaffoldOpts], Union[Path, None]]
++
++- **path** (:obj:`pathlib.Path`): file path potentially to be written to/changed
++  in the disk.
++- **contents** (:obj:`FileContents`): usually a string that represents a text content
++  of the file. :obj:`None` indicates the file should not be written.
++- **opts** (:obj:`ScaffoldOpts`): a dict with PyScaffold's options.
++
++If the file is written (or more generally changed, such as new access permissions),
++by convention they should return the :obj:`file path <pathlib.Path>`.
++If no file was touched, :obj:`None` should be returned. Please notice a **FileOp**
++might return :obj:`None` if a pre-existing file in the disk is not modified.
++
++.. note::
++    A **FileOp** usually has side effects (e.g. write a file to the disk), see
++    :obj:`FileFileContents` and :obj:`ScaffoldOpts` for other conventions.
++"""
++''')
++    
++    # Create conf.py
++    conf_py = tmpdir / "conf.py"
++    conf_py.write_text(f'''
++import sys
++sys.path.insert(0, r'{tmpdir}')
++
++extensions = ['sphinx.ext.autodoc']
++''')
++    
++    # Create index.rst that explicitly documents the type aliases
++    index_rst = tmpdir / "index.rst"
++    index_rst.write_text('''
++Test Documentation
++==================
++
++.. autodata:: test_file.ScaffoldOpts
++
++.. autodata:: test_file.FileContents
++
++.. autodata:: test_file.FileOp
++''')
++    
++    # Change to the temp directory
++    os.chdir(tmpdir)
++    
++    # Import sphinx and test autodoc
++    from sphinx.application import Sphinx
++    from sphinx.util.docutils import docutils_namespace
++    
++    with docutils_namespace():
++        app = Sphinx(
++            srcdir=str(tmpdir),
++            confdir=str(tmpdir),
++            outdir=str(tmpdir / "_build"),
++            doctreedir=str(tmpdir / "_doctrees"),
++            buildername="html",
++            confoverrides={}
++        )
++        
++        # Build the documentation
++        app.build()
++        
++        # Read the generated HTML
++        html_file = tmpdir / "_build" / "index.html"
++        if html_file.exists():
++            content = html_file.read_text()
++            print("Generated HTML content:")
++            print("=" * 50)
++            # Extract just the relevant parts
++            import re
++            data_sections = re.findall(r'<dl class="py data">.*?</dl>', content, re.DOTALL)
++            for i, section in enumerate(data_sections):
++                print(f"Type alias {i+1}:")
++                print(section)
++                print("-" * 30)
++                
++                # Check if it contains both docstring and alias text
++                has_docstring = 'Dictionary with PyScaffold' in section or 'When the file content' in section or 'Signature of functions' in section
++                has_alias = 'alias of' in section
++                
++                print(f"Has custom docstring: {has_docstring}")
++                print(f"Has 'alias of' text: {has_alias}")
++                print("=" * 30)
++        else:
++            print("HTML file not found")
+\ No newline at end of file
+diff --git a/test_mixed.py b/test_mixed.py
+new file mode 100644
+index 000000000..4e08c25d5
+--- /dev/null
++++ b/test_mixed.py
+@@ -0,0 +1,86 @@
++#!/usr/bin/env python3
++
++import tempfile
++import os
++import sys
++from pathlib import Path
++
++# Create a temporary directory for our test
++with tempfile.TemporaryDirectory() as tmpdir:
++    tmpdir = Path(tmpdir)
++    
++    # Create the test file with mixed content
++    test_file = tmpdir / "test_file.py"
++    test_file.write_text('''# file.py
++from typing import Any, Dict, Union
++
++# Type aliases without custom docstrings
++PlainDict = Dict[str, Any]
++PlainUnion = Union[str, None]
++
++# Type alias with custom docstring
++CustomDict = Dict[str, int]
++"""This is a custom docstring for CustomDict."""
++
++# Regular variable without docstring
++regular_var = "hello"
++
++# Regular variable with docstring
++documented_var = "world"
++"""This is a documented variable."""
++''')
++    
++    # Create conf.py
++    conf_py = tmpdir / "conf.py"
++    conf_py.write_text(f'''
++import sys
++sys.path.insert(0, r'{tmpdir}')
++
++extensions = ['sphinx.ext.autodoc']
++''')
++    
++    # Create index.rst that explicitly documents the undocumented items
++    index_rst = tmpdir / "index.rst"
++    index_rst.write_text('''
++Test Documentation
++==================
++
++.. automodule:: test_file
++   :members:
++   :undoc-members:
++''')
++    
++    # Change to the temp directory
++    os.chdir(tmpdir)
++    
++    # Import sphinx and test autodoc
++    from sphinx.application import Sphinx
++    from sphinx.util.docutils import docutils_namespace
++    
++    with docutils_namespace():
++        app = Sphinx(
++            srcdir=str(tmpdir),
++            confdir=str(tmpdir),
++            outdir=str(tmpdir / "_build"),
++            doctreedir=str(tmpdir / "_doctrees"),
++            buildername="html",
++            confoverrides={}
++        )
++        
++        # Build the documentation
++        app.build()
++        
++        # Read the generated HTML
++        html_file = tmpdir / "_build" / "index.html"
++        if html_file.exists():
++            content = html_file.read_text()
++            print("Generated HTML content:")
++            print("=" * 50)
++            # Extract just the relevant parts
++            import re
++            data_sections = re.findall(r'<dl class="py data">.*?</dl>', content, re.DOTALL)
++            for section in data_sections:
++                print(section)
++                print("-" * 30)
++        else:
++            print("HTML file not found")
+\ No newline at end of file
+diff --git a/test_mro.py b/test_mro.py
+new file mode 100644
+index 000000000..5b43461f1
+--- /dev/null
++++ b/test_mro.py
+@@ -0,0 +1,15 @@
++#!/usr/bin/env python3
++
++import sys
++sys.path.insert(0, '/testbed')
++
++from sphinx.ext.autodoc import DataDocumenter
++
++print("DataDocumenter MRO:")
++for i, cls in enumerate(DataDocumenter.__mro__):
++    print(f"  {i}: {cls}")
++    
++print("\nMethods that define get_doc:")
++for cls in DataDocumenter.__mro__:
++    if hasattr(cls, 'get_doc') and 'get_doc' in cls.__dict__:
++        print(f"  {cls}: {cls.get_doc}")
+\ No newline at end of file
+diff --git a/test_newtype.py b/test_newtype.py
+new file mode 100644
+index 000000000..5ffae61f9
+--- /dev/null
++++ b/test_newtype.py
+@@ -0,0 +1,78 @@
++#!/usr/bin/env python3
++
++import tempfile
++import os
++import sys
++from pathlib import Path
++
++# Create a temporary directory for our test
++with tempfile.TemporaryDirectory() as tmpdir:
++    tmpdir = Path(tmpdir)
++    
++    # Create the test file with NewType
++    test_file = tmpdir / "test_file.py"
++    test_file.write_text('''# file.py
++from typing import NewType
++
++# NewType without custom docstring
++UserId = NewType('UserId', int)
++
++# NewType with custom docstring
++ProductId = NewType('ProductId', int)
++"""A unique identifier for products in our system."""
++''')
++    
++    # Create conf.py
++    conf_py = tmpdir / "conf.py"
++    conf_py.write_text(f'''
++import sys
++sys.path.insert(0, r'{tmpdir}')
++
++extensions = ['sphinx.ext.autodoc']
++''')
++    
++    # Create index.rst that explicitly documents the NewTypes
++    index_rst = tmpdir / "index.rst"
++    index_rst.write_text('''
++Test Documentation
++==================
++
++.. autodata:: test_file.UserId
++
++.. autodata:: test_file.ProductId
++''')
++    
++    # Change to the temp directory
++    os.chdir(tmpdir)
++    
++    # Import sphinx and test autodoc
++    from sphinx.application import Sphinx
++    from sphinx.util.docutils import docutils_namespace
++    
++    with docutils_namespace():
++        app = Sphinx(
++            srcdir=str(tmpdir),
++            confdir=str(tmpdir),
++            outdir=str(tmpdir / "_build"),
++            doctreedir=str(tmpdir / "_doctrees"),
++            buildername="html",
++            confoverrides={}
++        )
++        
++        # Build the documentation
++        app.build()
++        
++        # Read the generated HTML
++        html_file = tmpdir / "_build" / "index.html"
++        if html_file.exists():
++            content = html_file.read_text()
++            print("Generated HTML content:")
++            print("=" * 50)
++            # Extract just the relevant parts
++            import re
++            data_sections = re.findall(r'<dl class="py data">.*?</dl>', content, re.DOTALL)
++            for section in data_sections:
++                print(section)
++                print("-" * 30)
++        else:
++            print("HTML file not found")
+\ No newline at end of file
+diff --git a/test_no_docstring.py b/test_no_docstring.py
+new file mode 100644
+index 000000000..908c8bb2d
+--- /dev/null
++++ b/test_no_docstring.py
+@@ -0,0 +1,78 @@
++#!/usr/bin/env python3
++
++import tempfile
++import os
++import sys
++from pathlib import Path
++
++# Create a temporary directory for our test
++with tempfile.TemporaryDirectory() as tmpdir:
++    tmpdir = Path(tmpdir)
++    
++    # Create the test file with type aliases without custom docstrings
++    test_file = tmpdir / "test_file.py"
++    test_file.write_text('''# file.py
++from typing import Any, Dict, Union
++
++# Type aliases without custom docstrings
++PlainDict = Dict[str, Any]
++PlainUnion = Union[str, None]
++
++# Type alias with custom docstring
++CustomDict = Dict[str, int]
++"""This is a custom docstring for CustomDict."""
++''')
++    
++    # Create conf.py
++    conf_py = tmpdir / "conf.py"
++    conf_py.write_text(f'''
++import sys
++sys.path.insert(0, r'{tmpdir}')
++
++extensions = ['sphinx.ext.autodoc']
++''')
++    
++    # Create index.rst
++    index_rst = tmpdir / "index.rst"
++    index_rst.write_text('''
++Test Documentation
++==================
++
++.. automodule:: test_file
++   :members:
++''')
++    
++    # Change to the temp directory
++    os.chdir(tmpdir)
++    
++    # Import sphinx and test autodoc
++    from sphinx.application import Sphinx
++    from sphinx.util.docutils import docutils_namespace
++    
++    with docutils_namespace():
++        app = Sphinx(
++            srcdir=str(tmpdir),
++            confdir=str(tmpdir),
++            outdir=str(tmpdir / "_build"),
++            doctreedir=str(tmpdir / "_doctrees"),
++            buildername="html",
++            confoverrides={}
++        )
++        
++        # Build the documentation
++        app.build()
++        
++        # Read the generated HTML
++        html_file = tmpdir / "_build" / "index.html"
++        if html_file.exists():
++            content = html_file.read_text()
++            print("Generated HTML content:")
++            print("=" * 50)
++            # Extract just the relevant parts
++            import re
++            data_sections = re.findall(r'<dl class="py data">.*?</dl>', content, re.DOTALL)
++            for section in data_sections:
++                print(section)
++                print("-" * 30)
++        else:
++            print("HTML file not found")
+\ No newline at end of file
+diff --git a/test_reproduce.py b/test_reproduce.py
+new file mode 100644
+index 000000000..bf2271691
+--- /dev/null
++++ b/test_reproduce.py
+@@ -0,0 +1,104 @@
++#!/usr/bin/env python3
++
++import tempfile
++import os
++import sys
++from pathlib import Path
++
++# Create a temporary directory for our test
++with tempfile.TemporaryDirectory() as tmpdir:
++    tmpdir = Path(tmpdir)
++    
++    # Create the test file
++    test_file = tmpdir / "test_file.py"
++    test_file.write_text('''# file.py
++from pathlib import Path
++from typing import Any, Callable, Dict, Union
++
++# Signatures for the documentation purposes
++
++ScaffoldOpts = Dict[str, Any]
++"""Dictionary with PyScaffold's options, see ``pyscaffold.api.create_project``.
++Should be treated as immutable (if required, copy before changing).
++
++Please notice some behaviours given by the options **SHOULD** be observed. For example,
++files should be overwritten when the **force** option is ``True``. Similarly when
++**pretend** is ``True``, no operation should be really performed, but any action should
++be logged as if realized.
++"""
++
++FileContents = Union[str, None]
++"""When the file content is ``None``, the file should not be written to
++disk (empty files are represented by an empty string ``""`` as content).
++"""
++
++FileOp = Callable[[Path, FileContents, ScaffoldOpts], Union[Path, None]]
++"""Signature of functions considered file operations::
++
++    Callable[[Path, FileContents, ScaffoldOpts], Union[Path, None]]
++
++- **path** (:obj:`pathlib.Path`): file path potentially to be written to/changed
++  in the disk.
++- **contents** (:obj:`FileContents`): usually a string that represents a text content
++  of the file. :obj:`None` indicates the file should not be written.
++- **opts** (:obj:`ScaffoldOpts`): a dict with PyScaffold's options.
++
++If the file is written (or more generally changed, such as new access permissions),
++by convention they should return the :obj:`file path <pathlib.Path>`.
++If no file was touched, :obj:`None` should be returned. Please notice a **FileOp**
++might return :obj:`None` if a pre-existing file in the disk is not modified.
++
++.. note::
++    A **FileOp** usually has side effects (e.g. write a file to the disk), see
++    :obj:`FileFileContents` and :obj:`ScaffoldOpts` for other conventions.
++"""
++''')
++    
++    # Create conf.py
++    conf_py = tmpdir / "conf.py"
++    conf_py.write_text(f'''
++import sys
++sys.path.insert(0, r'{tmpdir}')
++
++extensions = ['sphinx.ext.autodoc']
++''')
++    
++    # Create index.rst
++    index_rst = tmpdir / "index.rst"
++    index_rst.write_text('''
++Test Documentation
++==================
++
++.. automodule:: test_file
++   :members:
++''')
++    
++    # Change to the temp directory
++    os.chdir(tmpdir)
++    
++    # Import sphinx and test autodoc
++    from sphinx.application import Sphinx
++    from sphinx.util.docutils import docutils_namespace
++    
++    with docutils_namespace():
++        app = Sphinx(
++            srcdir=str(tmpdir),
++            confdir=str(tmpdir),
++            outdir=str(tmpdir / "_build"),
++            doctreedir=str(tmpdir / "_doctrees"),
++            buildername="html",
++            confoverrides={}
++        )
++        
++        # Build the documentation
++        app.build()
++        
++        # Read the generated HTML
++        html_file = tmpdir / "_build" / "index.html"
++        if html_file.exists():
++            content = html_file.read_text()
++            print("Generated HTML content:")
++            print("=" * 50)
++            print(content)
++        else:
++            print("HTML file not found")
+\ No newline at end of file
+diff --git a/test_types.py b/test_types.py
+new file mode 100644
+index 000000000..01141771e
+--- /dev/null
++++ b/test_types.py
+@@ -0,0 +1,31 @@
++#!/usr/bin/env python3
++
++from pathlib import Path
++from typing import Any, Callable, Dict, Union
++import sys
++sys.path.insert(0, '/testbed')
++
++from sphinx.util import inspect
++
++# Test the types
++ScaffoldOpts = Dict[str, Any]
++FileContents = Union[str, None]
++FileOp = Callable[[Path, FileContents, ScaffoldOpts], Union[Path, None]]
++
++print("ScaffoldOpts:")
++print(f"  Type: {type(ScaffoldOpts)}")
++print(f"  isgenericalias: {inspect.isgenericalias(ScaffoldOpts)}")
++print(f"  isNewType: {inspect.isNewType(ScaffoldOpts)}")
++print(f"  isinstance TypeVar: {isinstance(ScaffoldOpts, type(Union))}")
++
++print("\nFileContents:")
++print(f"  Type: {type(FileContents)}")
++print(f"  isgenericalias: {inspect.isgenericalias(FileContents)}")
++print(f"  isNewType: {inspect.isNewType(FileContents)}")
++print(f"  isinstance TypeVar: {isinstance(FileContents, type(Union))}")
++
++print("\nFileOp:")
++print(f"  Type: {type(FileOp)}")
++print(f"  isgenericalias: {inspect.isgenericalias(FileOp)}")
++print(f"  isNewType: {inspect.isNewType(FileOp)}")
++print(f"  isinstance TypeVar: {isinstance(FileOp, type(Union))}")
+\ No newline at end of file
+diff --git a/tests/test_ext_autodoc.py b/tests/test_ext_autodoc.py
+index 4c16886b3..4ad08e7fb 100644
+--- a/tests/test_ext_autodoc.py
++++ b/tests/test_ext_autodoc.py
+@@ -1943,16 +1943,12 @@ def test_autodoc_GenericAlias(app):
+             '',
+             '      A list of int',
+             '',
+-            '      alias of :class:`~typing.List`\\ [:class:`int`]',
+-            '',
+             '',
+             '.. py:data:: T',
+             '   :module: target.genericalias',
+             '',
+             '   A list of int',
+             '',
+-            '   alias of :class:`~typing.List`\\ [:class:`int`]',
+-            '',
+         ]
+ 
+ 
+diff --git a/tests/test_ext_autodoc_autoattribute.py b/tests/test_ext_autodoc_autoattribute.py
+index 5e7220234..173fcf0fc 100644
+--- a/tests/test_ext_autodoc_autoattribute.py
++++ b/tests/test_ext_autodoc_autoattribute.py
+@@ -156,8 +156,6 @@ def test_autoattribute_GenericAlias(app):
+             '',
+             '   A list of int',
+             '',
+-            '   alias of :class:`~typing.List`\\ [:class:`int`]',
+-            '',
+         ]
+ 
+ 
+diff --git a/tests/test_ext_autodoc_autodata.py b/tests/test_ext_autodoc_autodata.py
+index d01e45fc1..dcda36041 100644
+--- a/tests/test_ext_autodoc_autodata.py
++++ b/tests/test_ext_autodoc_autodata.py
+@@ -96,8 +96,6 @@ def test_autodata_GenericAlias(app):
+             '',
+             '   A list of int',
+             '',
+-            '   alias of :class:`~typing.List`\\ [:class:`int`]',
+-            '',
+         ]
+ 
+ 
+diff --git a/tox.ini b/tox.ini
+index a363e187f..3b8bc12d0 100644
+--- a/tox.ini
++++ b/tox.ini
+@@ -27,7 +27,7 @@ setenv =
+     PYTHONWARNINGS = all,ignore::ImportWarning:importlib._bootstrap_external,ignore::DeprecationWarning:site,ignore::DeprecationWarning:distutils,ignore::DeprecationWarning:pip._vendor.packaging.version
+     PYTEST_ADDOPTS = {env:PYTEST_ADDOPTS:} --color yes
+ commands=
+-    python -X dev -m pytest --durations 25 {posargs}
++    python -X dev -m pytest -rA --durations 25 {posargs}
+ 
+ [testenv:flake8]
+ basepython = python3

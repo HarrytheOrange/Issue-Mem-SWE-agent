@@ -1,0 +1,145 @@
+diff --git a/django/db/models/fields/related_descriptors.py b/django/db/models/fields/related_descriptors.py
+index b192df4fbf..8f8a7e1c87 100644
+--- a/django/db/models/fields/related_descriptors.py
++++ b/django/db/models/fields/related_descriptors.py
+@@ -145,7 +145,27 @@ class ForwardManyToOneDescriptor:
+             }
+         else:
+             query = {"%s__in" % self.field.related_query_name(): instances}
+-        queryset = queryset.filter(**query)
++        
++        # Handle sliced querysets by evaluating first, then filtering in Python
++        if queryset.query.is_sliced:
++            # Evaluate the sliced queryset to get the actual objects
++            sliced_objects = list(queryset)
++            
++            # Create a new queryset from the sliced objects
++            if sliced_objects:
++                # Get the IDs of the sliced objects
++                sliced_ids = [obj.pk for obj in sliced_objects]
++                
++                # Create a new queryset that includes only these objects
++                base_queryset = queryset.model.objects.filter(pk__in=sliced_ids)
++                
++                # Apply the filter to this new queryset
++                queryset = base_queryset.filter(**query)
++            else:
++                # If the slice resulted in no objects, return an empty queryset
++                queryset = queryset.model.objects.none()
++        else:
++            queryset = queryset.filter(**query)
+ 
+         # Since we're going to assign directly in the cache,
+         # we must manage the reverse relation cache manually.
+@@ -404,7 +424,27 @@ class ReverseOneToOneDescriptor:
+         instance_attr = self.related.field.get_foreign_related_value
+         instances_dict = {instance_attr(inst): inst for inst in instances}
+         query = {"%s__in" % self.related.field.name: instances}
+-        queryset = queryset.filter(**query)
++        
++        # Handle sliced querysets by evaluating first, then filtering in Python
++        if queryset.query.is_sliced:
++            # Evaluate the sliced queryset to get the actual objects
++            sliced_objects = list(queryset)
++            
++            # Create a new queryset from the sliced objects
++            if sliced_objects:
++                # Get the IDs of the sliced objects
++                sliced_ids = [obj.pk for obj in sliced_objects]
++                
++                # Create a new queryset that includes only these objects
++                base_queryset = queryset.model.objects.filter(pk__in=sliced_ids)
++                
++                # Apply the filter to this new queryset
++                queryset = base_queryset.filter(**query)
++            else:
++                # If the slice resulted in no objects, return an empty queryset
++                queryset = queryset.model.objects.none()
++        else:
++            queryset = queryset.filter(**query)
+ 
+         # Since we're going to assign directly in the cache,
+         # we must manage the reverse relation cache manually.
+@@ -719,7 +759,27 @@ def create_reverse_many_to_one_manager(superclass, rel):
+             instance_attr = self.field.get_foreign_related_value
+             instances_dict = {instance_attr(inst): inst for inst in instances}
+             query = {"%s__in" % self.field.name: instances}
+-            queryset = queryset.filter(**query)
++            
++            # Handle sliced querysets by evaluating first, then filtering in Python
++            if queryset.query.is_sliced:
++                # Evaluate the sliced queryset to get the actual objects
++                sliced_objects = list(queryset)
++                
++                # Create a new queryset from the sliced objects
++                if sliced_objects:
++                    # Get the IDs of the sliced objects
++                    sliced_ids = [obj.pk for obj in sliced_objects]
++                    
++                    # Create a new queryset that includes only these objects
++                    base_queryset = queryset.model.objects.filter(pk__in=sliced_ids)
++                    
++                    # Apply the filter to this new queryset
++                    queryset = base_queryset.filter(**query)
++                else:
++                    # If the slice resulted in no objects, return an empty queryset
++                    queryset = queryset.model.objects.none()
++            else:
++                queryset = queryset.filter(**query)
+ 
+             # Since we just bypassed this class' get_queryset(), we must manage
+             # the reverse relation manually.
+@@ -1052,8 +1112,7 @@ def create_forward_many_to_many_manager(superclass, rel, reverse):
+             queryset = queryset.using(queryset._db or self._db)
+ 
+             query = {"%s__in" % self.query_field_name: instances}
+-            queryset = queryset._next_is_sticky().filter(**query)
+-
++            
+             # M2M: need to annotate the query in order to get the primary model
+             # that the secondary model was actually related to. We know that
+             # there will already be a join on the join table, so we can just add
+@@ -1065,14 +1124,35 @@ def create_forward_many_to_many_manager(superclass, rel, reverse):
+             join_table = fk.model._meta.db_table
+             connection = connections[queryset.db]
+             qn = connection.ops.quote_name
+-            queryset = queryset.extra(
+-                select={
+-                    "_prefetch_related_val_%s"
+-                    % f.attname: "%s.%s"
+-                    % (qn(join_table), qn(f.column))
+-                    for f in fk.local_related_fields
+-                }
+-            )
++            extra_select = {
++                "_prefetch_related_val_%s"
++                % f.attname: "%s.%s"
++                % (qn(join_table), qn(f.column))
++                for f in fk.local_related_fields
++            }
++            
++            # Handle sliced querysets by evaluating first, then filtering in Python
++            if queryset.query.is_sliced:
++                # Evaluate the sliced queryset to get the actual objects
++                sliced_objects = list(queryset)
++                
++                # Create a new queryset from the sliced objects
++                if sliced_objects:
++                    # Get the IDs of the sliced objects
++                    sliced_ids = [obj.pk for obj in sliced_objects]
++                    
++                    # Create a new queryset that includes only these objects
++                    base_queryset = queryset.model.objects.filter(pk__in=sliced_ids)
++                    
++                    # Apply the filter and extra to this new queryset
++                    filtered_queryset = base_queryset._next_is_sticky().filter(**query)
++                    queryset = filtered_queryset.extra(select=extra_select)
++                else:
++                    # If the slice resulted in no objects, return an empty queryset
++                    queryset = queryset.model.objects.none()
++            else:
++                queryset = queryset._next_is_sticky().filter(**query)
++                queryset = queryset.extra(select=extra_select)
+             return (
+                 queryset,
+                 lambda result: tuple(

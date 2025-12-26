@@ -1,0 +1,180 @@
+diff --git a/django/db/backends/base/schema.py b/django/db/backends/base/schema.py
+index 09785e8586..ec9fa40c1d 100644
+--- a/django/db/backends/base/schema.py
++++ b/django/db/backends/base/schema.py
+@@ -20,6 +20,25 @@ from django.utils import timezone
+ logger = logging.getLogger("django.db.backends.schema")
+ 
+ 
++def _resolve_through_model(field, model):
++    """
++    Resolve the through model for a ManyToManyField.
++    
++    If field.remote_field.through is a string, resolve it to the actual model class
++    using the model's apps registry. Otherwise, return it as-is.
++    """
++    through = field.remote_field.through
++    if isinstance(through, str):
++        # Resolve string reference to actual model class
++        try:
++            return model._meta.apps.get_model(through)
++        except (LookupError, ValueError):
++            # If we can't resolve the model, return the string
++            # This maintains backward compatibility and lets other code handle the error
++            return through
++    return through
++
++
+ def _is_relevant_relation(relation, altered_field):
+     """
+     When altering the given field, must constraints on its model from the given
+@@ -450,15 +469,17 @@ class BaseDatabaseSchemaEditor:
+ 
+         # Make M2M tables
+         for field in model._meta.local_many_to_many:
+-            if field.remote_field.through._meta.auto_created:
+-                self.create_model(field.remote_field.through)
++            through_model = _resolve_through_model(field, model)
++            if hasattr(through_model, '_meta') and through_model._meta.auto_created:
++                self.create_model(through_model)
+ 
+     def delete_model(self, model):
+         """Delete a model from the database."""
+         # Handle auto-created intermediary models
+         for field in model._meta.local_many_to_many:
+-            if field.remote_field.through._meta.auto_created:
+-                self.delete_model(field.remote_field.through)
++            through_model = _resolve_through_model(field, model)
++            if hasattr(through_model, '_meta') and through_model._meta.auto_created:
++                self.delete_model(through_model)
+ 
+         # Delete the table
+         self.execute(
+@@ -630,8 +651,10 @@ class BaseDatabaseSchemaEditor:
+         involve adding a table instead (for M2M fields).
+         """
+         # Special-case implicit M2M tables
+-        if field.many_to_many and field.remote_field.through._meta.auto_created:
+-            return self.create_model(field.remote_field.through)
++        if field.many_to_many:
++            through_model = _resolve_through_model(field, model)
++            if hasattr(through_model, '_meta') and through_model._meta.auto_created:
++                return self.create_model(through_model)
+         # Get the column's definition
+         definition, params = self.column_sql(model, field, include_default=True)
+         # It might not actually have a column behind it
+@@ -704,8 +727,10 @@ class BaseDatabaseSchemaEditor:
+         but for M2Ms may involve deleting a table.
+         """
+         # Special-case implicit M2M tables
+-        if field.many_to_many and field.remote_field.through._meta.auto_created:
+-            return self.delete_model(field.remote_field.through)
++        if field.many_to_many:
++            through_model = _resolve_through_model(field, model)
++            if hasattr(through_model, '_meta') and through_model._meta.auto_created:
++                return self.delete_model(through_model)
+         # It might not actually have a column behind it
+         if field.db_parameters(connection=self.connection)["type"] is None:
+             return
+@@ -759,23 +784,31 @@ class BaseDatabaseSchemaEditor:
+             and (
+                 old_field.remote_field.through
+                 and new_field.remote_field.through
+-                and old_field.remote_field.through._meta.auto_created
+-                and new_field.remote_field.through._meta.auto_created
+             )
+         ):
+-            return self._alter_many_to_many(model, old_field, new_field, strict)
++            old_through_model = _resolve_through_model(old_field, model)
++            new_through_model = _resolve_through_model(new_field, model)
++            if (
++                hasattr(old_through_model, '_meta') and old_through_model._meta.auto_created
++                and hasattr(new_through_model, '_meta') and new_through_model._meta.auto_created
++            ):
++                return self._alter_many_to_many(model, old_field, new_field, strict)
+         elif (
+             old_type is None
+             and new_type is None
+             and (
+                 old_field.remote_field.through
+                 and new_field.remote_field.through
+-                and not old_field.remote_field.through._meta.auto_created
+-                and not new_field.remote_field.through._meta.auto_created
+             )
+         ):
+-            # Both sides have through models; this is a no-op.
+-            return
++            old_through_model = _resolve_through_model(old_field, model)
++            new_through_model = _resolve_through_model(new_field, model)
++            if (
++                hasattr(old_through_model, '_meta') and not old_through_model._meta.auto_created
++                and hasattr(new_through_model, '_meta') and not new_through_model._meta.auto_created
++            ):
++                # Both sides have through models; this is a no-op.
++                return
+         elif old_type is None or new_type is None:
+             raise ValueError(
+                 "Cannot alter field %s into %s - they are not compatible types "
+@@ -1246,35 +1279,39 @@ class BaseDatabaseSchemaEditor:
+ 
+     def _alter_many_to_many(self, model, old_field, new_field, strict):
+         """Alter M2Ms to repoint their to= endpoints."""
++        old_through_model = _resolve_through_model(old_field, model)
++        new_through_model = _resolve_through_model(new_field, model)
++        
+         # Rename the through table
+         if (
+-            old_field.remote_field.through._meta.db_table
+-            != new_field.remote_field.through._meta.db_table
++            hasattr(old_through_model, '_meta') and hasattr(new_through_model, '_meta')
++            and old_through_model._meta.db_table != new_through_model._meta.db_table
+         ):
+             self.alter_db_table(
+-                old_field.remote_field.through,
+-                old_field.remote_field.through._meta.db_table,
+-                new_field.remote_field.through._meta.db_table,
++                old_through_model,
++                old_through_model._meta.db_table,
++                new_through_model._meta.db_table,
+             )
+         # Repoint the FK to the other side
+-        self.alter_field(
+-            new_field.remote_field.through,
+-            # The field that points to the target model is needed, so we can
+-            # tell alter_field to change it - this is m2m_reverse_field_name()
+-            # (as opposed to m2m_field_name(), which points to our model).
+-            old_field.remote_field.through._meta.get_field(
+-                old_field.m2m_reverse_field_name()
+-            ),
+-            new_field.remote_field.through._meta.get_field(
+-                new_field.m2m_reverse_field_name()
+-            ),
+-        )
+-        self.alter_field(
+-            new_field.remote_field.through,
+-            # for self-referential models we need to alter field from the other end too
+-            old_field.remote_field.through._meta.get_field(old_field.m2m_field_name()),
+-            new_field.remote_field.through._meta.get_field(new_field.m2m_field_name()),
+-        )
++        if hasattr(new_through_model, '_meta'):
++            self.alter_field(
++                new_through_model,
++                # The field that points to the target model is needed, so we can
++                # tell alter_field to change it - this is m2m_reverse_field_name()
++                # (as opposed to m2m_field_name(), which points to our model).
++                old_through_model._meta.get_field(
++                    old_field.m2m_reverse_field_name()
++                ),
++                new_through_model._meta.get_field(
++                    new_field.m2m_reverse_field_name()
++                ),
++            )
++            self.alter_field(
++                new_through_model,
++                # for self-referential models we need to alter field from the other end too
++                old_through_model._meta.get_field(old_field.m2m_field_name()),
++                new_through_model._meta.get_field(new_field.m2m_field_name()),
++            )
+ 
+     def _create_index_name(self, table_name, column_names, suffix=""):
+         """

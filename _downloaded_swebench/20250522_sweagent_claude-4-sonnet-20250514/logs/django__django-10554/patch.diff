@@ -1,0 +1,59 @@
+diff --git a/django/db/models/sql/query.py b/django/db/models/sql/query.py
+index 08d7faf194..26caaa16d8 100644
+--- a/django/db/models/sql/query.py
++++ b/django/db/models/sql/query.py
+@@ -328,6 +328,9 @@ class Query(BaseExpression):
+             obj.subq_aliases = self.subq_aliases.copy()
+         obj.used_aliases = self.used_aliases.copy()
+         obj._filtered_relations = self._filtered_relations.copy()
++        # Clone combined_queries to avoid sharing query objects
++        if self.combined_queries:
++            obj.combined_queries = tuple(query.clone() for query in self.combined_queries)
+         # Clear the cached_property
+         try:
+             del obj.base_table
+diff --git a/tests/queries/test_qs_combinators.py b/tests/queries/test_qs_combinators.py
+index 227972e8c4..142788853e 100644
+--- a/tests/queries/test_qs_combinators.py
++++ b/tests/queries/test_qs_combinators.py
+@@ -228,3 +228,40 @@ class QuerySetSetOperationTests(TestCase):
+         qs1 = Number.objects.all()
+         qs2 = Number.objects.intersection(Number.objects.filter(num__gt=1))
+         self.assertEqual(qs1.difference(qs2).count(), 2)
++
++    def test_union_queryset_isolation(self):
++        """
++        Test that creating a derived queryset from a union queryset doesn't
++        break the original queryset due to shared state in combined_queries.
++        
++        Regression test for issue where union querysets with ordering would
++        break when a derived queryset was created that changed the select clause.
++        """
++        qs1 = Number.objects.filter(num__lte=1)
++        qs2 = Number.objects.filter(num__gte=8)
++        
++        # Create a union queryset with ordering
++        union_qs = qs1.union(qs2).order_by('num')
++        
++        # Create a derived queryset that changes the select clause
++        derived_qs = union_qs.order_by().values_list('num', flat=True)
++        
++        # Verify that the queries are properly isolated
++        self.assertIsNot(union_qs.query, derived_qs.query)
++        if union_qs.query.combined_queries and derived_qs.query.combined_queries:
++            self.assertIsNot(
++                union_qs.query.combined_queries,
++                derived_qs.query.combined_queries
++            )
++            self.assertIsNot(
++                union_qs.query.combined_queries[0],
++                derived_qs.query.combined_queries[0]
++            )
++        
++        # Both querysets should work independently
++        derived_result = list(derived_qs)
++        union_result = list(union_qs)
++        
++        # Verify results
++        self.assertEqual(set(derived_result), {0, 1, 8, 9})
++        self.assertEqual(set(num.num for num in union_result), {0, 1, 8, 9})

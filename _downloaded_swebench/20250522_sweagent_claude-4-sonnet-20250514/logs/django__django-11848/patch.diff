@@ -1,0 +1,35 @@
+diff --git a/django/utils/http.py b/django/utils/http.py
+index 572cfb4347..c292212282 100644
+--- a/django/utils/http.py
++++ b/django/utils/http.py
+@@ -176,10 +176,27 @@ def parse_http_date(date):
+     try:
+         year = int(m.group('year'))
+         if year < 100:
+-            if year < 70:
+-                year += 2000
++            # RFC 7231: Recipients of a timestamp value in rfc850-date format,
++            # which uses a two-digit year, MUST interpret a timestamp that
++            # appears to be more than 50 years in the future as representing
++            # the most recent year in the past that had the same last two digits.
++            if regex == RFC850_DATE:
++                # Apply RFC 7231 logic for RFC850 format (two-digit years)
++                current_year = datetime.datetime.now().year
++                current_century = (current_year // 100) * 100
++                candidate_year = current_century + year
++                
++                # If more than 50 years in the future, use previous century
++                if candidate_year - current_year > 50:
++                    year = candidate_year - 100
++                else:
++                    year = candidate_year
+             else:
+-                year += 1900
++                # For other formats, use the old logic for backward compatibility
++                if year < 70:
++                    year += 2000
++                else:
++                    year += 1900
+         month = MONTHS.index(m.group('mon').lower()) + 1
+         day = int(m.group('day'))
+         hour = int(m.group('hour'))

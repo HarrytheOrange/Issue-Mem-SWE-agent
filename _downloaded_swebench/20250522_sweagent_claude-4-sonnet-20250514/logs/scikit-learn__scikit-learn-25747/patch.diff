@@ -1,0 +1,37 @@
+diff --git a/sklearn/utils/_set_output.py b/sklearn/utils/_set_output.py
+index 335773c6a..52aec4a5b 100644
+--- a/sklearn/utils/_set_output.py
++++ b/sklearn/utils/_set_output.py
+@@ -55,10 +55,31 @@ def _wrap_in_pandas_container(
+     if isinstance(data_to_wrap, pd.DataFrame):
+         if columns is not None:
+             data_to_wrap.columns = columns
+-        if index is not None:
++        if index is not None and len(index) == len(data_to_wrap):
+             data_to_wrap.index = index
+         return data_to_wrap
+ 
++    # Handle pandas Series specially to avoid issues with column naming
++    if isinstance(data_to_wrap, pd.Series):
++        # For Series, use to_frame() and then handle index/columns
++        if columns is not None:
++            df = data_to_wrap.to_frame(columns[0] if len(columns) == 1 else None)
++        else:
++            df = data_to_wrap.to_frame()
++        
++        # Only set index if lengths are compatible
++        if index is not None and len(index) == len(df):
++            df.index = index
++        
++        return df
++
++    # For other data types, check index compatibility
++    if hasattr(data_to_wrap, '__len__') and index is not None and len(index) != len(data_to_wrap):
++        # If index length doesn't match data length, create DataFrame without specifying index
++        return pd.DataFrame(data_to_wrap.values if hasattr(data_to_wrap, 'values') else data_to_wrap, 
++                          index=data_to_wrap.index if hasattr(data_to_wrap, 'index') else None, 
++                          columns=columns)
++
+     return pd.DataFrame(data_to_wrap, index=index, columns=columns)
+ 
+ 

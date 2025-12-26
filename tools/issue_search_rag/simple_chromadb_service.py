@@ -19,10 +19,10 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 # 数据与模型路径
-DATA_ROOT: Final[Path] = Path("/home/harry/Issue-Mem-SWE-agent/data/issue_pr_v0")
-MODEL_PATH: Final[Path] = DATA_ROOT / "embedding"
+DATA_ROOT: Final[Path] = Path("/home/harry/Issue-Mem-SWE-agent/data/agentic_exp_data_1220_13wDS_6kGPT/chroma_db_experience")
+MODEL_PATH: Final[Path] = "/home/harry/Issue-Mem-SWE-agent/models/Qwen3-Embedding-0.6B"
 DB_DIR: Final[Path] = DATA_ROOT
-COLLECTION_NAME: Final[str] = "github_pr_patch_data"
+COLLECTION_NAME: Final[str] = "experience_knowledge"
 
 # 全局变量
 chroma_client = None

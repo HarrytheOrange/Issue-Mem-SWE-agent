@@ -1,0 +1,23 @@
+diff --git a/sphinx/builders/gettext.py b/sphinx/builders/gettext.py
+index e8bc547b7..2423e016b 100644
+--- a/sphinx/builders/gettext.py
++++ b/sphinx/builders/gettext.py
+@@ -57,8 +57,16 @@ class Catalog:
+ 
+     def __iter__(self) -> Generator[Message, None, None]:
+         for message in self.messages:
+-            positions = [(source, line) for source, line, uuid in self.metadata[message]]
+-            uuids = [uuid for source, line, uuid in self.metadata[message]]
++            # Remove duplicate positions while preserving order
++            seen_positions = set()
++            positions = []
++            uuids = []
++            for source, line, uuid in self.metadata[message]:
++                position = (source, line)
++                if position not in seen_positions:
++                    seen_positions.add(position)
++                    positions.append(position)
++                    uuids.append(uuid)
+             yield Message(message, positions, uuids)
+ 
+ 

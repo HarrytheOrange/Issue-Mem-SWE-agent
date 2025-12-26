@@ -1,0 +1,101 @@
+diff --git a/pylint/config/argument.py b/pylint/config/argument.py
+index 30a5fd175..a8268b82b 100644
+--- a/pylint/config/argument.py
++++ b/pylint/config/argument.py
+@@ -111,10 +111,86 @@ def _regex_transformer(value: str) -> Pattern[str]:
+         raise argparse.ArgumentTypeError(msg) from e
+ 
+ 
++def _regex_csv_split(value: str) -> Sequence[str]:
++    """Split a comma-separated string of regexes, handling commas inside regex patterns.
++    
++    This function is aware of regex syntax and won't split on commas that are inside
++    braces (quantifiers like {1,3}) or other regex constructs.
++    """
++    if not value.strip():
++        return []
++    
++    patterns = []
++    current_pattern = ""
++    brace_depth = 0
++    bracket_depth = 0
++    paren_depth = 0
++    in_char_class = False
++    escaped = False
++    
++    i = 0
++    while i < len(value):
++        char = value[i]
++        
++        if escaped:
++            # Previous character was a backslash, so this character is escaped
++            current_pattern += char
++            escaped = False
++        elif char == '\\':
++            # This is an escape character
++            current_pattern += char
++            escaped = True
++        elif char == '[' and not in_char_class:
++            # Start of character class
++            current_pattern += char
++            in_char_class = True
++            bracket_depth += 1
++        elif char == ']' and in_char_class and bracket_depth > 0:
++            # End of character class
++            current_pattern += char
++            bracket_depth -= 1
++            if bracket_depth == 0:
++                in_char_class = False
++        elif not in_char_class:
++            # We're not inside a character class, so we can track other constructs
++            if char == '{':
++                brace_depth += 1
++                current_pattern += char
++            elif char == '}':
++                brace_depth -= 1
++                current_pattern += char
++            elif char == '(':
++                paren_depth += 1
++                current_pattern += char
++            elif char == ')':
++                paren_depth -= 1
++                current_pattern += char
++            elif char == ',' and brace_depth == 0 and paren_depth == 0:
++                # This comma is not inside braces or parentheses, so it's a separator
++                pattern = current_pattern.strip()
++                if pattern:
++                    patterns.append(pattern)
++                current_pattern = ""
++            else:
++                current_pattern += char
++        else:
++            # We're inside a character class, just add the character
++            current_pattern += char
++        
++        i += 1
++    
++    # Add the last pattern
++    pattern = current_pattern.strip()
++    if pattern:
++        patterns.append(pattern)
++    
++    return patterns
++
++
+ def _regexp_csv_transfomer(value: str) -> Sequence[Pattern[str]]:
+     """Transforms a comma separated list of regular expressions."""
+     patterns: list[Pattern[str]] = []
+-    for pattern in _csv_transformer(value):
++    for pattern in _regex_csv_split(value):
+         patterns.append(_regex_transformer(pattern))
+     return patterns
+ 
+@@ -122,7 +198,7 @@ def _regexp_csv_transfomer(value: str) -> Sequence[Pattern[str]]:
+ def _regexp_paths_csv_transfomer(value: str) -> Sequence[Pattern[str]]:
+     """Transforms a comma separated list of regular expressions paths."""
+     patterns: list[Pattern[str]] = []
+-    for pattern in _csv_transformer(value):
++    for pattern in _regex_csv_split(value):
+         patterns.append(
+             re.compile(
+                 str(pathlib.PureWindowsPath(pattern)).replace("\\", "\\\\")

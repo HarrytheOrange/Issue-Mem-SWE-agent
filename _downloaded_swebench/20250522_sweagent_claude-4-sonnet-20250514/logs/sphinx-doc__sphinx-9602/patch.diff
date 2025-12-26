@@ -1,0 +1,191 @@
+diff --git a/setup.py b/setup.py
+index 4a1d5aeed..3faa58e79 100644
+--- a/setup.py
++++ b/setup.py
+@@ -15,22 +15,22 @@ if sys.version_info < (3, 6):
+     sys.exit(1)
+ 
+ install_requires = [
+-    'sphinxcontrib-applehelp',
+-    'sphinxcontrib-devhelp',
++    'sphinxcontrib-applehelp<=1.0.7',
++    'sphinxcontrib-devhelp<=1.0.5',
+     'sphinxcontrib-jsmath',
+-    'sphinxcontrib-htmlhelp>=2.0.0',
+-    'sphinxcontrib-serializinghtml>=1.1.5',
+-    'sphinxcontrib-qthelp',
+-    'Jinja2>=2.3',
++    'sphinxcontrib-htmlhelp>=2.0.0,<=2.0.4',
++    'sphinxcontrib-serializinghtml>=1.1.5,<=1.1.9',
++    'sphinxcontrib-qthelp<=1.0.6',
++    'Jinja2<3.0',
+     'Pygments>=2.0',
+     'docutils>=0.14,<0.18',
+     'snowballstemmer>=1.1',
+     'babel>=1.3',
+-    'alabaster>=0.7,<0.8',
++    'alabaster>=0.7,<0.7.12',
+     'imagesize',
+     'requests>=2.5.0',
+     'setuptools',
+-    'packaging',
++    'packaging', 'markupsafe<=2.0.1',
+ ]
+ 
+ extras_require = {
+diff --git a/sphinx/domains/python.py b/sphinx/domains/python.py
+index 9875a9f4b..d54c6f95c 100644
+--- a/sphinx/domains/python.py
++++ b/sphinx/domains/python.py
+@@ -107,15 +107,20 @@ def type_to_xref(text: str, env: BuildEnvironment = None) -> addnodes.pending_xr
+                         refdomain='py', reftype=reftype, reftarget=text, **kwargs)
+ 
+ 
++class LiteralText(nodes.Text):
++    """A Text node that represents a literal value and should not be converted to a cross-reference."""
++    pass
++
++
+ def _parse_annotation(annotation: str, env: BuildEnvironment = None) -> List[Node]:
+     """Parse type annotation."""
+-    def unparse(node: ast.AST) -> List[Node]:
++    def unparse(node: ast.AST, literal_context: bool = False) -> List[Node]:
+         if isinstance(node, ast.Attribute):
+             return [nodes.Text("%s.%s" % (unparse(node.value)[0], node.attr))]
+         elif isinstance(node, ast.BinOp):
+-            result: List[Node] = unparse(node.left)
+-            result.extend(unparse(node.op))
+-            result.extend(unparse(node.right))
++            result: List[Node] = unparse(node.left, literal_context)
++            result.extend(unparse(node.op, literal_context))
++            result.extend(unparse(node.right, literal_context))
+             return result
+         elif isinstance(node, ast.BitOr):
+             return [nodes.Text(' '), addnodes.desc_sig_punctuation('', '|'), nodes.Text(' ')]
+@@ -123,11 +128,15 @@ def _parse_annotation(annotation: str, env: BuildEnvironment = None) -> List[Nod
+             if node.value is Ellipsis:
+                 return [addnodes.desc_sig_punctuation('', "...")]
+             else:
+-                return [nodes.Text(node.value)]
++                # Create a special text node for literal values that shouldn't be converted to xrefs
++                if literal_context:
++                    return [LiteralText(node.value)]
++                else:
++                    return [nodes.Text(node.value)]
+         elif isinstance(node, ast.Expr):
+-            return unparse(node.value)
++            return unparse(node.value, literal_context)
+         elif isinstance(node, ast.Index):
+-            return unparse(node.value)
++            return unparse(node.value, literal_context)
+         elif isinstance(node, ast.List):
+             result = [addnodes.desc_sig_punctuation('', '[')]
+             if node.elts:
+@@ -135,26 +144,38 @@ def _parse_annotation(annotation: str, env: BuildEnvironment = None) -> List[Nod
+                 # last element of result if the for-loop was run at least
+                 # once
+                 for elem in node.elts:
+-                    result.extend(unparse(elem))
++                    result.extend(unparse(elem, literal_context))
+                     result.append(addnodes.desc_sig_punctuation('', ', '))
+                 result.pop()
+             result.append(addnodes.desc_sig_punctuation('', ']'))
+             return result
+         elif isinstance(node, ast.Module):
+-            return sum((unparse(e) for e in node.body), [])
++            return sum((unparse(e, literal_context) for e in node.body), [])
+         elif isinstance(node, ast.Name):
+-            return [nodes.Text(node.id)]
++            if literal_context:
++                return [LiteralText(node.id)]
++            else:
++                return [nodes.Text(node.id)]
+         elif isinstance(node, ast.Subscript):
+-            result = unparse(node.value)
++            result = unparse(node.value, literal_context)
+             result.append(addnodes.desc_sig_punctuation('', '['))
+-            result.extend(unparse(node.slice))
++            
++            # Check if this is a Literal type annotation
++            is_literal = False
++            if isinstance(node.value, ast.Name) and node.value.id == 'Literal':
++                is_literal = True
++            elif isinstance(node.value, ast.Attribute) and node.value.attr == 'Literal':
++                is_literal = True
++            
++            # Parse the slice with literal_context=True if this is a Literal type
++            result.extend(unparse(node.slice, is_literal))
+             result.append(addnodes.desc_sig_punctuation('', ']'))
+             return result
+         elif isinstance(node, ast.Tuple):
+             if node.elts:
+                 result = []
+                 for elem in node.elts:
+-                    result.extend(unparse(elem))
++                    result.extend(unparse(elem, literal_context))
+                     result.append(addnodes.desc_sig_punctuation('', ', '))
+                 result.pop()
+             else:
+@@ -167,7 +188,10 @@ def _parse_annotation(annotation: str, env: BuildEnvironment = None) -> List[Nod
+                 if isinstance(node, ast.Ellipsis):
+                     return [addnodes.desc_sig_punctuation('', "...")]
+                 elif isinstance(node, ast.NameConstant):
+-                    return [nodes.Text(node.value)]
++                    if literal_context:
++                        return [LiteralText(node.value)]
++                    else:
++                        return [nodes.Text(node.value)]
+ 
+             raise SyntaxError  # unsupported syntax
+ 
+@@ -179,7 +203,7 @@ def _parse_annotation(annotation: str, env: BuildEnvironment = None) -> List[Nod
+         tree = ast_parse(annotation)
+         result = unparse(tree)
+         for i, node in enumerate(result):
+-            if isinstance(node, nodes.Text) and node.strip():
++            if isinstance(node, nodes.Text) and node.strip() and not isinstance(node, LiteralText):
+                 result[i] = type_to_xref(str(node), env)
+         return result
+     except SyntaxError:
+@@ -324,6 +348,28 @@ class PyXrefMixin:
+                    innernode: Type[TextlikeNode] = nodes.emphasis,
+                    contnode: Node = None, env: BuildEnvironment = None,
+                    inliner: Inliner = None, location: Node = None) -> List[Node]:
++        # Check if this is a Literal type annotation that should be parsed specially
++        if rolename == 'class' and ('Literal[' in target):
++            # Use _parse_annotation to handle Literal types properly
++            try:
++                parsed_nodes = _parse_annotation(target, env)
++                # Convert the parsed nodes to the format expected by make_xrefs
++                results = []
++                for node in parsed_nodes:
++                    if isinstance(node, addnodes.pending_xref):
++                        results.append(node)
++                    elif isinstance(node, (nodes.Text, LiteralText)):
++                        # For text nodes (including literal values), create a text node
++                        results.append(innernode(str(node), str(node)))
++                    else:
++                        # For other nodes (punctuation, etc.), keep as-is
++                        results.append(node)
++                return results
++            except SyntaxError:
++                # If parsing fails, fall back to the original logic
++                pass
++        
++        # Original logic for non-Literal types
+         delims = r'(\s*[\[\]\(\),](?:\s*or\s)?\s*|\s+or\s+|\s*\|\s*|\.\.\.)'
+         delims_re = re.compile(delims)
+         sub_targets = re.split(delims, target)
+diff --git a/tox.ini b/tox.ini
+index b6a67fd85..483f2df92 100644
+--- a/tox.ini
++++ b/tox.ini
+@@ -28,7 +28,7 @@ setenv =
+     PYTHONWARNINGS = all,ignore::ImportWarning:importlib._bootstrap_external,ignore::DeprecationWarning:site,ignore::DeprecationWarning:distutils,ignore::DeprecationWarning:pip._vendor.packaging.version
+     PYTEST_ADDOPTS = {env:PYTEST_ADDOPTS:} --color yes
+ commands=
+-    python -X dev -m pytest --durations 25 {posargs}
++    python -X dev -m pytest -rA --durations 25 {posargs}
+ 
+ [testenv:flake8]
+ basepython = python3

@@ -1,0 +1,65 @@
+diff --git a/sklearn/linear_model/logistic.py b/sklearn/linear_model/logistic.py
+index 1999f1dae..bbcf29306 100644
+--- a/sklearn/linear_model/logistic.py
++++ b/sklearn/linear_model/logistic.py
+@@ -2170,7 +2170,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
+                 # Take the best scores across every fold and the average of
+                 # all coefficients corresponding to the best scores.
+                 best_indices = np.argmax(scores, axis=1)
+-                if self.multi_class == 'ovr':
++                if multi_class == 'ovr':
+                     w = np.mean([coefs_paths[i, best_indices[i], :]
+                                  for i in range(len(folds))], axis=0)
+                 else:
+@@ -2181,7 +2181,10 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
+                 self.C_.append(np.mean(self.Cs_[best_indices_C]))
+ 
+                 best_indices_l1 = best_indices // len(self.Cs_)
+-                self.l1_ratio_.append(np.mean(l1_ratios_[best_indices_l1]))
++                if l1_ratios_[0] is None:
++                    self.l1_ratio_.append(None)
++                else:
++                    self.l1_ratio_.append(np.mean([l1_ratios_[i] for i in best_indices_l1]))
+ 
+             if multi_class == 'multinomial':
+                 self.C_ = np.tile(self.C_, n_classes)
+diff --git a/sklearn/linear_model/tests/test_logistic.py b/sklearn/linear_model/tests/test_logistic.py
+index 6ad9a4ec9..fc85930d6 100644
+--- a/sklearn/linear_model/tests/test_logistic.py
++++ b/sklearn/linear_model/tests/test_logistic.py
+@@ -1554,6 +1554,35 @@ def test_LogisticRegressionCV_no_refit(multi_class):
+     assert lrcv.coef_.shape == (n_classes, n_features)
+ 
+ 
++def test_LogisticRegressionCV_no_refit_binary_classification():
++    # Test LogisticRegressionCV with refit=False on binary classification
++    # This is a regression test for issue where IndexError was thrown
++    # when using refit=False with binary classification and non-elasticnet penalty
++    
++    np.random.seed(29)
++    X = np.random.normal(size=(100, 3))
++    beta = np.random.normal(size=3)
++    intercept = np.random.normal(size=None)
++    y = np.sign(intercept + X @ beta)
++    
++    # Test with different solvers that were mentioned in the issue
++    for solver in ['saga', 'liblinear']:
++        lrcv = LogisticRegressionCV(
++            cv=5,
++            solver=solver,
++            tol=1e-2,
++            refit=False
++        )
++        # This should not raise an IndexError
++        lrcv.fit(X, y)
++        
++        # Check that the attributes have the correct shapes
++        assert lrcv.C_.shape == (1,)  # Binary classification -> n_classes = 1
++        assert lrcv.l1_ratio_.shape == (1,)
++        assert lrcv.coef_.shape == (1, 3)  # (n_classes, n_features)
++        assert lrcv.intercept_.shape == (1,)
++
++
+ def test_LogisticRegressionCV_elasticnet_attribute_shapes():
+     # Make sure the shapes of scores_ and coefs_paths_ attributes are correct
+     # when using elasticnet (added one dimension for l1_ratios)

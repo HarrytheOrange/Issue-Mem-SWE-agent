@@ -1,0 +1,37 @@
+diff --git a/django/utils/deprecation.py b/django/utils/deprecation.py
+index b2c681b33c..fb8d4c5e69 100644
+--- a/django/utils/deprecation.py
++++ b/django/utils/deprecation.py
+@@ -110,11 +110,31 @@ class MiddlewareMixin:
+     def __call__(self, request):
+         # Exit out to async mode, if needed
+         if asyncio.iscoroutinefunction(self.get_response):
++            # Ensure async check has been performed
++            if not hasattr(self, '_is_coroutine'):
++                self._async_check()
+             return self.__acall__(request)
+         response = None
+         if hasattr(self, 'process_request'):
+             response = self.process_request(request)
+-        response = response or self.get_response(request)
++        get_response_result = self.get_response(request)
++        # Handle the case where get_response returns a coroutine
++        # even though it's not a coroutine function
++        if asyncio.iscoroutine(get_response_result):
++            # We need to switch to async mode to handle the coroutine
++            # But we need to create a custom async function that handles
++            # the fact that process_request has already been called
++            async def async_continuation():
++                awaited_response = await get_response_result
++                final_response = response or awaited_response
++                if hasattr(self, 'process_response'):
++                    final_response = await sync_to_async(
++                        self.process_response,
++                        thread_sensitive=True,
++                    )(request, final_response)
++                return final_response
++            return async_continuation()
++        response = response or get_response_result
+         if hasattr(self, 'process_response'):
+             response = self.process_response(request, response)
+         return response

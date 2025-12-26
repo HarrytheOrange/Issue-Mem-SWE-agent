@@ -1,0 +1,59 @@
+diff --git a/django/db/models/fields/__init__.py b/django/db/models/fields/__init__.py
+index ee45bb941e..e24d811089 100644
+--- a/django/db/models/fields/__init__.py
++++ b/django/db/models/fields/__init__.py
+@@ -763,8 +763,10 @@ class Field(RegisterLookupMixin):
+             if not getattr(cls, self.attname, None):
+                 setattr(cls, self.attname, self.descriptor_class(self))
+         if self.choices is not None:
+-            setattr(cls, 'get_%s_display' % self.name,
+-                    partialmethod(cls._get_FIELD_display, field=self))
++            # Don't override an existing get_FOO_display method.
++            if not hasattr(cls, 'get_%s_display' % self.name):
++                setattr(cls, 'get_%s_display' % self.name,
++                        partialmethod(cls._get_FIELD_display, field=self))
+ 
+     def get_filter_kwargs_for_object(self, obj):
+         """
+diff --git a/tests/model_fields/models.py b/tests/model_fields/models.py
+index 98b32d0c1e..f4d325d600 100644
+--- a/tests/model_fields/models.py
++++ b/tests/model_fields/models.py
+@@ -56,6 +56,14 @@ class WhizDelayed(models.Model):
+     c = models.IntegerField(choices=(), null=True)
+ 
+ 
++class WhizWithCustomDisplay(models.Model):
++    """Model with custom get_FIELD_display method to test override functionality."""
++    c = models.IntegerField(choices=Whiz.CHOICES, null=True)
++    
++    def get_c_display(self):
++        return "Custom Display"
++
++
+ # Contrived way of adding choices later.
+ WhizDelayed._meta.get_field('c').choices = Whiz.CHOICES
+ 
+diff --git a/tests/model_fields/tests.py b/tests/model_fields/tests.py
+index 0d6e930b06..1999291527 100644
+--- a/tests/model_fields/tests.py
++++ b/tests/model_fields/tests.py
+@@ -186,6 +186,18 @@ class GetFieldDisplayTests(SimpleTestCase):
+         self.assertIsNone(WhizIterEmpty(c=None).c)         # Blank value
+         self.assertEqual(WhizIterEmpty(c='').c, '')        # Empty value
+ 
++    def test_get_FIELD_display_override(self):
++        """
++        Custom get_FIELD_display methods should not be overridden by Django's
++        auto-generated methods.
++        """
++        from .models import WhizWithCustomDisplay
++        instance = WhizWithCustomDisplay(c=1)
++        # Should return the custom value, not the choice value
++        self.assertEqual(instance.get_c_display(), "Custom Display")
++        # Verify that the field has choices (so Django would normally create a method)
++        self.assertTrue(instance._meta.get_field('c').choices)
++
+ 
+ class GetChoicesTests(SimpleTestCase):
+ 

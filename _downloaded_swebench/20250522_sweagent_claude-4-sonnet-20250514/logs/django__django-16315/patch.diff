@@ -1,0 +1,134 @@
+diff --git a/django/db/backends/mysql/operations.py b/django/db/backends/mysql/operations.py
+index 76ca815765..7bbcedbc89 100644
+--- a/django/db/backends/mysql/operations.py
++++ b/django/db/backends/mysql/operations.py
+@@ -451,8 +451,8 @@ class DatabaseOperations(BaseDatabaseOperations):
+ 
+             fields = ", ".join(
+                 [
+-                    field_sql % {"field": field}
+-                    for field in map(self.quote_name, update_fields)
++                    field_sql % {"field": self.quote_name(field.column)}
++                    for field in update_fields
+                 ]
+             )
+             return conflict_suffix_sql % {"fields": fields}
+diff --git a/django/db/backends/postgresql/operations.py b/django/db/backends/postgresql/operations.py
+index 62273fc43c..b6187fc156 100644
+--- a/django/db/backends/postgresql/operations.py
++++ b/django/db/backends/postgresql/operations.py
+@@ -354,11 +354,11 @@ class DatabaseOperations(BaseDatabaseOperations):
+             return "ON CONFLICT DO NOTHING"
+         if on_conflict == OnConflict.UPDATE:
+             return "ON CONFLICT(%s) DO UPDATE SET %s" % (
+-                ", ".join(map(self.quote_name, unique_fields)),
++                ", ".join(self.quote_name(field.column) for field in unique_fields),
+                 ", ".join(
+                     [
+-                        f"{field} = EXCLUDED.{field}"
+-                        for field in map(self.quote_name, update_fields)
++                        f"{self.quote_name(field.column)} = EXCLUDED.{self.quote_name(field.column)}"
++                        for field in update_fields
+                     ]
+                 ),
+             )
+diff --git a/django/db/backends/sqlite3/operations.py b/django/db/backends/sqlite3/operations.py
+index bb84d52071..4787f97c42 100644
+--- a/django/db/backends/sqlite3/operations.py
++++ b/django/db/backends/sqlite3/operations.py
+@@ -418,11 +418,11 @@ class DatabaseOperations(BaseDatabaseOperations):
+             and self.connection.features.supports_update_conflicts_with_target
+         ):
+             return "ON CONFLICT(%s) DO UPDATE SET %s" % (
+-                ", ".join(map(self.quote_name, unique_fields)),
++                ", ".join(self.quote_name(field.column) for field in unique_fields),
+                 ", ".join(
+                     [
+-                        f"{field} = EXCLUDED.{field}"
+-                        for field in map(self.quote_name, update_fields)
++                        f"{self.quote_name(field.column)} = EXCLUDED.{self.quote_name(field.column)}"
++                        for field in update_fields
+                     ]
+                 ),
+             )
+diff --git a/django/db/models/query.py b/django/db/models/query.py
+index be8580f2c4..b71189be98 100644
+--- a/django/db/models/query.py
++++ b/django/db/models/query.py
+@@ -698,7 +698,7 @@ class QuerySet(AltersData):
+                 raise NotSupportedError(
+                     "This database backend does not support ignoring conflicts."
+                 )
+-            return OnConflict.IGNORE
++            return OnConflict.IGNORE, [], []
+         elif update_conflicts:
+             if not db_features.supports_update_conflicts:
+                 raise NotSupportedError(
+@@ -720,28 +720,29 @@ class QuerySet(AltersData):
+                     "Unique fields that can trigger the upsert must be provided."
+                 )
+             # Updating primary keys and non-concrete fields is forbidden.
+-            update_fields = [self.model._meta.get_field(name) for name in update_fields]
+-            if any(not f.concrete or f.many_to_many for f in update_fields):
++            update_field_objects = [self.model._meta.get_field(name) for name in update_fields]
++            if any(not f.concrete or f.many_to_many for f in update_field_objects):
+                 raise ValueError(
+                     "bulk_create() can only be used with concrete fields in "
+                     "update_fields."
+                 )
+-            if any(f.primary_key for f in update_fields):
++            if any(f.primary_key for f in update_field_objects):
+                 raise ValueError(
+                     "bulk_create() cannot be used with primary keys in "
+                     "update_fields."
+                 )
++            unique_field_objects = []
+             if unique_fields:
+-                unique_fields = [
++                unique_field_objects = [
+                     self.model._meta.get_field(name) for name in unique_fields
+                 ]
+-                if any(not f.concrete or f.many_to_many for f in unique_fields):
++                if any(not f.concrete or f.many_to_many for f in unique_field_objects):
+                     raise ValueError(
+                         "bulk_create() can only be used with concrete fields "
+                         "in unique_fields."
+                     )
+-            return OnConflict.UPDATE
+-        return None
++            return OnConflict.UPDATE, update_field_objects, unique_field_objects
++        return None, [], []
+ 
+     def bulk_create(
+         self,
+@@ -788,7 +789,7 @@ class QuerySet(AltersData):
+             unique_fields = [
+                 opts.pk.name if name == "pk" else name for name in unique_fields
+             ]
+-        on_conflict = self._check_bulk_create_options(
++        on_conflict, update_field_objects, unique_field_objects = self._check_bulk_create_options(
+             ignore_conflicts,
+             update_conflicts,
+             update_fields,
+@@ -806,8 +807,8 @@ class QuerySet(AltersData):
+                     fields,
+                     batch_size,
+                     on_conflict=on_conflict,
+-                    update_fields=update_fields,
+-                    unique_fields=unique_fields,
++                    update_fields=update_field_objects,
++                    unique_fields=unique_field_objects,
+                 )
+                 for obj_with_pk, results in zip(objs_with_pk, returned_columns):
+                     for result, field in zip(results, opts.db_returning_fields):
+@@ -823,8 +824,8 @@ class QuerySet(AltersData):
+                     fields,
+                     batch_size,
+                     on_conflict=on_conflict,
+-                    update_fields=update_fields,
+-                    unique_fields=unique_fields,
++                    update_fields=update_field_objects,
++                    unique_fields=unique_field_objects,
+                 )
+                 connection = connections[self.db]
+                 if (

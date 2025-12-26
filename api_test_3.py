@@ -4,10 +4,10 @@ import json
 # openai_api_key = "token-abc123"
 # openai_api_base = "http://publicshare.a.pinggy.link/v1"
 
-api_key = "msk-67260fae97f724abc513186a3ba35d6e5b61c5bfe262b58e9928c0d69aeb3ccf"
+api_key = "msk-b8ee4eb9e40467c5c8bc699ea5840af20bae17debd763315986153a2c48cbb70"
 # base_url = "http://publicshare.a.pinggy.link/v1"
 base_url = "http://claude0openai.a.pinggy.link/v1"
-model = "Claude 4.5 Sonnet"
+model = "Claude-Sonnet-4-20250514-v1.0"
 
 client = OpenAI(
     api_key=api_key,

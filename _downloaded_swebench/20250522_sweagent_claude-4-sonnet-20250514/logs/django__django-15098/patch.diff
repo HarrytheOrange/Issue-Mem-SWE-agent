@@ -1,0 +1,856 @@
+diff --git a/debug_detailed.py b/debug_detailed.py
+new file mode 100644
+index 0000000000..3bd36d5a5d
+--- /dev/null
++++ b/debug_detailed.py
+@@ -0,0 +1,99 @@
++#!/usr/bin/env python
++"""
++Detailed debugging of the language resolution issue.
++"""
++
++import django
++from django.conf import settings
++from django.test import RequestFactory
++from django.middleware.locale import LocaleMiddleware
++from django.utils.translation import get_language, get_language_from_path, get_language_from_request, activate
++from django.conf.urls.i18n import is_language_prefix_patterns_used
++
++# Configure Django settings
++if not settings.configured:
++    settings.configure(
++        DEBUG=True,
++        SECRET_KEY='test-secret-key',
++        USE_I18N=True,
++        LANGUAGE_CODE='en-us',
++        LANGUAGES=[
++            ('en-us', "English"),
++            ('en-latn-us', "Latin English"),
++            ('en-Latn-US', "BCP 47 case format"),
++        ],
++        MIDDLEWARE=[
++            'django.middleware.locale.LocaleMiddleware',
++        ],
++        ALLOWED_HOSTS=['testserver'],
++    )
++
++django.setup()
++
++from django.conf.urls.i18n import i18n_patterns
++from django.http import HttpResponse
++from django.urls import path
++
++def test_view(request):
++    return HttpResponse('OK')
++
++# Create a test URLs module
++import sys
++from types import ModuleType
++urls_module = ModuleType('test_urls')
++urls_module.urlpatterns = i18n_patterns(path('', test_view))
++sys.modules['test_urls'] = urls_module
++settings.ROOT_URLCONF = 'test_urls'
++
++def debug_detailed():
++    """Detailed debugging of the language resolution."""
++    print("Detailed debugging of language resolution:")
++    print("=" * 60)
++    
++    factory = RequestFactory()
++    
++    path = '/en-Latn-US/'
++    print(f"Testing path: {path}")
++    
++    request = factory.get(path)
++    print(f"  Request path_info: {request.path_info}")
++    
++    # Step 1: Check get_language_from_path
++    lang_from_path = get_language_from_path(request.path_info)
++    print(f"  get_language_from_path: {lang_from_path}")
++    
++    # Step 2: Check is_language_prefix_patterns_used
++    urlconf = getattr(request, 'urlconf', settings.ROOT_URLCONF)
++    i18n_patterns_used, prefixed_default_language = is_language_prefix_patterns_used(urlconf)
++    print(f"  i18n_patterns_used: {i18n_patterns_used}")
++    print(f"  prefixed_default_language: {prefixed_default_language}")
++    
++    # Step 3: Check get_language_from_request
++    language = get_language_from_request(request, check_path=i18n_patterns_used)
++    print(f"  get_language_from_request: {language}")
++    
++    # Step 4: Check the middleware logic
++    language_from_path = get_language_from_path(request.path_info)
++    print(f"  language_from_path (again): {language_from_path}")
++    
++    if not language_from_path and i18n_patterns_used and not prefixed_default_language:
++        language = settings.LANGUAGE_CODE
++        print(f"  Using LANGUAGE_CODE: {language}")
++    
++    # Step 5: Activate the language
++    print(f"  Language before activation: {get_language()}")
++    activate(language)
++    print(f"  Language after activation: {get_language()}")
++    
++    # Step 6: Test the middleware directly
++    print("\n  Testing middleware directly:")
++    activate('en-us')  # Reset to default
++    print(f"    Language before middleware: {get_language()}")
++    
++    middleware = LocaleMiddleware(lambda req: HttpResponse('OK'))
++    middleware.process_request(request)
++    print(f"    Language after middleware: {get_language()}")
++    print(f"    request.LANGUAGE_CODE: {getattr(request, 'LANGUAGE_CODE', 'Not set')}")
++
++if __name__ == '__main__':
++    debug_detailed()
+\ No newline at end of file
+diff --git a/debug_issue.py b/debug_issue.py
+new file mode 100644
+index 0000000000..24bb337c2e
+--- /dev/null
++++ b/debug_issue.py
+@@ -0,0 +1,86 @@
++#!/usr/bin/env python
++"""
++Debug script to understand the i18n patterns issue in detail.
++"""
++
++import os
++import sys
++import django
++from django.conf import settings
++from django.test import RequestFactory
++from django.urls import path
++from django.http import HttpResponse
++from django.conf.urls.i18n import i18n_patterns
++from django.middleware.locale import LocaleMiddleware
++from django.urls import resolve
++from django.utils.translation import get_language_from_path, get_supported_language_variant
++from django.urls.resolvers import LocalePrefixPattern
++
++# Configure Django settings
++if not settings.configured:
++    settings.configure(
++        DEBUG=True,
++        SECRET_KEY='test-secret-key',
++        USE_I18N=True,
++        LANGUAGE_CODE='en-us',
++        LANGUAGES=[
++            ('en-us', "English"),
++            ('en-latn-us', "Latin English"),
++            ('en-Latn-US', "BCP 47 case format"),
++        ],
++        MIDDLEWARE=[
++            'django.middleware.locale.LocaleMiddleware',
++        ],
++        ROOT_URLCONF='debug_issue',
++    )
++
++django.setup()
++
++def test_view(request):
++    return HttpResponse('U!')
++
++# Define URL patterns
++urlpatterns = i18n_patterns(
++    path('', test_view, name='test'),
++)
++
++def debug_language_processing():
++    """Debug the language processing step by step."""
++    print("Debugging language processing:")
++    print("=" * 50)
++    
++    test_paths = [
++        '/en-us/',
++        '/en-latn-us/',
++        '/en-Latn-US/',
++    ]
++    
++    for path in test_paths:
++        print(f"\nProcessing path: {path}")
++        
++        # Step 1: Check get_language_from_path
++        lang_from_path = get_language_from_path(path)
++        print(f"  get_language_from_path: {lang_from_path}")
++        
++        # Step 2: Check get_supported_language_variant if we got a language
++        if lang_from_path:
++            try:
++                supported_variant = get_supported_language_variant(lang_from_path)
++                print(f"  get_supported_language_variant: {supported_variant}")
++            except LookupError as e:
++                print(f"  get_supported_language_variant: LookupError - {e}")
++        
++        # Step 3: Test LocalePrefixPattern.match directly
++        pattern = LocalePrefixPattern()
++        match_result = pattern.match(path)
++        print(f"  LocalePrefixPattern.match: {match_result}")
++        
++        # Step 4: Test URL resolution
++        try:
++            match = resolve(path)
++            print(f"  URL resolution: SUCCESS - {match}")
++        except Exception as e:
++            print(f"  URL resolution: ERROR - {e}")
++
++if __name__ == '__main__':
++    debug_language_processing()
+\ No newline at end of file
+diff --git a/debug_middleware.py b/debug_middleware.py
+new file mode 100644
+index 0000000000..056f616bef
+--- /dev/null
++++ b/debug_middleware.py
+@@ -0,0 +1,74 @@
++#!/usr/bin/env python
++"""
++Debug the middleware processing.
++"""
++
++import django
++from django.conf import settings
++from django.test import RequestFactory
++from django.middleware.locale import LocaleMiddleware
++from django.utils.translation import get_language, get_language_from_path
++
++# Configure Django settings
++if not settings.configured:
++    settings.configure(
++        DEBUG=True,
++        SECRET_KEY='test-secret-key',
++        USE_I18N=True,
++        LANGUAGE_CODE='en-us',
++        LANGUAGES=[
++            ('en-us', "English"),
++            ('en-latn-us', "Latin English"),
++            ('en-Latn-US', "BCP 47 case format"),
++        ],
++        MIDDLEWARE=[
++            'django.middleware.locale.LocaleMiddleware',
++        ],
++        ALLOWED_HOSTS=['testserver'],
++    )
++
++django.setup()
++
++from django.conf.urls.i18n import i18n_patterns
++from django.http import HttpResponse
++from django.urls import path
++
++def test_view(request):
++    return HttpResponse('OK')
++
++# Create a test URLs module
++import sys
++from types import ModuleType
++urls_module = ModuleType('test_urls')
++urls_module.urlpatterns = i18n_patterns(path('', test_view))
++sys.modules['test_urls'] = urls_module
++settings.ROOT_URLCONF = 'test_urls'
++
++def debug_middleware():
++    """Debug the middleware processing."""
++    print("Debugging middleware processing:")
++    print("=" * 50)
++    
++    factory = RequestFactory()
++    middleware = LocaleMiddleware(lambda request: HttpResponse('OK'))
++    
++    test_paths = ['/en-us/', '/en-latn-us/', '/en-Latn-US/']
++    
++    for path in test_paths:
++        print(f"\nProcessing path: {path}")
++        
++        request = factory.get(path)
++        print(f"  Request path_info: {request.path_info}")
++        
++        # Check get_language_from_path
++        lang_from_path = get_language_from_path(request.path_info)
++        print(f"  get_language_from_path: {lang_from_path}")
++        
++        # Process the request through middleware
++        print(f"  Language before middleware: {get_language()}")
++        middleware.process_request(request)
++        print(f"  Language after middleware: {get_language()}")
++        print(f"  request.LANGUAGE_CODE: {getattr(request, 'LANGUAGE_CODE', 'Not set')}")
++
++if __name__ == '__main__':
++    debug_middleware()
+\ No newline at end of file
+diff --git a/debug_pattern.py b/debug_pattern.py
+new file mode 100644
+index 0000000000..b6ef9be81a
+--- /dev/null
++++ b/debug_pattern.py
+@@ -0,0 +1,64 @@
++#!/usr/bin/env python
++"""
++Debug the LocalePrefixPattern.match method specifically.
++"""
++
++import os
++import sys
++import django
++from django.conf import settings
++from django.utils.translation import get_language, get_language_from_path, activate
++from django.urls.resolvers import LocalePrefixPattern
++
++# Configure Django settings
++if not settings.configured:
++    settings.configure(
++        DEBUG=True,
++        SECRET_KEY='test-secret-key',
++        USE_I18N=True,
++        LANGUAGE_CODE='en-us',
++        LANGUAGES=[
++            ('en-us', "English"),
++            ('en-latn-us', "Latin English"),
++            ('en-Latn-US', "BCP 47 case format"),
++        ],
++    )
++
++django.setup()
++
++def debug_pattern_match():
++    """Debug the LocalePrefixPattern.match method."""
++    print("Debugging LocalePrefixPattern.match:")
++    print("=" * 50)
++    
++    # Test with different active languages
++    test_languages = ['en-us', 'en-latn-us', 'en-Latn-US']
++    test_paths = ['/en-us/', '/en-latn-us/', '/en-Latn-US/']
++    
++    for active_lang in test_languages:
++        print(f"\nActive language: {active_lang}")
++        activate(active_lang)
++        
++        pattern = LocalePrefixPattern()
++        print(f"  Current language: {get_language()}")
++        print(f"  Language prefix: '{pattern.language_prefix}'")
++        
++        for path in test_paths:
++            print(f"  Testing path: {path}")
++            
++            # Check get_language_from_path
++            lang_from_path = get_language_from_path(path)
++            print(f"    get_language_from_path: {lang_from_path}")
++            
++            # Check pattern match
++            match_result = pattern.match(path)
++            print(f"    pattern.match: {match_result}")
++            
++            # Manual check of the logic
++            if lang_from_path is not None:
++                language_prefix = '%s/' % lang_from_path
++                print(f"    Constructed prefix: '{language_prefix}'")
++                print(f"    path.startswith(prefix): {path.startswith(language_prefix)}")
++
++if __name__ == '__main__':
++    debug_pattern_match()
+\ No newline at end of file
+diff --git a/debug_pattern_detailed.py b/debug_pattern_detailed.py
+new file mode 100644
+index 0000000000..1628fb3852
+--- /dev/null
++++ b/debug_pattern_detailed.py
+@@ -0,0 +1,66 @@
++#!/usr/bin/env python
++"""
++Debug the LocalePrefixPattern in detail.
++"""
++
++import os
++import sys
++import django
++from django.conf import settings
++from django.utils.translation import activate, get_language_from_path
++from django.urls.resolvers import LocalePrefixPattern
++
++# Configure Django settings
++if not settings.configured:
++    settings.configure(
++        DEBUG=True,
++        SECRET_KEY='test-secret-key',
++        USE_I18N=True,
++        LANGUAGE_CODE='en-us',
++        LANGUAGES=[
++            ('en-us', "English"),
++            ('en-latn-us', "Latin English"),
++            ('en-Latn-US', "BCP 47 case format"),
++        ],
++        ALLOWED_HOSTS=['testserver'],
++    )
++
++django.setup()
++
++def debug_pattern_detailed():
++    """Debug the LocalePrefixPattern in detail."""
++    print("Debugging LocalePrefixPattern in detail:")
++    print("=" * 60)
++    
++    test_paths = ['/en-us/', '/en-latn-us/', '/en-Latn-US/']
++    
++    # Test with different active languages
++    for active_lang in ['en-us', 'en-latn-us', 'en-Latn-US']:
++        print(f"\nActive language: {active_lang}")
++        activate(active_lang)
++        
++        pattern = LocalePrefixPattern()
++        print(f"  Current language: {pattern.language_prefix}")
++        
++        for path in test_paths:
++            print(f"  Testing path: {path}")
++            
++            # Step 1: get_language_from_path
++            lang_from_path = get_language_from_path(path)
++            print(f"    get_language_from_path: {lang_from_path}")
++            
++            # Step 2: pattern.match
++            match_result = pattern.match(path)
++            print(f"    pattern.match: {match_result}")
++            
++            # Step 3: Manual simulation of the match logic
++            if lang_from_path is not None:
++                constructed_prefix = '/%s/' % lang_from_path
++                print(f"    Constructed prefix: '{constructed_prefix}'")
++                print(f"    path.startswith(prefix): {path.startswith(constructed_prefix)}")
++                if path.startswith(constructed_prefix):
++                    remaining = path[len(constructed_prefix):]
++                    print(f"    Remaining path: '{remaining}'")
++
++if __name__ == '__main__':
++    debug_pattern_detailed()
+\ No newline at end of file
+diff --git a/django/urls/resolvers.py b/django/urls/resolvers.py
+index 6ea18dd22f..9e66915ac7 100644
+--- a/django/urls/resolvers.py
++++ b/django/urls/resolvers.py
+@@ -23,7 +23,7 @@ from django.utils.datastructures import MultiValueDict
+ from django.utils.functional import cached_property
+ from django.utils.http import RFC3986_SUBDELIMS, escape_leading_slashes
+ from django.utils.regex_helper import _lazy_re_compile, normalize
+-from django.utils.translation import get_language
++from django.utils.translation import get_language, get_language_from_path
+ 
+ from .converters import get_converter
+ from .exceptions import NoReverseMatch, Resolver404
+@@ -321,6 +321,15 @@ class LocalePrefixPattern:
+             return '%s/' % language_code
+ 
+     def match(self, path):
++        # First check if there's a valid language code in the path
++        language_code = get_language_from_path(path)
++        if language_code is not None:
++            # If we found a valid language code, construct the prefix and match
++            language_prefix = '/%s/' % language_code
++            if path.startswith(language_prefix):
++                return path[len(language_prefix):], (), {}
++        
++        # Fallback to the original behavior for the current language
+         language_prefix = self.language_prefix
+         if path.startswith(language_prefix):
+             return path[len(language_prefix):], (), {}
+diff --git a/django/utils/translation/trans_real.py b/django/utils/translation/trans_real.py
+index 7dcc77b46c..274a6f0643 100644
+--- a/django/utils/translation/trans_real.py
++++ b/django/utils/translation/trans_real.py
+@@ -43,7 +43,7 @@ language_code_re = _lazy_re_compile(
+     re.IGNORECASE
+ )
+ 
+-language_code_prefix_re = _lazy_re_compile(r'^/(\w+([@-]\w+)?)(/|$)')
++language_code_prefix_re = _lazy_re_compile(r'^/(\w+(?:[@-]\w+)*)(/|$)')
+ 
+ 
+ @receiver(setting_changed)
+diff --git a/reproduce_issue.py b/reproduce_issue.py
+new file mode 100644
+index 0000000000..13e2372319
+--- /dev/null
++++ b/reproduce_issue.py
+@@ -0,0 +1,106 @@
++#!/usr/bin/env python
++"""
++Script to reproduce the i18n patterns issue with language locales containing both script and region.
++"""
++
++import os
++import sys
++import django
++from django.conf import settings
++from django.test import RequestFactory
++from django.urls import path
++from django.http import HttpResponse
++from django.conf.urls.i18n import i18n_patterns
++from django.middleware.locale import LocaleMiddleware
++from django.urls import resolve
++from django.utils.translation import get_language_from_path
++
++# Configure Django settings
++if not settings.configured:
++    settings.configure(
++        DEBUG=True,
++        SECRET_KEY='test-secret-key',
++        USE_I18N=True,
++        LANGUAGE_CODE='en-us',
++        LANGUAGES=[
++            ('en-us', "English"),
++            ('en-latn-us', "Latin English"),
++            ('en-Latn-US', "BCP 47 case format"),
++        ],
++        MIDDLEWARE=[
++            'django.middleware.locale.LocaleMiddleware',
++        ],
++        ROOT_URLCONF='reproduce_issue',
++    )
++
++django.setup()
++
++def test_view(request):
++    return HttpResponse('U!')
++
++# Define URL patterns
++urlpatterns = i18n_patterns(
++    path('', test_view, name='test'),
++)
++
++def test_language_from_path():
++    """Test get_language_from_path function with different language codes."""
++    print("Testing get_language_from_path function:")
++    
++    test_paths = [
++        '/en-us/',
++        '/en-latn-us/',
++        '/en-Latn-US/',
++    ]
++    
++    for path in test_paths:
++        result = get_language_from_path(path)
++        print(f"  {path} -> {result}")
++    print()
++
++def test_url_resolution():
++    """Test URL resolution with different language prefixes."""
++    print("Testing URL resolution:")
++    
++    test_paths = [
++        '/en-us/',
++        '/en-latn-us/',
++        '/en-Latn-US/',
++    ]
++    
++    for path in test_paths:
++        try:
++            match = resolve(path)
++            print(f"  {path} -> SUCCESS: {match}")
++        except Exception as e:
++            print(f"  {path} -> ERROR: {e}")
++    print()
++
++def test_middleware():
++    """Test LocaleMiddleware processing."""
++    print("Testing LocaleMiddleware:")
++    
++    factory = RequestFactory()
++    middleware = LocaleMiddleware(lambda request: HttpResponse('OK'))
++    
++    test_paths = [
++        '/en-us/',
++        '/en-latn-us/',
++        '/en-Latn-US/',
++    ]
++    
++    for path in test_paths:
++        request = factory.get(path)
++        try:
++            middleware.process_request(request)
++            print(f"  {path} -> Language: {getattr(request, 'LANGUAGE_CODE', 'None')}")
++        except Exception as e:
++            print(f"  {path} -> ERROR: {e}")
++    print()
++
++if __name__ == '__main__':
++    print("Reproducing i18n patterns issue with language locales containing both script and region\n")
++    
++    test_language_from_path()
++    test_url_resolution()
++    test_middleware()
+\ No newline at end of file
+diff --git a/test_original.py b/test_original.py
+new file mode 100644
+index 0000000000..3afe643d6d
+--- /dev/null
++++ b/test_original.py
+@@ -0,0 +1,57 @@
++#!/usr/bin/env python
++"""
++Test the original Django behavior with simple language codes.
++"""
++
++import os
++import sys
++import django
++from django.conf import settings
++from django.utils.translation import activate
++from django.urls.resolvers import LocalePrefixPattern
++
++# Configure Django settings
++if not settings.configured:
++    settings.configure(
++        DEBUG=True,
++        SECRET_KEY='test-secret-key',
++        USE_I18N=True,
++        LANGUAGE_CODE='en',
++        LANGUAGES=[
++            ('en', "English"),
++            ('fr', "French"),
++        ],
++    )
++
++django.setup()
++
++def test_original_behavior():
++    """Test the original behavior with simple language codes."""
++    print("Testing original behavior:")
++    print("=" * 50)
++    
++    # Test with English active
++    activate('en')
++    pattern = LocalePrefixPattern()
++    print(f"Active language: en")
++    print(f"Language prefix: '{pattern.language_prefix}'")
++    
++    test_paths = ['/en/', '/fr/', '/']
++    for path in test_paths:
++        match_result = pattern.match(path)
++        print(f"  {path} -> {match_result}")
++    
++    print()
++    
++    # Test with French active
++    activate('fr')
++    pattern = LocalePrefixPattern()
++    print(f"Active language: fr")
++    print(f"Language prefix: '{pattern.language_prefix}'")
++    
++    for path in test_paths:
++        match_result = pattern.match(path)
++        print(f"  {path} -> {match_result}")
++
++if __name__ == '__main__':
++    test_original_behavior()
+\ No newline at end of file
+diff --git a/test_regex.py b/test_regex.py
+new file mode 100644
+index 0000000000..278627bf4e
+--- /dev/null
++++ b/test_regex.py
+@@ -0,0 +1,42 @@
++#!/usr/bin/env python
++"""
++Test the current language_code_prefix_re regex to understand what it captures.
++"""
++
++import re
++
++# Current regex from Django
++language_code_prefix_re = re.compile(r'^/(\w+([@-]\w+)?)(/|$)')
++
++test_paths = [
++    '/en/',
++    '/en-us/',
++    '/en-latn-us/',
++    '/en-Latn-US/',
++    '/zh-hant-tw/',
++    '/fr-ca/',
++]
++
++print("Testing current regex: r'^/(\\w+([@-]\\w+)?)(/|$)'")
++print("=" * 50)
++
++for path in test_paths:
++    match = language_code_prefix_re.match(path)
++    if match:
++        print(f"{path:15} -> MATCH: groups={match.groups()}, group(1)='{match.group(1)}'")
++    else:
++        print(f"{path:15} -> NO MATCH")
++
++print("\n" + "=" * 50)
++print("Testing improved regex: r'^/(\\w+(?:[@-]\\w+)*)(/|$)'")
++print("=" * 50)
++
++# Improved regex that can handle multiple parts
++improved_regex = re.compile(r'^/(\w+(?:[@-]\w+)*)(/|$)')
++
++for path in test_paths:
++    match = improved_regex.match(path)
++    if match:
++        print(f"{path:15} -> MATCH: groups={match.groups()}, group(1)='{match.group(1)}'")
++    else:
++        print(f"{path:15} -> NO MATCH")
+\ No newline at end of file
+diff --git a/test_three_part_lang.py b/test_three_part_lang.py
+new file mode 100644
+index 0000000000..7d2b9d581e
+--- /dev/null
++++ b/test_three_part_lang.py
+@@ -0,0 +1,82 @@
++#!/usr/bin/env python
++"""
++Test three-part language codes with i18n_patterns.
++"""
++
++import os
++import sys
++import django
++from django.conf import settings
++from django.test import TestCase, override_settings
++from django.test.client import Client
++
++# Add the testbed to the path
++sys.path.insert(0, '/testbed')
++
++# Configure Django settings
++if not settings.configured:
++    settings.configure(
++        DEBUG=True,
++        SECRET_KEY='test-secret-key',
++        USE_I18N=True,
++        LANGUAGE_CODE='en-us',
++        LANGUAGES=[
++            ('en-us', "English"),
++            ('en-latn-us', "Latin English"),
++            ('en-Latn-US', "BCP 47 case format"),
++        ],
++        MIDDLEWARE=[
++            'django.middleware.locale.LocaleMiddleware',
++            'django.middleware.common.CommonMiddleware',
++        ],
++        ROOT_URLCONF='test_three_part_lang',
++        ALLOWED_HOSTS=['testserver'],
++        TEMPLATES=[{
++            'BACKEND': 'django.template.backends.django.DjangoTemplates',
++            'DIRS': [],
++            'OPTIONS': {
++                'context_processors': [
++                    'django.template.context_processors.i18n',
++                ],
++            },
++        }],
++    )
++
++django.setup()
++
++from django.conf.urls.i18n import i18n_patterns
++from django.http import HttpResponse
++from django.urls import path
++
++def test_view(request):
++    return HttpResponse('OK')
++
++# Define URL patterns
++urlpatterns = i18n_patterns(
++    path('', test_view, name='test'),
++)
++
++class ThreePartLanguageCodeTests(TestCase):
++    """Test three-part language codes with i18n_patterns."""
++    
++    def test_en_us_url(self):
++        """Test that en-us works."""
++        response = self.client.get('/en-us/')
++        self.assertEqual(response.status_code, 200)
++        self.assertEqual(response.content, b'OK')
++    
++    def test_en_latn_us_url(self):
++        """Test that en-latn-us works."""
++        response = self.client.get('/en-latn-us/')
++        self.assertEqual(response.status_code, 200)
++        self.assertEqual(response.content, b'OK')
++    
++    def test_en_Latn_US_url(self):
++        """Test that en-Latn-US works."""
++        response = self.client.get('/en-Latn-US/')
++        self.assertEqual(response.status_code, 200)
++        self.assertEqual(response.content, b'OK')
++
++if __name__ == '__main__':
++    import unittest
++    unittest.main()
+\ No newline at end of file
+diff --git a/test_with_client.py b/test_with_client.py
+new file mode 100644
+index 0000000000..8b454d78d9
+--- /dev/null
++++ b/test_with_client.py
+@@ -0,0 +1,68 @@
++#!/usr/bin/env python
++"""
++Test the i18n patterns issue using Django test client.
++"""
++
++import os
++import sys
++import django
++from django.conf import settings
++from django.test.client import Client
++from django.conf.urls.i18n import i18n_patterns
++from django.http import HttpResponse
++from django.urls import path
++
++# Configure Django settings
++if not settings.configured:
++    settings.configure(
++        DEBUG=True,
++        SECRET_KEY='test-secret-key',
++        USE_I18N=True,
++        LANGUAGE_CODE='en-us',
++        LANGUAGES=[
++            ('en-us', "English"),
++            ('en-latn-us', "Latin English"),
++            ('en-Latn-US', "BCP 47 case format"),
++        ],
++        MIDDLEWARE=[
++            'django.middleware.locale.LocaleMiddleware',
++        ],
++        ALLOWED_HOSTS=['testserver'],
++    )
++
++django.setup()
++
++def test_view(request):
++    return HttpResponse('U!')
++
++# Create a test URLs module
++import sys
++from types import ModuleType
++urls_module = ModuleType('test_urls')
++urls_module.urlpatterns = i18n_patterns(
++    path('', test_view, name='test'),
++)
++sys.modules['test_urls'] = urls_module
++
++# Update settings to use our test URLs
++settings.ROOT_URLCONF = 'test_urls'
++
++def test_with_client():
++    """Test using Django test client."""
++    print("Testing with Django test client:")
++    print("=" * 50)
++    
++    client = Client()
++    
++    test_paths = [
++        '/en-us/',
++        '/en-latn-us/',
++        '/en-Latn-US/',
++    ]
++    
++    for path in test_paths:
++        response = client.get(path)
++        print(f"  GET {path} -> {response.status_code} {response.content.decode()}")
++
++if __name__ == '__main__':
++    test_with_client()
+\ No newline at end of file

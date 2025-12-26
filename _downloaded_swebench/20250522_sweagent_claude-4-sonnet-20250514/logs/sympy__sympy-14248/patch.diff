@@ -1,0 +1,186 @@
+diff --git a/sympy/printing/latex.py b/sympy/printing/latex.py
+index 8253b2f682..f61f70737e 100644
+--- a/sympy/printing/latex.py
++++ b/sympy/printing/latex.py
+@@ -1477,8 +1477,52 @@ def _print_Adjoint(self, expr):
+             return r"%s^\dagger" % self._print(mat)
+ 
+     def _print_MatAdd(self, expr):
++        def _matrix_coeff_isneg(arg):
++            """Return True if the leading coefficient of a matrix expression is negative."""
++            if hasattr(arg, 'is_MatMul') and arg.is_MatMul:
++                coeff, matrices = arg.as_coeff_matrices()
++                return coeff.is_Number and coeff.is_negative
++            return False
++        
+         terms = list(expr.args)
+-        tex = " + ".join(map(self._print, terms))
++        tex = ""
++        for i, term in enumerate(terms):
++            if i == 0:
++                # Handle first term
++                if _matrix_coeff_isneg(term):
++                    tex += "-"
++                    # Extract positive part for negative terms
++                    coeff, matrices = term.as_coeff_matrices()
++                    from sympy.matrices.expressions.matmul import MatMul
++                    if -coeff == 1:
++                        # If coefficient is -1, just print the matrices without the coefficient
++                        if len(matrices) == 1:
++                            term = matrices[0]
++                        else:
++                            term = MatMul(*matrices)
++                    else:
++                        term = MatMul(-coeff, *matrices)
++            elif _matrix_coeff_isneg(term):
++                tex += " - "
++                # Extract positive part for negative terms
++                coeff, matrices = term.as_coeff_matrices()
++                from sympy.matrices.expressions.matmul import MatMul
++                if -coeff == 1:
++                    # If coefficient is -1, just print the matrices without the coefficient
++                    if len(matrices) == 1:
++                        term = matrices[0]
++                    else:
++                        term = MatMul(*matrices)
++                else:
++                    term = MatMul(-coeff, *matrices)
++            else:
++                tex += " + "
++            
++            term_tex = self._print(term)
++            if self._needs_add_brackets(term):
++                term_tex = r"\left(%s\right)" % term_tex
++            tex += term_tex
++        
+         return tex
+ 
+     def _print_MatMul(self, expr):
+diff --git a/sympy/printing/pretty/pretty.py b/sympy/printing/pretty/pretty.py
+index db24f4c612..1e80e8fbe1 100644
+--- a/sympy/printing/pretty/pretty.py
++++ b/sympy/printing/pretty/pretty.py
+@@ -819,7 +819,49 @@ def _print_BlockMatrix(self, B):
+         return self._print(B.blocks)
+ 
+     def _print_MatAdd(self, expr):
+-        return self._print_seq(expr.args, None, None, ' + ')
++        def _matrix_coeff_isneg(arg):
++            """Return True if the leading coefficient of a matrix expression is negative."""
++            if hasattr(arg, 'is_MatMul') and arg.is_MatMul:
++                coeff, matrices = arg.as_coeff_matrices()
++                return coeff.is_Number and coeff.is_negative
++            return False
++        
++        pforms = []
++        for i, term in enumerate(expr.args):
++            if _matrix_coeff_isneg(term):
++                # Extract positive part for negative terms
++                coeff, matrices = term.as_coeff_matrices()
++                from sympy.matrices.expressions.matmul import MatMul
++                if -coeff == 1:
++                    # If coefficient is -1, just print the matrices without the coefficient
++                    if len(matrices) == 1:
++                        positive_term = matrices[0]
++                    else:
++                        positive_term = MatMul(*matrices)
++                else:
++                    positive_term = MatMul(-coeff, *matrices)
++                pform = self._print(positive_term)
++                
++                # Add minus sign
++                if i == 0:
++                    if pform.height() > 1:
++                        pform_neg = '- '
++                    else:
++                        pform_neg = '-'
++                else:
++                    pform_neg = ' - '
++                
++                if (pform.binding > prettyForm.NEG
++                    or pform.binding == prettyForm.ADD):
++                    p = stringPict(*pform.parens())
++                else:
++                    p = pform
++                p = stringPict.next(pform_neg, p)
++                pforms.append(prettyForm(binding=prettyForm.NEG, *p))
++            else:
++                pforms.append(self._print(term))
++        
++        return prettyForm.__add__(*pforms)
+ 
+     def _print_MatMul(self, expr):
+         args = list(expr.args)
+diff --git a/sympy/printing/str.py b/sympy/printing/str.py
+index 0baefe0f7f..73145255ff 100644
+--- a/sympy/printing/str.py
++++ b/sympy/printing/str.py
+@@ -312,8 +312,43 @@ def _print_HadamardProduct(self, expr):
+             for arg in expr.args])
+ 
+     def _print_MatAdd(self, expr):
+-        return ' + '.join([self.parenthesize(arg, precedence(expr))
+-            for arg in expr.args])
++        def _matrix_coeff_isneg(arg):
++            """Return True if the leading coefficient of a matrix expression is negative."""
++            if hasattr(arg, 'is_MatMul') and arg.is_MatMul:
++                coeff, matrices = arg.as_coeff_matrices()
++                return coeff.is_Number and coeff.is_negative
++            return False
++        
++        PREC = precedence(expr)
++        l = []
++        for term in expr.args:
++            if _matrix_coeff_isneg(term):
++                # Extract positive part for negative terms
++                coeff, matrices = term.as_coeff_matrices()
++                from sympy.matrices.expressions.matmul import MatMul
++                if -coeff == 1:
++                    # If coefficient is -1, just print the matrices without the coefficient
++                    if len(matrices) == 1:
++                        positive_term = matrices[0]
++                    else:
++                        positive_term = MatMul(*matrices)
++                else:
++                    positive_term = MatMul(-coeff, *matrices)
++                t = self._print(positive_term)
++                sign = "-"
++            else:
++                t = self._print(term)
++                sign = "+"
++            
++            if precedence(term) < PREC:
++                l.extend([sign, "(%s)" % t])
++            else:
++                l.extend([sign, t])
++        
++        sign = l.pop(0)
++        if sign == '+':
++            sign = ""
++        return sign + ' '.join(l)
+ 
+     def _print_NaN(self, expr):
+         return 'nan'
+diff --git a/sympy/printing/tests/test_latex.py b/sympy/printing/tests/test_latex.py
+index 0f07d5e3a9..414357384f 100644
+--- a/sympy/printing/tests/test_latex.py
++++ b/sympy/printing/tests/test_latex.py
+@@ -1710,7 +1710,7 @@ def test_MatrixElement_printing():
+     assert latex(3 * A[0, 0]) == r"3 A_{0, 0}"
+ 
+     F = C[0, 0].subs(C, A - B)
+-    assert latex(F) == r"\left(-1 B + A\right)_{0, 0}"
++    assert latex(F) == r"\left(-B + A\right)_{0, 0}"
+ 
+ 
+ def test_Quaternion_latex_printing():
+diff --git a/sympy/printing/tests/test_str.py b/sympy/printing/tests/test_str.py
+index 884c09d941..a65dc1d34e 100644
+--- a/sympy/printing/tests/test_str.py
++++ b/sympy/printing/tests/test_str.py
+@@ -784,4 +784,4 @@ def test_MatrixElement_printing():
+     assert(str(3 * A[0, 0]) == "3*A[0, 0]")
+ 
+     F = C[0, 0].subs(C, A - B)
+-    assert str(F) == "((-1)*B + A)[0, 0]"
++    assert str(F) == "(-B + A)[0, 0]"

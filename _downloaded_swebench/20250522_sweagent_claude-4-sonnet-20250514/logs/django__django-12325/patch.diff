@@ -1,0 +1,70 @@
+diff --git a/django/db/models/base.py b/django/db/models/base.py
+index 8ea6c05ef9..33e6ebb559 100644
+--- a/django/db/models/base.py
++++ b/django/db/models/base.py
+@@ -204,7 +204,11 @@ class ModelBase(type):
+             for field in base._meta.local_fields:
+                 if isinstance(field, OneToOneField):
+                     related = resolve_relation(new_class, field.remote_field.model)
+-                    parent_links[make_model_tuple(related)] = field
++                    related_key = make_model_tuple(related)
++                    # Prioritize fields with parent_link=True
++                    if (related_key not in parent_links or 
++                        getattr(field.remote_field, 'parent_link', False)):
++                        parent_links[related_key] = field
+ 
+         # Track fields inherited from base models.
+         inherited_attributes = set()
+diff --git a/tests/model_inheritance/tests.py b/tests/model_inheritance/tests.py
+index 5eef0f5bfa..0ec4ebb8c1 100644
+--- a/tests/model_inheritance/tests.py
++++ b/tests/model_inheritance/tests.py
+@@ -204,6 +204,48 @@ class ModelInheritanceTests(TestCase):
+ 
+         self.assertEqual(A.attr.called, (A, 'attr'))
+ 
++    @isolate_apps('model_inheritance')
++    def test_parent_link_field_selection_with_multiple_onetoone(self):
++        """
++        Test that when there are multiple OneToOneField instances pointing to
++        the parent model, the one with parent_link=True is correctly selected
++        as the parent link, regardless of field declaration order.
++        """
++        class Document(models.Model):
++            class Meta:
++                app_label = 'model_inheritance'
++
++        # Test case 1: parent_link field declared first
++        class Picking1(Document):
++            document_ptr = models.OneToOneField(
++                Document, on_delete=models.CASCADE, parent_link=True, related_name='+'
++            )
++            origin = models.OneToOneField(
++                Document, related_name='picking1', on_delete=models.PROTECT
++            )
++
++            class Meta:
++                app_label = 'model_inheritance'
++
++        # Test case 2: parent_link field declared second
++        class Picking2(Document):
++            origin = models.OneToOneField(
++                Document, related_name='picking2', on_delete=models.PROTECT
++            )
++            document_ptr = models.OneToOneField(
++                Document, on_delete=models.CASCADE, parent_link=True, related_name='+'
++            )
++
++            class Meta:
++                app_label = 'model_inheritance'
++
++        # Both should work and use the field with parent_link=True as the parent link
++        self.assertTrue(Picking1._meta.parents[Document].remote_field.parent_link)
++        self.assertEqual(Picking1._meta.parents[Document].name, 'document_ptr')
++        
++        self.assertTrue(Picking2._meta.parents[Document].remote_field.parent_link)
++        self.assertEqual(Picking2._meta.parents[Document].name, 'document_ptr')
++
+ 
+ class ModelInheritanceDataTests(TestCase):
+     @classmethod

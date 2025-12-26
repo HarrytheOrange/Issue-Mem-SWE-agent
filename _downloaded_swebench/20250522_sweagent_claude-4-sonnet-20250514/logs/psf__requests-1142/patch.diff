@@ -1,0 +1,50 @@
+diff --git a/requests/models.py b/requests/models.py
+index 99260453..e59118df 100644
+--- a/requests/models.py
++++ b/requests/models.py
+@@ -344,7 +344,8 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
+         is_stream = all([
+             hasattr(data, '__iter__'),
+             not isinstance(data, basestring),
+-            not isinstance(data, dict)
++            not isinstance(data, dict),
++            data  # Exclude empty iterables like []
+         ])
+ 
+         try:
+@@ -386,13 +387,28 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
+         self.body = body
+ 
+     def prepare_content_length(self, body):
+-        self.headers['Content-Length'] = '0'
+-        if hasattr(body, 'seek') and hasattr(body, 'tell'):
+-            body.seek(0, 2)
+-            self.headers['Content-Length'] = str(body.tell())
+-            body.seek(0, 0)
+-        elif body is not None:
+-            self.headers['Content-Length'] = str(len(body))
++        # Methods that typically don't have a body
++        methods_without_body = ('GET', 'HEAD', 'DELETE', 'OPTIONS')
++        
++        # Check if body is effectively empty (None, empty string, empty list, etc.)
++        is_empty_body = (
++            body is None or 
++            body == '' or 
++            body == [] or 
++            (hasattr(body, '__len__') and len(body) == 0)
++        )
++        
++        # Only set Content-Length if there's actually a body or if it's a method that expects a body
++        if not is_empty_body:
++            if hasattr(body, 'seek') and hasattr(body, 'tell'):
++                body.seek(0, 2)
++                self.headers['Content-Length'] = str(body.tell())
++                body.seek(0, 0)
++            else:
++                self.headers['Content-Length'] = str(len(body))
++        elif self.method not in methods_without_body:
++            # For methods that typically have a body (POST, PUT, PATCH), set Content-Length to 0
++            self.headers['Content-Length'] = '0'
+ 
+     def prepare_auth(self, auth):
+         """Prepares the given HTTP auth data."""

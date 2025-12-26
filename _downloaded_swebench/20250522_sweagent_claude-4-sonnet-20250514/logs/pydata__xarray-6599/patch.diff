@@ -1,0 +1,39 @@
+diff --git a/xarray/core/computation.py b/xarray/core/computation.py
+index 823cbe02..4eb147c4 100644
+--- a/xarray/core/computation.py
++++ b/xarray/core/computation.py
+@@ -1905,6 +1905,17 @@ def polyval(
+     coeffs = coeffs.reindex(
+         {degree_dim: np.arange(max_deg + 1)}, fill_value=0, copy=False
+     )
++    
++    # Handle the case where coord is a DataArray with datetime64 data but has
++    # a coordinate with the same name that contains timedelta64 data
++    from .dataarray import DataArray
++    if (isinstance(coord, DataArray) and 
++        coord.name in coord.coords and 
++        coord.dtype.kind == "M" and  # datetime64
++        coord.coords[coord.name].dtype.kind == "m"):  # timedelta64
++        # Use the coordinate values instead of the data values
++        coord = coord.coords[coord.name]
++    
+     coord = _ensure_numeric(coord)  # type: ignore # https://github.com/python/mypy/issues/1533 ?
+ 
+     # using Horner's method
+@@ -1934,10 +1945,15 @@ def _ensure_numeric(data: T_Xarray) -> T_Xarray:
+ 
+     def to_floatable(x: DataArray) -> DataArray:
+         if x.dtype.kind in "mM":
++            # For timedelta64, don't use a datetime offset
++            if x.dtype.kind == "m":
++                offset = None  # Use minimum value as offset for timedelta64
++            else:
++                offset = np.datetime64("1970-01-01")  # Use epoch for datetime64
+             return x.copy(
+                 data=datetime_to_numeric(
+                     x.data,
+-                    offset=np.datetime64("1970-01-01"),
++                    offset=offset,
+                     datetime_unit="ns",
+                 ),
+             )

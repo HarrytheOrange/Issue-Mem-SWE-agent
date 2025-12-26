@@ -1,0 +1,51 @@
+diff --git a/lib/matplotlib/cbook.py b/lib/matplotlib/cbook.py
+index c9699b2e21..4925f4ab83 100644
+--- a/lib/matplotlib/cbook.py
++++ b/lib/matplotlib/cbook.py
+@@ -846,6 +846,46 @@ class Grouper:
+         siblings = self._mapping.get(weakref.ref(a), [weakref.ref(a)])
+         return [x() for x in siblings]
+ 
++    def __getstate__(self):
++        """
++        Support for pickling.
++        
++        Convert weak references to strong references for pickling.
++        """
++        self.clean()
++        # Convert the mapping from weakref -> [weakref, ...] to obj -> [obj, ...]
++        strong_mapping = {}
++        for weak_key, weak_list in self._mapping.items():
++            strong_key = weak_key()
++            if strong_key is not None:  # Only include live references
++                strong_list = []
++                for weak_ref in weak_list:
++                    strong_obj = weak_ref()
++                    if strong_obj is not None:
++                        strong_list.append(strong_obj)
++                if strong_list:  # Only include non-empty lists
++                    strong_mapping[strong_key] = strong_list
++        return {'_strong_mapping': strong_mapping}
++
++    def __setstate__(self, state):
++        """
++        Support for unpickling.
++        
++        Convert strong references back to weak references after unpickling.
++        """
++        strong_mapping = state['_strong_mapping']
++        self._mapping = {}
++        
++        # Rebuild the weak reference mapping
++        for strong_key, strong_list in strong_mapping.items():
++            weak_key = weakref.ref(strong_key)
++            weak_list = [weakref.ref(obj) for obj in strong_list]
++            self._mapping[weak_key] = weak_list
++            
++            # Make sure all objects in the list point to the same list
++            for weak_ref in weak_list:
++                self._mapping[weak_ref] = weak_list
++
+ 
+ class GrouperView:
+     """Immutable view over a `.Grouper`."""

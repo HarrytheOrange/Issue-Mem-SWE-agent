@@ -1,0 +1,397 @@
+diff --git a/debug_mixed_types.py b/debug_mixed_types.py
+new file mode 100644
+index 0000000000..7ba52051e4
+--- /dev/null
++++ b/debug_mixed_types.py
+@@ -0,0 +1,14 @@
++#!/usr/bin/env python3
++
++from django.utils.datastructures import OrderedSet
++
++# Test what happens with True and 1
++mixed_set = OrderedSet([1, 'a', 2.5, True])
++print("Mixed set contents:", list(mixed_set))
++print("True == 1:", True == 1)
++print("hash(True) == hash(1):", hash(True) == hash(1))
++
++# Let's try without True
++mixed_set2 = OrderedSet([1, 'a', 2.5, False])
++print("Mixed set2 contents:", list(mixed_set2))
++print("Reversed:", list(reversed(mixed_set2)))
+\ No newline at end of file
+diff --git a/django/utils/datastructures.py b/django/utils/datastructures.py
+index 871b016715..721b0ee951 100644
+--- a/django/utils/datastructures.py
++++ b/django/utils/datastructures.py
+@@ -34,6 +34,9 @@ class OrderedSet:
+     def __len__(self):
+         return len(self.dict)
+ 
++    def __reversed__(self):
++        return reversed(self.dict)
++
+ 
+ class MultiValueDictKeyError(KeyError):
+     pass
+diff --git a/final_test.py b/final_test.py
+new file mode 100644
+index 0000000000..80c38afa92
+--- /dev/null
++++ b/final_test.py
+@@ -0,0 +1,45 @@
++#!/usr/bin/env python3
++
++import sys
++import os
++sys.path.insert(0, '/testbed')
++
++# Test our implementation
++try:
++    from django.utils.datastructures import OrderedSet
++    
++    # Test basic functionality
++    s = OrderedSet([1, 2, 3, 4, 5])
++    print("Original OrderedSet:", list(s))
++    
++    # Test reversed()
++    reversed_s = list(reversed(s))
++    print("Reversed OrderedSet:", reversed_s)
++    
++    # Verify it's correct
++    expected = [5, 4, 3, 2, 1]
++    if reversed_s == expected:
++        print("✓ SUCCESS: reversed() works correctly on OrderedSet")
++    else:
++        print(f"✗ FAILED: Expected {expected}, got {reversed_s}")
++        
++    # Test that __reversed__ method exists
++    if hasattr(OrderedSet, '__reversed__'):
++        print("✓ SUCCESS: __reversed__ method exists")
++    else:
++        print("✗ FAILED: __reversed__ method does not exist")
++        
++    # Test empty set
++    empty_s = OrderedSet()
++    empty_reversed = list(reversed(empty_s))
++    if empty_reversed == []:
++        print("✓ SUCCESS: reversed() works on empty OrderedSet")
++    else:
++        print(f"✗ FAILED: Expected [], got {empty_reversed}")
++        
++    print("\nAll tests completed successfully!")
++    
++except Exception as e:
++    print(f"ERROR: {e}")
++    import traceback
++    traceback.print_exc()
+\ No newline at end of file
+diff --git a/test_builtin_integration.py b/test_builtin_integration.py
+new file mode 100644
+index 0000000000..02f0d0bbd1
+--- /dev/null
++++ b/test_builtin_integration.py
+@@ -0,0 +1,62 @@
++#!/usr/bin/env python3
++
++"""
++Test integration with Python built-in functions that use reversed()
++"""
++
++from django.utils.datastructures import OrderedSet
++
++def test_builtin_integration():
++    print("=== Testing integration with Python built-ins ===")
++    
++    # Test 1: Using with sorted()
++    print("\n1. Testing with sorted():")
++    s = OrderedSet([3, 1, 4, 1, 5, 9, 2, 6])
++    print(f"   Original set: {list(s)}")
++    sorted_normal = sorted(s)
++    sorted_reversed = sorted(s, reverse=True)
++    sorted_manual_reverse = sorted(reversed(s))
++    print(f"   sorted(s): {sorted_normal}")
++    print(f"   sorted(s, reverse=True): {sorted_reversed}")
++    print(f"   sorted(reversed(s)): {sorted_manual_reverse}")
++    
++    # Test 2: Using with max() and min()
++    print("\n2. Testing with max() and min():")
++    s = OrderedSet([3, 1, 4, 1, 5, 9, 2, 6])
++    print(f"   max(s): {max(s)}")
++    print(f"   min(s): {min(s)}")
++    print(f"   max(reversed(s)): {max(reversed(s))}")
++    print(f"   min(reversed(s)): {min(reversed(s))}")
++    
++    # Test 3: Using with any() and all()
++    print("\n3. Testing with any() and all():")
++    s_true = OrderedSet([True, False, True])
++    s_false = OrderedSet([False, False, False])
++    s_mixed = OrderedSet([0, 1, 2])
++    
++    print(f"   any(s_true): {any(s_true)}")
++    print(f"   any(reversed(s_true)): {any(reversed(s_true))}")
++    print(f"   all(s_false): {all(s_false)}")
++    print(f"   all(reversed(s_false)): {all(reversed(s_false))}")
++    print(f"   any(s_mixed): {any(s_mixed)}")
++    print(f"   any(reversed(s_mixed)): {any(reversed(s_mixed))}")
++    
++    # Test 4: Using with enumerate()
++    print("\n4. Testing with enumerate():")
++    s = OrderedSet(['a', 'b', 'c'])
++    print(f"   enumerate(s): {list(enumerate(s))}")
++    print(f"   enumerate(reversed(s)): {list(enumerate(reversed(s)))}")
++    
++    # Test 5: Using with zip()
++    print("\n5. Testing with zip():")
++    s1 = OrderedSet([1, 2, 3])
++    s2 = OrderedSet(['a', 'b', 'c'])
++    print(f"   zip(s1, s2): {list(zip(s1, s2))}")
++    print(f"   zip(reversed(s1), s2): {list(zip(reversed(s1), s2))}")
++    print(f"   zip(s1, reversed(s2)): {list(zip(s1, reversed(s2)))}")
++    print(f"   zip(reversed(s1), reversed(s2)): {list(zip(reversed(s1), reversed(s2)))}")
++    
++    print("\n=== All builtin integration tests completed! ===")
++
++if __name__ == "__main__":
++    test_builtin_integration()
+\ No newline at end of file
+diff --git a/test_edge_cases.py b/test_edge_cases.py
+new file mode 100644
+index 0000000000..1ec8d76724
+--- /dev/null
++++ b/test_edge_cases.py
+@@ -0,0 +1,67 @@
++#!/usr/bin/env python3
++
++"""
++Test edge cases for reversed() on OrderedSet
++"""
++
++from django.utils.datastructures import OrderedSet
++
++def test_edge_cases():
++    print("=== Testing edge cases for reversed() on OrderedSet ===")
++    
++    # Test 1: Multiple calls to reversed() should work
++    print("\n1. Testing multiple calls to reversed():")
++    s = OrderedSet([1, 2, 3])
++    rev1 = list(reversed(s))
++    rev2 = list(reversed(s))
++    print(f"   First call: {rev1}")
++    print(f"   Second call: {rev2}")
++    assert rev1 == rev2 == [3, 2, 1], "Multiple calls should return same result"
++    
++    # Test 2: Modifying set after getting reversed iterator
++    print("\n2. Testing modification after getting reversed iterator:")
++    s = OrderedSet([1, 2, 3])
++    rev_iter = reversed(s)
++    s.add(4)  # Modify the set
++    try:
++        items = list(rev_iter)
++        print(f"   Items from iterator after modification: {items}")
++        print("   Note: Behavior depends on dict implementation")
++    except RuntimeError as e:
++        print(f"   RuntimeError (expected): {e}")
++    
++    # Test 3: Nested iteration
++    print("\n3. Testing nested iteration:")
++    s = OrderedSet([1, 2, 3])
++    result = []
++    for item in s:
++        for rev_item in reversed(s):
++            result.append((item, rev_item))
++    print(f"   Nested iteration result: {result}")
++    expected = [(1, 3), (1, 2), (1, 1), (2, 3), (2, 2), (2, 1), (3, 3), (3, 2), (3, 1)]
++    assert result == expected, f"Expected {expected}, got {result}"
++    
++    # Test 4: Using reversed() in list comprehension
++    print("\n4. Testing reversed() in list comprehension:")
++    s = OrderedSet(['x', 'y', 'z'])
++    result = [item.upper() for item in reversed(s)]
++    print(f"   List comprehension result: {result}")
++    assert result == ['Z', 'Y', 'X'], "List comprehension should work correctly"
++    
++    # Test 5: Using reversed() with set operations
++    print("\n5. Testing reversed() with set operations:")
++    s1 = OrderedSet([1, 2, 3])
++    s2 = OrderedSet([3, 4, 5])
++    
++    # Add items from reversed s2 to s1
++    for item in reversed(s2):
++        s1.add(item)
++    
++    print(f"   s1 after adding reversed s2: {list(s1)}")
++    # s1 should be [1, 2, 3, 5, 4] (3 already exists, 5 and 4 added in that order)
++    assert list(s1) == [1, 2, 3, 5, 4], "Set operations with reversed should work correctly"
++    
++    print("\n=== All edge case tests passed! ===")
++
++if __name__ == "__main__":
++    test_edge_cases()
+\ No newline at end of file
+diff --git a/test_reversed_comprehensive.py b/test_reversed_comprehensive.py
+new file mode 100644
+index 0000000000..ad8b890e72
+--- /dev/null
++++ b/test_reversed_comprehensive.py
+@@ -0,0 +1,88 @@
++#!/usr/bin/env python3
++
++"""
++Comprehensive test for reversed() functionality on OrderedSet
++"""
++
++from django.utils.datastructures import OrderedSet
++
++def test_reversed_comprehensive():
++    print("=== Testing reversed() on OrderedSet ===")
++    
++    # Test 1: Empty OrderedSet
++    print("\n1. Testing empty OrderedSet:")
++    empty_set = OrderedSet()
++    reversed_empty = list(reversed(empty_set))
++    print(f"   Empty set: {list(empty_set)}")
++    print(f"   Reversed: {reversed_empty}")
++    assert reversed_empty == [], "Empty set should reverse to empty list"
++    
++    # Test 2: Single item
++    print("\n2. Testing single item OrderedSet:")
++    single_set = OrderedSet([42])
++    reversed_single = list(reversed(single_set))
++    print(f"   Single set: {list(single_set)}")
++    print(f"   Reversed: {reversed_single}")
++    assert reversed_single == [42], "Single item should reverse to itself"
++    
++    # Test 3: Multiple items
++    print("\n3. Testing multiple items OrderedSet:")
++    multi_set = OrderedSet([1, 2, 3, 4, 5])
++    reversed_multi = list(reversed(multi_set))
++    print(f"   Multi set: {list(multi_set)}")
++    print(f"   Reversed: {reversed_multi}")
++    assert reversed_multi == [5, 4, 3, 2, 1], "Multiple items should reverse correctly"
++    
++    # Test 4: String items
++    print("\n4. Testing string items OrderedSet:")
++    string_set = OrderedSet(['a', 'b', 'c', 'd'])
++    reversed_string = list(reversed(string_set))
++    print(f"   String set: {list(string_set)}")
++    print(f"   Reversed: {reversed_string}")
++    assert reversed_string == ['d', 'c', 'b', 'a'], "String items should reverse correctly"
++    
++    # Test 5: Mixed types
++    print("\n5. Testing mixed types OrderedSet:")
++    mixed_set = OrderedSet([1, 'a', 2.5, False])  # Using False instead of True to avoid 1==True issue
++    reversed_mixed = list(reversed(mixed_set))
++    print(f"   Mixed set: {list(mixed_set)}")
++    print(f"   Reversed: {reversed_mixed}")
++    assert reversed_mixed == [False, 2.5, 'a', 1], "Mixed types should reverse correctly"
++    
++    # Test 6: Test that reversed() returns an iterator (not a list)
++    print("\n6. Testing that reversed() returns an iterator:")
++    test_set = OrderedSet([1, 2, 3])
++    reversed_iter = reversed(test_set)
++    print(f"   Type of reversed(): {type(reversed_iter)}")
++    # Should be able to iterate through it
++    items = []
++    for item in reversed_iter:
++        items.append(item)
++    print(f"   Items from iterator: {items}")
++    assert items == [3, 2, 1], "Iterator should yield items in reverse order"
++    
++    # Test 7: Test that original set is unchanged
++    print("\n7. Testing that original set is unchanged:")
++    original_set = OrderedSet([10, 20, 30])
++    original_items = list(original_set)
++    reversed_items = list(reversed(original_set))
++    after_items = list(original_set)
++    print(f"   Original before: {original_items}")
++    print(f"   Reversed: {reversed_items}")
++    print(f"   Original after: {after_items}")
++    assert original_items == after_items, "Original set should be unchanged"
++    
++    # Test 8: Test with duplicates (should not have duplicates in OrderedSet)
++    print("\n8. Testing with duplicate inputs (OrderedSet should deduplicate):")
++    dup_set = OrderedSet([1, 2, 2, 3, 1, 4])
++    reversed_dup = list(reversed(dup_set))
++    print(f"   Set with duplicates: {list(dup_set)}")
++    print(f"   Reversed: {reversed_dup}")
++    # OrderedSet should maintain order of first occurrence and remove duplicates
++    expected = [4, 3, 2, 1]  # Reverse of [1, 2, 3, 4]
++    assert reversed_dup == expected, f"Expected {expected}, got {reversed_dup}"
++    
++    print("\n=== All tests passed! ===")
++
++if __name__ == "__main__":
++    test_reversed_comprehensive()
+\ No newline at end of file
+diff --git a/test_reversed_error.py b/test_reversed_error.py
+new file mode 100644
+index 0000000000..f4d264d948
+--- /dev/null
++++ b/test_reversed_error.py
+@@ -0,0 +1,25 @@
++#!/usr/bin/env python3
++
++"""
++Script to reproduce the error when calling reversed() on OrderedSet
++"""
++
++from django.utils.datastructures import OrderedSet
++
++def test_reversed_error():
++    # Create an OrderedSet with some items
++    ordered_set = OrderedSet([1, 2, 3, 4, 5])
++    
++    print("OrderedSet contents:", list(ordered_set))
++    
++    try:
++        # Try to call reversed() on the OrderedSet
++        reversed_items = list(reversed(ordered_set))
++        print("Reversed OrderedSet:", reversed_items)
++        print("SUCCESS: reversed() works on OrderedSet")
++    except TypeError as e:
++        print(f"ERROR: {e}")
++        print("FAILED: reversed() does not work on OrderedSet")
++
++if __name__ == "__main__":
++    test_reversed_error()
+\ No newline at end of file
+diff --git a/tests/utils_tests/test_datastructures.py b/tests/utils_tests/test_datastructures.py
+index 45d172f984..8f0eeb8bd7 100644
+--- a/tests/utils_tests/test_datastructures.py
++++ b/tests/utils_tests/test_datastructures.py
+@@ -55,6 +55,35 @@ class OrderedSetTests(SimpleTestCase):
+         s.add(2)
+         self.assertEqual(len(s), 2)
+ 
++    def test_reversed(self):
++        # Test empty OrderedSet
++        s = OrderedSet()
++        self.assertEqual(list(reversed(s)), [])
++        
++        # Test single item
++        s = OrderedSet([1])
++        self.assertEqual(list(reversed(s)), [1])
++        
++        # Test multiple items
++        s = OrderedSet([1, 2, 3, 4, 5])
++        self.assertEqual(list(reversed(s)), [5, 4, 3, 2, 1])
++        
++        # Test that original set is unchanged
++        original_items = list(s)
++        list(reversed(s))
++        self.assertEqual(list(s), original_items)
++        
++        # Test with string items
++        s = OrderedSet(['a', 'b', 'c'])
++        self.assertEqual(list(reversed(s)), ['c', 'b', 'a'])
++        
++        # Test that reversed() returns an iterator
++        s = OrderedSet([1, 2, 3])
++        reversed_iter = reversed(s)
++        self.assertEqual(next(reversed_iter), 3)
++        self.assertEqual(next(reversed_iter), 2)
++        self.assertEqual(next(reversed_iter), 1)
++
+ 
+ class MultiValueDictTests(SimpleTestCase):
+ 

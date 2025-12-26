@@ -1,0 +1,704 @@
+diff --git a/check_test_expectations.py b/check_test_expectations.py
+new file mode 100644
+index 0000000000..531562940c
+--- /dev/null
++++ b/check_test_expectations.py
+@@ -0,0 +1,30 @@
++import matplotlib.dates as mdates
++import datetime
++
++# Test the exact cases from the test
++test_cases = [
++    (datetime.timedelta(weeks=52 * 200), "years"),
++    (datetime.timedelta(days=30), "days"),
++    (datetime.timedelta(hours=20), "hours"),
++]
++
++for delta, desc in test_cases:
++    print(f"\nTesting {desc} (delta={delta}):")
++    d1 = datetime.datetime(1990, 1, 1)
++    d2 = d1 + delta
++
++    locator = mdates.AutoDateLocator(interval_multiples=False)
++    locator.create_dummy_axis()
++    locator.axis.set_view_interval(mdates.date2num(d1), mdates.date2num(d2))
++
++    formatter = mdates.AutoDateFormatter(locator, usetex=True)
++    locations = locator()
++    formatted = [formatter(loc) for loc in locations]
++    
++    print(f"  Locations: {len(locations)}")
++    for i, (loc, fmt) in enumerate(zip(locations, formatted)):
++        date = mdates.num2date(loc)
++        print(f"    {i}: {date} -> '{fmt}'")
++        if i >= 5:  # Limit output
++            print(f"    ... and {len(locations) - i - 1} more")
++            break
+\ No newline at end of file
+diff --git a/debug_datetime_tex.py b/debug_datetime_tex.py
+new file mode 100644
+index 0000000000..4113d65dc4
+--- /dev/null
++++ b/debug_datetime_tex.py
+@@ -0,0 +1,58 @@
++import matplotlib.dates as mdates
++import datetime
++
++# Test the _wrap_in_tex function directly
++from matplotlib.dates import _wrap_in_tex
++
++# Test cases from the failing tests
++test_cases = [
++    "Jan 01 1990",
++    "01:00:00", 
++    "01 00:00",
++    "01 00:05",
++    "01 00:10",
++    "2020",
++    "Feb",
++    "12:30"
++]
++
++print("Testing _wrap_in_tex function:")
++for case in test_cases:
++    result = _wrap_in_tex(case)
++    print(f"'{case}' -> '{result}'")
++
++print("\nTesting AutoDateFormatter with usetex:")
++# Test AutoDateFormatter
++d1 = datetime.datetime(1990, 1, 1)
++d2 = d1 + datetime.timedelta(days=30)
++
++locator = mdates.AutoDateLocator(interval_multiples=False)
++locator.create_dummy_axis()
++locator.axis.set_view_interval(mdates.date2num(d1), mdates.date2num(d2))
++
++formatter = mdates.AutoDateFormatter(locator, usetex=True)
++locations = locator()
++formatted = [formatter(loc) for loc in locations]
++
++print("Locations and formatted values:")
++for loc, fmt in zip(locations, formatted):
++    date = mdates.num2date(loc)
++    print(f"  {date} -> '{fmt}'")
++
++print("\nTesting ConciseDateFormatter with usetex:")
++# Test ConciseDateFormatter  
++d1 = datetime.datetime(2020, 1, 1, 0, 0, 0)
++d2 = d1 + datetime.timedelta(minutes=10)
++
++locator = mdates.AutoDateLocator(interval_multiples=True)
++locator.create_dummy_axis()
++locator.axis.set_view_interval(mdates.date2num(d1), mdates.date2num(d2))
++
++formatter = mdates.ConciseDateFormatter(locator, usetex=True)
++locations = locator()
++formatted = formatter.format_ticks(locations)
++
++print("Locations and formatted values:")
++for loc, fmt in zip(locations, formatted):
++    date = mdates.num2date(loc)
++    print(f"  {date} -> '{fmt}'")
+\ No newline at end of file
+diff --git a/debug_pytest.py b/debug_pytest.py
+new file mode 100644
+index 0000000000..650140db66
+--- /dev/null
++++ b/debug_pytest.py
+@@ -0,0 +1,53 @@
++import matplotlib.dates as mdates
++import datetime
++import pytest
++
++@pytest.mark.parametrize('delta, expected', [
++    (datetime.timedelta(weeks=52 * 200),
++     [r'$\mathdefault{%d}$' % (year,) for year in range(1990, 2171, 20)]),
++    (datetime.timedelta(days=30),
++     [r'Jan$\mathdefault{ %02d 1990}$' % (day,) for day in range(1, 32, 3)]),
++    (datetime.timedelta(hours=20),
++     [r'$\mathdefault{%02d:00:00}$' % (hour,) for hour in range(0, 21, 2)]),
++])
++def test_date_formatter_usetex_debug(delta, expected):
++    d1 = datetime.datetime(1990, 1, 1)
++    d2 = d1 + delta
++
++    locator = mdates.AutoDateLocator(interval_multiples=False)
++    locator.create_dummy_axis()
++    locator.axis.set_view_interval(mdates.date2num(d1), mdates.date2num(d2))
++
++    formatter = mdates.AutoDateFormatter(locator, usetex=True)
++    actual = [formatter(loc) for loc in locator()]
++    
++    print(f"\nDelta: {delta}")
++    print(f"Expected length: {len(expected)}")
++    print(f"Actual length: {len(actual)}")
++    print(f"Expected[0]: '{expected[0] if expected else 'N/A'}'")
++    print(f"Actual[0]: '{actual[0] if actual else 'N/A'}'")
++    print(f"Match: {actual == expected}")
++    
++    assert actual == expected
++
++if __name__ == "__main__":
++    # Run the test manually
++    test_cases = [
++        (datetime.timedelta(weeks=52 * 200),
++         [r'$\mathdefault{%d}$' % (year,) for year in range(1990, 2171, 20)]),
++        (datetime.timedelta(days=30),
++         [r'Jan$\mathdefault{ %02d 1990}$' % (day,) for day in range(1, 32, 3)]),
++        (datetime.timedelta(hours=20),
++         [r'$\mathdefault{%02d:00:00}$' % (hour,) for hour in range(0, 21, 2)]),
++    ]
++    
++    for i, (delta, expected) in enumerate(test_cases):
++        print(f"\n{'='*50}")
++        print(f"Test case {i}: {delta}")
++        try:
++            test_date_formatter_usetex_debug(delta, expected)
++            print("PASSED")
++        except AssertionError as e:
++            print(f"FAILED: {e}")
++        except Exception as e:
++            print(f"ERROR: {e}")
+\ No newline at end of file
+diff --git a/debug_pytest_env.py b/debug_pytest_env.py
+new file mode 100644
+index 0000000000..a14e4fed78
+--- /dev/null
++++ b/debug_pytest_env.py
+@@ -0,0 +1,53 @@
++#!/usr/bin/env python
++
++# Try to replicate the exact pytest environment
++import sys
++import os
++
++# Add the lib directory to the path (same as pytest)
++sys.path.insert(0, os.path.join(os.getcwd(), 'lib'))
++
++# Import matplotlib and set up the same way as pytest
++import matplotlib
++matplotlib.use('agg', force=True)
++matplotlib._called_from_pytest = True
++matplotlib._init_tests()
++
++# Now import the test modules
++import matplotlib.dates as mdates
++import datetime
++
++# Run the test
++def test_date_formatter_usetex(delta, expected):
++    d1 = datetime.datetime(1990, 1, 1)
++    d2 = d1 + delta
++
++    locator = mdates.AutoDateLocator(interval_multiples=False)
++    locator.create_dummy_axis()
++    locator.axis.set_view_interval(mdates.date2num(d1), mdates.date2num(d2))
++
++    formatter = mdates.AutoDateFormatter(locator, usetex=True)
++    actual = [formatter(loc) for loc in locator()]
++    
++    print(f"Delta: {delta}")
++    print(f"Expected: {expected[:3]}...")
++    print(f"Actual: {actual[:3]}...")
++    print(f"Match: {actual == expected}")
++    
++    return actual == expected
++
++# Test the failing case
++delta = datetime.timedelta(days=30)
++expected = [r'Jan$\mathdefault{ %02d 1990}$' % (day,) for day in range(1, 32, 3)]
++
++print("Testing with pytest-like environment:")
++result = test_date_formatter_usetex(delta, expected)
++print(f"Test result: {result}")
++
++# Also test the hours case
++delta2 = datetime.timedelta(hours=20)
++expected2 = [r'$\mathdefault{%02d:00:00}$' % (hour,) for hour in range(0, 21, 2)]
++
++print("\nTesting hours case:")
++result2 = test_date_formatter_usetex(delta2, expected2)
++print(f"Test result: {result2}")
+\ No newline at end of file
+diff --git a/debug_rcparams.py b/debug_rcparams.py
+new file mode 100644
+index 0000000000..52a3271fcd
+--- /dev/null
++++ b/debug_rcparams.py
+@@ -0,0 +1,52 @@
++import matplotlib
++import matplotlib.dates as mdates
++import datetime
++
++# Check current rcParams
++print("Current date.autoformatter rcParams:")
++for key in matplotlib.rcParams:
++    if 'date.autoformatter' in key:
++        print(f"  {key}: {matplotlib.rcParams[key]}")
++
++print("\nTesting AutoDateFormatter behavior:")
++
++# Test case: 30 days
++delta = datetime.timedelta(days=30)
++d1 = datetime.datetime(1990, 1, 1)
++d2 = d1 + delta
++
++locator = mdates.AutoDateLocator(interval_multiples=False)
++locator.create_dummy_axis()
++locator.axis.set_view_interval(mdates.date2num(d1), mdates.date2num(d2))
++
++formatter = mdates.AutoDateFormatter(locator, usetex=True)
++
++# Check what scale the formatter is using
++print(f"Locator scale: {locator._get_unit()}")
++
++# Check the formatter's format strings
++print(f"Formatter formats: {formatter.scaled}")
++
++# Get the actual formatted values
++locations = locator()
++actual = [formatter(loc) for loc in locations]
++
++print(f"\nFirst few formatted values:")
++for i, (loc, fmt) in enumerate(zip(locations[:5], actual[:5])):
++    date = mdates.num2date(loc)
++    print(f"  {i}: {date} -> '{fmt}'")
++
++# Test with different rcParams
++print("\n" + "="*50)
++print("Testing with modified rcParams:")
++
++# Set rcParams to match what the test might expect
++matplotlib.rcParams['date.autoformatter.day'] = '%b %d %Y'
++
++formatter2 = mdates.AutoDateFormatter(locator, usetex=True)
++actual2 = [formatter2(loc) for loc in locations]
++
++print(f"With modified rcParams:")
++for i, (loc, fmt) in enumerate(zip(locations[:5], actual2[:5])):
++    date = mdates.num2date(loc)
++    print(f"  {i}: {date} -> '{fmt}'")
+\ No newline at end of file
+diff --git a/debug_test_failure.py b/debug_test_failure.py
+new file mode 100644
+index 0000000000..bd458d302b
+--- /dev/null
++++ b/debug_test_failure.py
+@@ -0,0 +1,39 @@
++import matplotlib.dates as mdates
++import datetime
++
++# Test the exact case that should produce "Jan 01 1990" format
++delta = datetime.timedelta(days=30)
++expected = [r'Jan$\mathdefault{ %02d 1990}$' % (day,) for day in range(1, 32, 3)]
++
++print("Expected values:")
++for i, exp in enumerate(expected):
++    print(f"  {i}: '{exp}'")
++
++d1 = datetime.datetime(1990, 1, 1)
++d2 = d1 + delta
++
++locator = mdates.AutoDateLocator(interval_multiples=False)
++locator.create_dummy_axis()
++locator.axis.set_view_interval(mdates.date2num(d1), mdates.date2num(d2))
++
++formatter = mdates.AutoDateFormatter(locator, usetex=True)
++locations = locator()
++actual = [formatter(loc) for loc in locations]
++
++print(f"\nActual values (got {len(actual)} vs expected {len(expected)}):")
++for i, act in enumerate(actual):
++    print(f"  {i}: '{act}'")
++
++print(f"\nComparison:")
++for i, (exp, act) in enumerate(zip(expected, actual)):
++    match = exp == act
++    print(f"  {i}: {'✓' if match else '✗'} Expected: '{exp}' | Actual: '{act}'")
++
++# Let's also check what the locator is producing
++print(f"\nLocator details:")
++print(f"  Interval: {mdates.num2date(locator.axis.get_view_interval()[0])} to {mdates.num2date(locator.axis.get_view_interval()[1])}")
++print(f"  Locations: {[mdates.num2date(loc) for loc in locations]}")
++
++# Check the formatter's scale
++print(f"\nFormatter scale: {formatter._formatter.scale}")
++print(f"Formatter format: {formatter._formatter.format}")
+\ No newline at end of file
+diff --git a/lib/matplotlib/dates.py b/lib/matplotlib/dates.py
+index 0766156d64..df1a12be3b 100644
+--- a/lib/matplotlib/dates.py
++++ b/lib/matplotlib/dates.py
+@@ -598,6 +598,17 @@ def _wrap_in_tex(text):
+     # Braces ensure dashes are not spaced like binary operators.
+     ret_text = '$\\mathdefault{'+ret_text.replace('-', '{-}')+'}$'
+     ret_text = ret_text.replace('$\\mathdefault{}$', '')
++    
++    # Fix spacing in math mode by replacing spaces with explicit LaTeX spacing
++    # Replace spaces inside \mathdefault{...} with \  (explicit space)
++    def replace_spaces_in_mathdefault(match):
++        content = match.group(1)
++        # Replace spaces with explicit LaTeX spaces
++        content_with_spaces = content.replace(' ', r'\ ')
++        return f'$\\mathdefault{{{content_with_spaces}}}$'
++    
++    ret_text = re.sub(r'\$\\mathdefault\{([^}]*)\}\$', replace_spaces_in_mathdefault, ret_text)
++    
+     return ret_text
+ 
+ 
+diff --git a/manual_test_debug.py b/manual_test_debug.py
+new file mode 100644
+index 0000000000..1f62b91d1e
+--- /dev/null
++++ b/manual_test_debug.py
+@@ -0,0 +1,61 @@
++import matplotlib.dates as mdates
++import datetime
++
++# Test case 2: days
++delta = datetime.timedelta(days=30)
++expected = [r'Jan$\mathdefault{ %02d 1990}$' % (day,) for day in range(1, 32, 3)]
++
++d1 = datetime.datetime(1990, 1, 1)
++d2 = d1 + delta
++
++locator = mdates.AutoDateLocator(interval_multiples=False)
++locator.create_dummy_axis()
++locator.axis.set_view_interval(mdates.date2num(d1), mdates.date2num(d2))
++
++formatter = mdates.AutoDateFormatter(locator, usetex=True)
++actual = [formatter(loc) for loc in locator()]
++
++print("Expected length:", len(expected))
++print("Actual length:", len(actual))
++print()
++
++print("Expected first few:")
++for i in range(min(5, len(expected))):
++    print(f"  {i}: '{expected[i]}'")
++
++print("\nActual first few:")
++for i in range(min(5, len(actual))):
++    print(f"  {i}: '{actual[i]}'")
++
++print(f"\nTest result: {actual == expected}")
++
++# Let's also test the hours case
++print("\n" + "="*50)
++print("Testing hours case:")
++
++delta = datetime.timedelta(hours=20)
++expected = [r'$\mathdefault{%02d:00:00}$' % (hour,) for hour in range(0, 21, 2)]
++
++d1 = datetime.datetime(1990, 1, 1)
++d2 = d1 + delta
++
++locator = mdates.AutoDateLocator(interval_multiples=False)
++locator.create_dummy_axis()
++locator.axis.set_view_interval(mdates.date2num(d1), mdates.date2num(d2))
++
++formatter = mdates.AutoDateFormatter(locator, usetex=True)
++actual = [formatter(loc) for loc in locator()]
++
++print("Expected length:", len(expected))
++print("Actual length:", len(actual))
++print()
++
++print("Expected first few:")
++for i in range(min(5, len(expected))):
++    print(f"  {i}: '{expected[i]}'")
++
++print("\nActual first few:")
++for i in range(min(5, len(actual))):
++    print(f"  {i}: '{actual[i]}'")
++
++print(f"\nTest result: {actual == expected}")
+\ No newline at end of file
+diff --git a/reproduce_issue.py b/reproduce_issue.py
+new file mode 100644
+index 0000000000..ff3f4cd5c9
+--- /dev/null
++++ b/reproduce_issue.py
+@@ -0,0 +1,16 @@
++import matplotlib
++import matplotlib.pyplot as plt
++import numpy as np
++import pandas as pd
++
++np.random.seed(1)
++matplotlib.rcParams["text.usetex"] = True
++
++dates = pd.date_range("2020-01-01 00:00:00", end="2020-01-01 00:10:00", periods=100)
++data = np.random.rand(100)
++
++fig, ax = plt.subplots(constrained_layout=True)
++ax.plot(dates.values, data)  # Convert to numpy array
++plt.savefig("test_output.png")
++print(f"Matplotlib version: {matplotlib.__version__}")
++print("Plot saved as test_output.png")
+\ No newline at end of file
+diff --git a/reproduce_pr_issue.py b/reproduce_pr_issue.py
+new file mode 100644
+index 0000000000..7b1433d7d3
+--- /dev/null
++++ b/reproduce_pr_issue.py
+@@ -0,0 +1,60 @@
++import matplotlib
++import matplotlib.pyplot as plt
++import numpy as np
++import pandas as pd
++import matplotlib.dates as mdates
++
++np.random.seed(1)
++
++dates = pd.date_range("2020-01-01 00:00:00", end="2020-01-01 00:10:00", periods=100)
++data = np.random.rand(100)
++
++# Test without usetex
++print("Testing without usetex:")
++matplotlib.rcParams["text.usetex"] = False
++fig, ax = plt.subplots(constrained_layout=True)
++ax.plot(dates.values, data)
++
++# Get the tick labels
++labels_no_tex = [label.get_text() for label in ax.get_xticklabels()]
++print("Labels without usetex:", labels_no_tex)
++
++# Test with usetex
++print("\nTesting with usetex:")
++matplotlib.rcParams["text.usetex"] = True
++fig2, ax2 = plt.subplots(constrained_layout=True)
++ax2.plot(dates.values, data)
++
++# Get the tick labels
++labels_with_tex = [label.get_text() for label in ax2.get_xticklabels()]
++print("Labels with usetex:", labels_with_tex)
++
++# Test the formatters directly
++print("\nTesting formatters directly:")
++d1 = dates[0].to_pydatetime()
++d2 = dates[-1].to_pydatetime()
++
++locator = mdates.AutoDateLocator()
++locator.create_dummy_axis()
++locator.axis.set_view_interval(mdates.date2num(d1), mdates.date2num(d2))
++
++# Without usetex
++formatter_no_tex = mdates.AutoDateFormatter(locator, usetex=False)
++locations = locator()
++formatted_no_tex = [formatter_no_tex(loc) for loc in locations]
++print("Formatted without usetex:", formatted_no_tex)
++
++# With usetex
++formatter_with_tex = mdates.AutoDateFormatter(locator, usetex=True)
++formatted_with_tex = [formatter_with_tex(loc) for loc in locations]
++print("Formatted with usetex:", formatted_with_tex)
++
++# Test ConciseDateFormatter too
++print("\nTesting ConciseDateFormatter:")
++concise_formatter_no_tex = mdates.ConciseDateFormatter(locator, usetex=False)
++concise_formatted_no_tex = concise_formatter_no_tex.format_ticks(locations)
++print("Concise formatted without usetex:", concise_formatted_no_tex)
++
++concise_formatter_with_tex = mdates.ConciseDateFormatter(locator, usetex=True)
++concise_formatted_with_tex = concise_formatter_with_tex.format_ticks(locations)
++print("Concise formatted with usetex:", concise_formatted_with_tex)
+\ No newline at end of file
+diff --git a/test_datetime_simple.py b/test_datetime_simple.py
+new file mode 100644
+index 0000000000..5e3d14d80e
+--- /dev/null
++++ b/test_datetime_simple.py
+@@ -0,0 +1,21 @@
++import matplotlib
++import matplotlib.pyplot as plt
++import numpy as np
++import pandas as pd
++
++np.random.seed(1)
++
++dates = pd.date_range("2020-01-01 00:00:00", end="2020-01-01 00:10:00", periods=100)
++data = np.random.rand(100)
++
++# Test without usetex first
++fig, ax = plt.subplots(constrained_layout=True)
++ax.plot(dates.values, data)
++plt.savefig("test_output_no_tex.png")
++print(f"Matplotlib version: {matplotlib.__version__}")
++print("Plot saved as test_output_no_tex.png")
++
++# Show the tick labels
++print("X-axis tick labels:")
++for i, label in enumerate(ax.get_xticklabels()):
++    print(f"  {i}: {label.get_text()}")
+\ No newline at end of file
+diff --git a/test_fix_wrap_in_tex.py b/test_fix_wrap_in_tex.py
+new file mode 100644
+index 0000000000..bd24482f2b
+--- /dev/null
++++ b/test_fix_wrap_in_tex.py
+@@ -0,0 +1,54 @@
++import re
++
++def _wrap_in_tex_current(text):
++    p = r'([a-zA-Z]+)'
++    ret_text = re.sub(p, r'}$\1$\\mathdefault{', text)
++
++    # Braces ensure dashes are not spaced like binary operators.
++    ret_text = '$\\mathdefault{'+ret_text.replace('-', '{-}')+'}$'
++    ret_text = ret_text.replace('$\\mathdefault{}$', '')
++    return ret_text
++
++def _wrap_in_tex_fixed(text):
++    p = r'([a-zA-Z]+)'
++    ret_text = re.sub(p, r'}$\1$\\mathdefault{', text)
++
++    # Braces ensure dashes are not spaced like binary operators.
++    ret_text = '$\\mathdefault{'+ret_text.replace('-', '{-}')+'}$'
++    ret_text = ret_text.replace('$\\mathdefault{}$', '')
++    
++    # Fix spacing in math mode by replacing spaces with explicit LaTeX spacing
++    # Replace spaces inside \mathdefault{...} with \  (explicit space)
++    def replace_spaces_in_mathdefault(match):
++        content = match.group(1)
++        # Replace spaces with explicit LaTeX spaces
++        content_with_spaces = content.replace(' ', r'\ ')
++        return f'$\\mathdefault{{{content_with_spaces}}}$'
++    
++    ret_text = re.sub(r'\$\\mathdefault\{([^}]*)\}\$', replace_spaces_in_mathdefault, ret_text)
++    
++    return ret_text
++
++# Test cases
++test_cases = [
++    "01 00:00",
++    "01 00:05", 
++    "01 00:10",
++    "Jan 01 1990",
++    "Feb 15 2020",
++    "12:30",
++    "2020-01-01",
++    "Jan",
++    "Feb"
++]
++
++print("Comparing current vs fixed implementation:")
++print("=" * 60)
++for case in test_cases:
++    current = _wrap_in_tex_current(case)
++    fixed = _wrap_in_tex_fixed(case)
++    print(f"Input: '{case}'")
++    print(f"Current:  '{current}'")
++    print(f"Fixed:    '{fixed}'")
++    print(f"Changed:  {current != fixed}")
++    print()
+\ No newline at end of file
+diff --git a/test_latex_spacing.py b/test_latex_spacing.py
+new file mode 100644
+index 0000000000..a741e05112
+--- /dev/null
++++ b/test_latex_spacing.py
+@@ -0,0 +1,59 @@
++import matplotlib
++import matplotlib.pyplot as plt
++import numpy as np
++
++# Test different LaTeX spacing approaches
++test_strings = [
++    "01 00:00",  # Normal space
++    r"$\mathdefault{01 00:00}$",  # Current approach
++    r"$\mathdefault{01\ 00:00}$",  # LaTeX space
++    r"$\mathdefault{01\,00:00}$",  # LaTeX thin space
++    r"$\mathdefault{01\;00:00}$",  # LaTeX medium space
++    r"$\mathdefault{01\quad 00:00}$",  # LaTeX quad space
++]
++
++# Create a simple plot to test text rendering
++fig, ax = plt.subplots(figsize=(10, 6))
++
++# Test without usetex first
++matplotlib.rcParams["text.usetex"] = False
++for i, text in enumerate(test_strings[:1]):  # Only test the first one without usetex
++    ax.text(0.1, 0.9 - i*0.1, f"No TeX: {text}", transform=ax.transAxes)
++
++# Test with usetex
++matplotlib.rcParams["text.usetex"] = True
++for i, text in enumerate(test_strings[1:], 1):  # Test the LaTeX versions
++    try:
++        ax.text(0.1, 0.9 - i*0.1, f"TeX {i}: {text}", transform=ax.transAxes)
++    except Exception as e:
++        ax.text(0.1, 0.9 - i*0.1, f"TeX {i}: ERROR - {str(e)[:50]}", transform=ax.transAxes)
++
++ax.set_xlim(0, 1)
++ax.set_ylim(0, 1)
++ax.set_title("LaTeX Spacing Test")
++
++plt.savefig("latex_spacing_test.png", dpi=150, bbox_inches='tight')
++print("Saved latex_spacing_test.png")
++
++# Also test the actual datetime formatting
++import pandas as pd
++import matplotlib.dates as mdates
++
++dates = pd.date_range("2020-01-01 00:00:00", end="2020-01-01 00:10:00", periods=5)
++data = np.random.rand(5)
++
++fig2, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
++
++# Without usetex
++matplotlib.rcParams["text.usetex"] = False
++ax1.plot(dates.values, data)
++ax1.set_title("Without usetex")
++
++# With usetex
++matplotlib.rcParams["text.usetex"] = True
++ax2.plot(dates.values, data)
++ax2.set_title("With usetex")
++
++plt.tight_layout()
++plt.savefig("datetime_comparison.png", dpi=150, bbox_inches='tight')
++print("Saved datetime_comparison.png")
+\ No newline at end of file
+diff --git a/test_output_no_tex.png b/test_output_no_tex.png
+new file mode 100644
+index 0000000000..d8543c820b
+Binary files /dev/null and b/test_output_no_tex.png differ
+diff --git a/test_wrap_in_tex.py b/test_wrap_in_tex.py
+new file mode 100644
+index 0000000000..e228d8a586
+--- /dev/null
++++ b/test_wrap_in_tex.py
+@@ -0,0 +1,31 @@
++import re
++
++def _wrap_in_tex_current(text):
++    p = r'([a-zA-Z]+)'
++    ret_text = re.sub(p, r'}$\1$\\mathdefault{', text)
++
++    # Braces ensure dashes are not spaced like binary operators.
++    ret_text = '$\\mathdefault{'+ret_text.replace('-', '{-}')+'}$'
++    ret_text = ret_text.replace('$\\mathdefault{}$', '')
++    return ret_text
++
++# Test with datetime strings
++test_strings = [
++    "01 00:00",
++    "01 00:05", 
++    "01 00:10",
++    "Jan",
++    "Feb",
++    "2020-01-01",
++    "12:30",
++    "00:00",
++    "Jan 01",
++    "Feb 15",
++    "Mon 12:30",
++    "Tue 14:45"
++]
++
++print("Current _wrap_in_tex behavior:")
++for s in test_strings:
++    result = _wrap_in_tex_current(s)
++    print(f"'{s}' -> '{result}'")
+\ No newline at end of file

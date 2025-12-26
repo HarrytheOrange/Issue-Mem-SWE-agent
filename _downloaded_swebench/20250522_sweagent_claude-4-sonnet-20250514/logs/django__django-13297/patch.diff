@@ -1,0 +1,27 @@
+diff --git a/django/utils/functional.py b/django/utils/functional.py
+index 6d38f932f9..16a5841d2e 100644
+--- a/django/utils/functional.py
++++ b/django/utils/functional.py
+@@ -1,6 +1,7 @@
+ import copy
+ import itertools
+ import operator
++import sqlite3
+ from functools import total_ordering, wraps
+ 
+ 
+@@ -402,6 +403,14 @@ class SimpleLazyObject(LazyObject):
+             return result
+         return copy.deepcopy(self._wrapped, memo)
+ 
++    def __conform__(self, protocol):
++        # Support for SQLite's parameter binding protocol
++        if protocol is sqlite3.PrepareProtocol:
++            if self._wrapped is empty:
++                self._setup()
++            return self._wrapped
++        return None
++
+ 
+ def partition(predicate, values):
+     """

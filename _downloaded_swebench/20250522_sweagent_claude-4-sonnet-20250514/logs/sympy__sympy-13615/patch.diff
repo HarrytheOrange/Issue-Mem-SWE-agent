@@ -1,0 +1,88 @@
+diff --git a/sympy/sets/sets.py b/sympy/sets/sets.py
+index 917717bb74..8878013566 100644
+--- a/sympy/sets/sets.py
++++ b/sympy/sets/sets.py
+@@ -1000,8 +1000,82 @@ def _complement(self, other):
+ 
+         if isinstance(other, FiniteSet):
+             nums = [m for m in other.args if m.is_number]
+-            if nums == []:
++            syms = [m for m in other.args if not m.is_number]
++            
++            if nums == [] and syms == []:
+                 return None
++            
++            # Handle case where we have a mixture of numbers and symbols
++            if nums != [] and syms != []:
++                # Remove numbers that are definitely contained in this interval
++                remaining_nums = []
++                undetermined = False
++                
++                for n in nums:
++                    try:
++                        contains_result = self.contains(n)
++                        if contains_result is S.true:
++                            # Definitely contained, remove it
++                            continue
++                        elif contains_result is S.false:
++                            # Definitely not contained, keep it
++                            remaining_nums.append(n)
++                        else:
++                            # Undetermined (symbolic), keep it and mark as undetermined
++                            remaining_nums.append(n)
++                            undetermined = True
++                    except (TypeError, ValueError):
++                        # If we can't determine containment, keep the number
++                        remaining_nums.append(n)
++                        undetermined = True
++                
++                remaining_elements = remaining_nums + syms
++                
++                if remaining_elements:
++                    if syms or undetermined:
++                        # If there are symbols or undetermined containment, return a Complement
++                        return Complement(FiniteSet(*remaining_elements), self, evaluate=False)
++                    else:
++                        # Only numbers remain and all containment is determined, return them as a FiniteSet
++                        return FiniteSet(*remaining_elements)
++                else:
++                    return S.EmptySet
++            
++            # Handle case where we have only numbers
++            elif nums != [] and syms == []:
++                remaining_nums = []
++                undetermined = False
++                
++                for n in nums:
++                    try:
++                        contains_result = self.contains(n)
++                        if contains_result is S.true:
++                            # Definitely contained, remove it
++                            continue
++                        elif contains_result is S.false:
++                            # Definitely not contained, keep it
++                            remaining_nums.append(n)
++                        else:
++                            # Undetermined (symbolic), keep it and mark as undetermined
++                            remaining_nums.append(n)
++                            undetermined = True
++                    except (TypeError, ValueError):
++                        # If we can't determine containment, keep the number
++                        remaining_nums.append(n)
++                        undetermined = True
++                
++                if remaining_nums:
++                    if undetermined:
++                        # Return a Complement if containment is undetermined
++                        return Complement(FiniteSet(*remaining_nums), self, evaluate=False)
++                    else:
++                        return FiniteSet(*remaining_nums)
++                else:
++                    return S.EmptySet
++            
++            # Handle case where we have only symbols (no numbers)
++            elif nums == [] and syms != []:
++                return None  # Let the base class handle this
+ 
+         return Set._complement(self, other)
+ 

@@ -1,0 +1,49 @@
+diff --git a/lib/matplotlib/axes/_base.py b/lib/matplotlib/axes/_base.py
+index d393cf209c..56a38aae40 100644
+--- a/lib/matplotlib/axes/_base.py
++++ b/lib/matplotlib/axes/_base.py
+@@ -834,6 +834,11 @@ class _AxesBase(martist.Artist):
+             mtransforms.IdentityTransform())
+ 
+         self._set_lim_and_transforms()
++        
++        # Set the figure on the axes locator if it exists and has a set_figure method
++        if (hasattr(self, '_axes_locator') and self._axes_locator is not None and 
++            hasattr(self._axes_locator, 'set_figure')):
++            self._axes_locator.set_figure(fig)
+ 
+     def _unstale_viewLim(self):
+         # We should arrange to store this information once per share-group
+@@ -1165,6 +1170,9 @@ class _AxesBase(martist.Artist):
+         locator : Callable[[Axes, Renderer], Bbox]
+         """
+         self._axes_locator = locator
++        # Set the figure on the locator if it has a set_figure method
++        if locator is not None and hasattr(locator, 'set_figure'):
++            locator.set_figure(self.figure)
+         self.stale = True
+ 
+     def get_axes_locator(self):
+diff --git a/lib/matplotlib/offsetbox.py b/lib/matplotlib/offsetbox.py
+index 13af941552..6d21edbd55 100644
+--- a/lib/matplotlib/offsetbox.py
++++ b/lib/matplotlib/offsetbox.py
+@@ -234,7 +234,8 @@ class OffsetBox(martist.Artist):
+         """
+         super().set_figure(fig)
+         for c in self.get_children():
+-            c.set_figure(fig)
++            if c is not None:
++                c.set_figure(fig)
+ 
+     @martist.Artist.axes.setter
+     def axes(self, ax):
+@@ -1053,6 +1054,8 @@ class AnchoredOffsetbox(OffsetBox):
+     @_compat_get_offset
+     def get_offset(self, bbox, renderer):
+         # docstring inherited
++        if renderer is None:
++            renderer = self.figure._get_renderer()
+         pad = (self.borderpad
+                * renderer.points_to_pixels(self.prop.get_size_in_points()))
+         bbox_to_anchor = self.get_bbox_to_anchor()

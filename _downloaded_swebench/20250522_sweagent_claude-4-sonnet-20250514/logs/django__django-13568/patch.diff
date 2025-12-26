@@ -1,0 +1,137 @@
+diff --git a/django/contrib/auth/checks.py b/django/contrib/auth/checks.py
+index 65fc266f7e..3c94d163a9 100644
+--- a/django/contrib/auth/checks.py
++++ b/django/contrib/auth/checks.py
+@@ -4,10 +4,31 @@ from types import MethodType
+ from django.apps import apps
+ from django.conf import settings
+ from django.core import checks
++from django.db.models.constraints import UniqueConstraint
+ 
+ from .management import _get_builtin_permissions
+ 
+ 
++def _is_field_unique(cls, field_name):
++    """
++    Check if a field is unique either through field.unique=True or through
++    a UniqueConstraint that includes only this field.
++    """
++    # Check if the field has unique=True
++    field = cls._meta.get_field(field_name)
++    if field.unique:
++        return True
++    
++    # Check if there's a UniqueConstraint that makes this field unique
++    for constraint in cls._meta.constraints:
++        if (isinstance(constraint, UniqueConstraint) and 
++            constraint.fields == (field_name,) and 
++            constraint.condition is None):
++            return True
++    
++    return False
++
++
+ def check_user_model(app_configs=None, **kwargs):
+     if app_configs is None:
+         cls = apps.get_model(settings.AUTH_USER_MODEL)
+@@ -52,7 +73,7 @@ def check_user_model(app_configs=None, **kwargs):
+         )
+ 
+     # Check that the username field is unique
+-    if not cls._meta.get_field(cls.USERNAME_FIELD).unique:
++    if not _is_field_unique(cls, cls.USERNAME_FIELD):
+         if (settings.AUTHENTICATION_BACKENDS ==
+                 ['django.contrib.auth.backends.ModelBackend']):
+             errors.append(
+diff --git a/tests/auth_tests/test_checks.py b/tests/auth_tests/test_checks.py
+index cfaa4063f8..b01557bf24 100644
+--- a/tests/auth_tests/test_checks.py
++++ b/tests/auth_tests/test_checks.py
+@@ -4,6 +4,7 @@ from django.contrib.auth.checks import (
+ from django.contrib.auth.models import AbstractBaseUser
+ from django.core import checks
+ from django.db import models
++from django.db.models.constraints import UniqueConstraint
+ from django.test import (
+     SimpleTestCase, override_settings, override_system_checks,
+ )
+@@ -85,6 +86,79 @@ class UserModelChecksTests(SimpleTestCase):
+                 ),
+             ])
+ 
++    @override_settings(AUTH_USER_MODEL='auth_tests.CustomUserUniqueConstraintUsername')
++    def test_username_unique_constraint(self):
++        """
++        A USERNAME_FIELD with a UniqueConstraint should not raise an error.
++        """
++        class CustomUserUniqueConstraintUsername(AbstractBaseUser):
++            username = models.CharField(max_length=30)
++            USERNAME_FIELD = 'username'
++
++            class Meta:
++                constraints = [
++                    UniqueConstraint(fields=['username'], name='unique_username')
++                ]
++
++        errors = checks.run_checks(app_configs=self.apps.get_app_configs())
++        self.assertEqual(errors, [])
++
++    @override_settings(AUTH_USER_MODEL='auth_tests.CustomUserConditionalUniqueConstraint')
++    def test_username_conditional_unique_constraint(self):
++        """
++        A USERNAME_FIELD with a conditional UniqueConstraint should raise an error
++        because the constraint doesn't guarantee uniqueness in all cases.
++        """
++        class CustomUserConditionalUniqueConstraint(AbstractBaseUser):
++            username = models.CharField(max_length=30)
++            is_active = models.BooleanField(default=True)
++            USERNAME_FIELD = 'username'
++
++            class Meta:
++                constraints = [
++                    UniqueConstraint(
++                        fields=['username'], 
++                        name='unique_username',
++                        condition=models.Q(is_active=True)
++                    )
++                ]
++
++        errors = checks.run_checks(app_configs=self.apps.get_app_configs())
++        self.assertEqual(errors, [
++            checks.Error(
++                "'CustomUserConditionalUniqueConstraint.username' must be "
++                "unique because it is named as the 'USERNAME_FIELD'.",
++                obj=CustomUserConditionalUniqueConstraint,
++                id='auth.E003',
++            ),
++        ])
++
++    @override_settings(AUTH_USER_MODEL='auth_tests.CustomUserMultiFieldUniqueConstraint')
++    def test_username_multi_field_unique_constraint(self):
++        """
++        A USERNAME_FIELD with a multi-field UniqueConstraint should raise an error
++        because the constraint doesn't guarantee uniqueness of the username field alone.
++        """
++        class CustomUserMultiFieldUniqueConstraint(AbstractBaseUser):
++            username = models.CharField(max_length=30)
++            email = models.EmailField()
++            USERNAME_FIELD = 'username'
++
++            class Meta:
++                constraints = [
++                    UniqueConstraint(fields=['username', 'email'], name='unique_username_email')
++                ]
++
++        errors = checks.run_checks(app_configs=self.apps.get_app_configs())
++        self.assertEqual(errors, [
++            checks.Error(
++                "'CustomUserMultiFieldUniqueConstraint.username' must be "
++                "unique because it is named as the 'USERNAME_FIELD'.",
++                obj=CustomUserMultiFieldUniqueConstraint,
++                id='auth.E003',
++            ),
++        ])
++
+     @override_settings(AUTH_USER_MODEL='auth_tests.BadUser')
+     def test_is_anonymous_authenticated_methods(self):
+         """

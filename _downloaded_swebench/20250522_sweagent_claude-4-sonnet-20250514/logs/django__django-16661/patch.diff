@@ -1,0 +1,46 @@
+diff --git a/django/contrib/admin/options.py b/django/contrib/admin/options.py
+index 5240b07cd6..4126a4c20f 100644
+--- a/django/contrib/admin/options.py
++++ b/django/contrib/admin/options.py
+@@ -454,7 +454,8 @@ class BaseModelAdmin(metaclass=forms.MediaDefiningClass):
+ 
+         relation_parts = []
+         prev_field = None
+-        for part in lookup.split(LOOKUP_SEP):
++        lookup_parts = lookup.split(LOOKUP_SEP)
++        for i, part in enumerate(lookup_parts):
+             try:
+                 field = model._meta.get_field(part)
+             except FieldDoesNotExist:
+@@ -464,11 +465,31 @@ class BaseModelAdmin(metaclass=forms.MediaDefiningClass):
+             # It is allowed to filter on values that would be found from local
+             # model anyways. For example, if you filter on employee__department__id,
+             # then the id value would be found already from employee__department_id.
++            # However, if we're traversing through the field to access other fields,
++            # we must include it in the relation_parts.
+             if not prev_field or (
+                 prev_field.is_relation
+                 and field not in prev_field.path_infos[-1].target_fields
+             ):
+                 relation_parts.append(part)
++            elif prev_field and prev_field.is_relation and field in prev_field.path_infos[-1].target_fields:
++                # Check if there are more parts after this one that are actual fields
++                # (not just lookup transforms like __exact, __isnull, etc.)
++                has_more_field_parts = False
++                for j in range(i + 1, len(lookup_parts)):
++                    try:
++                        # Try to get the field to see if it's a real field
++                        temp_model = field.path_infos[-1].to_opts.model if getattr(field, "path_infos", None) else model
++                        temp_model._meta.get_field(lookup_parts[j])
++                        has_more_field_parts = True
++                        break
++                    except FieldDoesNotExist:
++                        # This part is not a field, continue checking
++                        continue
++                
++                if has_more_field_parts:
++                    # We need to traverse through this field to access other fields
++                    relation_parts.append(part)
+             if not getattr(field, "path_infos", None):
+                 # This is not a relational field, so further parts
+                 # must be transforms.

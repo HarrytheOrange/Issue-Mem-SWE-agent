@@ -1,0 +1,146 @@
+diff --git a/django/db/models/expressions.py b/django/db/models/expressions.py
+index 90d90119d0..33756d596e 100644
+--- a/django/db/models/expressions.py
++++ b/django/db/models/expressions.py
+@@ -1332,6 +1332,62 @@ class Window(Expression):
+             'window': ''.join(window_sql).strip()
+         }, params
+ 
++    def as_sqlite(self, compiler, connection, **extra_context):
++        # For SQLite, we need to handle DecimalField casting differently for window functions.
++        # Instead of casting just the inner expression, we need to cast the entire window expression.
++        connection.ops.check_expression_support(self)
++        if not connection.features.supports_over_clause:
++            raise NotSupportedError('This backend does not support window expressions.')
++        
++        # Compile the source expression without SQLite-specific casting
++        # by temporarily calling as_sql instead of letting compiler.compile use as_sqlite
++        if hasattr(self.source_expression, 'as_sql'):
++            expr_sql, params = self.source_expression.as_sql(compiler, connection)
++        else:
++            expr_sql, params = compiler.compile(self.source_expression)
++        
++        window_sql, window_params = [], []
++
++        if self.partition_by is not None:
++            sql_expr, sql_params = self.partition_by.as_sql(
++                compiler=compiler, connection=connection,
++                template='PARTITION BY %(expressions)s',
++            )
++            window_sql.extend(sql_expr)
++            window_params.extend(sql_params)
++
++        if self.order_by is not None:
++            window_sql.append(' ORDER BY ')
++            # Use as_sql for order_by to avoid SQLite casting issues in ORDER BY clause
++            if hasattr(self.order_by, 'as_sql'):
++                order_sql, order_params = self.order_by.as_sql(compiler, connection)
++            else:
++                order_sql, order_params = compiler.compile(self.order_by)
++            window_sql.extend(order_sql)
++            window_params.extend(order_params)
++
++        if self.frame:
++            frame_sql, frame_params = compiler.compile(self.frame)
++            window_sql.append(' ' + frame_sql)
++            window_params.extend(frame_params)
++
++        params.extend(window_params)
++        template = self.template
++
++        window_expr_sql = template % {
++            'expression': expr_sql,
++            'window': ''.join(window_sql).strip()
++        }
++        
++        # Apply SQLite decimal casting to the entire window expression if needed
++        try:
++            if self.output_field.get_internal_type() == 'DecimalField':
++                window_expr_sql = 'CAST(%s AS NUMERIC)' % window_expr_sql
++        except (AttributeError, FieldError):
++            pass
++        
++        return window_expr_sql, params
++
+     def __str__(self):
+         return '{} OVER ({}{}{})'.format(
+             str(self.source_expression),
+diff --git a/tests/expressions_window/models.py b/tests/expressions_window/models.py
+index ce6f6621e9..372edf2991 100644
+--- a/tests/expressions_window/models.py
++++ b/tests/expressions_window/models.py
+@@ -12,3 +12,9 @@ class Employee(models.Model):
+     hire_date = models.DateField(blank=False, null=False)
+     age = models.IntegerField(blank=False, null=False)
+     classification = models.ForeignKey('Classification', on_delete=models.CASCADE, null=True)
++
++
++class DecimalModel(models.Model):
++    name = models.CharField(max_length=50)
++    value = models.DecimalField(max_digits=10, decimal_places=2)
++    date = models.DateField()
+diff --git a/tests/expressions_window/tests.py b/tests/expressions_window/tests.py
+index 30ed64f529..1bcb765379 100644
+--- a/tests/expressions_window/tests.py
++++ b/tests/expressions_window/tests.py
+@@ -13,7 +13,7 @@ from django.db.models.functions import (
+ )
+ from django.test import SimpleTestCase, TestCase, skipUnlessDBFeature
+ 
+-from .models import Employee
++from .models import Employee, DecimalModel
+ 
+ 
+ @skipUnlessDBFeature('supports_over_clause')
+@@ -786,6 +786,51 @@ class WindowFunctionTests(TestCase):
+                 frame=RowRange(start='a'),
+             )))
+ 
++    @skipUnlessDBFeature('supports_over_clause')
++    def test_lag_with_decimal_field_sqlite(self):
++        """
++        Test that Lag() with DecimalField works correctly on SQLite.
++        This is a regression test for the issue where CAST was applied
++        to just the function instead of the entire window expression.
++        """
++        from .models import DecimalModel
++        from decimal import Decimal
++        import datetime
++        
++        # Create test data
++        DecimalModel.objects.bulk_create([
++            DecimalModel(name='A', value=Decimal('10.50'), date=datetime.date(2023, 1, 1)),
++            DecimalModel(name='B', value=Decimal('20.75'), date=datetime.date(2023, 1, 2)),
++            DecimalModel(name='C', value=Decimal('30.25'), date=datetime.date(2023, 1, 3)),
++        ])
++        
++        # Test Lag with DecimalField - this should not raise an OperationalError
++        qs = DecimalModel.objects.annotate(
++            prev_value=Window(
++                expression=Lag('value', 1),
++                order_by=F('date').asc()
++            )
++        ).order_by('date')
++        
++        # This should execute without error
++        results = list(qs.values('name', 'value', 'prev_value'))
++        
++        # Verify the results
++        expected = [
++            {'name': 'A', 'value': Decimal('10.50'), 'prev_value': None},
++            {'name': 'B', 'value': Decimal('20.75'), 'prev_value': Decimal('10.50')},
++            {'name': 'C', 'value': Decimal('30.25'), 'prev_value': Decimal('20.75')},
++        ]
++        
++        # Convert Decimal values for comparison (SQLite may return with different precision)
++        for i, result in enumerate(results):
++            if result['prev_value'] is not None:
++                self.assertAlmostEqual(float(result['prev_value']), float(expected[i]['prev_value']), places=2)
++            else:
++                self.assertIsNone(expected[i]['prev_value'])
++            self.assertEqual(result['name'], expected[i]['name'])
++            self.assertAlmostEqual(float(result['value']), float(expected[i]['value']), places=2)
++
+ 
+ class WindowUnsupportedTests(TestCase):
+     def test_unsupported_backend(self):

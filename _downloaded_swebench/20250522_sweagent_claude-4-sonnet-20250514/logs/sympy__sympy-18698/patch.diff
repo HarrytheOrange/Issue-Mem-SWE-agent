@@ -1,0 +1,69 @@
+diff --git a/sympy/polys/polytools.py b/sympy/polys/polytools.py
+index c9e77a901f..b614d7bb7f 100644
+--- a/sympy/polys/polytools.py
++++ b/sympy/polys/polytools.py
+@@ -5895,6 +5895,53 @@ def _factors_product(factors):
+     return Mul(*[f.as_expr()**k for f, k in factors])
+ 
+ 
++def _combine_factors_by_multiplicity(factors, method):
++    """Combine factors with the same multiplicity for square-free factorization."""
++    if method != 'sqf':
++        return factors
++    
++    from collections import defaultdict
++    
++    # Group factors by multiplicity
++    multiplicity_groups = defaultdict(list)
++    for factor, mult in factors:
++        multiplicity_groups[mult].append(factor)
++    
++    # Combine factors within each multiplicity group
++    combined_factors = []
++    for mult, factor_list in multiplicity_groups.items():
++        if len(factor_list) == 1:
++            combined_factors.append((factor_list[0], mult))
++        else:
++            # Only combine factors if they are all univariate polynomials
++            # and have the same variable set
++            should_combine = True
++            first_gens = factor_list[0].gens if hasattr(factor_list[0], 'gens') else None
++            
++            for factor in factor_list:
++                if hasattr(factor, 'gens'):
++                    # Check if all factors have the same generators and are univariate
++                    if len(factor.gens) != 1 or factor.gens != first_gens:
++                        should_combine = False
++                        break
++                else:
++                    should_combine = False
++                    break
++            
++            if should_combine and first_gens and len(first_gens) == 1:
++                # Multiply all factors with the same multiplicity
++                combined_poly = factor_list[0]
++                for factor in factor_list[1:]:
++                    combined_poly = combined_poly * factor
++                combined_factors.append((combined_poly, mult))
++            else:
++                # Don't combine, keep factors separate
++                for factor in factor_list:
++                    combined_factors.append((factor, mult))
++    
++    return combined_factors
++
++
+ def _symbolic_factor_list(expr, opt, method):
+     """Helper function for :func:`_symbolic_factor`. """
+     coeff, factors = S.One, []
+@@ -5995,6 +6042,10 @@ def _generic_factor_list(expr, gens, args, method):
+                     f, _ = _poly_from_expr(f, _opt)
+                     factors[i] = (f, k)
+ 
++        # Combine factors with the same multiplicity for square-free factorization
++        fp = _combine_factors_by_multiplicity(fp, method)
++        fq = _combine_factors_by_multiplicity(fq, method)
++
+         fp = _sorted_factors(fp, method)
+         fq = _sorted_factors(fq, method)
+ 

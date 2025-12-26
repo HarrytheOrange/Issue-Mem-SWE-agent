@@ -1,0 +1,50 @@
+diff --git a/django/utils/autoreload.py b/django/utils/autoreload.py
+index b8efb9f881..64fe0a356f 100644
+--- a/django/utils/autoreload.py
++++ b/django/utils/autoreload.py
+@@ -216,16 +216,37 @@ def get_child_arguments():
+     executable is reported to not have the .exe extension which can cause bugs
+     on reloading.
+     """
+-    import django.__main__
+-    django_main_path = Path(django.__main__.__file__)
+     py_script = Path(sys.argv[0])
+-
+     args = [sys.executable] + ['-W%s' % o for o in sys.warnoptions]
+-    if py_script == django_main_path:
+-        # The server was started with `python -m django runserver`.
+-        args += ['-m', 'django']
+-        args += sys.argv[1:]
+-    elif not py_script.exists():
++    
++    # Check if Python was launched with -m by examining __main__.__spec__
++    main_module = sys.modules.get('__main__')
++    if main_module is not None and getattr(main_module, '__spec__', None) is not None:
++        spec = main_module.__spec__
++        # __main__.__spec__.parent exists if and only if Python was launched with -m
++        # and __main__.__spec__.parent == "pkg" if launched with -m pkg
++        if spec.parent is not None:
++            # Python was started with -m pkg
++            args += ['-m', spec.parent]
++            args += sys.argv[1:]
++            return args
++    
++    # Fallback: Check if this is Django's __main__.py for backward compatibility
++    # This handles cases where __main__.__spec__ is not available or not set correctly
++    try:
++        import django.__main__
++        django_main_path = Path(django.__main__.__file__)
++        if py_script == django_main_path:
++            # The server was started with `python -m django runserver`.
++            args += ['-m', 'django']
++            args += sys.argv[1:]
++            return args
++    except (ImportError, AttributeError):
++        # django.__main__ might not be available or might not have __file__
++        pass
++    
++    # Fall back to the original logic for non-module execution
++    if not py_script.exists():
+         # sys.argv[0] may not exist for several reasons on Windows.
+         # It may exist with a .exe extension or have a -script.py suffix.
+         exe_entrypoint = py_script.with_suffix('.exe')

@@ -1,0 +1,67 @@
+diff --git a/django/contrib/sessions/backends/base.py b/django/contrib/sessions/backends/base.py
+index b5453160a5..baaf77ccf5 100644
+--- a/django/contrib/sessions/backends/base.py
++++ b/django/contrib/sessions/backends/base.py
+@@ -108,6 +108,13 @@ class SessionBase:
+ 
+     def encode(self, session_dict):
+         "Return the given session dictionary serialized and encoded as a string."
++        # RemovedInDjango40Warning: when the deprecation ends, remove the
++        # legacy format.
++        if settings.DEFAULT_HASHING_ALGORITHM == 'sha1':
++            # Use legacy format when DEFAULT_HASHING_ALGORITHM is 'sha1' to
++            # allow multiple instances with different DEFAULT_HASHING_ALGORITHM
++            # values to share sessions during the Django 3.1 transition period.
++            return self._legacy_encode(session_dict)
+         return signing.dumps(
+             session_dict, salt=self.key_salt, serializer=self.serializer,
+             compress=True,
+@@ -116,15 +123,45 @@ class SessionBase:
+     def decode(self, session_data):
+         try:
+             return signing.loads(session_data, salt=self.key_salt, serializer=self.serializer)
+-        # RemovedInDjango40Warning: when the deprecation ends, handle here
+-        # exceptions similar to what _legacy_decode() does now.
+         except Exception:
++            # RemovedInDjango40Warning: when the deprecation ends, handle here
++            # exceptions similar to what _legacy_decode() does now.
++            
++            # During the transition period, if DEFAULT_HASHING_ALGORITHM is 'sha1',
++            # also try to decode with 'sha256' algorithm for compatibility with
++            # sessions encoded by instances using sha256.
++            if settings.DEFAULT_HASHING_ALGORITHM == 'sha1':
++                try:
++                    # Try to decode using sha256 algorithm
++                    signer = signing.TimestampSigner(
++                        key=settings.SECRET_KEY,
++                        salt=self.key_salt,
++                        algorithm='sha256'
++                    )
++                    base64d = signer.unsign(session_data).encode()
++                    decompress = base64d[:1] == b'.'
++                    if decompress:
++                        base64d = base64d[1:]
++                    data = signing.b64_decode(base64d)
++                    if decompress:
++                        import zlib
++                        data = zlib.decompress(data)
++                    return self.serializer().loads(data)
++                except Exception:
++                    pass
++            
+             return self._legacy_decode(session_data)
+ 
++    def _legacy_encode(self, session_dict):
++        # RemovedInDjango40Warning: pre-Django 3.1 format will be invalid.
++        serialized = self.serializer().dumps(session_dict)
++        hash = self._hash(serialized)
++        return base64.b64encode(hash.encode() + b":" + serialized).decode('ascii')
++
+     def _legacy_decode(self, session_data):
+         # RemovedInDjango40Warning: pre-Django 3.1 format will be invalid.
+-        encoded_data = base64.b64decode(session_data.encode('ascii'))
+         try:
++            encoded_data = base64.b64decode(session_data.encode('ascii'))
+             # could produce ValueError if there is no ':'
+             hash, serialized = encoded_data.split(b':', 1)
+             expected_hash = self._hash(serialized)

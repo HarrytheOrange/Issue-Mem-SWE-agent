@@ -1,0 +1,267 @@
+diff --git a/setup.py b/setup.py
+index 8d40de1a8..03f325278 100644
+--- a/setup.py
++++ b/setup.py
+@@ -15,22 +15,22 @@ if sys.version_info < (3, 5):
+     sys.exit(1)
+ 
+ install_requires = [
+-    'sphinxcontrib-applehelp',
+-    'sphinxcontrib-devhelp',
++    'sphinxcontrib-applehelp<=1.0.7',
++    'sphinxcontrib-devhelp<=1.0.5',
+     'sphinxcontrib-jsmath',
+-    'sphinxcontrib-htmlhelp',
+-    'sphinxcontrib-serializinghtml',
+-    'sphinxcontrib-qthelp',
+-    'Jinja2>=2.3',
++    'sphinxcontrib-htmlhelp<=2.0.4',
++    'sphinxcontrib-serializinghtml<=1.1.9',
++    'sphinxcontrib-qthelp<=1.0.6',
++    'Jinja2<3.0',
+     'Pygments>=2.0',
+     'docutils>=0.12',
+     'snowballstemmer>=1.1',
+     'babel>=1.3',
+-    'alabaster>=0.7,<0.8',
++    'alabaster>=0.7,<0.7.12',
+     'imagesize',
+     'requests>=2.5.0',
+     'setuptools',
+-    'packaging',
++    'packaging', 'markupsafe<=2.0.1',
+ ]
+ 
+ extras_require = {
+diff --git a/sphinx/builders/html/transforms.py b/sphinx/builders/html/transforms.py
+index c91da57e9..8a2c93f0b 100644
+--- a/sphinx/builders/html/transforms.py
++++ b/sphinx/builders/html/transforms.py
+@@ -37,26 +37,202 @@ class KeyboardTransform(SphinxPostTransform):
+     """
+     default_priority = 400
+     builders = ('html',)
+-    pattern = re.compile(r'(-|\+|\^|\s+)')
+ 
+     def run(self, **kwargs: Any) -> None:
+         matcher = NodeMatcher(nodes.literal, classes=["kbd"])
+         for node in self.document.traverse(matcher):  # type: nodes.literal
+-            parts = self.pattern.split(node[-1].astext())
++            text = node[-1].astext()
++            parts = self._parse_kbd_text(text)
++            
+             if len(parts) == 1:
+                 continue
+ 
+             node.pop()
+-            while parts:
+-                key = parts.pop(0)
+-                node += nodes.literal('', key, classes=["kbd"])
+-
+-                try:
+-                    # key separator (ex. -, +, ^)
+-                    sep = parts.pop(0)
+-                    node += nodes.Text(sep)
+-                except IndexError:
+-                    pass
++            for i, part in enumerate(parts):
++                if part['type'] == 'key':
++                    node += nodes.literal('', part['text'], classes=["kbd"])
++                elif part['type'] == 'separator':
++                    node += nodes.Text(part['text'])
++
++    def _parse_kbd_text(self, text: str) -> list:
++        """Parse keyboard text into keys and separators.
++        
++        This method intelligently parses keyboard shortcuts to distinguish
++        between separator characters (-, +, ^) and actual keystrokes that
++        happen to use these characters.
++        
++        Args:
++            text: The keyboard text to parse
++            
++        Returns:
++            List of dictionaries with 'type' ('key' or 'separator') and 'text'
++        """
++        if not text:
++            return [{'type': 'key', 'text': text}]
++        
++        # If the text is just a single separator character, treat it as a key
++        if text in ('-', '+', '^'):
++            return [{'type': 'key', 'text': text}]
++        
++        # Split by whitespace first (whitespace is always a separator)
++        whitespace_parts = re.split(r'(\s+)', text)
++        result = []
++        
++        for part in whitespace_parts:
++            if re.match(r'^\s+$', part):
++                # This is whitespace - treat as separator
++                result.append({'type': 'separator', 'text': part})
++            elif part:
++                # This is non-whitespace - parse for compound keys
++                compound_parts = self._parse_compound_keys(part)
++                result.extend(compound_parts)
++        
++        return result
++    
++    def _parse_compound_keys(self, text: str) -> list:
++        """Parse compound keyboard shortcuts like Ctrl-x, Shift-+, etc.
++        
++        Args:
++            text: Text without whitespace to parse
++            
++        Returns:
++            List of dictionaries with 'type' ('key' or 'separator') and 'text'
++        """
++        if not text:
++            return []
++        
++        # If it's a single character that could be a separator, treat as key
++        if len(text) == 1 and text in ('-', '+', '^'):
++            return [{'type': 'key', 'text': text}]
++        
++        # Look for separator patterns, but be smart about it
++        # We'll use a more sophisticated approach that considers context
++        parts = []
++        current_key = ""
++        i = 0
++        
++        while i < len(text):
++            char = text[i]
++            
++            if char in ('-', '+', '^'):
++                # Check if this could be a separator
++                if self._is_separator_context(text, i):
++                    # Add the current key if we have one
++                    if current_key:
++                        parts.append({'type': 'key', 'text': current_key})
++                        current_key = ""
++                    # Add the separator
++                    parts.append({'type': 'separator', 'text': char})
++                else:
++                    # This separator character is part of a key
++                    current_key += char
++            else:
++                current_key += char
++            
++            i += 1
++        
++        # Add any remaining key
++        if current_key:
++            parts.append({'type': 'key', 'text': current_key})
++        
++        # If we only found one part and it's a key, return it as-is
++        if len(parts) == 1:
++            return parts
++        
++        return parts
++    
++    def _is_separator_context(self, text: str, pos: int) -> bool:
++        """Determine if a character at the given position should be treated as a separator.
++        
++        Args:
++            text: The full text
++            pos: Position of the character to check
++            
++        Returns:
++            True if the character should be treated as a separator
++        """
++        char = text[pos]
++        
++        # If it's at the beginning or end, it's likely part of a key
++        if pos == 0 or pos == len(text) - 1:
++            return False
++        
++        # Look at the characters before and after
++        before = text[pos - 1]
++        after = text[pos + 1]
++        
++        # Check if we have a valid key before this position
++        before_is_key_end = self._is_key_end(text, pos - 1)
++        after_is_key_start = self._is_key_start(text, pos + 1)
++        
++        # If both before and after look like keys, this is likely a separator
++        if before_is_key_end and after_is_key_start:
++            return True
++        
++        return False
++    
++    def _is_key_end(self, text: str, pos: int) -> bool:
++        """Check if the position ends a valid key name.
++        
++        Args:
++            text: The full text
++            pos: Position to check
++            
++        Returns:
++            True if this position ends a key name
++        """
++        if pos < 0 or pos >= len(text):
++            return False
++        
++        char = text[pos]
++        
++        # Alphanumeric characters can end a key
++        if char.isalnum():
++            return True
++        
++        # Check if we're at the end of a known key name
++        # Look backwards to see if we match any known key names
++        for length in range(1, min(pos + 2, 10)):  # Check up to 10 chars back
++            start_pos = pos - length + 1
++            if start_pos < 0:
++                break
++            
++            candidate = text[start_pos:pos + 1]
++            if candidate in ['Ctrl', 'Alt', 'Shift', 'Meta', 'Cmd', 'Win', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12']:
++                return True
++        
++        return False
++    
++    def _is_key_start(self, text: str, pos: int) -> bool:
++        """Check if the position starts a valid key name.
++        
++        Args:
++            text: The full text
++            pos: Position to check
++            
++        Returns:
++            True if this position starts a key name
++        """
++        if pos >= len(text):
++            return False
++        
++        # Check for common key prefixes
++        remaining = text[pos:]
++        key_prefixes = ['Ctrl', 'Alt', 'Shift', 'Meta', 'Cmd', 'Win', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12']
++        
++        for prefix in key_prefixes:
++            if remaining.startswith(prefix):
++                return True
++        
++        # Single character keys
++        if remaining[0].isalnum():
++            return True
++        
++        # Special single-character keys
++        if remaining[0] in ('+', '-', '^', '=', '[', ']', '\\', ';', "'", ',', '.', '/', '`', '~', '!', '@', '#', '$', '%', '&', '*', '(', ')', '_'):
++            return True
++        
++        return False
+ 
+ 
+ def setup(app: Sphinx) -> Dict[str, Any]:
+diff --git a/tox.ini b/tox.ini
+index 21a0faec3..be1a9127e 100644
+--- a/tox.ini
++++ b/tox.ini
+@@ -28,7 +28,7 @@ setenv =
+     PYTHONWARNINGS = all,ignore::ImportWarning:importlib._bootstrap_external,ignore::DeprecationWarning:site,ignore::DeprecationWarning:distutils,ignore::DeprecationWarning:pip._vendor.packaging.version
+     PYTEST_ADDOPTS = {env:PYTEST_ADDOPTS:} --color yes
+ commands=
+-    python -X dev -m pytest --durations 25 {posargs}
++    python -X dev -m pytest -rA --durations 25 {posargs}
+ 
+ [testenv:flake8]
+ basepython = python3

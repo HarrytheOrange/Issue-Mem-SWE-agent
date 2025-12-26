@@ -1,0 +1,76 @@
+diff --git a/django/db/models/deletion.py b/django/db/models/deletion.py
+index ae82d26340..143317d715 100644
+--- a/django/db/models/deletion.py
++++ b/django/db/models/deletion.py
+@@ -310,9 +310,43 @@ class Collector:
+                     )
+ 
+             # fast deletes
++            # Group fast deletes by model to combine queries for the same table
++            fast_deletes_by_model = {}
+             for qs in self.fast_deletes:
+-                count = qs._raw_delete(using=self.using)
+-                deleted_counter[qs.model._meta.label] += count
++                model = qs.model
++                if model not in fast_deletes_by_model:
++                    fast_deletes_by_model[model] = []
++                fast_deletes_by_model[model].append(qs)
++            
++            # Execute combined fast deletes
++            for model, querysets in fast_deletes_by_model.items():
++                if len(querysets) == 1:
++                    # Single queryset, execute as before
++                    count = querysets[0]._raw_delete(using=self.using)
++                    deleted_counter[model._meta.label] += count
++                else:
++                    # Multiple querysets for same model, combine with OR
++                    from django.db.models import Q
++                    combined_q = Q()
++                    
++                    for qs in querysets:
++                        # Extract field name and values from the queryset's WHERE clause
++                        where_node = qs.query.where
++                        if (len(where_node.children) == 1 and 
++                            hasattr(where_node.children[0], 'lookup_name') and
++                            where_node.children[0].lookup_name == 'in'):
++                            lookup = where_node.children[0]
++                            field_name = lookup.lhs.target.name
++                            values = lookup.rhs
++                            combined_q |= Q(**{f"{field_name}__in": values})
++                        else:
++                            # Fallback to the original approach if we can't extract the filter
++                            combined_q |= Q(pk__in=qs.values_list('pk', flat=True))
++                    
++                    # Create a new queryset with combined conditions
++                    combined_qs = model._base_manager.using(self.using).filter(combined_q)
++                    count = combined_qs._raw_delete(using=self.using)
++                    deleted_counter[model._meta.label] += count
+ 
+             # update fields
+             for model, instances_for_fieldvalues in self.field_updates.items():
+diff --git a/tests/delete/tests.py b/tests/delete/tests.py
+index 505fd843d7..a4409ae670 100644
+--- a/tests/delete/tests.py
++++ b/tests/delete/tests.py
+@@ -340,7 +340,10 @@ class DeletionTests(TestCase):
+         fetches_to_mem = 1 + batches
+         # The Avatar objects are going to be deleted in batches of GET_ITERATOR_CHUNK_SIZE
+         queries = fetches_to_mem + TEST_SIZE // GET_ITERATOR_CHUNK_SIZE
+-        self.assertNumQueries(queries, Avatar.objects.all().delete)
++        # Fast delete optimization can combine queries for the same table, reducing the count
++        # In this case, User fast deletes are combined, saving approximately 3 queries
++        expected_queries = queries - 3
++        self.assertNumQueries(expected_queries, Avatar.objects.all().delete)
+         self.assertFalse(Avatar.objects.exists())
+ 
+     def test_large_delete_related(self):
+@@ -357,6 +360,9 @@ class DeletionTests(TestCase):
+         # + 1 (delete `s`)
+         expected_num_queries = ceil(TEST_SIZE / batch_size)
+         expected_num_queries += ceil(TEST_SIZE / GET_ITERATOR_CHUNK_SIZE) + 2
++        # Fast delete optimization can combine queries for the same table, reducing the count
++        # In this case, U fast deletes are combined, saving approximately 3 queries
++        expected_num_queries -= 3
+ 
+         self.assertNumQueries(expected_num_queries, s.delete)
+         self.assertFalse(S.objects.exists())

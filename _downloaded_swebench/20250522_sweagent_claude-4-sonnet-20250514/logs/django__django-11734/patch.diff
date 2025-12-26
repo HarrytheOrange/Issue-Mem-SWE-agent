@@ -1,0 +1,316 @@
+diff --git a/debug_outerref.py b/debug_outerref.py
+new file mode 100644
+index 0000000000..4716ea39e1
+--- /dev/null
++++ b/debug_outerref.py
+@@ -0,0 +1,98 @@
++#!/usr/bin/env python
++import os
++import sys
++import django
++from django.conf import settings
++
++# Configure Django settings
++if not settings.configured:
++    settings.configure(
++        DEBUG=True,
++        DATABASES={
++            'default': {
++                'ENGINE': 'django.db.backends.sqlite3',
++                'NAME': ':memory:',
++            }
++        },
++        INSTALLED_APPS=[
++            'django.contrib.contenttypes',
++            'django.contrib.auth',
++            'tests.queries',
++        ],
++        SECRET_KEY='test-secret-key',
++    )
++
++django.setup()
++
++from django.db.models import Exists, Q, OuterRef
++from tests.queries.models import Number, Item, Tag, NamedCategory, Author, Note, ExtraInfo
++
++# Create the database tables
++from django.core.management import execute_from_command_line
++execute_from_command_line(['manage.py', 'migrate', '--run-syncdb'])
++
++# Create some test data
++category = NamedCategory.objects.create(name="test_cat")
++tag = Tag.objects.create(name="test_tag", category=category)
++
++# Create required dependencies
++note = Note.objects.create(note="test_note", misc="test_misc")
++extra_info = ExtraInfo.objects.create(info="test_info")
++author = Author.objects.create(name="test_author", num=1, extra=extra_info)
++
++item = Item.objects.create(
++    name="test_item",
++    created="2023-01-01 00:00:00",
++    creator=author,
++    note=note
++)
++item.tags.add(tag)
++
++number = Number.objects.create(num=1, other_num=10)
++
++# Let's debug the OuterRef resolution
++print("=== Debugging OuterRef resolution ===")
++
++# Test 1: filter() - should work correctly
++print("\n1. Testing filter() with OuterRef:")
++subquery1 = Item.objects.filter(tags__category_id=OuterRef('pk'))
++print(f"Subquery SQL: {subquery1.query}")
++
++# Test 2: exclude() - should show the problem
++print("\n2. Testing exclude() with OuterRef:")
++subquery2 = Item.objects.exclude(tags__category_id=OuterRef('pk'))
++print(f"Subquery SQL: {subquery2.query}")
++
++# Test 3: filter(~Q()) - should show the problem
++print("\n3. Testing filter(~Q()) with OuterRef:")
++subquery3 = Item.objects.filter(~Q(tags__category_id=OuterRef('pk')))
++print(f"Subquery SQL: {subquery3.query}")
++
++# Let's also check what happens when we manually create the Q objects
++print("\n4. Testing Q object creation:")
++q1 = Q(tags__category_id=OuterRef('pk'))
++print(f"Q object: {q1}")
++print(f"Q object children: {q1.children}")
++
++q2 = ~Q(tags__category_id=OuterRef('pk'))
++print(f"~Q object: {q2}")
++print(f"~Q object children: {q2.children}")
++print(f"~Q object negated: {q2.negated}")
++
++# Let's see what happens when we resolve the OuterRef manually
++print("\n5. Testing OuterRef resolution:")
++outer_ref = OuterRef('pk')
++print(f"OuterRef: {outer_ref}")
++print(f"OuterRef name: {outer_ref.name}")
++
++# Create a dummy query to see how resolution works
++from django.db.models.sql.query import Query
++dummy_query = Query(Number)
++print(f"Dummy query model: {dummy_query.model}")
++
++try:
++    resolved = outer_ref.resolve_expression(dummy_query)
++    print(f"Resolved OuterRef: {resolved}")
++    print(f"Resolved OuterRef type: {type(resolved)}")
++except Exception as e:
++    print(f"Error resolving OuterRef: {e}")
+\ No newline at end of file
+diff --git a/django/db/models/expressions.py b/django/db/models/expressions.py
+index 2b59dd301a..dbfaceccf8 100644
+--- a/django/db/models/expressions.py
++++ b/django/db/models/expressions.py
+@@ -552,6 +552,30 @@ class ResolvedOuterRef(F):
+     """
+     contains_aggregate = False
+ 
++    def resolve_expression(self, query=None, allow_joins=True, reuse=None,
++                           summarize=False, for_save=False, simple_col=False):
++        # When resolving in a subquery context, we need to resolve the reference
++        # to point to the outer query's table alias
++        if query and hasattr(query, 'external_aliases') and query.external_aliases:
++            # Try to resolve the reference using the outer query context
++            # For 'pk' references, find the primary key field of the outer model
++            if self.name == 'pk':
++                # Find the outer query's model and primary key
++                for alias in query.external_aliases:
++                    table = query.alias_map.get(alias)
++                    if table:
++                        # Get the primary key field
++                        if hasattr(table, 'table_name'):
++                            # This is a BaseTable, find the model
++                            for model in query.model._meta.apps.get_models():
++                                if model._meta.db_table == table.table_name:
++                                    pk_field = model._meta.pk
++                                    from django.db.models.sql.datastructures import Col
++                                    return Col(alias, pk_field, pk_field)
++        
++        # If we can't resolve using external aliases, use the parent implementation
++        return super().resolve_expression(query, allow_joins, reuse, summarize, for_save, simple_col)
++
+     def as_sql(self, *args, **kwargs):
+         raise ValueError(
+             'This queryset contains a reference to an outer query and may '
+diff --git a/django/db/models/sql/query.py b/django/db/models/sql/query.py
+index 35f3c5e1ea..7b11cee83b 100644
+--- a/django/db/models/sql/query.py
++++ b/django/db/models/sql/query.py
+@@ -1702,7 +1702,14 @@ class Query(BaseExpression):
+         handle.
+         """
+         filter_lhs, filter_rhs = filter_expr
+-        if isinstance(filter_rhs, F):
++        from django.db.models.expressions import OuterRef
++        if isinstance(filter_rhs, OuterRef):
++            # OuterRef is already correct, no need to convert
++            pass
++        elif isinstance(filter_rhs, F):
++            filter_expr = (filter_lhs, OuterRef(filter_rhs.name))
++        elif hasattr(filter_rhs, '__class__') and filter_rhs.__class__.__name__ == 'ResolvedOuterRef':
++            # If it's already a ResolvedOuterRef, convert it back to OuterRef
+             filter_expr = (filter_lhs, OuterRef(filter_rhs.name))
+         # Generate the inner query.
+         query = Query(self.model)
+diff --git a/reproduce_issue.py b/reproduce_issue.py
+new file mode 100644
+index 0000000000..cf30c4301b
+--- /dev/null
++++ b/reproduce_issue.py
+@@ -0,0 +1,106 @@
++#!/usr/bin/env python
++import os
++import sys
++import django
++from django.conf import settings
++
++# Configure Django settings
++if not settings.configured:
++    settings.configure(
++        DEBUG=True,
++        DATABASES={
++            'default': {
++                'ENGINE': 'django.db.backends.sqlite3',
++                'NAME': ':memory:',
++            }
++        },
++        INSTALLED_APPS=[
++            'django.contrib.contenttypes',
++            'django.contrib.auth',
++            'tests.queries',
++        ],
++        SECRET_KEY='test-secret-key',
++    )
++
++django.setup()
++
++from django.db.models import Exists, Q, OuterRef
++from tests.queries.models import Number, Item, Tag, NamedCategory, Author, Note, ExtraInfo
++
++# Create the database tables
++from django.core.management import execute_from_command_line
++execute_from_command_line(['manage.py', 'migrate', '--run-syncdb'])
++
++# Create some test data
++category = NamedCategory.objects.create(name="test_cat")
++tag = Tag.objects.create(name="test_tag", category=category)
++
++# Create required dependencies
++note = Note.objects.create(note="test_note", misc="test_misc")
++extra_info = ExtraInfo.objects.create(info="test_info")
++author = Author.objects.create(name="test_author", num=1, extra=extra_info)
++
++item = Item.objects.create(
++    name="test_item",
++    created="2023-01-01 00:00:00",
++    creator=author,
++    note=note
++)
++item.tags.add(tag)
++
++number = Number.objects.create(num=1, other_num=10)
++
++print("Testing OuterRef with filter() - should work:")
++try:
++    qs = Number.objects.annotate(
++        foo=Exists(
++            Item.objects.filter(tags__category_id=OuterRef('pk'))
++        )
++    ).filter(foo=True)
++    print(f"Query: {qs.query}")
++    print(f"Result: {list(qs)}")
++    print("✓ filter() works")
++except Exception as e:
++    print(f"✗ filter() failed: {e}")
++
++print("\nTesting OuterRef with exclude() - should fail:")
++try:
++    qs = Number.objects.annotate(
++        foo=Exists(
++            Item.objects.exclude(tags__category_id=OuterRef('pk'))
++        )
++    ).filter(foo=True)
++    print(f"Query: {qs.query}")
++    print(f"Result: {list(qs)}")
++    print("✓ exclude() works")
++except Exception as e:
++    print(f"✗ exclude() failed: {e}")
++
++print("\nTesting OuterRef with filter(~Q()) - should fail:")
++try:
++    qs = Number.objects.annotate(
++        foo=Exists(
++            Item.objects.filter(~Q(tags__category_id=OuterRef('pk')))
++        )
++    ).filter(foo=True)
++    print(f"Query: {qs.query}")
++    print(f"Result: {list(qs)}")
++    print("✓ filter(~Q()) works")
++except Exception as e:
++    print(f"✗ filter(~Q()) failed: {e}")
++
++# Let's try to trigger the actual error by using the subquery directly
++print("\nTesting direct subquery usage - should trigger the error:")
++try:
++    subquery = Item.objects.exclude(tags__category_id=OuterRef('pk'))
++    print(f"Subquery: {subquery.query}")
++    print("✗ This should have failed!")
++except Exception as e:
++    print(f"✓ Direct subquery failed as expected: {e}")
++
++try:
++    subquery = Item.objects.filter(~Q(tags__category_id=OuterRef('pk')))
++    print(f"Subquery: {subquery.query}")
++    print("✗ This should have failed!")
++except Exception as e:
++    print(f"✓ Direct subquery failed as expected: {e}")
+\ No newline at end of file
+diff --git a/tests/queries/test_qs_combinators.py b/tests/queries/test_qs_combinators.py
+index 668d5e6ad6..ded783be37 100644
+--- a/tests/queries/test_qs_combinators.py
++++ b/tests/queries/test_qs_combinators.py
+@@ -1,9 +1,9 @@
+ from django.db import connection
+-from django.db.models import Exists, F, IntegerField, OuterRef, Value
++from django.db.models import Exists, F, IntegerField, OuterRef, Value, Q
+ from django.db.utils import DatabaseError, NotSupportedError
+ from django.test import TestCase, skipIfDBFeature, skipUnlessDBFeature
+ 
+-from .models import Number, ReservedName
++from .models import Number, ReservedName, Item
+ 
+ 
+ @skipUnlessDBFeature('supports_select_union')
+@@ -285,3 +285,26 @@ class QuerySetSetOperationTests(TestCase):
+                         msg % (operation, combinator),
+                     ):
+                         getattr(getattr(qs, combinator)(qs), operation)()
++
++    def test_exists_exclude(self):
++        # filter()
++        qs = Number.objects.annotate(
++            foo=Exists(
++                Item.objects.filter(tags__category_id=OuterRef('pk'))
++            )
++        ).filter(foo=True)
++        print(qs)  # works
++        # exclude()
++        qs = Number.objects.annotate(
++            foo=Exists(
++                Item.objects.exclude(tags__category_id=OuterRef('pk'))
++            )
++        ).filter(foo=True)
++        print(qs)  # crashes
++        # filter(~Q())
++        qs = Number.objects.annotate(
++            foo=Exists(
++                Item.objects.filter(~Q(tags__category_id=OuterRef('pk')))
++            )
++        ).filter(foo=True)
++        print(qs)  # crashes

@@ -1,0 +1,4950 @@
++ source /opt/miniconda3/bin/activate
+++ _CONDA_ROOT=/opt/miniconda3
+++ . /opt/miniconda3/etc/profile.d/conda.sh
++++ export CONDA_EXE=/opt/miniconda3/bin/conda
++++ CONDA_EXE=/opt/miniconda3/bin/conda
++++ export _CE_M=
++++ _CE_M=
++++ export _CE_CONDA=
++++ _CE_CONDA=
++++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ '[' -z '' ']'
++++ export CONDA_SHLVL=0
++++ CONDA_SHLVL=0
++++ '[' -n '' ']'
++++++ dirname /opt/miniconda3/bin/conda
+++++ dirname /opt/miniconda3/bin
++++ PATH=/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ export PATH
++++ '[' -z '' ']'
++++ PS1=
+++ conda activate
+++ local cmd=activate
+++ case "$cmd" in
+++ __conda_activate activate
+++ '[' -n '' ']'
+++ local ask_conda
++++ PS1=
++++ __conda_exe shell.posix activate
++++ /opt/miniconda3/bin/conda shell.posix activate
+++ ask_conda='PS1='''(base) '''
+export PATH='''/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'''
+export CONDA_PREFIX='''/opt/miniconda3'''
+export CONDA_SHLVL='''1'''
+export CONDA_DEFAULT_ENV='''base'''
+export CONDA_PROMPT_MODIFIER='''(base) '''
+export CONDA_EXE='''/opt/miniconda3/bin/conda'''
+export _CE_M=''''''
+export _CE_CONDA=''''''
+export CONDA_PYTHON_EXE='''/opt/miniconda3/bin/python''''
+++ eval 'PS1='''(base) '''
+export PATH='''/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'''
+export CONDA_PREFIX='''/opt/miniconda3'''
+export CONDA_SHLVL='''1'''
+export CONDA_DEFAULT_ENV='''base'''
+export CONDA_PROMPT_MODIFIER='''(base) '''
+export CONDA_EXE='''/opt/miniconda3/bin/conda'''
+export _CE_M=''''''
+export _CE_CONDA=''''''
+export CONDA_PYTHON_EXE='''/opt/miniconda3/bin/python''''
++++ PS1='(base) '
++++ export PATH=/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ PATH=/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ export CONDA_PREFIX=/opt/miniconda3
++++ CONDA_PREFIX=/opt/miniconda3
++++ export CONDA_SHLVL=1
++++ CONDA_SHLVL=1
++++ export CONDA_DEFAULT_ENV=base
++++ CONDA_DEFAULT_ENV=base
++++ export 'CONDA_PROMPT_MODIFIER=(base) '
++++ CONDA_PROMPT_MODIFIER='(base) '
++++ export CONDA_EXE=/opt/miniconda3/bin/conda
++++ CONDA_EXE=/opt/miniconda3/bin/conda
++++ export _CE_M=
++++ _CE_M=
++++ export _CE_CONDA=
++++ _CE_CONDA=
++++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
+++ __conda_hashr
+++ '[' -n '' ']'
+++ '[' -n '' ']'
+++ hash -r
++ conda activate testbed
++ local cmd=activate
++ case "$cmd" in
++ __conda_activate activate testbed
++ '[' -n '' ']'
++ local ask_conda
+++ PS1='(base) '
+++ __conda_exe shell.posix activate testbed
+++ /opt/miniconda3/bin/conda shell.posix activate testbed
++ ask_conda='PS1='''(testbed) '''
+export PATH='''/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'''
+export CONDA_PREFIX='''/opt/miniconda3/envs/testbed'''
+export CONDA_SHLVL='''2'''
+export CONDA_DEFAULT_ENV='''testbed'''
+export CONDA_PROMPT_MODIFIER='''(testbed) '''
+export CONDA_PREFIX_1='''/opt/miniconda3'''
+export CONDA_EXE='''/opt/miniconda3/bin/conda'''
+export _CE_M=''''''
+export _CE_CONDA=''''''
+export CONDA_PYTHON_EXE='''/opt/miniconda3/bin/python''''
++ eval 'PS1='''(testbed) '''
+export PATH='''/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'''
+export CONDA_PREFIX='''/opt/miniconda3/envs/testbed'''
+export CONDA_SHLVL='''2'''
+export CONDA_DEFAULT_ENV='''testbed'''
+export CONDA_PROMPT_MODIFIER='''(testbed) '''
+export CONDA_PREFIX_1='''/opt/miniconda3'''
+export CONDA_EXE='''/opt/miniconda3/bin/conda'''
+export _CE_M=''''''
+export _CE_CONDA=''''''
+export CONDA_PYTHON_EXE='''/opt/miniconda3/bin/python''''
+++ PS1='(testbed) '
+++ export PATH=/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+++ PATH=/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+++ export CONDA_PREFIX=/opt/miniconda3/envs/testbed
+++ CONDA_PREFIX=/opt/miniconda3/envs/testbed
+++ export CONDA_SHLVL=2
+++ CONDA_SHLVL=2
+++ export CONDA_DEFAULT_ENV=testbed
+++ CONDA_DEFAULT_ENV=testbed
+++ export 'CONDA_PROMPT_MODIFIER=(testbed) '
+++ CONDA_PROMPT_MODIFIER='(testbed) '
+++ export CONDA_PREFIX_1=/opt/miniconda3
+++ CONDA_PREFIX_1=/opt/miniconda3
+++ export CONDA_EXE=/opt/miniconda3/bin/conda
+++ CONDA_EXE=/opt/miniconda3/bin/conda
+++ export _CE_M=
+++ _CE_M=
+++ export _CE_CONDA=
+++ _CE_CONDA=
+++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
+++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++ __conda_hashr
++ '[' -n '' ']'
++ '[' -n '' ']'
++ hash -r
++ cd /testbed
++ git config --global --add safe.directory /testbed
++ cd /testbed
++ git status
+On branch main
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   django/db/models/aggregates.py
+
+no changes added to commit (use "git add" and/or "git commit -a")
++ git show
+commit beb7ddbcee03270e833b2f74927ccfc8027aa693
+Author: Claude Paroz <claude@2xlibre.net>
+Date:   Sat Jan 29 18:59:17 2022 +0100
+
+    Updated translations from Transifex.
+    
+    Updated Bulgarian, Czech, German, Uzbek, and Vietnamese translations.
+    
+    Forwardport of 7a1c6533eb72c3e6faa308796ba7f8d7d447d3b9 from stable/4.0.x.
+
+diff --git a/django/conf/locale/bg/LC_MESSAGES/django.mo b/django/conf/locale/bg/LC_MESSAGES/django.mo
+index a7886df827..5b85f3380f 100644
+Binary files a/django/conf/locale/bg/LC_MESSAGES/django.mo and b/django/conf/locale/bg/LC_MESSAGES/django.mo differ
+diff --git a/django/conf/locale/bg/LC_MESSAGES/django.po b/django/conf/locale/bg/LC_MESSAGES/django.po
+index e911c00aa6..0d4bf7a366 100644
+--- a/django/conf/locale/bg/LC_MESSAGES/django.po
++++ b/django/conf/locale/bg/LC_MESSAGES/django.po
+@@ -1,11 +1,12 @@
+ # This file is distributed under the same license as the Django package.
+ #
+ # Translators:
++# arneatec <arneatec@gmail.com>, 2022
+ # Boris Chervenkov <office@sentido.bg>, 2012
+ # Claude Paroz <claude@2xlibre.net>, 2020
+ # Jannis Leidel <jannis@leidel.info>, 2011
+ # Lyuboslav  Petrov <petrov.lyuboslav@gmail.com>, 2014
+-# Todor Lubenov <tgl.sysdev@gmail.com>, 2013-2015
++# Todor Lubenov <tlubenov@gmail.com>, 2013-2015
+ # Venelin Stoykov <vkstoykov@gmail.com>, 2015-2017
+ # vestimir <vestimir@gmail.com>, 2014
+ # Alexander Atanasov <aatanasov@gmail.com>, 2012
+@@ -13,9 +14,9 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: django
+"
+ "Report-Msgid-Bugs-To: 
+"
+-"POT-Creation-Date: 2020-05-19 20:23+0200
+"
+-"PO-Revision-Date: 2020-07-14 21:42+0000
+"
+-"Last-Translator: Transifex Bot <>
+"
++"POT-Creation-Date: 2021-09-21 10:22+0200
+"
++"PO-Revision-Date: 2022-01-14 11:26+0000
+"
++"Last-Translator: arneatec <arneatec@gmail.com>
+"
+ "Language-Team: Bulgarian (http://www.transifex.com/django/django/language/"
+ "bg/)
+"
+ "MIME-Version: 1.0
+"
+@@ -25,13 +26,13 @@ msgstr ""
+ "Plural-Forms: nplurals=2; plural=(n != 1);
+"
+ 
+ msgid "Afrikaans"
+-msgstr "ÐÑÑÐ¸ÐºÐ°Ð½ÑÐºÐ¸"
++msgstr "Ð°ÑÑÐ¸ÐºÐ°Ð°Ð½ÑÐºÐ¸"
+ 
+ msgid "Arabic"
+ msgstr "Ð°ÑÐ°Ð±ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
+ 
+ msgid "Algerian Arabic"
+-msgstr ""
++msgstr "Ð°Ð»Ð¶Ð¸ÑÑÐºÐ¸ Ð°ÑÐ°Ð±ÑÐºÐ¸"
+ 
+ msgid "Asturian"
+ msgstr "ÐÑÑÑÑÐ¸Ð¹ÑÐºÐ¸"
+@@ -55,82 +56,82 @@ msgid "Bosnian"
+ msgstr "Ð±Ð¾ÑÐ½ÐµÐ½ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
+ 
+ msgid "Catalan"
+-msgstr "ÐºÐ°ÑÐ°Ð»ÑÐ½ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "ÐºÐ°ÑÐ°Ð»Ð°Ð½ÑÐºÐ¸"
+ 
+ msgid "Czech"
+-msgstr "ÑÐµÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "ÑÐµÑÐºÐ¸"
+ 
+ msgid "Welsh"
+-msgstr "ÑÐµÐ»ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "ÑÐµÐ»ÑÐºÐ¸"
+ 
+ msgid "Danish"
+-msgstr "Ð´Ð°ÑÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "Ð´Ð°ÑÑÐºÐ¸"
+ 
+ msgid "German"
+-msgstr "Ð½ÐµÐ¼ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "Ð½ÐµÐ¼ÑÐºÐ¸"
+ 
+ msgid "Lower Sorbian"
+-msgstr ""
++msgstr "Ð´Ð¾Ð»Ð½Ð¾ÑÐ¾ÑÐ±ÑÐºÐ¸"
+ 
+ msgid "Greek"
+-msgstr "Ð³ÑÑÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "Ð³ÑÑÑÐºÐ¸"
+ 
+ msgid "English"
+-msgstr "Ð°Ð½Ð³Ð»Ð¸Ð¹ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "Ð°Ð½Ð³Ð»Ð¸Ð¹ÑÐºÐ¸"
+ 
+ msgid "Australian English"
+-msgstr "ÐÐ²ÑÑÑÐ°Ð»Ð¸Ð¹ÑÐºÐ¸ ÐÐ½Ð³Ð»Ð¸Ð¹ÑÐºÐ¸"
++msgstr "Ð°Ð²ÑÑÑÐ°Ð»Ð¸Ð¹ÑÐºÐ¸ Ð°Ð½Ð³Ð»Ð¸Ð¹ÑÐºÐ¸"
+ 
+ msgid "British English"
+ msgstr "Ð±ÑÐ¸ÑÐ°Ð½ÑÐºÐ¸ Ð°Ð½Ð³Ð»Ð¸Ð¹ÑÐºÐ¸"
+ 
+ msgid "Esperanto"
+-msgstr "ÐÑÐ¿ÐµÑÐ°Ð½ÑÐ¾"
++msgstr "ÐµÑÐ¿ÐµÑÐ°Ð½ÑÐ¾"
+ 
+ msgid "Spanish"
+-msgstr "Ð¸ÑÐ¿Ð°Ð½ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "Ð¸ÑÐ¿Ð°Ð½ÑÐºÐ¸"
+ 
+ msgid "Argentinian Spanish"
+ msgstr "ÐºÐ°ÑÑÐ¸Ð»ÑÐºÐ¸"
+ 
+ msgid "Colombian Spanish"
+-msgstr "ÐÐ¾Ð»ÑÐ¼Ð±Ð¸Ð¹ÑÐºÐ¸ ÐÑÐ¿Ð°Ð½ÑÐºÐ¸"
++msgstr "ÐºÐ¾Ð»ÑÐ¼Ð±Ð¸Ð¹ÑÐºÐ¸ Ð¸ÑÐ¿Ð°Ð½ÑÐºÐ¸"
+ 
+ msgid "Mexican Spanish"
+-msgstr "ÐÐµÐºÑÐ¸ÐºÐ°Ð½ÑÐºÐ¸ Ð¸ÑÐ¿Ð°Ð½ÑÐºÐ¸"
++msgstr "Ð¼ÐµÐºÑÐ¸ÐºÐ°Ð½ÑÐºÐ¸ Ð¸ÑÐ¿Ð°Ð½ÑÐºÐ¸"
+ 
+ msgid "Nicaraguan Spanish"
+ msgstr "Ð½Ð¸ÐºÐ°ÑÐ°Ð³ÑÐ°Ð½ÑÐºÐ¸ Ð¸ÑÐ¿Ð°Ð½ÑÐºÐ¸"
+ 
+ msgid "Venezuelan Spanish"
+-msgstr "ÐÑÐ¿Ð°Ð½ÑÐºÐ¸ ÐÐµÐ½ÐµÑÑÐµÐ»ÑÐºÐ¸"
++msgstr "Ð²ÐµÐ½ÐµÑÑÐµÐ»ÑÐºÐ¸ Ð¸ÑÐ¿Ð°Ð½ÑÐºÐ¸"
+ 
+ msgid "Estonian"
+-msgstr "ÐµÑÑÐ¾Ð½ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "ÐµÑÑÐ¾Ð½ÑÐºÐ¸"
+ 
+ msgid "Basque"
+ msgstr "Ð±Ð°ÑÐºÐ¸"
+ 
+ msgid "Persian"
+-msgstr "Ð¿ÐµÑÑÐ¸Ð¹ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "Ð¿ÐµÑÑÐ¸Ð¹ÑÐºÐ¸"
+ 
+ msgid "Finnish"
+-msgstr "ÑÐ¸Ð½Ð»Ð°Ð½Ð´ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "ÑÐ¸Ð½Ð»Ð°Ð½Ð´ÑÐºÐ¸"
+ 
+ msgid "French"
+-msgstr "ÑÑÐµÐ½ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "ÑÑÐµÐ½ÑÐºÐ¸"
+ 
+ msgid "Frisian"
+-msgstr "ÑÑÐ¸Ð·Ð¸Ð¹ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "ÑÑÐ¸Ð·Ð¸Ð¹ÑÐºÐ¸"
+ 
+ msgid "Irish"
+-msgstr "Ð¸ÑÐ»Ð°Ð½Ð´ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "Ð¸ÑÐ»Ð°Ð½Ð´ÑÐºÐ¸"
+ 
+ msgid "Scottish Gaelic"
+-msgstr ""
++msgstr "ÑÐ¾ÑÐ»Ð°Ð½Ð´ÑÐºÐ¸ Ð³Ð°Ð»ÑÐºÐ¸"
+ 
+ msgid "Galician"
+-msgstr "Ð³Ð°Ð»Ð¸ÑÐµÐ¹ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "Ð³Ð°Ð»Ð¸ÑÐµÐ¹ÑÐºÐ¸"
+ 
+ msgid "Hebrew"
+ msgstr "Ð¸Ð²ÑÐ¸Ñ"
+@@ -139,175 +140,178 @@ msgid "Hindi"
+ msgstr "ÑÐ¸Ð½Ð´Ð¸"
+ 
+ msgid "Croatian"
+-msgstr "ÑÑÑÐ²Ð°ÑÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "ÑÑÑÐ²Ð°ÑÑÐºÐ¸"
+ 
+ msgid "Upper Sorbian"
+-msgstr ""
++msgstr "Ð³Ð¾ÑÐ½Ð¾ÑÐ¾ÑÐ±ÑÐºÐ¸"
+ 
+ msgid "Hungarian"
+-msgstr "ÑÐ½Ð³Ð°ÑÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "ÑÐ½Ð³Ð°ÑÑÐºÐ¸"
+ 
+ msgid "Armenian"
+-msgstr ""
++msgstr "Ð°ÑÐ¼ÐµÐ½ÑÐºÐ¸"
+ 
+ msgid "Interlingua"
+-msgstr "ÐÐµÐ¶Ð´ÑÐ½Ð°ÑÐ¾Ð´ÐµÐ½"
++msgstr "Ð¸Ð½ÑÐµÑÐ»Ð¸Ð½Ð³Ð²Ð°"
+ 
+ msgid "Indonesian"
+-msgstr "Ð¸Ð½Ð´Ð¾Ð½ÐµÐ·Ð¸Ð¹ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "Ð¸Ð½Ð´Ð¾Ð½ÐµÐ·Ð¸Ð¹ÑÐºÐ¸"
+ 
+ msgid "Igbo"
+-msgstr ""
++msgstr "Ð¸Ð³Ð±Ð¾"
+ 
+ msgid "Ido"
+-msgstr "ÐÐ´Ð¾"
++msgstr "Ð¸Ð´Ð¾"
+ 
+ msgid "Icelandic"
+-msgstr "Ð¸ÑÐ»Ð°Ð½Ð´ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "Ð¸ÑÐ»Ð°Ð½Ð´ÑÐºÐ¸"
+ 
+ msgid "Italian"
+-msgstr "Ð¸ÑÐ°Ð»Ð¸Ð°Ð½ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "Ð¸ÑÐ°Ð»Ð¸Ð°Ð½ÑÐºÐ¸"
+ 
+ msgid "Japanese"
+-msgstr "ÑÐ¿Ð¾Ð½ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "ÑÐ¿Ð¾Ð½ÑÐºÐ¸"
+ 
+ msgid "Georgian"
+-msgstr "Ð³ÑÑÐ·Ð¸Ð½ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "Ð³ÑÑÐ·Ð¸Ð½ÑÐºÐ¸"
+ 
+ msgid "Kabyle"
+-msgstr ""
++msgstr "ÐºÐ°Ð±Ð¸Ð»ÑÐºÐ¸"
+ 
+ msgid "Kazakh"
+-msgstr "ÐÐ°Ð·Ð°ÑÑÐºÐ¸"
++msgstr "ÐºÐ°Ð·Ð°ÑÑÐºÐ¸"
+ 
+ msgid "Khmer"
+-msgstr "ÐºÑÐ¼ÐµÑÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "ÐºÑÐ¼ÐµÑÑÐºÐ¸"
+ 
+ msgid "Kannada"
+ msgstr "ÐºÐ°Ð½Ð½Ð°Ð´Ð°"
+ 
+ msgid "Korean"
+-msgstr "ÐÐ¾ÑÐµÐ¹ÑÐºÐ¸"
++msgstr "ÐºÐ¾ÑÐµÐ¹ÑÐºÐ¸"
+ 
+ msgid "Kyrgyz"
+-msgstr ""
++msgstr "ÐºÐ¸ÑÐ³Ð¸Ð·ÐºÐ¸"
+ 
+ msgid "Luxembourgish"
+-msgstr "ÐÑÐºÑÐµÐ¼Ð±ÑÑÐ³ÑÐºÐ¸"
++msgstr "Ð»ÑÐºÑÐµÐ¼Ð±ÑÑÐ³ÑÐºÐ¸"
+ 
+ msgid "Lithuanian"
+-msgstr "ÐÐ¸ÑÐ¾Ð²ÑÐºÐ¸"
++msgstr "Ð»Ð¸ÑÐ¾Ð²ÑÐºÐ¸"
+ 
+ msgid "Latvian"
+-msgstr "ÐÐ°ÑÐ²Ð¸Ð¹ÑÐºÐ¸"
++msgstr "Ð»Ð°ÑÐ²Ð¸Ð¹ÑÐºÐ¸"
+ 
+ msgid "Macedonian"
+-msgstr "ÐÐ°ÐºÐµÐ´Ð¾Ð½ÑÐºÐ¸"
++msgstr "Ð¼Ð°ÐºÐµÐ´Ð¾Ð½ÑÐºÐ¸"
+ 
+ msgid "Malayalam"
+ msgstr "Ð¼Ð°Ð»Ð°ÑÐ»Ð°Ð¼"
+ 
+ msgid "Mongolian"
+-msgstr "ÐÐ¾Ð½Ð³Ð¾Ð»ÑÐºÐ¸"
++msgstr "Ð¼Ð¾Ð½Ð³Ð¾Ð»ÑÐºÐ¸"
+ 
+ msgid "Marathi"
+-msgstr "ÐÐ°ÑÐ°ÑÐ¸"
++msgstr "Ð¼Ð°ÑÐ°ÑÐ¸"
++
++msgid "Malay"
++msgstr "Ð¼Ð°Ð»Ð°Ð¹ÑÐºÐ¸"
+ 
+ msgid "Burmese"
+-msgstr "ÐÑÑÐ¼ÐµÑÐµ"
++msgstr "Ð±Ð¸ÑÐ¼Ð°Ð½ÑÐºÐ¸"
+ 
+ msgid "Norwegian BokmÃ¥l"
+-msgstr ""
++msgstr "Ð½Ð¾ÑÐ²ÐµÐ¶ÐºÐ¸ Ð±ÑÐºÐ¼Ð¾Ð»"
+ 
+ msgid "Nepali"
+-msgstr "ÐÐµÐ¿Ð°Ð»ÑÐºÐ¸"
++msgstr "Ð½ÐµÐ¿Ð°Ð»ÑÐºÐ¸"
+ 
+ msgid "Dutch"
+-msgstr "ÑÐ¾Ð»Ð°Ð½Ð´ÑÐºÐ¸"
++msgstr "Ð½Ð¸Ð´ÐµÑÐ»Ð°Ð½Ð´ÑÐºÐ¸"
+ 
+ msgid "Norwegian Nynorsk"
+-msgstr "Ð½Ð¾ÑÐ²ÐµÐ¶ÐºÐ¸ ÑÑÐ²ÑÐµÐ¼ÐµÐ½ÐµÐ½ ÐµÐ·Ð¸Ðº"
++msgstr "ÑÑÐ²ÑÐµÐ¼ÐµÐ½ÐµÐ½ Ð½Ð¾ÑÐ²ÐµÐ¶ÐºÐ¸"
+ 
+ msgid "Ossetic"
+-msgstr "ÐÑÐµÑÑÐºÐ¸"
++msgstr "Ð¾ÑÐµÑÑÐºÐ¸"
+ 
+ msgid "Punjabi"
+-msgstr "Ð¿ÐµÐ½Ð´Ð¶Ð°Ð±Ð¸"
++msgstr "Ð¿Ð°Ð½Ð´Ð¶Ð°Ð±ÑÐºÐ¸"
+ 
+ msgid "Polish"
+-msgstr "Ð¿Ð¾Ð»ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "Ð¿Ð¾Ð»ÑÐºÐ¸"
+ 
+ msgid "Portuguese"
+-msgstr "Ð¿Ð¾ÑÑÑÐ³Ð°Ð»ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "Ð¿Ð¾ÑÑÑÐ³Ð°Ð»ÑÐºÐ¸"
+ 
+ msgid "Brazilian Portuguese"
+ msgstr "Ð±ÑÐ°Ð·Ð¸Ð»ÑÐºÐ¸ Ð¿Ð¾ÑÑÑÐ³Ð°Ð»ÑÐºÐ¸"
+ 
+ msgid "Romanian"
+-msgstr "ÑÑÐ¼ÑÐ½ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "ÑÑÐ¼ÑÐ½ÑÐºÐ¸"
+ 
+ msgid "Russian"
+-msgstr "ÑÑÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "ÑÑÑÐºÐ¸"
+ 
+ msgid "Slovak"
+-msgstr "ÑÐ»Ð¾Ð²Ð°ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "ÑÐ»Ð¾Ð²Ð°ÑÐºÐ¸"
+ 
+ msgid "Slovenian"
+-msgstr "ÑÐ»Ð¾Ð²ÐµÐ½ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "ÑÐ»Ð¾Ð²ÐµÐ½ÑÐºÐ¸"
+ 
+ msgid "Albanian"
+-msgstr "Ð°Ð»Ð±Ð°Ð½ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "Ð°Ð»Ð±Ð°Ð½ÑÐºÐ¸"
+ 
+ msgid "Serbian"
+-msgstr "ÑÑÑÐ±ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "ÑÑÑÐ±ÑÐºÐ¸"
+ 
+ msgid "Serbian Latin"
+-msgstr "ÑÑÑÐ±ÑÐºÐ¸ Ñ Ð»Ð°ÑÐ¸Ð½ÑÐºÐ¸ Ð±ÑÐºÐ²Ð¸"
++msgstr "ÑÑÑÐ±ÑÐºÐ¸ - Ð»Ð°ÑÐ¸Ð½Ð¸ÑÐ°"
+ 
+ msgid "Swedish"
+-msgstr "ÑÐ²ÐµÐ´ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "ÑÐ²ÐµÐ´ÑÐºÐ¸"
+ 
+ msgid "Swahili"
+-msgstr "Ð¡ÑÐ°ÑÐ¸Ð»Ð¸"
++msgstr "ÑÑÐ°ÑÐ¸Ð»Ð¸"
+ 
+ msgid "Tamil"
+-msgstr "ÑÐ°Ð¼Ð¸Ð»"
++msgstr "ÑÐ°Ð¼Ð¸Ð»ÑÐºÐ¸"
+ 
+ msgid "Telugu"
+ msgstr "ÑÐµÐ»ÑÐ³Ñ"
+ 
+ msgid "Tajik"
+-msgstr ""
++msgstr "ÑÐ°Ð´Ð¶Ð¸ÐºÑÐºÐ¸"
+ 
+ msgid "Thai"
+-msgstr "ÑÐ°Ð¹Ð»Ð°Ð½Ð´ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "ÑÐ°Ð¹Ð»Ð°Ð½Ð´ÑÐºÐ¸"
+ 
+ msgid "Turkmen"
+-msgstr ""
++msgstr "ÑÑÑÐºÐ¼ÐµÐ½ÑÐºÐ¸"
+ 
+ msgid "Turkish"
+-msgstr "ÑÑÑÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "ÑÑÑÑÐºÐ¸"
+ 
+ msgid "Tatar"
+-msgstr "Ð¢Ð°ÑÐ°ÑÑÐºÐ¸"
++msgstr "ÑÐ°ÑÐ°ÑÑÐºÐ¸"
+ 
+ msgid "Udmurt"
+-msgstr "Ð£Ð´Ð¼ÑÑÑ"
++msgstr "ÑÐ´Ð¼ÑÑÑ"
+ 
+ msgid "Ukrainian"
+-msgstr "ÑÐºÑÐ°Ð¸Ð½ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "ÑÐºÑÐ°Ð¸Ð½ÑÐºÐ¸"
+ 
+ msgid "Urdu"
+-msgstr "Ð£ÑÐ´Ñ"
++msgstr "ÑÑÐ´Ñ"
+ 
+ msgid "Uzbek"
+-msgstr ""
++msgstr "ÑÐ·Ð±ÐµÐºÑÐºÐ¸"
+ 
+ msgid "Vietnamese"
+-msgstr "Ð²Ð¸ÐµÑÐ½Ð°Ð¼ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "Ð²Ð¸ÐµÑÐ½Ð°Ð¼ÑÐºÐ¸"
+ 
+ msgid "Simplified Chinese"
+-msgstr "ÐºÐ¸ÑÐ°Ð¹ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "ÐºÐ¸ÑÐ°Ð¹ÑÐºÐ¸"
+ 
+ msgid "Traditional Chinese"
+ msgstr "ÑÑÐ°Ð´Ð¸ÑÐ¸Ð¾Ð½ÐµÐ½ ÐºÐ¸ÑÐ°Ð¹ÑÐºÐ¸"
+@@ -316,13 +320,18 @@ msgid "Messages"
+ msgstr "Ð¡ÑÐ¾Ð±ÑÐµÐ½Ð¸Ñ"
+ 
+ msgid "Site Maps"
+-msgstr "ÐÑÑÐ·Ð¸ Maps"
++msgstr "ÐÐ°ÑÑÐ¸ Ð½Ð° ÑÐ°Ð¹ÑÐ°"
+ 
+ msgid "Static Files"
+ msgstr "Ð¡ÑÐ°ÑÐ¸ÑÐ½Ð¸ ÑÐ°Ð¹Ð»Ð¾Ð²Ðµ"
+ 
+ msgid "Syndication"
+-msgstr "Syndication"
++msgstr "Ð¡Ð¸Ð½Ð´Ð¸ÐºÐ°ÑÐ¸Ñ"
++
++#. Translators: String used to replace omitted page numbers in elided page
++#. range generated by paginators, e.g. [1, 2, 'â¦', 5, 6, 7, 'â¦', 9, 10].
++msgid "â¦"
++msgstr "..."
+ 
+ msgid "That page number is not an integer"
+ msgstr "ÐÐ¾Ð¼ÐµÑÑÑ Ð½Ð° ÑÑÑÐ°Ð½Ð¸ÑÐ°ÑÐ° Ð½Ðµ Ðµ ÑÑÐ»Ð¾ ÑÐ¸ÑÐ»Ð¾"
+@@ -340,7 +349,7 @@ msgid "Enter a valid URL."
+ msgstr "ÐÑÐ²ÐµÐ´ÐµÑÐµ Ð²Ð°Ð»Ð¸Ð´ÐµÐ½ URL Ð°Ð´ÑÐµÑ."
+ 
+ msgid "Enter a valid integer."
+-msgstr "ÐÑÐ²ÐµÐ´ÐµÑÐµ Ð²Ð°Ð»Ð¸Ð´Ð½Ð¾ ÑÐ¸ÑÐ»Ð¾."
++msgstr "ÐÑÐ²ÐµÐ´ÐµÑÐµ Ð²Ð°Ð»Ð¸Ð´Ð½Ð¾ ÑÐµÐ»Ð¾ÑÐ¸ÑÐ»ÐµÐ½Ð¾ ÑÐ¸ÑÐ»Ð¾."
+ 
+ msgid "Enter a valid email address."
+ msgstr "ÐÑÐ²ÐµÐ´ÐµÑÐµ Ð²Ð°Ð»Ð¸Ð´ÐµÐ½ Ð¸Ð¼ÐµÐ¹Ð» Ð°Ð´ÑÐµÑ."
+@@ -349,11 +358,14 @@ msgstr "ÐÑÐ²ÐµÐ´ÐµÑÐµ Ð²Ð°Ð»Ð¸Ð´ÐµÐ½ Ð¸Ð¼ÐµÐ¹Ð» Ð°Ð´ÑÐµÑ."
+ msgid ""
+ "Enter a valid âslugâ consisting of letters, numbers, underscores or hyphens."
+ msgstr ""
++"ÐÑÐ²ÐµÐ´ÐµÑÐµ Ð²Ð°Ð»Ð¸Ð´ÐµÐ½ 'ÑÐ»ÑÐ³', ÑÑÑÑÐ¾ÑÑ ÑÐµ Ð¾Ñ Ð±ÑÐºÐ²Ð¸, ÑÐ¸ÑÑÐ¸, ÑÐ¸ÑÐµÑÐ° Ð¸Ð»Ð¸ Ð´Ð¾Ð»Ð½Ð¸ ÑÐ¸ÑÐµÑÐ°."
+ 
+ msgid ""
+ "Enter a valid âslugâ consisting of Unicode letters, numbers, underscores, or "
+ "hyphens."
+ msgstr ""
++"ÐÑÐ²ÐµÐ´ÐµÑÐµ Ð²Ð°Ð»Ð¸Ð´ÐµÐ½ 'ÑÐ»ÑÐ³', ÑÑÑÑÐ¾ÑÑ ÑÐµ Ð¾Ñ Ð£Ð½Ð¸ÐºÐ¾Ð´ Ð±ÑÐºÐ²Ð¸, ÑÐ¸ÑÑÐ¸, ÑÐ¸ÑÐµÑÐ° Ð¸Ð»Ð¸ Ð´Ð¾Ð»Ð½Ð¸ "
++"ÑÐ¸ÑÐµÑÐ°."
+ 
+ msgid "Enter a valid IPv4 address."
+ msgstr "ÐÑÐ²ÐµÐ´ÐµÑÐµ Ð²Ð°Ð»Ð¸Ð´ÐµÐ½ IPv4 Ð°Ð´ÑÐµÑ."
+@@ -414,7 +426,7 @@ msgstr "ÐÑÐ²ÐµÐ´ÐµÑÐµ ÑÐ¸ÑÐ»Ð¾."
+ #, python-format
+ msgid "Ensure that there are no more than %(max)s digit in total."
+ msgid_plural "Ensure that there are no more than %(max)s digits in total."
+-msgstr[0] "Ð£Ð²ÐµÑÐµÑÐµ ÑÐµ, ÑÐµ Ð¸Ð¼Ð° Ð½Ðµ Ð¿Ð¾Ð²ÐµÑÐµ Ð¾Ñ %(max)s ÑÐ¸ÑÑÐ¸ Ð² Ð¾Ð±ÑÐ¾."
++msgstr[0] "Ð£Ð²ÐµÑÐµÑÐµ ÑÐµ, ÑÐµ Ð¸Ð¼Ð° Ð½Ðµ Ð¿Ð¾Ð²ÐµÑÐµ Ð¾Ñ %(max)s ÑÐ¸ÑÑÐ¸ Ð¾Ð±ÑÐ¾."
+ msgstr[1] "Ð£Ð²ÐµÑÐµÑÐµ ÑÐµ, ÑÐµ Ð¸Ð¼Ð° Ð½Ðµ Ð¿Ð¾Ð²ÐµÑÐµ Ð¾Ñ %(max)s ÑÐ¸ÑÑÐ¸ Ð¾Ð±ÑÐ¾."
+ 
+ #, python-format
+@@ -431,7 +443,7 @@ msgid ""
+ msgid_plural ""
+ "Ensure that there are no more than %(max)s digits before the decimal point."
+ msgstr[0] ""
+-"Ð£Ð²ÐµÑÐµÑÐµ ÑÐµ, ÑÐµ Ð¸Ð¼Ð° Ð½Ðµ Ð¿Ð¾Ð²ÐµÑÐµ Ð¾Ñ %(max)s ÑÐ¸ÑÑÐ¸ Ð¿ÑÐµÐ´Ð¸ Ð´ÐµÑÐµÑÐ¸ÑÐ½Ð°ÑÐ° Ð·Ð°Ð¿ÐµÑÐ°Ñ."
++"Ð£Ð²ÐµÑÐµÑÐµ ÑÐµ, ÑÐµ Ð¸Ð¼Ð° Ð½Ðµ Ð¿Ð¾Ð²ÐµÑÐµ Ð¾Ñ %(max)s ÑÐ¸ÑÑÐ° Ð¿ÑÐµÐ´Ð¸ Ð´ÐµÑÐµÑÐ¸ÑÐ½Ð°ÑÐ° Ð·Ð°Ð¿ÐµÑÐ°Ñ."
+ msgstr[1] ""
+ "Ð£Ð²ÐµÑÐµÑÐµ ÑÐµ, ÑÐµ Ð¸Ð¼Ð° Ð½Ðµ Ð¿Ð¾Ð²ÐµÑÐµ Ð¾Ñ %(max)s ÑÐ¸ÑÑÐ¸ Ð¿ÑÐµÐ´Ð¸ Ð´ÐµÑÐµÑÐ¸ÑÐ½Ð°ÑÐ° Ð·Ð°Ð¿ÐµÑÐ°Ñ."
+ 
+@@ -440,16 +452,18 @@ msgid ""
+ "File extension â%(extension)sâ is not allowed. Allowed extensions are: "
+ "%(allowed_extensions)s."
+ msgstr ""
++"ÐÐµ ÑÐ° ÑÐ°Ð·ÑÐµÑÐµÐ½Ð¸ ÑÐ°Ð¹Ð»Ð¾Ð²Ðµ Ñ ÑÐ°ÑÐ¸ÑÐµÐ½Ð¸Ðµ "%(extension)s". ÐÐ¾Ð·Ð²Ð¾Ð»ÐµÐ½Ð¸ÑÐµ "
++"ÑÐ°Ð·ÑÐ¸ÑÐµÐ½Ð¸Ñ ÑÐ°:  %(allowed_extensions)s."
+ 
+ msgid "Null characters are not allowed."
+-msgstr ""
++msgstr "ÐÑÐ°Ð·Ð½Ð¸ Ð·Ð½Ð°ÑÐ¸ Ð½Ðµ ÑÐ° ÑÐ°Ð·ÑÐµÑÐµÐ½Ð¸."
+ 
+ msgid "and"
+ msgstr "Ð¸"
+ 
+ #, python-format
+ msgid "%(model_name)s with this %(field_labels)s already exists."
+-msgstr "%(model_name)s Ñ ÑÐµÐ·Ð¸ %(field_labels)s Ð²ÐµÑÐµ ÑÑÑÐµÑÑÐ²ÑÐ²Ð°."
++msgstr "%(model_name)s Ñ ÑÐ¾Ð·Ð¸ %(field_labels)s Ð²ÐµÑÐµ ÑÑÑÐµÑÑÐ²ÑÐ²Ð°."
+ 
+ #, python-format
+ msgid "Value %(value)r is not a valid choice."
+@@ -471,8 +485,7 @@ msgstr "%(model_name)s Ñ ÑÐ¾Ð·Ð¸ %(field_label)s Ð²ÐµÑÐµ ÑÑÑÐµÑÑÐ²ÑÐ²Ð°
+ msgid ""
+ "%(field_label)s must be unique for %(date_field_label)s %(lookup_type)s."
+ msgstr ""
+-"%(field_label)s ÑÑÑÐ±Ð²Ð° Ð´Ð° ÑÐ° ÑÐ½Ð¸ÐºÐ°Ð»Ð½Ð¸ Ð·Ð° %(date_field_label)s "
+-"%(lookup_type)s."
++"%(field_label)s ÑÑÑÐ±Ð²Ð° Ð´Ð° Ðµ ÑÐ½Ð¸ÐºÐ°Ð»Ð½Ð¾ Ð·Ð° %(date_field_label)s %(lookup_type)s."
+ 
+ #, python-format
+ msgid "Field of type: %(field_type)s"
+@@ -480,14 +493,14 @@ msgstr "ÐÐ¾Ð»Ðµ Ð¾Ñ ÑÐ¸Ð¿: %(field_type)s"
+ 
+ #, python-format
+ msgid "â%(value)sâ value must be either True or False."
+-msgstr ""
++msgstr "Ð¡ÑÐ¾Ð¹Ð½Ð¾ÑÑÑÐ° Ð½Ð° "%(value)s" ÑÑÑÐ±Ð²Ð° Ð´Ð° Ð±ÑÐ´Ðµ Ð¸Ð»Ð¸ True, Ð¸Ð»Ð¸ False."
+ 
+ #, python-format
+ msgid "â%(value)sâ value must be either True, False, or None."
+-msgstr ""
++msgstr "Ð¡ÑÐ¾Ð¹Ð½Ð¾ÑÑ "%(value)s" ÑÑÑÐ±Ð²Ð° Ð´Ð° Ð±ÑÐ´Ðµ Ð¸Ð»Ð¸ True, Ð¸Ð»Ð¸ False Ð¸Ð»Ð¸ None."
+ 
+ msgid "Boolean (Either True or False)"
+-msgstr "Boolean (True Ð¸Ð»Ð¸ False)"
++msgstr "ÐÑÐ»ÐµÐ²Ð¾ (True Ð¸Ð»Ð¸ False)"
+ 
+ #, python-format
+ msgid "String (up to %(max_length)s)"
+@@ -501,12 +514,16 @@ msgid ""
+ "â%(value)sâ value has an invalid date format. It must be in YYYY-MM-DD "
+ "format."
+ msgstr ""
++"Ð¡ÑÐ¾Ð¹Ð½Ð¾ÑÑÑÐ° "%(value)s" Ðµ Ñ Ð½ÐµÐ²Ð°Ð»Ð¸Ð´ÐµÐ½ ÑÐ¾ÑÐ¼Ð°Ñ Ð·Ð° Ð´Ð°ÑÐ°. Ð¢Ñ ÑÑÑÐ±Ð²Ð° Ð´Ð° Ð±ÑÐ´Ðµ Ð² "
++"ÐÐÐÐ-ÐÐ-ÐÐ ÑÐ¾ÑÐ¼Ð°Ñ."
+ 
+ #, python-format
+ msgid ""
+ "â%(value)sâ value has the correct format (YYYY-MM-DD) but it is an invalid "
+ "date."
+ msgstr ""
++"Ð¡ÑÐ¾Ð¹Ð½Ð¾ÑÑÑÐ° "%(value)s" Ðµ Ð² Ð¿ÑÐ°Ð²Ð¸Ð»Ð½Ð¸Ñ ÑÐ¾ÑÐ¼Ð°Ñ (ÐÐÐÐ-ÐÐ-ÐÐ), Ð½Ð¾ ÑÐ°Ð¼Ð°ÑÐ° Ð´Ð°ÑÐ° Ðµ "
++"Ð½ÐµÐ²Ð°Ð»Ð¸Ð´Ð½Ð°."
+ 
+ msgid "Date (without time)"
+ msgstr "ÐÐ°ÑÐ° (Ð±ÐµÐ· ÑÐ°Ñ)"
+@@ -516,19 +533,23 @@ msgid ""
+ "â%(value)sâ value has an invalid format. It must be in YYYY-MM-DD HH:MM[:ss[."
+ "uuuuuu]][TZ] format."
+ msgstr ""
++"Ð¡ÑÐ¾Ð¹Ð½Ð¾ÑÑÑÐ° '%(value)s' Ðµ Ñ Ð½ÐµÐ²Ð°Ð»Ð¸Ð´ÐµÐ½ ÑÐ¾ÑÐ¼Ð°Ñ. Ð¢ÑÑÐ±Ð²Ð° Ð´Ð° Ð±ÑÐ´Ðµ Ð²ÑÐ² ÑÐ¾ÑÐ¼Ð°Ñ ÐÐÐÐ-"
++"ÐÐ-ÐÐ Ð§Ð§:ÐÐ[:ÑÑ[.uuuuuu]][TZ]"
+ 
+ #, python-format
+ msgid ""
+ "â%(value)sâ value has the correct format (YYYY-MM-DD HH:MM[:ss[.uuuuuu]]"
+ "[TZ]) but it is an invalid date/time."
+ msgstr ""
++"Ð¡ÑÐ¾Ð¹Ð½Ð¾ÑÑÑÐ° '%(value)s' Ðµ Ñ Ð¿ÑÐ°Ð²Ð¸Ð»ÐµÐ½ ÑÐ¾ÑÐ¼Ð°Ñ ( ÐÐÐÐ-ÐÐ-ÐÐ Ð§Ð§:ÐÐ[:ÑÑ[.Î¼Î¼Î¼Î¼Î¼Î¼]]"
++"[TZ]), Ð½Ð¾ Ð´Ð°ÑÐ°ÑÐ°/ÑÐ°ÑÑÑ ÑÐ° Ð½ÐµÐ²Ð°Ð»Ð¸Ð´Ð½Ð¸"
+ 
+ msgid "Date (with time)"
+ msgstr "ÐÐ°ÑÐ° (Ð¸ ÑÐ°Ñ)"
+ 
+ #, python-format
+ msgid "â%(value)sâ value must be a decimal number."
+-msgstr ""
++msgstr "Ð¡ÑÐ¾Ð¹Ð½Ð¾ÑÑÑÐ° "%(value)s" ÑÑÑÐ±Ð²Ð° Ð´Ð° Ðµ Ð´ÐµÑÐµÑÐ¸ÑÐ½Ð¾ ÑÐ¸ÑÐ»Ð¾."
+ 
+ msgid "Decimal number"
+ msgstr "ÐÐµÑÐµÑÐ¸ÑÐ½Ð° Ð´ÑÐ¾Ð±"
+@@ -538,26 +559,28 @@ msgid ""
+ "â%(value)sâ value has an invalid format. It must be in [DD] [[HH:]MM:]ss[."
+ "uuuuuu] format."
+ msgstr ""
++"Ð¡ÑÐ¾Ð¹Ð½Ð¾ÑÑÑÐ° â%(value)sâ Ðµ Ñ Ð½ÐµÐ²Ð°Ð»Ð¸Ð´ÐµÐ½ ÑÐ¾ÑÐ¼Ð°Ñ. Ð¢ÑÑÐ±Ð²Ð° Ð´Ð° Ð±ÑÐ´Ðµ Ð²ÑÐ² ÑÐ¾ÑÐ¼Ð°Ñ [ÐÐ] "
++"[[Ð§Ð§:]ÐÐ:]ÑÑ[.uuuuuu] format."
+ 
+ msgid "Duration"
+ msgstr "ÐÑÐ¾Ð´ÑÐ»Ð¶Ð¸ÑÐµÐ»Ð½Ð¾ÑÑ"
+ 
+ msgid "Email address"
+-msgstr "Email Ð°Ð´ÑÐµÑ"
++msgstr "ÐÐ¼ÐµÐ¹Ð» Ð°Ð´ÑÐµÑ"
+ 
+ msgid "File path"
+ msgstr "ÐÑÑ ÐºÑÐ¼ ÑÐ°Ð¹Ð»"
+ 
+ #, python-format
+ msgid "â%(value)sâ value must be a float."
+-msgstr ""
++msgstr "Ð¡ÑÐ¾Ð¹Ð½Ð¾ÑÑÑÐ° '%(value)s' ÑÑÑÐ±Ð²Ð° Ð´Ð° Ðµ ÑÐ¸ÑÐ»Ð¾ Ñ Ð¿Ð»Ð°Ð²Ð°ÑÐ° Ð·Ð°Ð¿ÐµÑÐ°Ñ."
+ 
+ msgid "Floating point number"
+ msgstr "Ð§Ð¸ÑÐ»Ð¾ Ñ Ð¿Ð»Ð°Ð²Ð°ÑÐ° Ð·Ð°Ð¿ÐµÑÐ°Ñ"
+ 
+ #, python-format
+ msgid "â%(value)sâ value must be an integer."
+-msgstr ""
++msgstr "Ð¡ÑÐ¾Ð¹Ð½Ð¾ÑÑÑÐ° "%(value)s" ÑÑÑÐ±Ð²Ð° Ð´Ð° Ðµ ÑÑÐ»Ð¾ ÑÐ¸ÑÐ»Ð¾."
+ 
+ msgid "Integer"
+ msgstr "Ð¦ÑÐ»Ð¾ ÑÐ¸ÑÐ»Ð¾"
+@@ -565,6 +588,9 @@ msgstr "Ð¦ÑÐ»Ð¾ ÑÐ¸ÑÐ»Ð¾"
+ msgid "Big (8 byte) integer"
+ msgstr "ÐÐ¾Ð»ÑÐ¼Ð¾ (8 Ð±Ð°Ð¹ÑÐ°) ÑÑÐ»Ð¾ ÑÐ¸ÑÐ»Ð¾"
+ 
++msgid "Small integer"
++msgstr "2 Ð±Ð°Ð¹ÑÐ° ÑÑÐ»Ð¾ ÑÐ¸ÑÐ»Ð¾"
++
+ msgid "IPv4 address"
+ msgstr "IPv4 Ð°Ð´ÑÐµÑ"
+ 
+@@ -573,13 +599,13 @@ msgstr "IP Ð°Ð´ÑÐµÑ"
+ 
+ #, python-format
+ msgid "â%(value)sâ value must be either None, True or False."
+-msgstr ""
++msgstr "Ð¡ÑÐ¾Ð¹Ð½Ð¾ÑÑÑÐ° '%(value)s' ÑÑÑÐ±Ð²Ð° Ð´Ð° Ð±ÑÐ´Ðµ None, True Ð¸Ð»Ð¸ False."
+ 
+ msgid "Boolean (Either True, False or None)"
+-msgstr "Boolean (ÐÑÐ·Ð¼Ð¾Ð¶Ð½Ð¸ÑÐµ ÑÑÐ¾Ð¹Ð½Ð¾ÑÑÐ¸ ÑÐ° True, False Ð¸Ð»Ð¸ None)"
++msgstr "Ð±ÑÐ»ÐµÐ² (Ð²ÑÐ·Ð¼Ð¾Ð¶Ð½Ð¸ÑÐµ ÑÑÐ¾Ð¹Ð½Ð¾ÑÑÐ¸ ÑÐ° True, False Ð¸Ð»Ð¸ None)"
+ 
+ msgid "Positive big integer"
+-msgstr ""
++msgstr "ÐÐ¾Ð»Ð¾Ð¶Ð¸ÑÐµÐ»Ð½Ð¾ Ð³Ð¾Ð»ÑÐ¼Ð¾ ÑÑÐ»Ð¾ ÑÐ¸ÑÐ»Ð¾."
+ 
+ msgid "Positive integer"
+ msgstr "ÐÐ¾Ð»Ð¾Ð¶Ð¸ÑÐµÐ»Ð½Ð¾ ÑÑÐ»Ð¾ ÑÐ¸ÑÐ»Ð¾"
+@@ -589,10 +615,7 @@ msgstr "ÐÐ¾Ð»Ð¾Ð¶Ð¸ÑÐµÐ»Ð½Ð¾ 2 Ð±Ð°Ð¹ÑÐ° ÑÑÐ»Ð¾ ÑÐ¸ÑÐ»Ð¾"
+ 
+ #, python-format
+ msgid "Slug (up to %(max_length)s)"
+-msgstr "Slug (Ð´Ð¾ %(max_length)s )"
+-
+-msgid "Small integer"
+-msgstr "2 Ð±Ð°Ð¹ÑÐ° ÑÑÐ»Ð¾ ÑÐ¸ÑÐ»Ð¾"
++msgstr "Ð¡Ð»ÑÐ³ (Ð´Ð¾ %(max_length)s )"
+ 
+ msgid "Text"
+ msgstr "Ð¢ÐµÐºÑÑ"
+@@ -602,12 +625,16 @@ msgid ""
+ "â%(value)sâ value has an invalid format. It must be in HH:MM[:ss[.uuuuuu]] "
+ "format."
+ msgstr ""
++"Ð¡ÑÐ¾Ð¹Ð½Ð¾ÑÑÑÐ° "%(value)s"  Ðµ Ñ Ð½ÐµÐ²Ð°Ð»Ð¸Ð´ÐµÐ½ ÑÐ¾ÑÐ¼Ð°Ñ. Ð¢Ñ ÑÑÑÐ±Ð²Ð° Ð´Ð° Ð±ÑÐ´Ðµ Ð² Ð§Ð§:ÐÐ [:"
++"ÑÑ[.Î¼Î¼Î¼Î¼Î¼Î¼]]"
+ 
+ #, python-format
+ msgid ""
+ "â%(value)sâ value has the correct format (HH:MM[:ss[.uuuuuu]]) but it is an "
+ "invalid time."
+ msgstr ""
++"Ð¡ÑÐ¾Ð¹Ð½Ð¾ÑÑÑÐ° "%(value)s" Ðµ Ð² Ð¿ÑÐ°Ð²Ð¸Ð»Ð½Ð¸Ñ ÑÐ¾ÑÐ¼Ð°Ñ (Ð§Ð§:ÐÐ [:ÑÑ[.Î¼Î¼Î¼Î¼Î¼Î¼]]), Ð½Ð¾ "
++"ÑÐ°ÑÑÑ Ðµ Ð½ÐµÐ²Ð°Ð»Ð¸Ð´ÐµÐ½."
+ 
+ msgid "Time"
+ msgstr "ÐÑÐµÐ¼Ðµ"
+@@ -620,10 +647,10 @@ msgstr "ÑÑÑÐ¾Ð²Ð¸ Ð´Ð²Ð¾Ð¸ÑÐ½Ð¸ Ð´Ð°Ð½Ð½Ð¸"
+ 
+ #, python-format
+ msgid "â%(value)sâ is not a valid UUID."
+-msgstr ""
++msgstr ""%(value)s" Ð½Ðµ Ðµ Ð²Ð°Ð»Ð¸Ð´ÐµÐ½ UUID."
+ 
+ msgid "Universally unique identifier"
+-msgstr ""
++msgstr "Ð£Ð½Ð¸Ð²ÐµÑÑÐ°Ð»Ð½Ð¾ ÑÐ½Ð¸ÐºÐ°Ð»ÐµÐ½ Ð¸Ð´ÐµÐ½ÑÐ¸ÑÐ¸ÐºÐ°ÑÐ¾Ñ"
+ 
+ msgid "File"
+ msgstr "Ð¤Ð°Ð¹Ð»"
+@@ -632,10 +659,10 @@ msgid "Image"
+ msgstr "ÐÐ·Ð¾Ð±ÑÐ°Ð¶ÐµÐ½Ð¸Ðµ"
+ 
+ msgid "A JSON object"
+-msgstr ""
++msgstr "ÐÐ±ÐµÐºÑ Ð²ÑÐ² ÑÐ¾ÑÐ¼Ð°Ñ JSON"
+ 
+ msgid "Value must be valid JSON."
+-msgstr ""
++msgstr "Ð¡ÑÐ¾Ð¹Ð½Ð¾ÑÑÑÐ° ÑÑÑÐ±Ð²Ð° Ð´Ð° Ðµ Ð²Ð°Ð»Ð¸Ð´ÐµÐ½ JSON."
+ 
+ #, python-format
+ msgid "%(model)s instance with %(field)s %(value)r does not exist."
+@@ -645,18 +672,18 @@ msgid "Foreign Key (type determined by related field)"
+ msgstr "ÐÑÐ½ÑÐµÐ½ ÐºÐ»ÑÑ (ÑÐ¸Ð¿, Ð¾Ð¿ÑÐµÐ´ÐµÐ»ÐµÐ½ Ð¾Ñ ÑÐ²ÑÑÐ·Ð°Ð½Ð¾ÑÐ¾ Ð¿Ð¾Ð»Ðµ)"
+ 
+ msgid "One-to-one relationship"
+-msgstr "ÑÐ»Ð¾Ð²ÐµÐ½ÑÐºÐ¸ ÐµÐ·Ð¸Ðº"
++msgstr "ÐµÐ´Ð½Ð¾-ÐºÑÐ¼-ÐµÐ´Ð½Ð¾ ÑÐµÐ»Ð°ÑÐ¸Ñ "
+ 
+ #, python-format
+ msgid "%(from)s-%(to)s relationship"
+-msgstr ""
++msgstr "%(from)s-%(to)s ÑÐµÐ»Ð°ÑÐ¸Ñ"
+ 
+ #, python-format
+ msgid "%(from)s-%(to)s relationships"
+-msgstr ""
++msgstr "%(from)s-%(to)s ÑÐµÐ»Ð°ÑÐ¸Ð¸"
+ 
+ msgid "Many-to-many relationship"
+-msgstr "ÐÐ½Ð¾Ð³Ð¾-ÐºÑÐ¼-Ð¼Ð½Ð¾Ð³Ð¾ Ð²ÑÑÐ·ÐºÐ°"
++msgstr "ÐÐ½Ð¾Ð³Ð¾-ÐºÑÐ¼-Ð¼Ð½Ð¾Ð³Ð¾ ÑÐµÐ»Ð°ÑÐ¸Ñ"
+ 
+ #. Translators: If found as last label character, these punctuation
+ #. characters will prevent the default label_suffix to be appended to the
+@@ -671,7 +698,7 @@ msgid "Enter a whole number."
+ msgstr "ÐÑÐ²ÐµÐ´ÐµÑÐµ ÑÑÐ»Ð¾ ÑÐ¸ÑÐ»Ð¾.  "
+ 
+ msgid "Enter a valid date."
+-msgstr "ÐÑÐ²ÐµÐ´ÐµÑÐµ Ð²Ð°Ð»Ð¸Ð´Ð½Ð° Ð´Ð°ÑÐ°.  "
++msgstr "ÐÑÐ²ÐµÐ´ÐµÑÐµ Ð²Ð°Ð»Ð¸Ð´Ð½Ð° Ð´Ð°ÑÐ°."
+ 
+ msgid "Enter a valid time."
+ msgstr "ÐÑÐ²ÐµÐ´ÐµÑÐµ Ð²Ð°Ð»Ð¸Ð´ÐµÐ½ ÑÐ°Ñ."
+@@ -684,16 +711,16 @@ msgstr "ÐÑÐ²ÐµÐ´ÐµÑÐµ Ð²Ð°Ð»Ð¸Ð´Ð½Ð° Ð¿ÑÐ¾Ð´ÑÐ»Ð¶Ð¸ÑÐµÐ»Ð½Ð¾ÑÑ."
+ 
+ #, python-brace-format
+ msgid "The number of days must be between {min_days} and {max_days}."
+-msgstr ""
++msgstr "ÐÑÐ¾ÑÑ Ð½Ð° Ð´Ð½Ð¸ÑÐµ ÑÑÑÐ±Ð²Ð° Ð´Ð° Ðµ Ð¼ÐµÐ¶Ð´Ñ {min_days} Ð¸ {max_days}."
+ 
+ msgid "No file was submitted. Check the encoding type on the form."
+-msgstr "ÐÐµ Ðµ Ð¿Ð¾Ð»ÑÑÐµÐ½ ÑÐ°Ð¹Ð».  ÐÑÐ¾Ð²ÐµÑÐµÑÐµ ÑÐ¸Ð¿Ð° ÐºÐ¾Ð´Ð¸ÑÐ°Ð½Ðµ Ð½Ð° ÑÐ¾ÑÐ¼Ð°ÑÐ°.  "
++msgstr "ÐÑÐ¼Ð° Ð¸Ð·Ð¿ÑÐ°ÑÐµÐ½ ÑÐ°Ð¹Ð».  ÐÑÐ¾Ð²ÐµÑÐµÑÐµ ÑÐ¸Ð¿Ð° ÐºÐ¾Ð´Ð¸ÑÐ°Ð½Ðµ Ð½Ð° ÑÐ¾ÑÐ¼Ð°ÑÐ°.  "
+ 
+ msgid "No file was submitted."
+ msgstr "ÐÑÐ¼Ð° Ð¸Ð·Ð¿ÑÐ°ÑÐµÐ½ ÑÐ°Ð¹Ð»."
+ 
+ msgid "The submitted file is empty."
+-msgstr "ÐÐ°ÑÐµÐ½Ð¸ÑÑ ÑÐ°Ð¹Ð» Ðµ Ð¿ÑÐ°Ð·ÐµÐ½.  "
++msgstr "ÐÐ·Ð¿ÑÐ°ÑÐµÐ½Ð¸ÑÑ ÑÐ°Ð¹Ð» Ðµ Ð¿ÑÐ°Ð·ÐµÐ½.  "
+ 
+ #, python-format
+ msgid "Ensure this filename has at most %(max)d character (it has %(length)d)."
+@@ -729,7 +756,7 @@ msgid "Enter a valid UUID."
+ msgstr "ÐÑÐ²ÐµÐ´ÐµÑÐµ Ð²Ð°Ð»Ð¸Ð´ÐµÐ½ UUID."
+ 
+ msgid "Enter a valid JSON."
+-msgstr ""
++msgstr "ÐÑÐ²ÐµÐ´ÐµÑÐµ Ð²Ð°Ð»Ð¸Ð´ÐµÐ½ JSON."
+ 
+ #. Translators: This is the default suffix added to form field labels
+ msgid ":"
+@@ -739,20 +766,26 @@ msgstr ":"
+ msgid "(Hidden field %(name)s) %(error)s"
+ msgstr "(Ð¡ÐºÑÐ¸ÑÐ¾ Ð¿Ð¾Ð»Ðµ %(name)s) %(error)s"
+ 
+-msgid "ManagementForm data is missing or has been tampered with"
+-msgstr "ÐÐ°Ð½Ð½Ð¸ Ð·Ð° Ð¼ÐµÐ½Ð¸Ð´Ð¶ÑÑÑÐºÐ°ÑÐ° ÑÐ¾ÑÐ¼Ð° Ð»Ð¸Ð¿ÑÐ²Ð°Ñ Ð¸Ð»Ð¸ ÑÐ° Ð±Ð¸Ð»Ð¸ Ð¿ÑÐ¾Ð¼ÐµÐ½ÐµÐ½Ð¸."
++#, python-format
++msgid ""
++"ManagementForm data is missing or has been tampered with. Missing fields: "
++"%(field_names)s. You may need to file a bug report if the issue persists."
++msgstr ""
++"ManagementForm Ð´Ð°Ð½Ð½Ð¸ÑÐµ Ð»Ð¸Ð¿ÑÐ²Ð°Ñ Ð¸Ð»Ð¸ ÑÐ° Ð¿ÑÐ¾Ð¼ÐµÐ½ÑÐ½Ð¸ Ð½ÐµÐ¿ÑÐ°Ð²Ð¾Ð¼ÐµÑÐ½Ð¾. ÐÐ¸Ð¿ÑÐ²Ð°ÑÐ¸ "
++"Ð¿Ð¾Ð»ÐµÑÐ°: %(field_names)s. Ð¢ÑÑÐ±Ð²Ð° Ð´Ð° Ð¸Ð·Ð¿ÑÐ°ÑÐ¸ÑÐµ ÑÐ²ÐµÐ´Ð¾Ð¼Ð»ÐµÐ½Ð¸Ðµ Ð·Ð° Ð±ÑÐ³, Ð°ÐºÐ¾ ÑÐ¾Ð·Ð¸ "
++"Ð¿ÑÐ¾Ð±Ð»ÐµÐ¼ Ð¿ÑÐ¾Ð´ÑÐ»Ð¶Ð°Ð²Ð°."
+ 
+ #, python-format
+-msgid "Please submit %d or fewer forms."
+-msgid_plural "Please submit %d or fewer forms."
+-msgstr[0] "ÐÐ¾Ð»Ñ, Ð²ÑÐ²ÐµÐ´ÐµÑÐµ %d Ð¿Ð¾-Ð¼Ð°Ð»ÐºÐ¾ ÑÐ¾ÑÐ¼Ð¸."
+-msgstr[1] "ÐÐ¾Ð»Ñ, Ð²ÑÐ²ÐµÐ´ÐµÑÐµ %d Ð¿Ð¾-Ð¼Ð°Ð»ÐºÐ¾ ÑÐ¾ÑÐ¼Ð¸."
++msgid "Please submit at most %d form."
++msgid_plural "Please submit at most %d forms."
++msgstr[0] "ÐÐ¾Ð»Ñ Ð¸Ð·Ð¿ÑÐ°ÑÐµÑÐµ Ð½Ðµ Ð¿Ð¾Ð²ÐµÑÐµ Ð¾Ñ %d ÑÐ¾ÑÐ¼ÑÐ»ÑÑ."
++msgstr[1] "ÐÐ¾Ð»Ñ Ð¸Ð·Ð¿ÑÐ°ÑÐµÑÐµ Ð½Ðµ Ð¿Ð¾Ð²ÐµÑÐµ Ð¾Ñ %d ÑÐ¾ÑÐ¼ÑÐ»ÑÑÐ¸."
+ 
+ #, python-format
+-msgid "Please submit %d or more forms."
+-msgid_plural "Please submit %d or more forms."
+-msgstr[0] "ÐÐ¾Ð»Ñ, Ð²ÑÐ²ÐµÐ´ÐµÑÐµ %d Ð¸Ð»Ð¸ Ð¿Ð¾-Ð²ÐµÑÐµ ÑÐ¾ÑÐ¼Ð¸."
+-msgstr[1] "ÐÐ¾Ð»Ñ, Ð²ÑÐ²ÐµÐ´ÐµÑÐµ %d Ð¸Ð»Ð¸ Ð¿Ð¾-Ð²ÐµÑÐµ ÑÐ¾ÑÐ¼Ð¸."
++msgid "Please submit at least %d form."
++msgid_plural "Please submit at least %d forms."
++msgstr[0] "ÐÐ¾Ð»Ñ Ð¸Ð·Ð¿ÑÐ°ÑÐµÑÐµ Ð¿Ð¾Ð½Ðµ %d ÑÐ¾ÑÐ¼ÑÐ»ÑÑ."
++msgstr[1] "ÐÐ¾Ð»Ñ Ð¸Ð·Ð¿ÑÐ°ÑÐµÑÐµ Ð¿Ð¾Ð½Ðµ %d ÑÐ¾ÑÐ¼ÑÐ»ÑÑÐ°."
+ 
+ msgid "Order"
+ msgstr "Ð ÐµÐ´"
+@@ -782,20 +815,22 @@ msgid "Please correct the duplicate values below."
+ msgstr "ÐÐ¾Ð»Ñ, ÐºÐ¾ÑÐ¸Ð³Ð¸ÑÐ°Ð¹ÑÐµ Ð¿Ð¾Ð²ÑÐ°ÑÑÑÐ¸ÑÐµ ÑÐµ ÑÑÐ¾Ð¹Ð½Ð¾ÑÑÐ¸ Ð¿Ð¾-Ð´Ð¾Ð»Ñ."
+ 
+ msgid "The inline value did not match the parent instance."
+-msgstr ""
++msgstr "Ð¡ÑÐ¾Ð¹Ð½Ð¾ÑÑÑÐ° Ð² ÑÐµÐ´Ð° Ð½Ðµ Ð¾ÑÐ³Ð¾Ð²Ð°ÑÑ Ð½Ð° ÑÐ¾Ð´Ð¸ÑÐµÐ»ÑÐºÐ°ÑÐ° Ð¸Ð½ÑÑÐ°Ð½ÑÐ¸Ñ."
+ 
+ msgid "Select a valid choice. That choice is not one of the available choices."
+ msgstr "ÐÐ°Ð¿ÑÐ°Ð²ÐµÑÐµ Ð²Ð°Ð»Ð¸Ð´ÐµÐ½ Ð¸Ð·Ð±Ð¾Ñ. Ð¢Ð¾Ð·Ð¸ Ð½Ðµ Ðµ ÐµÐ´Ð¸Ð½ Ð¾Ñ Ð²ÑÐ·Ð¼Ð¾Ð¶Ð½Ð¸ÑÐµ Ð¸Ð·Ð±Ð¾ÑÐ¸.  "
+ 
+ #, python-format
+ msgid "â%(pk)sâ is not a valid value."
+-msgstr ""
++msgstr "â%(pk)sâ Ð½Ðµ Ðµ Ð²Ð°Ð»Ð¸Ð´Ð½Ð° ÑÑÐ¾Ð¹Ð½Ð¾ÑÑ."
+ 
+ #, python-format
+ msgid ""
+ "%(datetime)s couldnât be interpreted in time zone %(current_timezone)s; it "
+ "may be ambiguous or it may not exist."
+ msgstr ""
++"%(datetime)s Ð½Ðµ Ð¼Ð¾Ð¶Ðµ Ð´Ð° ÑÐµ Ð¸Ð½ÑÐµÑÐ¿ÑÐµÑÐ¸ÑÐ° Ð² ÑÐ°ÑÐ¾Ð²Ð° Ð·Ð¾Ð½Ð° %(current_timezone)s; "
++"Ð²ÐµÑÐ¾ÑÑÐ½Ð¾ ÑÑÐ¾Ð¹Ð½Ð¾ÑÑÑÐ° Ðµ Ð½ÐµÐµÐ´Ð½Ð¾Ð·Ð½Ð°ÑÐ½Ð° Ð¸Ð»Ð¸ Ð½Ðµ ÑÑÑÐµÑÑÐ²ÑÐ²Ð° Ð¸Ð·Ð¾Ð±ÑÐ¾."
+ 
+ msgid "Clear"
+ msgstr "ÐÐ·ÑÐ¸ÑÑÐ¸"
+@@ -823,19 +858,19 @@ msgstr "Ð´Ð°,Ð½Ðµ,Ð¼Ð¾Ð¶Ðµ Ð±Ð¸"
+ msgid "%(size)d byte"
+ msgid_plural "%(size)d bytes"
+ msgstr[0] "%(size)d, Ð±Ð°Ð¹Ñ"
+-msgstr[1] "%(size)d, Ð±Ð°Ð¹ÑÐ°"
++msgstr[1] "%(size)d Ð±Ð°Ð¹ÑÐ°"
+ 
+ #, python-format
+ msgid "%s KB"
+-msgstr "%s KB"
++msgstr "%s KÐ"
+ 
+ #, python-format
+ msgid "%s MB"
+-msgstr "%s MB"
++msgstr "%s ÐÐ"
+ 
+ #, python-format
+ msgid "%s GB"
+-msgstr "%s GB"
++msgstr "%s ÐÐ"
+ 
+ #, python-format
+ msgid "%s TB"
+@@ -843,7 +878,7 @@ msgstr "%s Ð¢Ð"
+ 
+ #, python-format
+ msgid "%s PB"
+-msgstr "%s PB"
++msgstr "%s ÐÐ"
+ 
+ msgid "p.m."
+ msgstr "ÑÐ»ÐµÐ´ Ð¾Ð±ÑÐ´"
+@@ -972,7 +1007,7 @@ msgid "oct"
+ msgstr "Ð¾ÐºÑ"
+ 
+ msgid "nov"
+-msgstr "Ð½Ð¾ÐµÐ²"
++msgstr "Ð½Ð¾ÐµÐ¼"
+ 
+ msgid "dec"
+ msgstr "Ð´ÐµÐº"
+@@ -991,7 +1026,7 @@ msgstr "ÐÐ°ÑÑ"
+ 
+ msgctxt "abbrev. month"
+ msgid "April"
+-msgstr "ÐÐ¿ÑÐ¸Ð»"
++msgstr "ÐÐ¿Ñ."
+ 
+ msgctxt "abbrev. month"
+ msgid "May"
+@@ -1019,7 +1054,7 @@ msgstr "ÐÐºÑ."
+ 
+ msgctxt "abbrev. month"
+ msgid "Nov."
+-msgstr "ÐÐ¾ÐµÐ²."
++msgstr "ÐÐ¾ÐµÐ¼."
+ 
+ msgctxt "abbrev. month"
+ msgid "Dec."
+@@ -1063,7 +1098,7 @@ msgstr "Ð¡ÐµÐ¿ÑÐµÐ¼Ð²ÑÐ¸"
+ 
+ msgctxt "alt. month"
+ msgid "October"
+-msgstr "ÑÐ»ÐµÐ´ Ð¾Ð±ÑÐ´"
++msgstr "ÐÐºÑÐ¾Ð¼Ð²ÑÐ¸"
+ 
+ msgctxt "alt. month"
+ msgid "November"
+@@ -1079,7 +1114,7 @@ msgstr "ÐÑÐ²ÐµÐ´ÐµÑÐµ Ð²Ð°Ð»Ð¸Ð´ÐµÐ½ IPv6 Ð°Ð´ÑÐµÑ."
+ #, python-format
+ msgctxt "String to return when truncating text"
+ msgid "%(truncated_text)sâ¦"
+-msgstr ""
++msgstr "%(truncated_text)sâ¦"
+ 
+ msgid "or"
+ msgstr "Ð¸Ð»Ð¸"
+@@ -1089,40 +1124,40 @@ msgid ", "
+ msgstr ","
+ 
+ #, python-format
+-msgid "%d year"
+-msgid_plural "%d years"
+-msgstr[0] "%d Ð³Ð¾Ð´Ð¸Ð½Ð°"
+-msgstr[1] "%d Ð³Ð¾Ð´Ð¸Ð½Ð¸"
++msgid "%(num)d year"
++msgid_plural "%(num)d years"
++msgstr[0] "%(num)d Ð³Ð¾Ð´Ð¸Ð½Ð°"
++msgstr[1] "%(num)d Ð³Ð¾Ð´Ð¸Ð½Ð¸"
+ 
+ #, python-format
+-msgid "%d month"
+-msgid_plural "%d months"
+-msgstr[0] "%d Ð¼ÐµÑÐµÑ"
+-msgstr[1] "%d Ð¼ÐµÑÐµÑÐ°"
++msgid "%(num)d month"
++msgid_plural "%(num)d months"
++msgstr[0] "%(num)d Ð¼ÐµÑÐµÑ"
++msgstr[1] "%(num)d Ð¼ÐµÑÐµÑÐ°"
+ 
+ #, python-format
+-msgid "%d week"
+-msgid_plural "%d weeks"
+-msgstr[0] "%d ÑÐµÐ´Ð¼Ð¸ÑÐ°"
+-msgstr[1] "%d ÑÐµÐ´Ð¼Ð¸ÑÐ¸"
++msgid "%(num)d week"
++msgid_plural "%(num)d weeks"
++msgstr[0] "%(num)d ÑÐµÐ´Ð¼Ð¸ÑÐ°"
++msgstr[1] "%(num)d ÑÐµÐ´Ð¼Ð¸ÑÐ¸"
+ 
+ #, python-format
+-msgid "%d day"
+-msgid_plural "%d days"
+-msgstr[0] "%d Ð´Ð½Ð¸"
+-msgstr[1] "%d Ð´Ð½Ð¸"
++msgid "%(num)d day"
++msgid_plural "%(num)d days"
++msgstr[0] "%(num)d Ð´ÐµÐ½"
++msgstr[1] "%(num)d Ð´Ð½Ð¸"
+ 
+ #, python-format
+-msgid "%d hour"
+-msgid_plural "%d hours"
+-msgstr[0] "%d ÑÐ°Ñ"
+-msgstr[1] "%d ÑÐ°ÑÐ°"
++msgid "%(num)d hour"
++msgid_plural "%(num)d hours"
++msgstr[0] "%(num)d ÑÐ°Ñ"
++msgstr[1] "%(num)d ÑÐ°ÑÐ°"
+ 
+ #, python-format
+-msgid "%d minute"
+-msgid_plural "%d minutes"
+-msgstr[0] "%d Ð¼Ð¸Ð½ÑÑÐ°"
+-msgstr[1] "%d Ð¼Ð¸Ð½ÑÑÐ¸"
++msgid "%(num)d minute"
++msgid_plural "%(num)d minutes"
++msgstr[0] "%(num)d Ð¼Ð¸Ð½ÑÑÐ°"
++msgstr[1] "%(num)d Ð¼Ð¸Ð½ÑÑÐ¸"
+ 
+ msgid "Forbidden"
+ msgstr "ÐÐ°Ð±ÑÐ°Ð½ÐµÐ½"
+@@ -1132,16 +1167,23 @@ msgstr "CSRF Ð¿ÑÐ¾Ð²ÐµÑÐºÐ°ÑÐ° ÑÐµ Ð¿ÑÐ¾Ð²Ð°Ð»Ð¸. ÐÐ°ÑÐ²ÐºÐ°ÑÐ° Ð¿ÑÐµÐº
+ 
+ msgid ""
+ "You are seeing this message because this HTTPS site requires a âReferer "
+-"headerâ to be sent by your Web browser, but none was sent. This header is "
++"headerâ to be sent by your web browser, but none was sent. This header is "
+ "required for security reasons, to ensure that your browser is not being "
+ "hijacked by third parties."
+ msgstr ""
++"ÐÐ¸Ðµ Ð²Ð¸Ð¶Ð´Ð°ÑÐµ ÑÐ¾Ð²Ð° ÑÑÐ¾Ð±ÑÐµÐ½Ð¸Ðµ, Ð·Ð°ÑÐ¾ÑÐ¾ ÑÐ¾Ð·Ð¸ HTTPS ÑÐ°Ð¹Ñ Ð¸Ð·Ð¸ÑÐºÐ²Ð° Ð´Ð° Ð±ÑÐ´Ðµ Ð¸Ð·Ð¿ÑÐ°ÑÐµÐ½ "
++"'Referer header'  Ð¾Ñ Ð²Ð°ÑÐ¸ÑÑ ÑÐµÐ± Ð±ÑÐ°ÑÐ·ÑÑ, Ð½Ð¾ ÑÐ°ÐºÑÐ² Ð½Ðµ Ð±Ðµ Ð¸Ð·Ð¿ÑÐ°ÑÐµÐ½. Ð¢Ð¾Ð·Ð¸ "
++"header  Ðµ Ð·Ð°Ð´ÑÐ»Ð¶Ð¸ÑÐµÐ»ÐµÐ½ Ð¾Ñ ÑÑÐ¾Ð±ÑÐ°Ð¶ÐµÐ½Ð¸Ñ Ð·Ð° ÑÐ¸Ð³ÑÑÐ½Ð¾ÑÑ, Ð·Ð° Ð´Ð° ÑÐµ Ð³Ð°ÑÐ°Ð½ÑÐ¸ÑÐ°, ÑÐµ "
++"Ð²Ð°ÑÐ¸ÑÑ Ð±ÑÐ°ÑÐ·ÑÑ Ð½Ðµ Ðµ ÐºÐ¾Ð¼Ð¿ÑÐ¾Ð¼ÐµÑÐ¸ÑÐ°Ð½ Ð¾Ñ ÑÑÐµÑÐ¸ ÑÑÑÐ°Ð½Ð¸."
+ 
+ msgid ""
+ "If you have configured your browser to disable âRefererâ headers, please re-"
+ "enable them, at least for this site, or for HTTPS connections, or for âsame-"
+ "originâ requests."
+ msgstr ""
++"ÐÐºÐ¾ ÑÑÐµ Ð½Ð°ÑÑÑÐ¾Ð¸Ð»Ð¸ Ð²Ð°ÑÐ¸Ñ Ð±ÑÐ°ÑÐ·ÑÑ Ð´Ð° Ð´ÐµÐ°ÐºÑÐ¸Ð²Ð¸ÑÐ° 'Referer' headers, Ð¼Ð¾Ð»Ñ Ð´Ð° Ð³Ð¸ "
++"Ð°ÐºÑÐ¸Ð²Ð¸ÑÐ°ÑÐµ Ð¾ÑÐ½Ð¾Ð²Ð¾, Ð¿Ð¾Ð½Ðµ Ð·Ð° ÑÐ¾Ð·Ð¸ ÑÐ°Ð¹Ñ, Ð¸Ð»Ð¸ Ð·Ð° HTTPS Ð²ÑÑÐ·ÐºÐ¸, Ð¸Ð»Ð¸ Ð·Ð° 'same-"
++"origin' Ð·Ð°ÑÐ²ÐºÐ¸."
+ 
+ msgid ""
+ "If you are using the <meta name="referrer" content="no-referrer"> tag or "
+@@ -1150,13 +1192,18 @@ msgid ""
+ "If youâre concerned about privacy, use alternatives like <a rel="noreferrer"
+ "" â¦> for links to third-party sites."
+ msgstr ""
++"ÐÐºÐ¾ Ð¸Ð·Ð¿Ð¾Ð»Ð·Ð²Ð°ÑÐµ <meta name="referrer" content="no-referrer"> ÑÐ°Ð³ Ð¸Ð»Ð¸ "
++"Ð²ÐºÐ»ÑÑÐ²Ð°ÑÐµ âReferrer-Policy: no-referrerâ header, Ð¼Ð¾Ð»Ñ Ð¿ÑÐµÐ¼Ð°ÑÐ½ÐµÑÐµ Ð³Ð¸. CSRF "
++"Ð·Ð°ÑÐ¸ÑÐ°ÑÐ° Ð¸Ð·Ð¸ÑÐºÐ²Ð° âRefererâ header, Ð·Ð° Ð´Ð° Ð¸Ð·Ð²ÑÑÑÐ¸ ÑÑÑÐ¸ÐºÑÐ½Ð° Ð¿ÑÐ¾Ð²ÐµÑÐºÐ° Ð½Ð° "
++"Ð¸Ð·Ð¿ÑÐ°ÑÐ°ÑÐ°. ÐÐºÐ¾ ÑÑÐµ Ð¿ÑÐ¸ÑÐµÑÐ½ÐµÐ½Ð¸ Ð·Ð° Ð¿Ð¾Ð²ÐµÑÐ¸ÑÐµÐ»Ð½Ð¾ÑÑÑÐ°, Ð¸Ð·Ð¿Ð¾Ð»Ð·Ð²Ð°Ð¹ÑÐµ Ð°Ð»ÑÐµÑÐ½Ð°ÑÐ¸Ð²Ð¸ "
++"ÐºÐ°ÑÐ¾ <a rel="noreferrer" â¦> Ð·Ð° Ð²ÑÑÐ·ÐºÐ¸ ÐºÑÐ¼ ÑÐ°Ð¹ÑÐ¾Ð²Ðµ Ð½Ð° ÑÑÐµÑÐ¸ ÑÑÑÐ°Ð½Ð¸."
+ 
+ msgid ""
+ "You are seeing this message because this site requires a CSRF cookie when "
+ "submitting forms. This cookie is required for security reasons, to ensure "
+ "that your browser is not being hijacked by third parties."
+ msgstr ""
+-"ÐÐ¸Ðµ Ð²Ð¸Ð¶Ð´Ð°ÑÐµ ÑÐ¾Ð²Ð° ÑÑÐ¾Ð±ÑÐµÐ½Ð¸Ðµ, Ð·Ð°ÑÐ¾ÑÐ¾ ÑÐ¾Ð·Ð¸ ÑÐ°Ð¹Ñ Ð¸Ð·Ð¸ÑÐºÐ²Ð° CSRF Ð±Ð¸ÑÐºÐ²Ð¸ÑÐºÐ° ÐºÐ¾Ð³Ð°ÑÐ¾ "
++"ÐÐ¸Ðµ Ð²Ð¸Ð¶Ð´Ð°ÑÐµ ÑÐ¾Ð²Ð° ÑÑÐ¾Ð±ÑÐµÐ½Ð¸Ðµ, Ð·Ð°ÑÐ¾ÑÐ¾ ÑÐ¾Ð·Ð¸ ÑÐ°Ð¹Ñ Ð¸Ð·Ð¸ÑÐºÐ²Ð° CSRF Ð±Ð¸ÑÐºÐ²Ð¸ÑÐºÐ°, ÐºÐ¾Ð³Ð°ÑÐ¾ "
+ "ÑÐµ Ð¿Ð¾Ð´Ð°Ð²Ð°Ñ ÑÐ¾ÑÐ¼ÑÐ»ÑÑÐ¸. Ð¢Ð°Ð·Ð¸ Ð±Ð¸ÑÐºÐ²Ð¸ÑÐºÐ° Ðµ Ð·Ð°Ð´ÑÐ»Ð¶Ð¸ÑÐµÐ»Ð½Ð° Ð¾Ñ ÑÑÐ¾Ð±ÑÐ°Ð¶ÐµÐ½Ð¸Ñ Ð·Ð° "
+ "ÑÐ¸Ð³ÑÑÐ½Ð¾ÑÑ, Ð·Ð° Ð´Ð° ÑÐµ Ð³Ð°ÑÐ°Ð½ÑÐ¸ÑÐ°, ÑÐµ Ð²Ð°ÑÐ¸ÑÑ Ð±ÑÐ°ÑÐ·ÑÑ Ð½Ðµ Ðµ ÐºÐ¾Ð¼Ð¿ÑÐ¾Ð¼ÐµÑÐ¸ÑÐ°Ð½ Ð¾Ñ ÑÑÐµÑÐ¸ "
+ "ÑÑÑÐ°Ð½Ð¸."
+@@ -1165,6 +1212,8 @@ msgid ""
+ "If you have configured your browser to disable cookies, please re-enable "
+ "them, at least for this site, or for âsame-originâ requests."
+ msgstr ""
++"ÐÐºÐ¾ ÑÑÐµ ÐºÐ¾Ð½ÑÐ¸Ð³ÑÑÐ¸ÑÐ°Ð»Ð¸ Ð±ÑÐ°ÑÐ·ÑÑÐ° ÑÐ¸ Ð´Ð° Ð·Ð°Ð±ÑÐ°Ð½Ð¸ Ð±Ð¸ÑÐºÐ²Ð¸ÑÐºÐ¸ÑÐµ, Ð¼Ð¾Ð»Ñ Ð´Ð° Ð³Ð¸ "
++"Ð°ÐºÑÐ¸Ð²Ð¸ÑÐ°ÑÐµ Ð¾ÑÐ½Ð¾Ð²Ð¾, Ð¿Ð¾Ð½Ðµ Ð·Ð° ÑÐ¾Ð·Ð¸ ÑÐ°Ð¹Ñ, Ð¸Ð»Ð¸ Ð·Ð° "same-origin" Ð·Ð°ÑÐ²ÐºÐ¸."
+ 
+ msgid "More information is available with DEBUG=True."
+ msgstr "ÐÐ¾Ð²ÐµÑÐµ Ð¸Ð½ÑÐ¾ÑÐ¼Ð°ÑÐ¸Ñ Ðµ Ð½Ð° ÑÐ°Ð·Ð¿Ð¾Ð»Ð¾Ð¶ÐµÐ½Ð¸Ðµ Ñ DEBUG=True."
+@@ -1173,13 +1222,13 @@ msgid "No year specified"
+ msgstr "ÐÐµ Ðµ Ð¿Ð¾ÑÐ¾ÑÐµÐ½Ð° Ð³Ð¾Ð´Ð¸Ð½Ð°"
+ 
+ msgid "Date out of range"
+-msgstr ""
++msgstr "ÐÐ°ÑÐ°ÑÐ° Ðµ Ð² Ð½ÐµÐ²Ð°Ð»Ð¸Ð´ÐµÐ½ Ð´Ð¸Ð°Ð¿Ð°Ð·Ð¾Ð½"
+ 
+ msgid "No month specified"
+ msgstr "ÐÐµ Ðµ Ð¿Ð¾ÑÐ¾ÑÐµÐ½ Ð¼ÐµÑÐµÑ"
+ 
+ msgid "No day specified"
+-msgstr "Ð½Ð¾ÐµÐ²"
++msgstr "ÐÐµ Ðµ Ð¿Ð¾ÑÐ¾ÑÐµÐ½ Ð´ÐµÐ½"
+ 
+ msgid "No week specified"
+ msgstr "ÐÐµ Ðµ Ð¿Ð¾ÑÐ¾ÑÐµÐ½Ð° ÑÐµÐ´Ð¼Ð¸ÑÐ°"
+@@ -1193,19 +1242,22 @@ msgid ""
+ "Future %(verbose_name_plural)s not available because %(class_name)s."
+ "allow_future is False."
+ msgstr ""
+-"ÐÑÐ´ÐµÑo %(verbose_name_plural)s Ðµ Ð´Ð¾ÑÑÑÐ¿Ð½Ð¾, ÑÑÐ¹ ÐºÐ°ÑÐ¾ %(class_name)s."
++"ÐÑÐ´ÐµÑo %(verbose_name_plural)s Ðµ Ð½ÐµÐ´Ð¾ÑÑÑÐ¿Ð½Ð¾, ÑÑÐ¹ ÐºÐ°ÑÐ¾ %(class_name)s."
+ "allow_future Ðµ False."
+ 
+ #, python-format
+ msgid "Invalid date string â%(datestr)sâ given format â%(format)sâ"
+ msgstr ""
++"ÐÐµÐ²Ð°Ð»Ð¸Ð´Ð½Ð° ÑÐµÐºÑÑÐ¾Ð²Ð° ÑÑÐ¾Ð¹Ð½Ð¾ÑÑ Ð½Ð° Ð´Ð°ÑÐ°ÑÐ° â%(datestr)sâ Ð¿ÑÐ¸ Ð·Ð°Ð´Ð°Ð´ÐµÐ½ ÑÐ¾ÑÐ¼Ð°Ñ "
++"â%(format)sâ"
+ 
+ #, python-format
+ msgid "No %(verbose_name)s found matching the query"
+-msgstr "ÐÑÐ¼Ð° %(verbose_name)s , ÑÑÐ²Ð¿Ð°Ð´Ð°ÑÐ¸ ÑÑÑ Ð·Ð°ÑÐ²ÐºÐ°ÑÐ°"
++msgstr "ÐÑÐ¼Ð° %(verbose_name)s, ÑÑÐ²Ð¿Ð°Ð´Ð°ÑÐ¸ ÑÑÑ Ð·Ð°ÑÐ²ÐºÐ°ÑÐ°"
+ 
+ msgid "Page is not âlastâ, nor can it be converted to an int."
+ msgstr ""
++"Ð¡ÑÑÐ°Ð½Ð¸ÑÐ°ÑÐ° Ð½Ðµ Ðµ "Ð¿Ð¾ÑÐ»ÐµÐ´Ð½Ð°", Ð½Ð¸ÑÐ¾ Ð¼Ð¾Ð¶Ðµ Ð´Ð° ÑÐµ Ð¿ÑÐµÐ¾Ð±ÑÐ°Ð·ÑÐ²Ð° Ð² ÑÑÐ»Ð¾ ÑÐ¸ÑÐ»Ð¾."
+ 
+ #, python-format
+ msgid "Invalid page (%(page_number)s): %(message)s"
+@@ -1213,30 +1265,29 @@ msgstr "ÐÐµÐ²Ð°Ð»Ð¸Ð´Ð½Ð° ÑÑÑÐ°Ð½Ð¸ÑÐ° (%(page_number)s): %(message)s"
+ 
+ #, python-format
+ msgid "Empty list and â%(class_name)s.allow_emptyâ is False."
+-msgstr ""
++msgstr "ÐÑÐ°Ð·ÐµÐ½ ÑÐ¿Ð¸ÑÑÐº Ð¸ "%(class_name)s.allow_empty" e False."
+ 
+ msgid "Directory indexes are not allowed here."
+ msgstr "Ð¢ÑÐº Ð½Ðµ Ðµ Ð¿Ð¾Ð·Ð²Ð¾Ð»ÐµÐ½Ð¾ Ð¸Ð½Ð´ÐµÐºÑÐ¸ÑÐ°Ð½Ðµ Ð½Ð° Ð´Ð¸ÑÐµÐºÑÐ¾ÑÐ¸Ñ."
+ 
+ #, python-format
+ msgid "â%(path)sâ does not exist"
+-msgstr ""
++msgstr ""%(path)s" Ð½Ðµ ÑÑÑÐµÑÑÐ²ÑÐ²Ð°"
+ 
+ #, python-format
+ msgid "Index of %(directory)s"
+ msgstr "ÐÐ½Ð´ÐµÐºÑ %(directory)s"
+ 
+-msgid "Django: the Web framework for perfectionists with deadlines."
+-msgstr "Django: Ð¤ÑÐµÐ¹Ð¼ÑÐ¾ÑÐºÑÑ Ð·Ð° Ð¿ÐµÑÑÐµÐºÑÐ¸Ð¾Ð½Ð¸ÑÑÐ¸ Ñ ÐºÑÐ°Ð¹Ð½Ð¸ ÑÑÐ¾ÐºÐ¾Ð²Ðµ."
++msgid "The install worked successfully! Congratulations!"
++msgstr "ÐÐ½ÑÑÐ°Ð»Ð°ÑÐ¸ÑÑÐ° ÐÐ¸ Ð·Ð°ÑÐ°Ð±Ð¾ÑÐ¸ ÑÑÐ¿ÐµÑÐ½Ð¾! ÐÐ¾Ð·Ð´ÑÐ°Ð²Ð»ÐµÐ½Ð¸Ñ!"
+ 
+ #, python-format
+ msgid ""
+ "View <a href="https://docs.djangoproject.com/en/%(version)s/releases/" "
+ "target="_blank" rel="noopener">release notes</a> for Django %(version)s"
+ msgstr ""
+-
+-msgid "The install worked successfully! Congratulations!"
+-msgstr ""
++"Ð Ð°Ð·Ð³Ð»ÐµÐ´Ð°Ð¹ÑÐµ <a href="https://docs.djangoproject.com/en/%(version)s/releases/"
++"" target="_blank" rel="noopener">release notes</a> Ð·Ð° Django %(version)s"
+ 
+ #, python-format
+ msgid ""
+@@ -1245,25 +1296,25 @@ msgid ""
+ "">DEBUG=True</a> is in your settings file and you have not configured any "
+ "URLs."
+ msgstr ""
+-"ÐÐ¸Ðµ Ð²Ð¸Ð¶Ð´Ð°ÑÐµ ÑÐ°Ð·Ð¸ ÑÑÑÐ°Ð½Ð¸ÑÐ° Ð·Ð°ÑÐ¾ÑÐ¾ <a href="https://docs.djangoproject.com/en/"
+-"%(version)s/ref/settings/#debug" target="_blank" rel="noopener"
+-"">DEBUG=True</a> Ðµ Ð²ÑÐ² Ð²Ð°ÑÐ¸ÑÑ settings ÑÐ°Ð¹Ð» Ð¸ Ð½Ðµ ÑÑÐµ ÐºÐ¾Ð½ÑÐ¸Ð³ÑÑÐ¸ÑÐ°Ð»Ð¸ Ð½Ð¸ÐºÐ°ÐºÐ²Ð¸ "
+-"URL-Ð¸"
++"ÐÐ¸Ðµ Ð²Ð¸Ð¶Ð´Ð°ÑÐµ ÑÐ°Ð·Ð¸ ÑÑÑÐ°Ð½Ð¸ÑÐ°, Ð·Ð°ÑÐ¾ÑÐ¾ <a href="https://docs.djangoproject.com/"
++"en/%(version)s/ref/settings/#debug" target="_blank" rel="noopener"
++"">DEBUG=True</a> Ðµ Ð²ÑÐ² Ð²Ð°ÑÐ¸Ñ ÑÐ°Ð¹Ð» Ñ Ð½Ð°ÑÑÑÐ¾Ð¹ÐºÐ¸ Ð¸ Ð½Ðµ ÑÑÐµ ÐºÐ¾Ð½ÑÐ¸Ð³ÑÑÐ¸ÑÐ°Ð»Ð¸ "
++"Ð½Ð¸ÐºÐ°ÐºÐ²Ð¸ URL-Ð¸."
+ 
+ msgid "Django Documentation"
+-msgstr "Django ÐÐ¾ÐºÑÐ¼ÐµÐ½ÑÐ°ÑÐ¸Ñ"
++msgstr "Django Ð´Ð¾ÐºÑÐ¼ÐµÐ½ÑÐ°ÑÐ¸Ñ"
+ 
+ msgid "Topics, references, &amp; how-toâs"
+-msgstr ""
++msgstr "Ð¢ÐµÐ¼Ð¸, Ð½Ð°ÑÑÑÐ½Ð¸ÑÐ¸, &amp; Ð´ÑÑÐ³Ð° Ð´Ð¾ÐºÑÐ¼ÐµÐ½ÑÐ°ÑÐ¸Ñ"
+ 
+ msgid "Tutorial: A Polling App"
+-msgstr ""
++msgstr "Ð£ÑÐ¾Ðº: ÐÑÐ¸Ð»Ð¾Ð¶ÐµÐ½Ð¸Ðµ Ð·Ð° Ð°Ð½ÐºÐµÑÐ°"
+ 
+ msgid "Get started with Django"
+ msgstr "ÐÐ°Ð¿Ð¾ÑÐ½ÐµÑÐµ Ñ Django"
+ 
+ msgid "Django Community"
+-msgstr ""
++msgstr "Django Ð¾Ð±ÑÐ½Ð¾ÑÑ"
+ 
+ msgid "Connect, get help, or contribute"
+-msgstr ""
++msgstr "Ð¡Ð²ÑÑÐ¶ÐµÑÐµ ÑÐµ, Ð¿Ð¾Ð»ÑÑÐµÑÐµ Ð¿Ð¾Ð¼Ð¾Ñ Ð¸Ð»Ð¸ Ð´Ð¾Ð¿ÑÐ¸Ð½ÐµÑÐµÑÐµ"
+diff --git a/django/contrib/admin/locale/bg/LC_MESSAGES/django.mo b/django/contrib/admin/locale/bg/LC_MESSAGES/django.mo
+index 4a04342fc2..340a88042e 100644
+Binary files a/django/contrib/admin/locale/bg/LC_MESSAGES/django.mo and b/django/contrib/admin/locale/bg/LC_MESSAGES/django.mo differ
+diff --git a/django/contrib/admin/locale/bg/LC_MESSAGES/django.po b/django/contrib/admin/locale/bg/LC_MESSAGES/django.po
+index 767c727f2a..111d7094eb 100644
+--- a/django/contrib/admin/locale/bg/LC_MESSAGES/django.po
++++ b/django/contrib/admin/locale/bg/LC_MESSAGES/django.po
+@@ -1,6 +1,7 @@
+ # This file is distributed under the same license as the Django package.
+ #
+ # Translators:
++# arneatec <arneatec@gmail.com>, 2022
+ # Boris Chervenkov <office@sentido.bg>, 2012
+ # Claude Paroz <claude@2xlibre.net>, 2014
+ # Jannis Leidel <jannis@leidel.info>, 2011
+@@ -12,9 +13,9 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: django
+"
+ "Report-Msgid-Bugs-To: 
+"
+-"POT-Creation-Date: 2021-01-15 09:00+0100
+"
+-"PO-Revision-Date: 2020-12-06 05:54+0000
+"
+-"Last-Translator: Todor Lubenov <tlubenov@gmail.com>
+"
++"POT-Creation-Date: 2021-09-21 10:22+0200
+"
++"PO-Revision-Date: 2022-01-14 09:41+0000
+"
++"Last-Translator: arneatec <arneatec@gmail.com>
+"
+ "Language-Team: Bulgarian (http://www.transifex.com/django/django/language/"
+ "bg/)
+"
+ "MIME-Version: 1.0
+"
+@@ -78,7 +79,7 @@ msgid "Empty"
+ msgstr "ÐÑÐ°Ð·Ð½Ð¾"
+ 
+ msgid "Not empty"
+-msgstr ""
++msgstr "ÐÐµ Ðµ Ð¿ÑÐ°Ð·Ð½Ð¾"
+ 
+ #, python-format
+ msgid ""
+@@ -86,7 +87,7 @@ msgid ""
+ "that both fields may be case-sensitive."
+ msgstr ""
+ "ÐÐ¾Ð»Ñ Ð²ÑÐ²ÐµÐ´ÐµÑÐµ Ð¿ÑÐ°Ð²Ð¸Ð»Ð½Ð¸Ñ %(username)s Ð¸ Ð¿Ð°ÑÐ¾Ð»Ð° Ð·Ð° Ð°Ð´Ð¼Ð¸Ð½Ð¸ÑÑÑÐ°ÑÐ¾ÑÑÐºÐ¸ Ð°ÐºÐ°ÑÐ½Ñ. "
+-"ÐÐ¾Ð»Ñ Ð·Ð°Ð±ÐµÐ»ÐµÐ¶ÐµÑÐµ, ÑÐµ Ð¸ Ð´Ð²ÐµÑÐµ Ð¿Ð¾Ð»ÐµÑÐ° ÑÐ° Ñ Ð³Ð»Ð°Ð²Ð½Ð¸ Ð¸ Ð¼Ð°Ð»ÐºÐ¸ Ð±ÑÐºÐ²Ð¸."
++"ÐÐ¾Ð»Ñ Ð·Ð°Ð±ÐµÐ»ÐµÐ¶ÐµÑÐµ, ÑÐµ Ð¸ Ð´Ð²ÐµÑÐµ Ð¿Ð¾Ð»ÐµÑÐ° Ð¼Ð¾Ð³Ð°Ñ Ð´Ð° ÑÐ° Ñ Ð³Ð»Ð°Ð²Ð½Ð¸ Ð¸ Ð¼Ð°Ð»ÐºÐ¸ Ð±ÑÐºÐ²Ð¸."
+ 
+ msgid "Action:"
+ msgstr "ÐÐµÐ¹ÑÑÐ²Ð¸Ðµ:"
+@@ -99,7 +100,7 @@ msgid "Remove"
+ msgstr "ÐÑÐµÐ¼Ð°ÑÐ²Ð°Ð½Ðµ"
+ 
+ msgid "Addition"
+-msgstr ""
++msgstr "ÐÐ¾Ð±Ð°Ð²ÐºÐ°"
+ 
+ msgid "Change"
+ msgstr "ÐÑÐ¾Ð¼ÐµÐ½Ð¸"
+@@ -131,29 +132,29 @@ msgid "change message"
+ msgstr "Ð¿ÑÐ¾Ð¼ÐµÐ½Ð¸ ÑÑÐ¾Ð±ÑÐµÐ½Ð¸Ðµ"
+ 
+ msgid "log entry"
+-msgstr "Ð·Ð°Ð¿Ð¸ÑÐºÐ°"
++msgstr "Ð·Ð°Ð¿Ð¸ÑÐºÐ° Ð² Ð¶ÑÑÐ½Ð°Ð»Ð°"
+ 
+ msgid "log entries"
+-msgstr "Ð·Ð°Ð¿Ð¸ÑÐºÐ¸"
++msgstr "Ð·Ð°Ð¿Ð¸ÑÐºÐ¸ Ð² Ð¶ÑÑÐ½Ð°Ð»Ð°"
+ 
+ #, python-format
+ msgid "Added â%(object)sâ."
+-msgstr ""
++msgstr "ÐÐ¾Ð±Ð°Ð²ÐµÐ½ â%(object)sâ."
+ 
+ #, python-format
+ msgid "Changed â%(object)sâ â %(changes)s"
+-msgstr ""
++msgstr "ÐÑÐ¾Ð¼ÐµÐ½ÐµÐ½Ð¸ â%(object)sâ â %(changes)s"
+ 
+ #, python-format
+ msgid "Deleted â%(object)s.â"
+-msgstr ""
++msgstr "ÐÐ·ÑÑÐ¸ÑÐ¸ â%(object)s.â"
+ 
+ msgid "LogEntry Object"
+ msgstr "LogEntry Ð¾Ð±ÐµÐºÑ"
+ 
+ #, python-brace-format
+ msgid "Added {name} â{object}â."
+-msgstr ""
++msgstr "ÐÐ¾Ð±Ð°Ð²ÐµÐ½ {name} â{object}â."
+ 
+ msgid "Added."
+ msgstr "ÐÐ¾Ð±Ð°Ð²ÐµÐ½Ð¾."
+@@ -163,7 +164,7 @@ msgstr "Ð¸"
+ 
+ #, python-brace-format
+ msgid "Changed {fields} for {name} â{object}â."
+-msgstr ""
++msgstr "ÐÑÐ¾Ð¼ÐµÐ½ÐµÐ½Ð¸ {fields} Ð·Ð° {name} â{object}â."
+ 
+ #, python-brace-format
+ msgid "Changed {fields}."
+@@ -171,7 +172,7 @@ msgstr "ÐÑÐ¾Ð¼ÐµÐ½ÐµÐ½Ð¸ {fields}."
+ 
+ #, python-brace-format
+ msgid "Deleted {name} â{object}â."
+-msgstr ""
++msgstr "ÐÐ·ÑÑÐ¸Ñ {name} â{object}â."
+ 
+ msgid "No fields changed."
+ msgstr "ÐÑÐ¼Ð° Ð¿ÑÐ¾Ð¼ÐµÐ½ÐµÐ½Ð¸ Ð¿Ð¾Ð»ÐµÑÐ°."
+@@ -181,37 +182,46 @@ msgstr "ÐÑÐ°Ð·Ð½Ð¾"
+ 
+ msgid "Hold down âControlâ, or âCommandâ on a Mac, to select more than one."
+ msgstr ""
++"ÐÐ°Ð´ÑÑÐ¶ÑÐµ âControlâ, Ð¸Ð»Ð¸ âCommandâ Ð½Ð° Mac, Ð·Ð° Ð´Ð° Ð¸Ð·Ð±ÐµÑÐµÑÐµ Ð¿Ð¾Ð²ÐµÑÐµ Ð¾Ñ ÐµÐ´Ð½Ð¾."
+ 
+ #, python-brace-format
+ msgid "The {name} â{obj}â was added successfully."
+-msgstr ""
++msgstr "ÐÐ±ÐµÐºÑÑÑ {name} â{obj}â Ð±Ðµ ÑÑÐ¿ÐµÑÐ½Ð¾ Ð´Ð¾Ð±Ð°Ð²ÐµÐ½."
+ 
+ msgid "You may edit it again below."
+-msgstr ""
++msgstr "ÐÐ¾Ð¶ÐµÑÐµ Ð¾ÑÐ½Ð¾Ð²Ð¾ Ð´Ð° Ð³Ð¾ Ð¿ÑÐ¾Ð¼ÐµÐ½Ð¸ÑÐµ Ð¿Ð¾-Ð´Ð¾Ð»Ñ."
+ 
+ #, python-brace-format
+ msgid ""
+ "The {name} â{obj}â was added successfully. You may add another {name} below."
+ msgstr ""
++"ÐÐ±ÐµÐºÑÑÑ {name} â{obj}â Ð±Ðµ ÑÑÐ¿ÐµÑÐ½Ð¾ Ð´Ð¾Ð±Ð°Ð²ÐµÐ½. ÐÐ¾Ð¶ÐµÑÐµ Ð´Ð° Ð´Ð¾Ð±Ð°Ð²Ð¸ÑÐµ Ð´ÑÑÐ³ {name} Ð¿Ð¾-"
++"Ð´Ð¾Ð»Ñ."
+ 
+ #, python-brace-format
+ msgid ""
+ "The {name} â{obj}â was changed successfully. You may edit it again below."
+ msgstr ""
++"ÐÐ±ÐµÐºÑÑÑ {name} â{obj}â Ð±Ðµ ÑÑÐ¿ÐµÑÐ½Ð¾ Ð¿ÑÐ¾Ð¼ÐµÐ½ÐµÐ½. ÐÐ¾Ð¶ÐµÑÐµ Ð´Ð° Ð³Ð¾ Ð¿ÑÐ¾Ð¼ÐµÐ½Ð¸ÑÐµ Ð¾ÑÐ½Ð¾Ð²Ð¾ Ð¿Ð¾-"
++"Ð´Ð¾Ð»Ñ."
+ 
+ #, python-brace-format
+ msgid "The {name} â{obj}â was added successfully. You may edit it again below."
+ msgstr ""
++"ÐÐ±ÐµÐºÑÑÑ {name} â{obj}â Ð±Ðµ ÑÑÐ¿ÐµÑÐ½Ð¾ Ð´Ð¾Ð±Ð°Ð²ÐµÐ½. ÐÐ¾Ð¶ÐµÑÐµ Ð´Ð° Ð³Ð¾ Ð¿ÑÐ¾Ð¼ÐµÐ½Ð¸ÑÐµ Ð¾ÑÐ½Ð¾Ð²Ð¾ Ð¿Ð¾-"
++"Ð´Ð¾Ð»Ñ."
+ 
+ #, python-brace-format
+ msgid ""
+ "The {name} â{obj}â was changed successfully. You may add another {name} "
+ "below."
+ msgstr ""
++"ÐÐ±ÐµÐºÑÑÑ {name} â{obj}â Ð±Ðµ ÑÑÐ¿ÐµÑÐ½Ð¾ Ð¿ÑÐ¾Ð¼ÐµÐ½ÐµÐ½. ÐÐ¾Ð¶ÐµÑÐµ Ð´Ð° Ð´Ð¾Ð±Ð°Ð²Ð¸ÑÐµ Ð´ÑÑÐ³ {name} "
++"Ð¿Ð¾-Ð´Ð¾Ð»Ñ."
+ 
+ #, python-brace-format
+ msgid "The {name} â{obj}â was changed successfully."
+-msgstr ""
++msgstr "ÐÐ±ÐµÐºÑÑÑ {name} â{obj}â Ð±Ðµ ÑÑÐ¿ÐµÑÐ½Ð¾ Ð¿ÑÐ¾Ð¼ÐµÐ½ÐµÐ½."
+ 
+ msgid ""
+ "Items must be selected in order to perform actions on them. No items have "
+@@ -221,15 +231,15 @@ msgstr ""
+ "Ð¿ÑÐ¾Ð¼ÐµÐ½ÐµÐ½Ð¸ ÐµÐ»ÐµÐ¼ÐµÐ½ÑÐ¸."
+ 
+ msgid "No action selected."
+-msgstr "ÐÑÐ¼Ð° Ð¸Ð·Ð±ÑÐ°Ð½Ð¸ Ð´ÐµÐ¹ÑÑÐ²Ð¸Ñ."
++msgstr "ÐÑÐ¼Ð° Ð¸Ð·Ð±ÑÐ°Ð½Ð¾ Ð´ÐµÐ¹ÑÑÐ²Ð¸Ðµ."
+ 
+ #, python-format
+ msgid "The %(name)s â%(obj)sâ was deleted successfully."
+-msgstr ""
++msgstr "%(name)s â%(obj)sâ Ð±ÐµÑÐµ ÑÑÐ¿ÐµÑÐ½Ð¾ Ð¸Ð·ÑÑÐ¸Ñ."
+ 
+ #, python-format
+ msgid "%(name)s with ID â%(key)sâ doesnât exist. Perhaps it was deleted?"
+-msgstr ""
++msgstr "%(name)s Ñ ID â%(key)sâ Ð½Ðµ ÑÑÑÐµÑÑÐ²ÑÐ²Ð°. ÐÐ¾Ð¶Ðµ Ð±Ð¸ Ðµ Ð¸Ð·ÑÑÐ¸Ñ?"
+ 
+ #, python-format
+ msgid "Add %s"
+@@ -250,17 +260,17 @@ msgstr "ÐÑÐµÑÐºÐ° Ð² Ð±Ð°Ð·Ð°ÑÐ° Ð´Ð°Ð½Ð½Ð¸"
+ msgid "%(count)s %(name)s was changed successfully."
+ msgid_plural "%(count)s %(name)s were changed successfully."
+ msgstr[0] "%(count)s %(name)s Ð±ÐµÑÐµ Ð¿ÑÐ¾Ð¼ÐµÐ½ÐµÐ½Ð¾ ÑÑÐ¿ÐµÑÐ½Ð¾."
+-msgstr[1] "%(count)s %(name)s Ð±ÑÑÐ° Ð¿ÑÐ¾Ð¼ÐµÐ½ÐµÐ½Ð¸ ÑÑÐ¿ÐµÑÐ½Ð¾."
++msgstr[1] "%(count)s %(name)s Ð±ÑÑÐ° ÑÑÐ¿ÐµÑÐ½Ð¾ Ð¿ÑÐ¾Ð¼ÐµÐ½ÐµÐ½Ð¸."
+ 
+ #, python-format
+ msgid "%(total_count)s selected"
+ msgid_plural "All %(total_count)s selected"
+ msgstr[0] "%(total_count)s Ðµ Ð¸Ð·Ð±ÑÐ°Ð½"
+-msgstr[1] "ÐÑÐ¸ÑÐºÐ¸ %(total_count)s ÑÐ° Ð¸Ð·Ð±ÑÐ°Ð½Ð¸"
++msgstr[1] "ÐÐ·Ð±ÑÐ°Ð½Ð¸ ÑÐ° Ð²ÑÐ¸ÑÐºÐ¸ %(total_count)s"
+ 
+ #, python-format
+ msgid "0 of %(cnt)s selected"
+-msgstr "0 Ð¾Ñ %(cnt)s ÑÐ° Ð¸Ð·Ð±ÑÐ°Ð½Ð¸"
++msgstr "ÐÐ·Ð±ÑÐ°Ð½Ð¸ ÑÐ° 0 Ð¾Ñ %(cnt)s"
+ 
+ #, python-format
+ msgid "Change history: %s"
+@@ -281,10 +291,10 @@ msgstr ""
+ "Ð½Ð° ÑÐ»ÐµÐ´Ð½Ð¸ÑÐµ Ð·Ð°ÑÐ¸ÑÐµÐ½Ð¸ Ð¸ ÑÐ²ÑÑÐ·Ð°Ð½Ð¸ Ð¾Ð±ÐµÐºÑÐ¸: %(related_objects)s"
+ 
+ msgid "Django site admin"
+-msgstr "ÐÐ´Ð¼Ð¸Ð½Ð¸ÑÑÑÐ°ÑÐ¸Ð²ÐµÐ½ Ð¿Ð°Ð½ÐµÐ»"
++msgstr "Django Ð°Ð´Ð¼Ð¸Ð½Ð¸ÑÑÑÐ°ÑÐ¸Ð²ÐµÐ½ ÑÐ°Ð¹Ñ"
+ 
+ msgid "Django administration"
+-msgstr "ÐÐ´Ð¼Ð¸Ð½Ð¸ÑÑÑÐ°ÑÐ¸Ð²ÐµÐ½ Ð¿Ð°Ð½ÐµÐ»"
++msgstr "ÐÐ´Ð¼Ð¸Ð½Ð¸ÑÑÑÐ°ÑÐ¸Ñ Ð½Ð° Django"
+ 
+ msgid "Site administration"
+ msgstr "ÐÐ´Ð¼Ð¸Ð½Ð¸ÑÑÑÐ°ÑÐ¸Ñ Ð½Ð° ÑÐ°Ð¹ÑÐ°"
+@@ -318,9 +328,12 @@ msgid ""
+ "Thereâs been an error. Itâs been reported to the site administrators via "
+ "email and should be fixed shortly. Thanks for your patience."
+ msgstr ""
++"ÐÐ¾Ð»ÑÑÐ¸ ÑÐµ Ð³ÑÐµÑÐºÐ°. ÐÐ´Ð¼Ð¸Ð½Ð¸ÑÑÑÐ°ÑÐ¾ÑÐ¸ÑÐµ Ð½Ð° ÑÐ°Ð¹ÑÐ° ÑÐ° ÑÐ²ÐµÐ´Ð¾Ð¼ÐµÐ½Ð¸ Ð·Ð° ÑÐ¾Ð²Ð° ÑÑÐµÐ· "
++"ÐµÐ»ÐµÐºÑÑÐ¾Ð½Ð½Ð° Ð¿Ð¾ÑÐ° Ð¸ Ð³ÑÐµÑÐºÐ°ÑÐ° ÑÑÑÐ±Ð²Ð° Ð´Ð° Ð±ÑÐ´Ðµ Ð¿Ð¾Ð¿ÑÐ°Ð²ÐµÐ½Ð° ÑÐºÐ¾ÑÐ¾. ÐÐ»Ð°Ð³Ð¾Ð´Ð°ÑÐ¸Ð¼ Ð²Ð¸ Ð·Ð° "
++"ÑÑÑÐ¿ÐµÐ½Ð¸ÐµÑÐ¾."
+ 
+ msgid "Run the selected action"
+-msgstr "Ð¡ÑÐ°ÑÑÐ¸ÑÐ°Ð¹ Ð¸Ð·Ð±ÑÐ°Ð½Ð¸ÑÐµ Ð´ÐµÐ¹ÑÑÐ²Ð¸Ñ"
++msgstr "ÐÐ·Ð¿ÑÐ»Ð½Ð¸ Ð¸Ð·Ð±ÑÐ°Ð½Ð¾ÑÐ¾ Ð´ÐµÐ¹ÑÑÐ²Ð¸Ðµ"
+ 
+ msgid "Go"
+ msgstr "ÐÐ°Ð¿ÑÐµÐ´"
+@@ -333,11 +346,11 @@ msgid "Select all %(total_count)s %(module_name)s"
+ msgstr "ÐÐ·Ð±ÐµÑÐ¸ Ð²ÑÐ¸ÑÐºÐ¸ %(total_count)s %(module_name)s"
+ 
+ msgid "Clear selection"
+-msgstr "ÐÐ·ÑÑÐ¸Ð¹ Ð¸Ð·Ð±ÑÐ°Ð½Ð¾ÑÐ¾"
++msgstr "ÐÐ·ÑÐ¸ÑÑÐ¸ Ð¸Ð·Ð±ÑÐ°Ð½Ð¾ÑÐ¾"
+ 
+ #, python-format
+ msgid "Models in the %(name)s application"
+-msgstr "ÐÐ¾Ð´ÐµÐ»Ð¸ÑÐµ Ð² %(name)s Ð¿ÑÐ¸Ð»Ð¾Ð¶ÐµÐ½Ð¸Ðµ"
++msgstr "ÐÐ¾Ð´ÐµÐ»Ð¸ Ð² Ð¿ÑÐ¸Ð»Ð¾Ð¶ÐµÐ½Ð¸ÐµÑÐ¾ %(name)s "
+ 
+ msgid "Add"
+ msgstr "ÐÐ¾Ð±Ð°Ð²Ð¸"
+@@ -346,12 +359,14 @@ msgid "View"
+ msgstr "ÐÐ·Ð³Ð»ÐµÐ´"
+ 
+ msgid "You donât have permission to view or edit anything."
+-msgstr "ÐÐ¸Ðµ Ð½ÑÐ¼Ð°ÑÐµ Ð¿ÑÐ°Ð²Ð° Ð´Ð° ÑÐ°Ð·Ð³Ð»ÐµÐ¶Ð´Ð°ÑÐµ Ð¸Ð»Ð¸ ÑÐµÐ´Ð°ÐºÑÐ¸ÑÐ°ÑÐµ Ð½Ð¸ÑÐ¾."
++msgstr "ÐÑÐ¼Ð°ÑÐµ Ð¿ÑÐ°Ð²Ð° Ð´Ð° ÑÐ°Ð·Ð³Ð»ÐµÐ¶Ð´Ð°ÑÐµ Ð¸Ð»Ð¸ ÑÐµÐ´Ð°ÐºÑÐ¸ÑÐ°ÑÐµ ÐºÐ°ÐºÐ²Ð¾ÑÐ¾ Ð¸ Ð´Ð° Ðµ."
+ 
+ msgid ""
+ "First, enter a username and password. Then, youâll be able to edit more user "
+ "options."
+ msgstr ""
++"ÐÑÑÐ²Ð¾ Ð²ÑÐ²ÐµÐ´ÐµÑÐµ Ð¿Ð¾ÑÑÐµÐ±Ð¸ÑÐµÐ» Ð¸ Ð¿Ð°ÑÐ¾Ð»Ð°. Ð¡Ð»ÐµÐ´ ÑÐ¾Ð²Ð° ÑÐµ Ð¼Ð¾Ð¶ÐµÑÐµ Ð´Ð° ÑÐµÐ´Ð°ÐºÑÐ¸ÑÐ°ÑÐµ "
++"Ð¿Ð¾Ð²ÐµÑÐµ Ð´ÐµÑÐ°Ð¹Ð»Ð¸. "
+ 
+ msgid "Enter a username and password."
+ msgstr "ÐÑÐ²ÐµÐ´ÐµÑÐµ Ð¿Ð¾ÑÑÐµÐ±Ð¸ÑÐµÐ»ÑÐºÐ¾ Ð¸Ð¼Ðµ Ð¸ Ð¿Ð°ÑÐ¾Ð»Ð°."
+@@ -360,7 +375,7 @@ msgid "Change password"
+ msgstr "ÐÑÐ¾Ð¼ÐµÐ½Ð¸ Ð¿Ð°ÑÐ¾Ð»Ð°"
+ 
+ msgid "Please correct the error below."
+-msgstr "ÐÐ¾Ð»Ñ ÐºÐ¾ÑÐ¸Ð³Ð¸ÑÐ°Ð¹ÑÐµ Ð³ÑÐµÑÐºÐ°ÑÐ° Ð´Ð¾Ð»Ñ"
++msgstr "ÐÐ¾Ð»Ñ, Ð¿Ð¾Ð¿ÑÐ°Ð²ÐµÑÐµ Ð³ÑÐµÑÐºÐ°ÑÐ° Ð¿Ð¾-Ð´Ð¾Ð»Ñ"
+ 
+ msgid "Please correct the errors below."
+ msgstr "ÐÐ¾Ð»Ñ Ð¿Ð¾Ð¿ÑÐ°Ð²ÐµÑÐµ Ð³ÑÐµÑÐºÐ¸ÑÐµ Ð¿Ð¾-Ð´Ð¾Ð»Ñ."
+@@ -405,7 +420,7 @@ msgid "Sorting priority: %(priority_number)s"
+ msgstr "Ð ÐµÐ´ Ð½Ð° Ð¿Ð¾Ð´ÑÐµÐ¶Ð´Ð°Ð½Ðµ: %(priority_number)s"
+ 
+ msgid "Toggle sorting"
+-msgstr "ÐÐ±ÑÑÐ½Ð¸ Ð¿Ð¾Ð´ÑÐµÐ¶Ð´Ð°Ð½ÐµÑÐ¾"
++msgstr "ÐÑÐµÐ²ÐºÐ»ÑÑÐ¸ Ð¿Ð¾Ð´ÑÐµÐ¶Ð´Ð°Ð½ÐµÑÐ¾"
+ 
+ msgid "Delete"
+ msgstr "ÐÐ·ÑÑÐ¸Ð¹"
+@@ -416,31 +431,31 @@ msgid ""
+ "related objects, but your account doesn't have permission to delete the "
+ "following types of objects:"
+ msgstr ""
+-"ÐÐ·ÑÑÐ¸Ð²Ð°Ð½ÐµÑÐ¾ Ð½Ð° Ð¾Ð±ÐµÐºÑÐ° %(object_name)s '%(escaped_object)s' Ð½Ðµ Ð¼Ð¾Ð¶Ðµ Ð´Ð° Ð±ÑÐ´Ðµ "
+-"Ð¸Ð·Ð²ÑÑÑÐµÐ½Ð¾ Ð±ÐµÐ· Ð´Ð° ÑÐµ Ð¸Ð·ÑÑÐ¸ÑÑ Ð¸ Ð½ÑÐºÐ¾Ð¸ ÑÐ²ÑÑÐ·Ð°Ð½Ð¸ Ð¾Ð±ÐµÐºÑÐ¸, Ð²ÑÑÑÑ ÐºÐ¾Ð¸ÑÐ¾ Ð¾Ð±Ð°ÑÐµ "
+-"Ð½ÑÐ¼Ð°ÑÐµ Ð¿ÑÐ°Ð²Ð°: "
++"ÐÐ·ÑÑÐ¸Ð²Ð°Ð½ÐµÑÐ¾ Ð½Ð° %(object_name)s '%(escaped_object)s' Ð±Ð¸ Ð¿ÑÐ¸ÑÐ¸Ð½Ð¸Ð»Ð¾ Ð¸Ð·ÑÑÐ¸Ð²Ð°Ð½Ðµ "
++"Ð½Ð° ÑÐ²ÑÑÐ·Ð°Ð½Ð¸ Ð¾Ð±ÐµÐºÑÐ¸, Ð½Ð¾ Ð²Ð°ÑÐ¸ÑÑ Ð¿Ð¾ÑÑÐµÐ±Ð¸ÑÐµÐ» Ð½ÑÐ¼Ð° Ð¿ÑÐ°Ð²Ð¾ Ð´Ð° Ð¸Ð·ÑÑÐ¸Ð²Ð° ÑÐ»ÐµÐ´Ð½Ð¸ÑÐµ "
++"Ð²Ð¸Ð´Ð¾Ð²Ðµ Ð¾Ð±ÐµÐºÑÐ¸:"
+ 
+ #, python-format
+ msgid ""
+ "Deleting the %(object_name)s '%(escaped_object)s' would require deleting the "
+ "following protected related objects:"
+ msgstr ""
+-"ÐÐ·ÑÑÐ¸Ð²Ð°Ð½ÐµÑÐ¾ Ð½Ð° %(object_name)s '%(escaped_object)s' ÑÐµ Ð´Ð¾Ð²ÐµÐ´Ðµ Ð´Ð¾ "
+-"Ð·Ð°Ð»Ð¸ÑÐ°Ð²Ð°Ð½ÐµÑÐ¾ Ð½Ð° ÑÐ»ÐµÐ´Ð½Ð¸ÑÐµ Ð·Ð°ÑÐ¸ÑÐµÐ½Ð¸ ÑÐ²ÑÑÐ·Ð°Ð½Ð¸ Ð¾Ð±ÐµÐºÑÐ¸:"
++"ÐÐ·ÑÑÐ¸Ð²Ð°Ð½ÐµÑÐ¾ Ð½Ð° %(object_name)s '%(escaped_object)s' Ð¸Ð·Ð¸ÑÐºÐ²Ð° Ð¸Ð·ÑÑÐ¸Ð²Ð°Ð½ÐµÑÐ¾ Ð½Ð° "
++"ÑÐ»ÐµÐ´Ð½Ð¸ÑÐµ Ð·Ð°ÑÐ¸ÑÐµÐ½Ð¸ ÑÐ²ÑÑÐ·Ð°Ð½Ð¸ Ð¾Ð±ÐµÐºÑÐ¸:"
+ 
+ #, python-format
+ msgid ""
+ "Are you sure you want to delete the %(object_name)s "%(escaped_object)s"? "
+ "All of the following related items will be deleted:"
+ msgstr ""
+-"ÐÐ°Ð¸ÑÑÐ¸Ð½Ð° Ð»Ð¸ Ð¸ÑÐºÐ°ÑÐµ Ð´Ð° Ð¸Ð·ÑÑÐ¸ÐµÑÐµ Ð¾Ð±ÐµÐºÑÐ¸ÑÐµ %(object_name)s "%(escaped_object)s"
+-""? Ð¡Ð»ÐµÐ´Ð½Ð¸ÑÐµ ÑÐ²ÑÑÐ·Ð°Ð½Ð¸ ÐµÐ»ÐµÐ¼ÐµÐ½ÑÐ¸ ÑÑÑÐ¾ ÑÐµ Ð±ÑÐ´Ð°Ñ Ð¸Ð·ÑÑÐ¸ÑÐ¸:"
++"ÐÐ°Ð¸ÑÑÐ¸Ð½Ð° Ð»Ð¸ Ð¸ÑÐºÐ°ÑÐµ Ð´Ð° Ð¸Ð·ÑÑÐ¸ÐµÑÐµ %(object_name)s "%(escaped_object)s"? "
++"Ð¡Ð»ÐµÐ´Ð½Ð¸ÑÐµ ÑÐ²ÑÑÐ·Ð°Ð½Ð¸ ÐµÐ»ÐµÐ¼ÐµÐ½ÑÐ¸ ÑÑÑÐ¾ ÑÐµ Ð±ÑÐ´Ð°Ñ Ð¸Ð·ÑÑÐ¸ÑÐ¸:"
+ 
+ msgid "Objects"
+ msgstr "ÐÐ±ÐµÐºÑÐ¸"
+ 
+ msgid "Yes, Iâm sure"
+-msgstr "ÐÐ° ÑÐ¸Ð³ÑÑÐµÐ½ ÑÑÐ¼"
++msgstr "ÐÐ°, ÑÐ¸Ð³ÑÑÐµÐ½ ÑÑÐ¼"
+ 
+ msgid "No, take me back"
+ msgstr "ÐÐµ, Ð²ÑÑÐ½Ð¸ Ð¼Ðµ Ð¾Ð±ÑÐ°ÑÐ½Ð¾"
+@@ -455,15 +470,15 @@ msgid ""
+ "types of objects:"
+ msgstr ""
+ "ÐÐ·ÑÑÐ¸Ð²Ð°Ð½ÐµÑÐ¾ Ð½Ð° Ð¸Ð·Ð±ÑÐ°Ð½Ð¸ÑÐµ %(objects_name)s ÑÐµ Ð´Ð¾Ð²ÐµÐ´Ðµ Ð´Ð¾ Ð¸Ð·ÑÑÐ¸Ð²Ð°Ð½Ðµ Ð½Ð° ÑÐ²ÑÑÐ·Ð°Ð½Ð¸ "
+-"Ð¾Ð±ÐµÐºÑÐ¸. ÐÐ°ÑÐ¸ÑÑ Ð¿ÑÐ¾ÑÐ¸Ð» Ð½ÑÐ¼Ð° Ð¿ÑÐ°Ð²Ð° Ð·Ð° Ð¸Ð·ÑÑÐ¸Ð²Ð°Ð½Ðµ Ð½Ð° ÑÐ»ÐµÐ´Ð½Ð¸ÑÐµ ÑÐ¸Ð¿Ð¾Ð²Ðµ Ð¾Ð±ÐµÐºÑÐ¸:"
++"Ð¾Ð±ÐµÐºÑÐ¸, Ð½Ð¾ Ð²Ð°ÑÐ¸ÑÑ Ð¿Ð¾ÑÑÐµÐ±Ð¸ÑÐµÐ» Ð½ÑÐ¼Ð° Ð¿ÑÐ°Ð²Ð¾ Ð´Ð° Ð¸Ð·ÑÑÐ¸Ð²Ð° ÑÐ»ÐµÐ´Ð½Ð¸ÑÐµ ÑÐ¸Ð¿Ð¾Ð²Ðµ Ð¾Ð±ÐµÐºÑÐ¸:"
+ 
+ #, python-format
+ msgid ""
+ "Deleting the selected %(objects_name)s would require deleting the following "
+ "protected related objects:"
+ msgstr ""
+-"ÐÐ·ÑÑÐ¸Ð²Ð°Ð½ÐµÑÐ¾ Ð½Ð° Ð¸Ð·Ð±ÑÐ°Ð½Ð¸ÑÐµ %(objects_name)s ÑÐµ Ð´Ð¾Ð²ÐµÐ´Ðµ Ð´Ð¾ Ð·Ð°Ð»Ð¸ÑÐ°Ð²Ð°Ð½ÐµÑÐ¾ Ð½Ð° "
+-"ÑÐ»ÐµÐ´Ð½Ð¸ÑÐµ Ð·Ð°ÑÐ¸ÑÐµÐ½Ð¸ ÑÐ²ÑÑÐ·Ð°Ð½Ð¸ Ð¾Ð±ÐµÐºÑÐ¸:"
++"ÐÐ·ÑÑÐ¸Ð²Ð°Ð½ÐµÑÐ¾ Ð½Ð° Ð¸Ð·Ð±ÑÐ°Ð½Ð¸ÑÐµ %(objects_name)s Ð¸Ð·Ð¸ÑÐºÐ²Ð° Ð¸Ð·ÑÑÐ¸Ð²Ð°Ð½ÐµÑÐ¾ Ð½Ð° ÑÐ»ÐµÐ´Ð½Ð¸ÑÐµ "
++"Ð·Ð°ÑÐ¸ÑÐµÐ½Ð¸ ÑÐ²ÑÑÐ·Ð°Ð½Ð¸ Ð¾Ð±ÐµÐºÑÐ¸:"
+ 
+ #, python-format
+ msgid ""
+@@ -500,14 +515,16 @@ msgid ""
+ "database tables have been created, and make sure the database is readable by "
+ "the appropriate user."
+ msgstr ""
++"ÐÑÐ¾Ð±Ð»ÐµÐ¼ Ñ Ð²Ð°ÑÐ°ÑÐ° Ð±Ð°Ð·Ð° Ð´Ð°Ð½Ð½Ð¸. Ð£Ð±ÐµÐ´ÐµÑÐµ ÑÐµ, ÑÐµ Ð½ÐµÐ¾Ð±ÑÐ¾Ð´Ð¸Ð¼Ð¸ÑÐµ ÑÐ°Ð±Ð»Ð¸ÑÐ¸ Ð² Ð±Ð°Ð·Ð°ÑÐ° ÑÐ° "
++"ÑÑÐ·Ð´Ð°Ð´ÐµÐ½Ð¸ Ð¸ ÑÐµ ÑÑÐ¾ÑÐ²ÐµÑÐ½Ð¸Ñ Ð¿Ð¾ÑÑÐµÐ±Ð¸ÑÐµÐ» Ð¸Ð¼Ð° Ð½ÐµÐ¾Ð±ÑÐ¾Ð´Ð¸Ð¼Ð¸ÑÐµ Ð¿ÑÐ°Ð²Ð° Ð·Ð° Ð´Ð¾ÑÑÑÐ¿.  "
+ 
+ #, python-format
+ msgid ""
+ "You are authenticated as %(username)s, but are not authorized to access this "
+ "page. Would you like to login to a different account?"
+ msgstr ""
+-"ÐÐ¸Ðµ ÑÑÐµ ÑÐµ Ð°Ð²ÑÐµÐ½ÑÐ¸ÐºÐ¸ÑÐ°Ð½ ÐºÐ°ÑÐ¾ %(username)s, Ð½Ð¾ Ð½Ðµ ÑÑÐµ Ð¾ÑÐ¾ÑÐ¸Ð·Ð¸ÑÐ°Ð½ Ð´Ð° Ð´Ð¾ÑÑÑÐ¿Ð¸ÑÐµ "
+-"ÑÐ°Ð·Ð¸ ÑÑÑÐ°Ð½Ð¸ÑÐ°. ÐÐ¸ÑÑÐµ Ð»Ð¸ Ð¶ÐµÐ»Ð°Ð»Ð¸ Ð´Ð° Ð²Ð»ÐµÐ·Ðµ Ñ Ð´ÑÑÐ³ Ð¿ÑÐ¾ÑÐ¸Ð»."
++"ÐÐ¸Ðµ ÑÑÐµ ÑÐµ ÑÐ´Ð¾ÑÑÐ¾Ð²ÐµÑÐµÐ½ ÐºÐ°ÑÐ¾ %(username)s, Ð½Ð¾ Ð½Ðµ ÑÑÐµ Ð¾ÑÐ¾ÑÐ¸Ð·Ð¸ÑÐ°Ð½ Ð´Ð° Ð´Ð¾ÑÑÑÐ¿Ð¸ÑÐµ "
++"ÑÐ°Ð·Ð¸ ÑÑÑÐ°Ð½Ð¸ÑÐ°. ÐÐ¸ÑÑÐµ Ð»Ð¸ Ð¶ÐµÐ»Ð°Ð»Ð¸ Ð´Ð° Ð²Ð»ÐµÐ·Ðµ Ñ Ð´ÑÑÐ³ Ð¿ÑÐ¾ÑÐ¸Ð»?"
+ 
+ msgid "Forgotten your password or username?"
+ msgstr "ÐÐ°Ð±ÑÐ°Ð²ÐµÐ½Ð° Ð¿Ð°ÑÐ¾Ð»Ð° Ð¸Ð»Ð¸ Ð¿Ð¾ÑÑÐµÐ±Ð¸ÑÐµÐ»ÑÐºÐ¾ Ð¸Ð¼Ðµ?"
+@@ -515,6 +532,12 @@ msgstr "ÐÐ°Ð±ÑÐ°Ð²ÐµÐ½Ð° Ð¿Ð°ÑÐ¾Ð»Ð° Ð¸Ð»Ð¸ Ð¿Ð¾ÑÑÐµÐ±Ð¸ÑÐµÐ»ÑÐºÐ¾ Ð¸Ð¼Ðµ
+ msgid "Toggle navigation"
+ msgstr "ÐÑÐµÐ²ÐºÐ»ÑÑÐ¸ Ð½Ð°Ð²Ð¸Ð³Ð°ÑÐ¸ÑÑÐ°"
+ 
++msgid "Start typing to filterâ¦"
++msgstr "ÐÐ°Ð¿Ð¾ÑÐ½ÐµÑÐµ Ð´Ð° Ð¿Ð¸ÑÐµÑÐµ Ð·Ð° ÑÐ¸Ð»ÑÑÑ..."
++
++msgid "Filter navigation items"
++msgstr "Ð¤Ð¸Ð»ÑÑÐ¸ÑÐ°Ð½Ðµ Ð½Ð° Ð½Ð°Ð²Ð¸Ð³Ð°ÑÐ¸Ð¾Ð½Ð½Ð¸ÑÐµ ÐµÐ»ÐµÐ¼ÐµÐ½ÑÐ¸"
++
+ msgid "Date/time"
+ msgstr "ÐÐ°ÑÐ°/ÑÐ°Ñ"
+ 
+@@ -528,6 +551,8 @@ msgid ""
+ "This object doesnât have a change history. It probably wasnât added via this "
+ "admin site."
+ msgstr ""
++"Ð¢Ð¾Ð·Ð¸ Ð¾Ð±ÐµÐºÑ Ð½ÑÐ¼Ð° Ð¸ÑÑÐ¾ÑÐ¸Ñ Ð½Ð° Ð¿ÑÐ¾Ð¼ÐµÐ½Ð¸ÑÐµ. ÐÐµÑÐ¾ÑÑÐ½Ð¾ Ð½Ðµ Ðµ Ð±Ð¸Ð» Ð´Ð¾Ð±Ð°Ð²ÐµÐ½ ÑÑÐµÐ· ÑÐ¾Ð·Ð¸ "
++"Ð°Ð´Ð¼Ð¸Ð½Ð¸ÑÑÑÐ°ÑÐ¸Ð²ÐµÐ½ ÑÐ°Ð¹Ñ."
+ 
+ msgid "Show all"
+ msgstr "ÐÐ¾ÐºÐ°Ð¶Ð¸ Ð²ÑÐ¸ÑÐºÐ¸"
+@@ -536,7 +561,7 @@ msgid "Save"
+ msgstr "ÐÐ°Ð¿Ð¸Ñ"
+ 
+ msgid "Popup closingâ¦"
+-msgstr ""
++msgstr "ÐÐ·ÑÐºÐ°ÑÐ°ÑÐ¸ÑÑ Ð¿ÑÐ¾Ð·Ð¾ÑÐµÑ ÑÐµ Ð·Ð°ÑÐ²Ð°ÑÑ..."
+ 
+ msgid "Search"
+ msgstr "Ð¢ÑÑÑÐµÐ½Ðµ"
+@@ -552,13 +577,13 @@ msgid "%(full_result_count)s total"
+ msgstr "%(full_result_count)s Ð¾Ð±ÑÐ¾"
+ 
+ msgid "Save as new"
+-msgstr "ÐÐ°Ð¿Ð¸Ñ ÐºÐ°ÑÐ¾ Ð½Ð¾Ð²"
++msgstr "ÐÐ°Ð¿Ð¸ÑÐ¸ ÐºÐ°ÑÐ¾ Ð½Ð¾Ð²"
+ 
+ msgid "Save and add another"
+-msgstr "ÐÐ°Ð¿Ð¸Ñ Ð¸ Ð½Ð¾Ð²"
++msgstr "ÐÐ°Ð¿Ð¸ÑÐ¸ Ð¸ Ð´Ð¾Ð±Ð°Ð²Ð¸ Ð½Ð¾Ð²"
+ 
+ msgid "Save and continue editing"
+-msgstr "ÐÐ°Ð¿Ð¸Ñ Ð¸ Ð¿ÑÐ¾Ð´ÑÐ»Ð¶ÐµÐ½Ð¸Ðµ"
++msgstr "ÐÐ°Ð¿Ð¸ÑÐ¸ Ð¸ Ð¿ÑÐ¾Ð´ÑÐ»Ð¶Ð¸"
+ 
+ msgid "Save and view"
+ msgstr "ÐÐ°Ð¿Ð¸ÑÐ¸ Ð¸ Ð¿ÑÐµÐ³Ð»ÐµÐ´Ð°Ð¹"
+@@ -578,8 +603,8 @@ msgstr "ÐÐ¾Ð±Ð°Ð²ÑÐ½Ðµ Ð½Ð° Ð´ÑÑÐ³ %(model)s"
+ msgid "Delete selected %(model)s"
+ msgstr "ÐÐ·ÑÑÐ¸Ð²Ð°Ð½Ðµ Ð½Ð° Ð¸Ð·Ð±ÑÐ°Ð½Ð¸Ñ %(model)s"
+ 
+-msgid "Thanks for spending some quality time with the Web site today."
+-msgstr "ÐÐ»Ð°Ð³Ð¾Ð´Ð°ÑÐ¸Ð¼ ÐÐ¸, ÑÐµ Ð¸Ð·Ð¿Ð¾Ð»Ð·Ð²Ð°ÑÑÐµ ÑÐ¾Ð·Ð¸ ÑÐ°Ð¹Ñ Ð´Ð½ÐµÑ."
++msgid "Thanks for spending some quality time with the web site today."
++msgstr "ÐÐ»Ð°Ð³Ð¾Ð´Ð°ÑÐ¸Ð¼ Ð²Ð¸ Ð·Ð° Ð´Ð¾Ð±ÑÐµ Ð¿ÑÐµÐºÐ°ÑÐ°Ð½Ð¾ÑÐ¾ Ð²ÑÐµÐ¼Ðµ Ñ ÑÐ¾Ð·Ð¸ ÑÐ°Ð¹Ñ Ð´Ð½ÐµÑ."
+ 
+ msgid "Log in again"
+ msgstr "ÐÐ»ÐµÐ· Ð¿Ð°Ðº"
+@@ -594,25 +619,27 @@ msgid ""
+ "Please enter your old password, for securityâs sake, and then enter your new "
+ "password twice so we can verify you typed it in correctly."
+ msgstr ""
++"ÐÑÐ²ÐµÐ´ÐµÑÐµ ÑÑÐ°ÑÐ°ÑÐ° ÑÐ¸ Ð¿Ð°ÑÐ¾Ð»Ð° /Ð¾Ñ ÑÑÐ¾Ð±ÑÐ°Ð¶ÐµÐ½Ð¸Ñ Ð·Ð° ÑÐ¸Ð³ÑÑÐ½Ð¾ÑÑ/. Ð¡Ð»ÐµÐ´ ÑÐ¾Ð²Ð° Ð²ÑÐ²ÐµÐ´ÐµÑÐµ "
++"Ð¶ÐµÐ»Ð°Ð½Ð°ÑÐ° Ð½Ð¾Ð²Ð° Ð¿Ð°ÑÐ¾Ð»Ð° Ð´Ð²Ð° Ð¿ÑÑÐ¸, Ð·Ð° Ð´Ð° ÑÐ²ÐµÑÐ¸Ð¼ Ð´Ð°Ð»Ð¸ Ðµ Ð½Ð°Ð¿Ð¸ÑÐ°Ð½Ð° Ð¿ÑÐ°Ð²Ð¸Ð»Ð½Ð¾."
+ 
+ msgid "Change my password"
+-msgstr "ÐÑÐ¾Ð¼ÑÐ½Ð° Ð½Ð° Ð¿Ð°ÑÐ¾Ð»Ð°"
++msgstr "ÐÑÐ¾Ð¼ÑÐ½Ð° Ð½Ð° Ð¿Ð°ÑÐ¾Ð»Ð°ÑÐ° Ð¼Ð¸"
+ 
+ msgid "Password reset"
+ msgstr "ÐÐ¾Ð²Ð° Ð¿Ð°ÑÐ¾Ð»Ð°"
+ 
+ msgid "Your password has been set.  You may go ahead and log in now."
+-msgstr "ÐÐ°ÑÐ¾Ð»Ð°ÑÐ° Ðµ Ð¿ÑÐ¾Ð¼ÐµÐ½ÐµÐ½Ð°. ÐÐµÑÐµ Ð¼Ð¾Ð¶ÐµÑÐµ Ð´Ð° ÑÐµ Ð²Ð¿Ð¸ÑÐµÑÐµ"
++msgstr "ÐÐ°ÑÐ¾Ð»Ð°ÑÐ° Ðµ Ð¿ÑÐ¾Ð¼ÐµÐ½ÐµÐ½Ð°. ÐÐµÑÐµ Ð¼Ð¾Ð¶ÐµÑÐµ Ð´Ð° ÑÐµ Ð²Ð¿Ð¸ÑÐµÑÐµ."
+ 
+ msgid "Password reset confirmation"
+-msgstr "ÐÐ°ÑÐ¾Ð»Ð° Ð·Ð° Ð¿Ð¾ÑÐ²ÑÑÐ¶Ð´ÐµÐ½Ð¸Ðµ"
++msgstr "ÐÐ¾ÑÐ²ÑÑÐ¶Ð´ÐµÐ½Ð¸Ðµ Ð·Ð° ÑÐ¼ÑÐ½Ð° Ð½Ð° Ð¿Ð°ÑÐ¾Ð»Ð°ÑÐ°"
+ 
+ msgid ""
+ "Please enter your new password twice so we can verify you typed it in "
+ "correctly."
+ msgstr ""
+-"ÐÐ¾Ð»Ñ, Ð²ÑÐ²ÐµÐ´ÐµÑÐµ Ð½Ð¾Ð²Ð°ÑÐ° Ð¿Ð°ÑÐ¾Ð»Ð° Ð´Ð²Ð° Ð¿ÑÑÐ¸, Ð·Ð° Ð´Ð° Ð¼Ð¾Ð¶Ðµ Ð´Ð° ÑÐµ Ð¿Ð¾ÑÐ²ÑÑÐ´Ð¸, ÑÐµ ÑÑÐµ Ñ "
+-"Ð½Ð°Ð¿Ð¸ÑÐ°Ð»Ð¸ Ð¿ÑÐ°Ð²Ð¸Ð»Ð½Ð¾."
++"ÐÐ¾Ð»Ñ, Ð²ÑÐ²ÐµÐ´ÐµÑÐµ Ð½Ð¾Ð²Ð°ÑÐ° Ð¿Ð°ÑÐ¾Ð»Ð° Ð´Ð²Ð° Ð¿ÑÑÐ¸, Ð·Ð° Ð´Ð° ÑÐµ ÑÐ²ÐµÑÐ¸Ð¼, ÑÐµ ÑÑÐµ Ñ Ð½Ð°Ð¿Ð¸ÑÐ°Ð»Ð¸ "
++"Ð¿ÑÐ°Ð²Ð¸Ð»Ð½Ð¾."
+ 
+ msgid "New password:"
+ msgstr "ÐÐ¾Ð²Ð° Ð¿Ð°ÑÐ¾Ð»Ð°:"
+@@ -631,25 +658,29 @@ msgid ""
+ "Weâve emailed you instructions for setting your password, if an account "
+ "exists with the email you entered. You should receive them shortly."
+ msgstr ""
++"ÐÐ¾ Ð¸Ð¼ÐµÐ¹Ð» Ð¸Ð·Ð¿ÑÐ°ÑÐ¸ÑÐ¼Ðµ Ð¸Ð½ÑÑÑÑÐºÑÐ¸Ð¸ Ð·Ð° ÑÐ¼ÑÐ½Ð° Ð½Ð° Ð¿Ð°ÑÐ¾Ð»Ð°ÑÐ°, Ð°ÐºÐ¾ ÑÑÑÐµÑÑÐ²ÑÐ²Ð° Ð¿ÑÐ¾ÑÐ¸Ð» Ñ "
++"Ð²ÑÐ²ÐµÐ´ÐµÐ½Ð¸Ñ Ð¾Ñ Ð²Ð°Ñ Ð°Ð´ÑÐµÑ. ÐÐ¸ ÑÑÑÐ±Ð²Ð°Ð»Ð¾ ÑÐºÐ¾ÑÐ¾ Ð´Ð° Ð³Ð¸ Ð¿Ð¾Ð»ÑÑÐ¸ÑÐµ.   "
+ 
+ msgid ""
+ "If you donât receive an email, please make sure youâve entered the address "
+ "you registered with, and check your spam folder."
+ msgstr ""
++"ÐÐºÐ¾ Ð½Ðµ Ð¿Ð¾Ð»ÑÑÐ¸ÑÐµ Ð¸Ð¼ÐµÐ¹Ð», Ð¼Ð¾Ð»Ñ ÑÐ²ÐµÑÐµÑÐµ ÑÐµ, ÑÐµ ÑÑÐµ Ð¿Ð¾Ð¿ÑÐ»Ð½Ð¸Ð»Ð¸ Ð¿ÑÐ°Ð²Ð¸Ð»Ð½Ð¾ Ð°Ð´ÑÐµÑÐ°, Ñ "
++"ÐºÐ¾Ð¹ÑÐ¾ ÑÑÐµ ÑÐµ ÑÐµÐ³Ð¸ÑÑÑÐ¸ÑÐ°Ð»Ð¸, ÑÑÑÐ¾ Ð¿ÑÐ¾Ð²ÐµÑÐµÑÐµ ÑÐ¿Ð°Ð¼ Ð¿Ð°Ð¿ÐºÐ°ÑÐ° Ð²ÑÐ² Ð²Ð°ÑÐ°ÑÐ° Ð¿Ð¾ÑÐ°."
+ 
+ #, python-format
+ msgid ""
+ "You're receiving this email because you requested a password reset for your "
+ "user account at %(site_name)s."
+ msgstr ""
+-"ÐÐ¸Ðµ ÑÑÐµ Ð¿Ð¾Ð»ÑÑÐ¸Ð»Ð¸ ÑÐ¾Ð·Ð¸ Ð¸Ð¼ÐµÐ¹Ð», Ð·Ð°ÑÐ¾ÑÐ¾ ÑÑÐµ Ð¿Ð¾Ð¸ÑÐºÐ°Ð»Ð¸ Ð´Ð° Ð¿ÑÐ¾Ð¼ÐµÐ½Ð¸ÑÐµ Ð¿Ð°ÑÐ¾Ð»Ð°ÑÐ° Ð·Ð° "
++"ÐÐ¸Ðµ Ð¿Ð¾Ð»ÑÑÐ°Ð²Ð°ÑÐ¸ ÑÐ¾Ð·Ð¸ Ð¸Ð¼ÐµÐ¹Ð», Ð·Ð°ÑÐ¾ÑÐ¾ ÑÑÐµ Ð¿Ð¾Ð¸ÑÐºÐ°Ð»Ð¸ Ð´Ð° Ð¿ÑÐ¾Ð¼ÐµÐ½Ð¸ÑÐµ Ð¿Ð°ÑÐ¾Ð»Ð°ÑÐ° Ð·Ð° "
+ "Ð²Ð°ÑÐ¸Ñ Ð¿Ð¾ÑÑÐµÐ±Ð¸ÑÐµÐ»ÑÐºÐ¸ Ð°ÐºÐ°ÑÐ½Ñ Ð² %(site_name)s."
+ 
+ msgid "Please go to the following page and choose a new password:"
+ msgstr "ÐÐ¾Ð»Ñ, Ð¾ÑÐ¸Ð´ÐµÑÐµ Ð½Ð° ÑÐ»ÐµÐ´Ð½Ð°ÑÐ° ÑÑÑÐ°Ð½Ð¸ÑÐ° Ð¸ Ð¸Ð·Ð±ÐµÑÐµÑÐµ Ð½Ð¾Ð²Ð° Ð¿Ð°ÑÐ¾Ð»Ð°:"
+ 
+ msgid "Your username, in case youâve forgotten:"
+-msgstr "ÐÐ°ÑÐµÑÐ¾ Ð¿Ð¾ÑÑÐµÐ±Ð¸ÑÐµÐ»ÑÐºÐ¾ Ð¸Ð¼Ðµ Ð² ÑÐ»ÑÑÐ°Ð¹ ÑÐµ ÑÑÐµ Ð³Ð¾ Ð·Ð°Ð±ÑÐ°Ð²Ð¸Ð»Ð¸:"
++msgstr "ÐÐ°ÑÐµÑÐ¾ Ð¿Ð¾ÑÑÐµÐ±Ð¸ÑÐµÐ»ÑÐºÐ¾ Ð¸Ð¼Ðµ, Ð² ÑÐ»ÑÑÐ°Ð¹ ÑÐµ ÑÑÐµ Ð³Ð¾ Ð·Ð°Ð±ÑÐ°Ð²Ð¸Ð»Ð¸:"
+ 
+ msgid "Thanks for using our site!"
+ msgstr "ÐÐ»Ð°Ð³Ð¾Ð´Ð°ÑÐ¸Ð¼, ÑÐµ Ð¿Ð¾Ð»Ð·Ð²Ð°ÑÐµ ÑÐ°Ð¹ÑÐ° Ð½Ð¸!"
+@@ -662,12 +693,14 @@ msgid ""
+ "Forgotten your password? Enter your email address below, and weâll email "
+ "instructions for setting a new one."
+ msgstr ""
++"ÐÐ°Ð±ÑÐ°Ð²Ð¸Ð»Ð¸ ÑÑÐµ ÑÐ¸ Ð¿Ð°ÑÐ¾Ð»Ð°ÑÐ°? ÐÑÐ²ÐµÐ´ÐµÑÐµ ÑÐ²Ð¾Ñ Ð¸Ð¼ÐµÐ¹Ð» Ð°Ð´ÑÐµÑ Ð¿Ð¾-Ð´Ð¾Ð»Ñ, Ð¸ Ð½Ð¸Ðµ ÑÐµ Ð²Ð¸ "
++"Ð¸Ð·Ð¿ÑÐ°ÑÐ¸Ð¼ Ð¸Ð½ÑÑÑÑÐºÑÐ¸Ð¸ ÐºÐ°Ðº Ð´Ð° Ñ ÑÐ¼ÐµÐ½Ð¸ÑÐµ Ñ Ð½Ð¾Ð²Ð°."
+ 
+ msgid "Email address:"
+-msgstr "E-mail Ð°Ð´ÑÐµÑÐ¸:"
++msgstr "ÐÐ¼ÐµÐ¹Ð» Ð°Ð´ÑÐµÑÐ¸:"
+ 
+ msgid "Reset my password"
+-msgstr "ÐÐ¾Ð²Ð° Ð¿Ð°ÑÐ¾Ð»Ð°"
++msgstr "ÐÐ°Ð´Ð°Ð¹ Ð½Ð¾Ð²Ð°ÑÐ° Ð¼Ð¸ Ð¿Ð°ÑÐ¾Ð»Ð°"
+ 
+ msgid "All dates"
+ msgstr "ÐÑÐ¸ÑÐºÐ¸ Ð´Ð°ÑÐ¸"
+@@ -697,4 +730,4 @@ msgid "Currently:"
+ msgstr "Ð¡ÐµÐ³Ð°:"
+ 
+ msgid "Change:"
+-msgstr "ÐÑÐ¾Ð¼ÐµÐ½Ð¸"
++msgstr "ÐÑÐ¾Ð¼ÑÐ½Ð°:"
+diff --git a/django/contrib/admin/locale/bg/LC_MESSAGES/djangojs.mo b/django/contrib/admin/locale/bg/LC_MESSAGES/djangojs.mo
+index 4940bb9f4e..2a86863893 100644
+Binary files a/django/contrib/admin/locale/bg/LC_MESSAGES/djangojs.mo and b/django/contrib/admin/locale/bg/LC_MESSAGES/djangojs.mo differ
+diff --git a/django/contrib/admin/locale/bg/LC_MESSAGES/djangojs.po b/django/contrib/admin/locale/bg/LC_MESSAGES/djangojs.po
+index ded64ac3d0..84a6141234 100644
+--- a/django/contrib/admin/locale/bg/LC_MESSAGES/djangojs.po
++++ b/django/contrib/admin/locale/bg/LC_MESSAGES/djangojs.po
+@@ -1,15 +1,16 @@
+ # This file is distributed under the same license as the Django package.
+ #
+ # Translators:
++# arneatec <arneatec@gmail.com>, 2022
+ # Jannis Leidel <jannis@leidel.info>, 2011
+ # Venelin Stoykov <vkstoykov@gmail.com>, 2015-2016
+ msgid ""
+ msgstr ""
+ "Project-Id-Version: django
+"
+ "Report-Msgid-Bugs-To: 
+"
+-"POT-Creation-Date: 2016-05-17 23:12+0200
+"
+-"PO-Revision-Date: 2017-09-19 16:41+0000
+"
+-"Last-Translator: Venelin Stoykov <vkstoykov@gmail.com>
+"
++"POT-Creation-Date: 2021-01-15 09:00+0100
+"
++"PO-Revision-Date: 2022-01-14 09:49+0000
+"
++"Last-Translator: arneatec <arneatec@gmail.com>
+"
+ "Language-Team: Bulgarian (http://www.transifex.com/django/django/language/"
+ "bg/)
+"
+ "MIME-Version: 1.0
+"
+@@ -28,8 +29,8 @@ msgid ""
+ "the box below and then clicking the "Choose" arrow between the two boxes."
+ msgstr ""
+ "Ð¢Ð¾Ð²Ð° Ðµ ÑÐ¿Ð¸ÑÑÐº Ð½Ð° Ð½Ð°Ð»Ð¸ÑÐ½Ð¸ÑÐµ %s . ÐÐ¾Ð¶ÐµÑÐµ Ð´Ð° Ð¸Ð·Ð±ÐµÑÐµÑÐµ Ð½ÑÐºÐ¾Ð¸, ÐºÐ°ÑÐ¾ Ð³Ð¸ Ð¸Ð·Ð±ÐµÑÐµÑÐµ Ð² "
+-"Ð¿Ð¾Ð»ÐµÑÐ¾ Ð¿Ð¾-Ð´Ð¾Ð»Ñ Ð¸ ÑÐ»ÐµÐ´ ÑÐ¾Ð²Ð° ÐºÐ»Ð¸ÐºÐ½ÐµÑÐµ Ð²ÑÑÑÑ "ÐÐ·Ð±Ð¾Ñ" ÑÑÑÐµÐ»ÐºÐ° Ð¼ÐµÐ¶Ð´Ñ Ð´Ð²ÐµÑÐµ "
+-"ÐºÑÑÐ¸Ð¸."
++"Ð¿Ð¾Ð»ÐµÑÐ¾ Ð¿Ð¾-Ð´Ð¾Ð»Ñ Ð¸ ÑÐ»ÐµÐ´ ÑÐ¾Ð²Ð° ÐºÐ»Ð¸ÐºÐ½ÐµÑÐµ Ð²ÑÑÑÑ ÑÑÑÐµÐ»ÐºÐ°ÑÐ° "ÐÐ·Ð±ÐµÑÐ¸" Ð¼ÐµÐ¶Ð´Ñ Ð´Ð²ÐµÑÐµ "
++"Ð¿Ð¾Ð»ÐµÑÐ°."
+ 
+ #, javascript-format
+ msgid "Type into this box to filter down the list of available %s."
+@@ -46,7 +47,7 @@ msgid "Click to choose all %s at once."
+ msgstr "ÐÐ»Ð¸ÐºÐ½ÐµÑÐµ, Ð·Ð° Ð´Ð° Ð¸Ð·Ð±ÐµÑÐµÑÐµ Ð²ÑÐ¸ÑÐºÐ¸ %s Ð½Ð°Ð²ÐµÐ´Ð½ÑÐ¶."
+ 
+ msgid "Choose"
+-msgstr "ÐÐ·Ð±Ð¸ÑÐ°Ð¼"
++msgstr "ÐÐ·Ð±ÐµÑÐ¸"
+ 
+ msgid "Remove"
+ msgstr "ÐÑÐµÐ¼Ð°ÑÐ½Ð¸"
+@@ -60,9 +61,9 @@ msgid ""
+ "This is the list of chosen %s. You may remove some by selecting them in the "
+ "box below and then clicking the "Remove" arrow between the two boxes."
+ msgstr ""
+-"Ð¢Ð¾Ð²Ð° Ðµ ÑÐ¿Ð¸ÑÑÐº Ð½Ð° Ð¸Ð·Ð±ÑÐ°Ð½Ð¸Ñ %s. ÐÐ¾Ð¶ÐµÑÐµ Ð´Ð° Ð¿ÑÐµÐ¼Ð°ÑÐ½ÐµÑÐµ Ð½ÑÐºÐ¾Ð¸, ÐºÐ°ÑÐ¾ Ð³Ð¸ Ð¸Ð·Ð±ÐµÑÐµÑÐµ Ð² "
+-"Ð¿Ð¾Ð»ÐµÑÐ¾ Ð¿Ð¾-Ð´Ð¾Ð»Ñ Ð¸ ÑÐ»ÐµÐ´ ÑÐ¾Ð²Ð° ÑÑÐ°ÐºÐ½ÐµÑÐµ Ð²ÑÑÑÑ "ÐÑÐµÐ¼Ð°ÑÐ½Ð¸" ÑÑÑÐµÐ»ÐºÐ° Ð¼ÐµÐ¶Ð´Ñ Ð´Ð²ÐµÑÐµ "
+-"ÐºÑÑÐ¸Ð¸."
++"Ð¢Ð¾Ð²Ð° Ðµ ÑÐ¿Ð¸ÑÑÐº Ð½Ð° Ð¸Ð·Ð±ÑÐ°Ð½Ð¸ÑÐµ %s. ÐÐ¾Ð¶ÐµÑÐµ Ð´Ð° Ð¿ÑÐµÐ¼Ð°ÑÐ½ÐµÑÐµ Ð½ÑÐºÐ¾Ð¸, ÐºÐ°ÑÐ¾ Ð³Ð¸ Ð¸Ð·Ð±ÐµÑÐµÑÐµ "
++"Ð² Ð¿Ð¾Ð»ÐµÑÐ¾ Ð¿Ð¾-Ð´Ð¾Ð»Ñ Ð¸ ÑÐ»ÐµÐ´ ÑÐ¾Ð²Ð° ÑÑÐ°ÐºÐ½ÐµÑÐµ Ð²ÑÑÑÑ ÑÑÑÐµÐ»ÐºÐ°ÑÐ° "ÐÑÐµÐ¼Ð°ÑÐ½Ð¸" Ð¼ÐµÐ¶Ð´Ñ "
++"Ð´Ð²ÐµÑÐµ Ð¿Ð¾Ð»ÐµÑÐ°."
+ 
+ msgid "Remove all"
+ msgstr "ÐÑÐµÐ¼Ð°ÑÐ²Ð°Ð½Ðµ Ð½Ð° Ð²ÑÐ¸ÑÐºÐ¸"
+@@ -80,57 +81,57 @@ msgid ""
+ "You have unsaved changes on individual editable fields. If you run an "
+ "action, your unsaved changes will be lost."
+ msgstr ""
+-"ÐÐ¼Ð°ÑÐµ Ð½ÐµÐ·Ð°Ð¿Ð°Ð·ÐµÐ½Ð¸ Ð¿ÑÐ¾Ð¼ÐµÐ½Ð¸ Ð¿Ð¾ Ð¾ÑÐ´ÐµÐ»Ð½Ð¸ Ð¿Ð¾Ð»ÐµÑÐ° Ð·Ð° ÑÐµÐ´Ð°ÐºÑÐ¸ÑÐ°Ð½Ðµ. ÐÐºÐ¾ Ð·Ð°Ð¿Ð¾ÑÐ½ÐµÑÐµ "
+-"Ð´ÑÑÐ³Ð¾, Ð½ÐµÐ·Ð°Ð¿Ð¸ÑÐ°Ð½Ð¸ÑÐµ Ð¿ÑÐ¾Ð¼ÐµÐ½Ð¸ ÑÐµ Ð±ÑÐ´Ð°Ñ Ð·Ð°Ð³ÑÐ±ÐµÐ½Ð¸."
++"ÐÐ¼Ð°ÑÐµ Ð½ÐµÐ·Ð°Ð¿Ð°Ð·ÐµÐ½Ð¸ Ð¿ÑÐ¾Ð¼ÐµÐ½Ð¸ Ð¿Ð¾ Ð¾ÑÐ´ÐµÐ»Ð½Ð¸ Ð¿Ð¾Ð»ÐµÑÐ° Ð·Ð° ÑÐµÐ´Ð°ÐºÑÐ¸ÑÐ°Ð½Ðµ. ÐÐºÐ¾ Ð¸Ð·Ð¿ÑÐ»Ð½Ð¸ÑÐµ "
++"Ð´ÐµÐ¹ÑÑÐ²Ð¸Ðµ, Ð½ÐµÐ·Ð°Ð¿Ð¸ÑÐ°Ð½Ð¸ÑÐµ Ð¿ÑÐ¾Ð¼ÐµÐ½Ð¸ ÑÐµ Ð±ÑÐ´Ð°Ñ Ð·Ð°Ð³ÑÐ±ÐµÐ½Ð¸."
+ 
+ msgid ""
+-"You have selected an action, but you haven't saved your changes to "
+-"individual fields yet. Please click OK to save. You'll need to re-run the "
++"You have selected an action, but you havenât saved your changes to "
++"individual fields yet. Please click OK to save. Youâll need to re-run the "
+ "action."
+ msgstr ""
+ "ÐÐ¸Ðµ ÑÑÐµ Ð¸Ð·Ð±ÑÐ°Ð»Ð¸ Ð´ÐµÐ¹ÑÑÐ²Ð¸Ðµ, Ð½Ð¾ Ð½Ðµ ÑÑÐµ Ð·Ð°Ð¿Ð¸ÑÐ°Ð»Ð¸ Ð¿ÑÐ¾Ð¼ÐµÐ½Ð¸ÑÐµ Ð¿Ð¾ Ð¿Ð¾Ð»ÐµÑÐ°. ÐÐ¾Ð»Ñ, "
+-"ÐºÐ»Ð¸ÐºÐ½ÐµÑÐµ ÐÐ, Ð·Ð° Ð´Ð° ÑÐµ Ð·Ð°Ð¿Ð¸ÑÐ°Ñ. Ð¢ÑÑÐ±Ð²Ð° Ð¾ÑÐ½Ð¾Ð²Ð¾ Ð´Ð° Ð·Ð°Ð¿Ð¾ÑÐ½ÐµÑÐµ Ð´ÐµÐ¹ÑÑÐ²Ð¸Ðµ."
++"ÐºÐ»Ð¸ÐºÐ½ÐµÑÐµ ÐÐ, Ð·Ð° Ð´Ð° ÑÐµ Ð·Ð°Ð¿Ð¸ÑÐ°Ñ. Ð¢ÑÑÐ±Ð²Ð° Ð¾ÑÐ½Ð¾Ð²Ð¾ Ð´Ð° Ð¸Ð·Ð¿ÑÐ»Ð½Ð¸ÑÐµ Ð´ÐµÐ¹ÑÑÐ²Ð¸ÐµÑÐ¾."
+ 
+ msgid ""
+-"You have selected an action, and you haven't made any changes on individual "
+-"fields. You're probably looking for the Go button rather than the Save "
++"You have selected an action, and you havenât made any changes on individual "
++"fields. Youâre probably looking for the Go button rather than the Save "
+ "button."
+ msgstr ""
+-"ÐÐ¸Ðµ ÑÑÐµ Ð¸Ð·Ð±ÑÐ°Ð»Ð¸ Ð´Ð°Ð´ÐµÐ½Ð° Ð´ÐµÐ¹Ð½Ð¾ÑÑ, Ð° Ð½Ðµ ÑÑÐµ Ð½Ð°Ð¿ÑÐ°Ð²Ð¸Ð»Ð¸ Ð½ÑÐºÐ°ÐºÐ²Ð¸ Ð¿ÑÐ¾Ð¼ÐµÐ½Ð¸ Ð¿Ð¾ "
+-"Ð¿Ð¾Ð»ÐµÑÐ°ÑÐ°. ÐÐµÑÐ¾ÑÑÐ½Ð¾ ÑÑÑÑÐ¸ÑÐµ Go Ð±ÑÑÐ¾Ð½, Ð° Ð½Ðµ Ð±ÑÑÐ¾Ð½Ð° Save."
++"ÐÐ¸Ðµ ÑÑÐµ Ð¸Ð·Ð±ÑÐ°Ð»Ð¸ Ð´ÐµÐ¹ÑÑÐ²Ð¸Ðµ, Ð½Ð¾ Ð½Ðµ ÑÑÐµ Ð½Ð°Ð¿ÑÐ°Ð²Ð¸Ð»Ð¸ Ð¿ÑÐ¾Ð¼ÐµÐ½Ð¸ Ð¿Ð¾ Ð¿Ð¾Ð»ÐµÑÐ°ÑÐ°. ÐÐµÑÐ¾ÑÑÐ½Ð¾ "
++"ÑÑÑÑÐ¸ÑÐµ ÐÐ·Ð¿ÑÐ»Ð½Ð¸ Ð±ÑÑÐ¾Ð½Ð°, Ð° Ð½Ðµ Ð±ÑÑÐ¾Ð½Ð° ÐÐ°Ð¿Ð¸Ñ."
++
++msgid "Now"
++msgstr "Ð¡ÐµÐ³Ð°"
++
++msgid "Midnight"
++msgstr "ÐÐ¾Ð»ÑÐ½Ð¾Ñ"
++
++msgid "6 a.m."
++msgstr "6 ÑÑÑÑÐ¸Ð½ÑÐ°"
++
++msgid "Noon"
++msgstr "ÐÐ¾ Ð¾Ð±ÑÐ´"
++
++msgid "6 p.m."
++msgstr "6 ÑÐ»ÐµÐ´ Ð¾Ð±ÑÐ´"
+ 
+ #, javascript-format
+ msgid "Note: You are %s hour ahead of server time."
+ msgid_plural "Note: You are %s hours ahead of server time."
+ msgstr[0] "ÐÐµÐ»ÐµÐ¶ÐºÐ°: ÐÐ¸Ðµ ÑÑÐµ %s ÑÐ°Ñ Ð½Ð°Ð¿ÑÐµÐ´ Ð¾Ñ Ð²ÑÐµÐ¼ÐµÑÐ¾ Ð½Ð° ÑÑÑÐ²ÑÑÐ°."
+-msgstr[1] "ÐÐµÐ»ÐµÐ¶ÐºÐ°: ÐÐ¸Ðµ ÑÑÐµ %s ÑÐ°ÑÐ° Ð½Ð°Ð¿ÑÐµÐ´ Ð¾Ñ Ð²ÑÐµÐ¼ÐµÑÐ¾ Ð½Ð° ÑÑÑÐ²ÑÑÐ°"
++msgstr[1] "ÐÐµÐ»ÐµÐ¶ÐºÐ°: ÐÐ¸Ðµ ÑÑÐµ Ñ %s ÑÐ°ÑÐ° Ð½Ð°Ð¿ÑÐµÐ´ Ð¾Ñ Ð²ÑÐµÐ¼ÐµÑÐ¾ Ð½Ð° ÑÑÑÐ²ÑÑÐ°"
+ 
+ #, javascript-format
+ msgid "Note: You are %s hour behind server time."
+ msgid_plural "Note: You are %s hours behind server time."
+ msgstr[0] "ÐÐ½Ð¸Ð¼Ð°Ð½Ð¸Ðµ: ÐÐ¸Ðµ ÑÑÐµ %s ÑÐ°Ñ Ð½Ð°Ð·Ð°Ð´ Ð¾Ñ Ð²ÑÐµÐ¼ÐµÑÐ¾ Ð½Ð° ÑÑÑÐ²ÑÑÐ°."
+-msgstr[1] "ÐÐ½Ð¸Ð¼Ð°Ð½Ð¸Ðµ: ÐÐ¸Ðµ ÑÑÐµ %s ÑÐ°ÑÐ° Ð½Ð°Ð·Ð°Ð´ Ð¾Ñ Ð²ÑÐµÐ¼ÐµÑÐ¾ Ð½Ð° ÑÑÑÐ²ÑÑÐ°."
+-
+-msgid "Now"
+-msgstr "Ð¡ÐµÐ³Ð°"
++msgstr[1] "ÐÐ½Ð¸Ð¼Ð°Ð½Ð¸Ðµ: ÐÐ¸Ðµ ÑÑÐµ Ñ %s ÑÐ°ÑÐ° Ð½Ð°Ð·Ð°Ð´ Ð¾Ñ Ð²ÑÐµÐ¼ÐµÑÐ¾ Ð½Ð° ÑÑÑÐ²ÑÑÐ°."
+ 
+ msgid "Choose a Time"
+ msgstr "ÐÐ·Ð±ÐµÑÐµÑÐµ Ð²ÑÐµÐ¼Ðµ"
+ 
+ msgid "Choose a time"
+-msgstr "ÐÐ·Ð±ÐµÑÐ¸ Ð²ÑÐµÐ¼Ðµ"
+-
+-msgid "Midnight"
+-msgstr "ÐÐ¾Ð»ÑÐ½Ð¾Ñ"
+-
+-msgid "6 a.m."
+-msgstr "6 a.m."
+-
+-msgid "Noon"
+-msgstr "ÐÐ¾ Ð¾Ð±ÑÐ´"
+-
+-msgid "6 p.m."
+-msgstr "6 ÑÐ»ÐµÐ´ Ð¾Ð±ÑÐ´"
++msgstr "ÐÐ·Ð±ÐµÑÐµÑÐµ Ð²ÑÐµÐ¼Ðµ"
+ 
+ msgid "Cancel"
+ msgstr "ÐÑÐºÐ°Ð·"
+@@ -183,6 +184,54 @@ msgstr "ÐÐ¾ÐµÐ¼Ð²ÑÐ¸"
+ msgid "December"
+ msgstr "ÐÐµÐºÐµÐ¼Ð²ÑÐ¸"
+ 
++msgctxt "abbrev. month January"
++msgid "Jan"
++msgstr "ÑÐ½."
++
++msgctxt "abbrev. month February"
++msgid "Feb"
++msgstr "ÑÐµÐ²Ñ."
++
++msgctxt "abbrev. month March"
++msgid "Mar"
++msgstr "Ð¼Ð°ÑÑ"
++
++msgctxt "abbrev. month April"
++msgid "Apr"
++msgstr "Ð°Ð¿Ñ."
++
++msgctxt "abbrev. month May"
++msgid "May"
++msgstr "Ð¼Ð°Ð¹"
++
++msgctxt "abbrev. month June"
++msgid "Jun"
++msgstr "ÑÐ½Ð¸"
++
++msgctxt "abbrev. month July"
++msgid "Jul"
++msgstr "ÑÐ»Ð¸"
++
++msgctxt "abbrev. month August"
++msgid "Aug"
++msgstr "Ð°Ð²Ð³."
++
++msgctxt "abbrev. month September"
++msgid "Sep"
++msgstr "ÑÐµÐ¿Ñ."
++
++msgctxt "abbrev. month October"
++msgid "Oct"
++msgstr "Ð¾ÐºÑ."
++
++msgctxt "abbrev. month November"
++msgid "Nov"
++msgstr "Ð½Ð¾ÐµÐ¼."
++
++msgctxt "abbrev. month December"
++msgid "Dec"
++msgstr "Ð´ÐµÐº."
++
+ msgctxt "one letter Sunday"
+ msgid "S"
+ msgstr "Ð"
+diff --git a/django/contrib/admin/locale/cs/LC_MESSAGES/django.mo b/django/contrib/admin/locale/cs/LC_MESSAGES/django.mo
+index 3329fe2bdc..0dd0b0c3f5 100644
+Binary files a/django/contrib/admin/locale/cs/LC_MESSAGES/django.mo and b/django/contrib/admin/locale/cs/LC_MESSAGES/django.mo differ
+diff --git a/django/contrib/admin/locale/cs/LC_MESSAGES/django.po b/django/contrib/admin/locale/cs/LC_MESSAGES/django.po
+index be87f4a47b..ce5d6f8a85 100644
+--- a/django/contrib/admin/locale/cs/LC_MESSAGES/django.po
++++ b/django/contrib/admin/locale/cs/LC_MESSAGES/django.po
+@@ -5,14 +5,14 @@
+ # Jirka Vejrazka <Jirka.Vejrazka@gmail.com>, 2011
+ # TomÃ¡Å¡ Ehrlich <tomas.ehrlich@gmail.com>, 2015
+ # VlÃ¡Äa Macek <macek@sandbox.cz>, 2013-2014
+-# VlÃ¡Äa Macek <macek@sandbox.cz>, 2015-2020
++# VlÃ¡Äa Macek <macek@sandbox.cz>, 2015-2020,2022
+ # yedpodtrzitko <yed@vanyli.net>, 2016
+ msgid ""
+ msgstr ""
+ "Project-Id-Version: django
+"
+ "Report-Msgid-Bugs-To: 
+"
+-"POT-Creation-Date: 2020-07-14 19:53+0200
+"
+-"PO-Revision-Date: 2020-07-20 09:24+0000
+"
++"POT-Creation-Date: 2021-09-21 10:22+0200
+"
++"PO-Revision-Date: 2022-01-04 18:54+0000
+"
+ "Last-Translator: VlÃ¡Äa Macek <macek@sandbox.cz>
+"
+ "Language-Team: Czech (http://www.transifex.com/django/django/language/cs/)
+"
+ "MIME-Version: 1.0
+"
+@@ -22,6 +22,10 @@ msgstr ""
+ "Plural-Forms: nplurals=4; plural=(n == 1 && n % 1 == 0) ? 0 : (n >= 2 && n "
+ "<= 4 && n % 1 == 0) ? 1: (n % 1 != 0 ) ? 2 : 3;
+"
+ 
++#, python-format
++msgid "Delete selected %(verbose_name_plural)s"
++msgstr "Odstranit vybranÃ© poloÅ¾ky typu %(verbose_name_plural)s"
++
+ #, python-format
+ msgid "Successfully deleted %(count)d %(items)s."
+ msgstr "ÃspÄÅ¡nÄ odstranÄno: %(count)d %(items)s."
+@@ -33,10 +37,6 @@ msgstr "Nelze smazat %(name)s"
+ msgid "Are you sure?"
+ msgstr "Jste si jisti?"
+ 
+-#, python-format
+-msgid "Delete selected %(verbose_name_plural)s"
+-msgstr "Odstranit vybranÃ© poloÅ¾ky typu %(verbose_name_plural)s"
+-
+ msgid "Administration"
+ msgstr "SprÃ¡va"
+ 
+@@ -536,6 +536,12 @@ msgstr "ZapomnÄli jste heslo nebo uÅ¾ivatelskÃ© jmÃ©no?"
+ msgid "Toggle navigation"
+ msgstr "PÅehodit navigaci"
+ 
++msgid "Start typing to filterâ¦"
++msgstr "Filtrovat zaÄnete vepsÃ¡nÃ­m textu..."
++
++msgid "Filter navigation items"
++msgstr "Filtrace poloÅ¾ek navigace"
++
+ msgid "Date/time"
+ msgstr "Datum a Äas"
+ 
+@@ -603,8 +609,8 @@ msgstr "PÅidat dalÅ¡Ã­ %(model)s"
+ msgid "Delete selected %(model)s"
+ msgstr "Odstranit vybranÃ© poloÅ¾ky typu %(model)s"
+ 
+-msgid "Thanks for spending some quality time with the Web site today."
+-msgstr "DÄkujeme za Äas strÃ¡venÃ½ s tÃ­mto webem."
++msgid "Thanks for spending some quality time with the web site today."
++msgstr "DÄkujeme za dneÅ¡nÃ­ Äas strÃ¡venÃ½ s tÃ­mto neobyÄejnÃ½m webem."
+ 
+ msgid "Log in again"
+ msgstr "PÅihlaste se znovu"
+diff --git a/django/contrib/admin/locale/de/LC_MESSAGES/django.mo b/django/contrib/admin/locale/de/LC_MESSAGES/django.mo
+index fe08e8aad4..7b6bae067f 100644
+Binary files a/django/contrib/admin/locale/de/LC_MESSAGES/django.mo and b/django/contrib/admin/locale/de/LC_MESSAGES/django.mo differ
+diff --git a/django/contrib/admin/locale/de/LC_MESSAGES/django.po b/django/contrib/admin/locale/de/LC_MESSAGES/django.po
+index 83549e69e4..a1425c58b1 100644
+--- a/django/contrib/admin/locale/de/LC_MESSAGES/django.po
++++ b/django/contrib/admin/locale/de/LC_MESSAGES/django.po
+@@ -4,7 +4,7 @@
+ # AndrÃ© Hagenbruch, 2012
+ # Florian Apolloner <florian@apolloner.eu>, 2011
+ # Dimitris Glezos <glezos@transifex.com>, 2012
+-# Florian Apolloner <florian@apolloner.eu>, 2020-2021
++# Florian Apolloner <florian@apolloner.eu>, 2020-2022
+ # Jannis Vajen, 2013
+ # Jannis Leidel <jannis@leidel.info>, 2013-2018,2020
+ # Jannis Vajen, 2016
+@@ -15,8 +15,8 @@ msgstr ""
+ "Project-Id-Version: django
+"
+ "Report-Msgid-Bugs-To: 
+"
+ "POT-Creation-Date: 2021-09-21 10:22+0200
+"
+-"PO-Revision-Date: 2021-11-28 17:14+0000
+"
+-"Last-Translator: Raphael Michel <mail@raphaelmichel.de>
+"
++"PO-Revision-Date: 2022-01-15 11:22+0000
+"
++"Last-Translator: Florian Apolloner <florian@apolloner.eu>
+"
+ "Language-Team: German (http://www.transifex.com/django/django/language/de/)
+"
+ "MIME-Version: 1.0
+"
+ "Content-Type: text/plain; charset=UTF-8
+"
+@@ -392,7 +392,7 @@ msgid "Welcome,"
+ msgstr "Willkommen,"
+ 
+ msgid "View site"
+-msgstr "Auf der Website anzeigen"
++msgstr "Website anzeigen"
+ 
+ msgid "Documentation"
+ msgstr "Dokumentation"
+diff --git a/django/contrib/admin/locale/uz/LC_MESSAGES/django.mo b/django/contrib/admin/locale/uz/LC_MESSAGES/django.mo
+index 6fa33743d7..67c6d07e41 100644
+Binary files a/django/contrib/admin/locale/uz/LC_MESSAGES/django.mo and b/django/contrib/admin/locale/uz/LC_MESSAGES/django.mo differ
+diff --git a/django/contrib/admin/locale/uz/LC_MESSAGES/django.po b/django/contrib/admin/locale/uz/LC_MESSAGES/django.po
+index b5cdb16d39..80dd7971a6 100644
+--- a/django/contrib/admin/locale/uz/LC_MESSAGES/django.po
++++ b/django/contrib/admin/locale/uz/LC_MESSAGES/django.po
+@@ -1,9 +1,11 @@
+ # This file is distributed under the same license as the Django package.
+ #
+ # Translators:
++# Alex Ibragimov, 2021
+ # Anvar Ulugov <wasatiyatm@gmail.com>, 2020
+ # Bedilbek Khamidov <bedilbek@gmail.com>, 2019
+ # Claude Paroz <claude@2xlibre.net>, 2019
++# Nuriddin Islamov, 2021
+ # Shukrullo Turgunov <shukrullo@umail.uz>, 2021
+ # Sukhrobbek Ismatov <isukhrobbek@gmail.com>, 2019
+ # Yet Sum <sotuvchicom@gmail.com>, 2019
+@@ -11,9 +13,9 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: django
+"
+ "Report-Msgid-Bugs-To: 
+"
+-"POT-Creation-Date: 2021-01-15 09:00+0100
+"
+-"PO-Revision-Date: 2021-03-23 11:13+0000
+"
+-"Last-Translator: Shukrullo Turgunov <shukrullo@umail.uz>
+"
++"POT-Creation-Date: 2021-09-21 10:22+0200
+"
++"PO-Revision-Date: 2021-12-16 12:06+0000
+"
++"Last-Translator: Alex Ibragimov
+"
+ "Language-Team: Uzbek (http://www.transifex.com/django/django/language/uz/)
+"
+ "MIME-Version: 1.0
+"
+ "Content-Type: text/plain; charset=UTF-8
+"
+@@ -91,7 +93,7 @@ msgstr "Harakat:"
+ 
+ #, python-format
+ msgid "Add another %(verbose_name)s"
+-msgstr "Boshqa%(verbose_name)s qoâshish"
++msgstr "Boshqa %(verbose_name)s qoâshish"
+ 
+ msgid "Remove"
+ msgstr "Olib tashlash"
+@@ -129,10 +131,10 @@ msgid "change message"
+ msgstr "xabarni o'zgartirish"
+ 
+ msgid "log entry"
+-msgstr ""
++msgstr "jurnal yozuvi"
+ 
+ msgid "log entries"
+-msgstr ""
++msgstr "jurnal yozuvlari"
+ 
+ #, python-format
+ msgid "Added â%(object)sâ."
+@@ -157,7 +159,7 @@ msgid "Added."
+ msgstr ""
+ 
+ msgid "and"
+-msgstr ""
++msgstr "va"
+ 
+ #, python-brace-format
+ msgid "Changed {fields} for {name} â{object}â."
+@@ -233,14 +235,14 @@ msgstr "Qo'shish %s"
+ 
+ #, python-format
+ msgid "Change %s"
+-msgstr "O'zgartirish %s"
++msgstr "%sni o'zgartirish"
+ 
+ #, python-format
+ msgid "View %s"
+ msgstr "Ko'rish %s"
+ 
+ msgid "Database error"
+-msgstr ""
++msgstr "Ma'lumotlar bazasi xatoligi yuz berdi"
+ 
+ #, python-format
+ msgid "%(count)s %(name)s was changed successfully."
+@@ -375,7 +377,7 @@ msgstr "Chiqish"
+ 
+ #, python-format
+ msgid "Add %(name)s"
+-msgstr ""
++msgstr "%(name)sqo'shish"
+ 
+ msgid "History"
+ msgstr ""
+@@ -490,6 +492,12 @@ msgid "Forgotten your password or username?"
+ msgstr ""
+ 
+ msgid "Toggle navigation"
++msgstr "Navigatsiyani almashtirish"
++
++msgid "Start typing to filterâ¦"
++msgstr ""
++
++msgid "Filter navigation items"
+ msgstr ""
+ 
+ msgid "Date/time"
+@@ -554,7 +562,7 @@ msgstr ""
+ msgid "Delete selected %(model)s"
+ msgstr ""
+ 
+-msgid "Thanks for spending some quality time with the Web site today."
++msgid "Thanks for spending some quality time with the web site today."
+ msgstr ""
+ 
+ msgid "Log in again"
+@@ -637,14 +645,14 @@ msgid "Email address:"
+ msgstr ""
+ 
+ msgid "Reset my password"
+-msgstr ""
++msgstr "Parolimni tiklash"
+ 
+ msgid "All dates"
+-msgstr ""
++msgstr "Barcha sanalar"
+ 
+ #, python-format
+ msgid "Select %s"
+-msgstr ""
++msgstr "%sni tanlash"
+ 
+ #, python-format
+ msgid "Select %s to change"
+@@ -655,16 +663,16 @@ msgid "Select %s to view"
+ msgstr ""
+ 
+ msgid "Date:"
+-msgstr ""
++msgstr "Sana:"
+ 
+ msgid "Time:"
+-msgstr ""
++msgstr "Vaqt:"
+ 
+ msgid "Lookup"
+-msgstr ""
++msgstr "Izlash"
+ 
+ msgid "Currently:"
+-msgstr ""
++msgstr "Hozirda:"
+ 
+ msgid "Change:"
+-msgstr ""
++msgstr "O'zgartirish:"
+diff --git a/django/contrib/admin/locale/uz/LC_MESSAGES/djangojs.mo b/django/contrib/admin/locale/uz/LC_MESSAGES/djangojs.mo
+index 914da08102..7c922f6917 100644
+Binary files a/django/contrib/admin/locale/uz/LC_MESSAGES/djangojs.mo and b/django/contrib/admin/locale/uz/LC_MESSAGES/djangojs.mo differ
+diff --git a/django/contrib/admin/locale/uz/LC_MESSAGES/djangojs.po b/django/contrib/admin/locale/uz/LC_MESSAGES/djangojs.po
+index 05e46414e6..d731b22efd 100644
+--- a/django/contrib/admin/locale/uz/LC_MESSAGES/djangojs.po
++++ b/django/contrib/admin/locale/uz/LC_MESSAGES/djangojs.po
+@@ -1,14 +1,15 @@
+ # This file is distributed under the same license as the Django package.
+ #
+ # Translators:
++# Nuriddin Islamov, 2021
+ # Otabek Umurzakov <umurzakov.otabek.1999@gmail.com>, 2019
+ msgid ""
+ msgstr ""
+ "Project-Id-Version: django
+"
+ "Report-Msgid-Bugs-To: 
+"
+-"POT-Creation-Date: 2018-05-17 11:50+0200
+"
+-"PO-Revision-Date: 2019-12-13 21:48+0000
+"
+-"Last-Translator: Otabek Umurzakov <umurzakov.otabek.1999@gmail.com>
+"
++"POT-Creation-Date: 2021-01-15 09:00+0100
+"
++"PO-Revision-Date: 2021-12-15 16:52+0000
+"
++"Last-Translator: Nuriddin Islamov
+"
+ "Language-Team: Uzbek (http://www.transifex.com/django/django/language/uz/)
+"
+ "MIME-Version: 1.0
+"
+ "Content-Type: text/plain; charset=UTF-8
+"
+@@ -84,22 +85,16 @@ msgstr ""
+ "o'zgarishlaringiz yo'qotiladi."
+ 
+ msgid ""
+-"You have selected an action, but you haven't saved your changes to "
+-"individual fields yet. Please click OK to save. You'll need to re-run the "
++"You have selected an action, but you havenât saved your changes to "
++"individual fields yet. Please click OK to save. Youâll need to re-run the "
+ "action."
+ msgstr ""
+-"Siz harakatni tanladingiz, lekin hali ham o'zgartirishlaringizni alohida "
+-"maydonlarga saqlamadingiz. Iltimos saqlash uchun OK ni bosing. Harakatni "
+-"qayta ishga tushurishingiz kerak bo'ladi."
+ 
+ msgid ""
+-"You have selected an action, and you haven't made any changes on individual "
+-"fields. You're probably looking for the Go button rather than the Save "
++"You have selected an action, and you havenât made any changes on individual "
++"fields. Youâre probably looking for the Go button rather than the Save "
+ "button."
+ msgstr ""
+-"Siz harakatni tanladingiz va alohida maydonlarda hech qanday o'zgartirishlar "
+-"kiritmadingiz. Ehtimol siz Saqlash tugmasini emas, balki O'tish tugmasini "
+-"qidirmoqdasiz."
+ 
+ msgid "Now"
+ msgstr "Hozir"
+@@ -183,36 +178,84 @@ msgstr "Noyabr"
+ msgid "December"
+ msgstr "Dekabr"
+ 
++msgctxt "abbrev. month January"
++msgid "Jan"
++msgstr ""
++
++msgctxt "abbrev. month February"
++msgid "Feb"
++msgstr ""
++
++msgctxt "abbrev. month March"
++msgid "Mar"
++msgstr ""
++
++msgctxt "abbrev. month April"
++msgid "Apr"
++msgstr ""
++
++msgctxt "abbrev. month May"
++msgid "May"
++msgstr ""
++
++msgctxt "abbrev. month June"
++msgid "Jun"
++msgstr ""
++
++msgctxt "abbrev. month July"
++msgid "Jul"
++msgstr ""
++
++msgctxt "abbrev. month August"
++msgid "Aug"
++msgstr ""
++
++msgctxt "abbrev. month September"
++msgid "Sep"
++msgstr ""
++
++msgctxt "abbrev. month October"
++msgid "Oct"
++msgstr ""
++
++msgctxt "abbrev. month November"
++msgid "Nov"
++msgstr ""
++
++msgctxt "abbrev. month December"
++msgid "Dec"
++msgstr ""
++
+ msgctxt "one letter Sunday"
+ msgid "S"
+-msgstr "S"
++msgstr "Ya"
+ 
+ msgctxt "one letter Monday"
+ msgid "M"
+-msgstr "M"
++msgstr "Du"
+ 
+ msgctxt "one letter Tuesday"
+ msgid "T"
+-msgstr "T"
++msgstr "Se"
+ 
+ msgctxt "one letter Wednesday"
+ msgid "W"
+-msgstr "W"
++msgstr "Ch"
+ 
+ msgctxt "one letter Thursday"
+ msgid "T"
+-msgstr "T"
++msgstr "Pa"
+ 
+ msgctxt "one letter Friday"
+ msgid "F"
+-msgstr "F"
++msgstr "Ju"
+ 
+ msgctxt "one letter Saturday"
+ msgid "S"
+-msgstr "S"
++msgstr "Sh"
+ 
+ msgid "Show"
+ msgstr "Ko'rsatish"
+ 
+ msgid "Hide"
+-msgstr "Yashirish"
++msgstr "Bekitish"
+diff --git a/django/contrib/admin/locale/vi/LC_MESSAGES/django.mo b/django/contrib/admin/locale/vi/LC_MESSAGES/django.mo
+index 298498a4a8..1091b6fcd5 100644
+Binary files a/django/contrib/admin/locale/vi/LC_MESSAGES/django.mo and b/django/contrib/admin/locale/vi/LC_MESSAGES/django.mo differ
+diff --git a/django/contrib/admin/locale/vi/LC_MESSAGES/django.po b/django/contrib/admin/locale/vi/LC_MESSAGES/django.po
+index 68fd78c640..60fe2ce82c 100644
+--- a/django/contrib/admin/locale/vi/LC_MESSAGES/django.po
++++ b/django/contrib/admin/locale/vi/LC_MESSAGES/django.po
+@@ -6,15 +6,16 @@
+ # Thanh Le Viet <lethanhx2k@gmail.com>, 2013
+ # Tran <hongdiepkien@gmail.com>, 2011
+ # Tran Van <vantxm@yahoo.co.uk>, 2011-2013,2016,2018
++# tinnguyen121221, 2021
+ # Vuong Nguyen <autalpha@gmail.com>, 2011
+ # xgenvn <xgenvn@gmail.com>, 2014
+ msgid ""
+ msgstr ""
+ "Project-Id-Version: django
+"
+ "Report-Msgid-Bugs-To: 
+"
+-"POT-Creation-Date: 2019-01-16 20:42+0100
+"
+-"PO-Revision-Date: 2019-01-18 00:36+0000
+"
+-"Last-Translator: Ramiro Morales
+"
++"POT-Creation-Date: 2021-09-21 10:22+0200
+"
++"PO-Revision-Date: 2021-12-23 17:57+0000
+"
++"Last-Translator: tinnguyen121221
+"
+ "Language-Team: Vietnamese (http://www.transifex.com/django/django/language/"
+ "vi/)
+"
+ "MIME-Version: 1.0
+"
+@@ -23,6 +24,10 @@ msgstr ""
+ "Language: vi
+"
+ "Plural-Forms: nplurals=1; plural=0;
+"
+ 
++#, python-format
++msgid "Delete selected %(verbose_name_plural)s"
++msgstr "XÃ³a cÃ¡c %(verbose_name_plural)s ÄÃ£ chá»n"
++
+ #, python-format
+ msgid "Successfully deleted %(count)d %(items)s."
+ msgstr "ÄÃ£ xÃ³a thÃ nh cÃ´ng %(count)d %(items)s ."
+@@ -34,10 +39,6 @@ msgstr "KhÃ´ng thá» xÃ³a %(name)s"
+ msgid "Are you sure?"
+ msgstr "Báº¡n cÃ³ cháº¯c cháº¯n khÃ´ng?"
+ 
+-#, python-format
+-msgid "Delete selected %(verbose_name_plural)s"
+-msgstr "XÃ³a cÃ¡c %(verbose_name_plural)s ÄÃ£ chá»n"
+-
+ msgid "Administration"
+ msgstr "Quáº£n trá» website"
+ 
+@@ -69,10 +70,16 @@ msgid "This year"
+ msgstr "NÄm nay"
+ 
+ msgid "No date"
+-msgstr ""
++msgstr "KhÃ´ng cÃ³ ngÃ y"
+ 
+ msgid "Has date"
+-msgstr ""
++msgstr "CÃ³ ngÃ y"
++
++msgid "Empty"
++msgstr "Rá»ng"
++
++msgid "Not empty"
++msgstr "KhÃ´ng rá»ng"
+ 
+ #, python-format
+ msgid ""
+@@ -92,19 +99,19 @@ msgid "Remove"
+ msgstr "Gá»¡ bá»"
+ 
+ msgid "Addition"
+-msgstr ""
++msgstr "ThÃªm"
+ 
+ msgid "Change"
+ msgstr "Thay Äá»i"
+ 
+ msgid "Deletion"
+-msgstr ""
++msgstr "XÃ³a"
+ 
+ msgid "action time"
+ msgstr "Thá»i gian tÃ¡c Äá»ng"
+ 
+ msgid "user"
+-msgstr ""
++msgstr "ngÆ°á»i dÃ¹ng"
+ 
+ msgid "content type"
+ msgstr "kiá»u ná»i dung"
+@@ -130,23 +137,23 @@ msgid "log entries"
+ msgstr "má»¥c ÄÄng nháº­p"
+ 
+ #, python-format
+-msgid "Added "%(object)s"."
+-msgstr "ThÃªm "%(object)s"."
++msgid "Added â%(object)sâ."
++msgstr "ÄÃ£ thÃªm â%(object)sâ."
+ 
+ #, python-format
+-msgid "Changed "%(object)s" - %(changes)s"
+-msgstr "ÄÃ£ thay Äá»i "%(object)s" - %(changes)s"
++msgid "Changed â%(object)sâ â %(changes)s"
++msgstr "ÄÃ£ thay Äá»i â%(object)sâ â %(changes)s"
+ 
+ #, python-format
+-msgid "Deleted "%(object)s.""
+-msgstr "Äá»i tÆ°á»£ng "%(object)s." ÄÃ£ ÄÆ°á»£c xoÃ¡."
++msgid "Deleted â%(object)s.â"
++msgstr "ÄÃ£ xÃ³a â%(object)s.â"
+ 
+ msgid "LogEntry Object"
+ msgstr "LogEntry Object"
+ 
+ #, python-brace-format
+-msgid "Added {name} "{object}"."
+-msgstr "{name} "{object}" ÄÃ£ ÄÆ°á»£c thÃªm vÃ o."
++msgid "Added {name} â{object}â."
++msgstr "ÄÃ£ thÃªm {name} â{object}â."
+ 
+ msgid "Added."
+ msgstr "ÄÆ°á»£c thÃªm."
+@@ -155,16 +162,16 @@ msgid "and"
+ msgstr "vÃ "
+ 
+ #, python-brace-format
+-msgid "Changed {fields} for {name} "{object}"."
+-msgstr ""
++msgid "Changed {fields} for {name} â{object}â."
++msgstr "ÄÃ£ thay Äá»i {fields} cho {name} â{object}â."
+ 
+ #, python-brace-format
+ msgid "Changed {fields}."
+-msgstr ""
++msgstr "ÄÃ£ thay Äá»i {fields}."
+ 
+ #, python-brace-format
+-msgid "Deleted {name} "{object}"."
+-msgstr ""
++msgid "Deleted {name} â{object}â."
++msgstr "ÄÃ£ xÃ³a {name} â{object}â."
+ 
+ msgid "No fields changed."
+ msgstr "KhÃ´ng cÃ³ trÆ°á»ng nÃ o thay Äá»i"
+@@ -172,43 +179,46 @@ msgstr "KhÃ´ng cÃ³ trÆ°á»ng nÃ o thay Äá»i"
+ msgid "None"
+ msgstr "KhÃ´ng"
+ 
+-msgid ""
+-"Hold down "Control", or "Command" on a Mac, to select more than one."
++msgid "Hold down âControlâ, or âCommandâ on a Mac, to select more than one."
+ msgstr ""
+-"Giá»¯ phÃ­m "Control", hoáº·c "Command" trÃªn Mac, Äá» chá»n nhiá»u hÆ¡n má»t."
++"Nháº¥n giá»¯ phÃ­m âControlâ, hoáº·c âCommandâ trÃªn mÃ¡y Mac, Äá» chá»n nhiá»u hÆ¡n má»t."
+ 
+ #, python-brace-format
+-msgid "The {name} "{obj}" was added successfully."
+-msgstr ""
++msgid "The {name} â{obj}â was added successfully."
++msgstr "{name} â{obj}â ÄÆ°á»£c thÃªm vÃ o thÃ nh cÃ´ng."
+ 
+ msgid "You may edit it again below."
+-msgstr ""
++msgstr "Báº¡n cÃ³ thá» chá»nh sá»­a láº¡i bÃªn dÆ°á»i."
+ 
+ #, python-brace-format
+ msgid ""
+-"The {name} "{obj}" was added successfully. You may add another {name} "
+-"below."
++"The {name} â{obj}â was added successfully. You may add another {name} below."
+ msgstr ""
++"{name} â{obj}â ÄÆ°á»£c thÃªm vÃ o thÃ nh cÃ´ng. Báº¡n cÃ³ thá» thÃªm má»t {name} khÃ¡c bÃªn "
++"dÆ°á»i."
+ 
+ #, python-brace-format
+ msgid ""
+-"The {name} "{obj}" was changed successfully. You may edit it again below."
++"The {name} â{obj}â was changed successfully. You may edit it again below."
+ msgstr ""
++"{name} â{obj}â ÄÆ°á»£c chá»nh sá»­a thÃ nh cÃ´ng. Báº¡n cÃ³ thá» chá»nh sá»­a láº¡i bÃªn dÆ°á»i."
+ 
+ #, python-brace-format
+-msgid ""
+-"The {name} "{obj}" was added successfully. You may edit it again below."
++msgid "The {name} â{obj}â was added successfully. You may edit it again below."
+ msgstr ""
++"{name} â{obj}â ÄÆ°á»£c thÃªm vÃ o thÃ nh cÃ´ng. Báº¡n cÃ³ thá» chá»nh sá»­a láº¡i bÃªn dÆ°á»i."
+ 
+ #, python-brace-format
+ msgid ""
+-"The {name} "{obj}" was changed successfully. You may add another {name} "
++"The {name} â{obj}â was changed successfully. You may add another {name} "
+ "below."
+ msgstr ""
++"{name} â{obj}â ÄÆ°á»£c chá»nh sá»­a thÃ nh cÃ´ng. Báº¡n cÃ³ thá» thÃªm má»t {name} khÃ¡c "
++"bÃªn dÆ°á»i."
+ 
+ #, python-brace-format
+-msgid "The {name} "{obj}" was changed successfully."
+-msgstr ""
++msgid "The {name} â{obj}â was changed successfully."
++msgstr "{name} â{obj}â ÄÃ£ ÄÆ°á»£c thay Äá»i thÃ nh cÃ´ng."
+ 
+ msgid ""
+ "Items must be selected in order to perform actions on them. No items have "
+@@ -221,12 +231,12 @@ msgid "No action selected."
+ msgstr "KhÃ´ng cÃ³ hoáº¡t Äá»ng nÃ o ÄÆ°á»£c lá»±a chá»n."
+ 
+ #, python-format
+-msgid "The %(name)s "%(obj)s" was deleted successfully."
+-msgstr "%(name)s "%(obj)s" ÄÃ£ ÄÆ°á»£c xÃ³a thÃ nh cÃ´ng."
++msgid "The %(name)s â%(obj)sâ was deleted successfully."
++msgstr "%(name)s â%(obj)sâ ÄÃ£ ÄÆ°á»£c xÃ³a thÃ nh cÃ´ng."
+ 
+ #, python-format
+-msgid "%(name)s with ID "%(key)s" doesn't exist. Perhaps it was deleted?"
+-msgstr ""
++msgid "%(name)s with ID â%(key)sâ doesnât exist. Perhaps it was deleted?"
++msgstr "%(name)s vá»i ID â%(key)sâ khÃ´ng tá»n táº¡i. CÃ³ láº½ nÃ³ ÄÃ£ bá» xÃ³a?"
+ 
+ #, python-format
+ msgid "Add %s"
+@@ -238,7 +248,7 @@ msgstr "Thay Äá»i %s"
+ 
+ #, python-format
+ msgid "View %s"
+-msgstr ""
++msgstr "Xem %s"
+ 
+ msgid "Database error"
+ msgstr "CÆ¡ sá» dá»¯ liá»u bá» lá»i"
+@@ -294,8 +304,8 @@ msgstr "Quáº£n lÃ½ %(app)s"
+ msgid "Page not found"
+ msgstr "KhÃ´ng tÃ¬m tháº¥y trang nÃ o"
+ 
+-msgid "We're sorry, but the requested page could not be found."
+-msgstr "Xin lá»i báº¡n! Trang mÃ  báº¡n yÃªu cáº§u khÃ´ng tÃ¬m tháº¥y."
++msgid "Weâre sorry, but the requested page could not be found."
++msgstr "Ráº¥t tiáº¿c, khÃ´ng thá» tÃ¬m tháº¥y trang ÄÆ°á»£c yÃªu cáº§u."
+ 
+ msgid "Home"
+ msgstr "Trang chá»§"
+@@ -310,7 +320,7 @@ msgid "Server Error <em>(500)</em>"
+ msgstr "Lá»i mÃ¡y chá»§ <em>(500)</em>"
+ 
+ msgid ""
+-"There's been an error. It's been reported to the site administrators via "
++"Thereâs been an error. Itâs been reported to the site administrators via "
+ "email and should be fixed shortly. Thanks for your patience."
+ msgstr ""
+ "CÃ³ lá»i xáº£y ra. Lá»i sáº½ ÄÆ°á»£c gá»­i Äáº¿n quáº£n trá» website qua email vÃ  sáº½ ÄÆ°á»£c "
+@@ -332,11 +342,24 @@ msgstr "HÃ£y chá»n táº¥t cáº£ %(total_count)s %(module_name)s"
+ msgid "Clear selection"
+ msgstr "XÃ³a lá»±a chá»n"
+ 
++#, python-format
++msgid "Models in the %(name)s application"
++msgstr "CÃ¡c mÃ´ models trong %(name)s"
++
++msgid "Add"
++msgstr "ThÃªm vÃ o"
++
++msgid "View"
++msgstr "Xem"
++
++msgid "You donât have permission to view or edit anything."
++msgstr "Báº¡n khÃ´ng cÃ³ quyá»n xem hoáº·c chá»nh sá»­a báº¥t cá»© gÃ¬."
++
+ msgid ""
+-"First, enter a username and password. Then, you'll be able to edit more user "
++"First, enter a username and password. Then, youâll be able to edit more user "
+ "options."
+ msgstr ""
+-"Äáº§u tiÃªn, Äiá»n tÃªn ÄÄng nháº­p vÃ  máº­t kháº©u. Sau ÄÃ³ báº¡n má»i cÃ³ thá» chá»nh sá»­a "
++"Äáº§u tiÃªn, Äiá»n tÃªn ÄÄng nháº­p vÃ  máº­t kháº©u. Sau ÄÃ³, báº¡n má»i cÃ³ thá» chá»nh sá»­a "
+ "nhiá»u hÆ¡n lá»±a chá»n cá»§a ngÆ°á»i dÃ¹ng."
+ 
+ msgid "Enter a username and password."
+@@ -359,7 +382,7 @@ msgid "Welcome,"
+ msgstr "ChÃ o má»«ng báº¡n,"
+ 
+ msgid "View site"
+-msgstr ""
++msgstr "Xem trang web"
+ 
+ msgid "Documentation"
+ msgstr "TÃ i liá»u"
+@@ -380,6 +403,9 @@ msgstr "Xem trÃªn trang web"
+ msgid "Filter"
+ msgstr "Bá» lá»c"
+ 
++msgid "Clear all filters"
++msgstr "XÃ³a táº¥t cáº£ bá» lá»c"
++
+ msgid "Remove from sorting"
+ msgstr "Bá» khá»i sáº¯p xáº¿p"
+ 
+@@ -421,11 +447,11 @@ msgstr ""
+ msgid "Objects"
+ msgstr "Äá»i tÆ°á»£ng"
+ 
+-msgid "Yes, I'm sure"
+-msgstr "CÃ³, tÃ´i cháº¯c cháº¯n."
++msgid "Yes, Iâm sure"
++msgstr "CÃ³, tÃ´i cháº¯c cháº¯n"
+ 
+ msgid "No, take me back"
+-msgstr ""
++msgstr "KhÃ´ng, ÄÆ°a tÃ´i trá» láº¡i"
+ 
+ msgid "Delete multiple objects"
+ msgstr "XÃ³a nhiá»u Äá»i tÆ°á»£ng"
+@@ -455,9 +481,6 @@ msgstr ""
+ "Báº¡n cháº¯c cháº¯n muá»n xÃ³a nhá»¯ng lá»±a chá»n %(objects_name)s? Táº¥t cáº£ nhá»¯ng Äá»i "
+ "tÆ°á»£ng sau vÃ  nhá»¯ng Äá»i tÆ°á»£ng liÃªn quan sáº½ ÄÆ°á»£c xÃ³a:"
+ 
+-msgid "View"
+-msgstr ""
+-
+ msgid "Delete?"
+ msgstr "Báº¡n muá»n xÃ³a?"
+ 
+@@ -466,23 +489,13 @@ msgid " By %(filter_title)s "
+ msgstr "Bá»i %(filter_title)s "
+ 
+ msgid "Summary"
+-msgstr ""
+-
+-#, python-format
+-msgid "Models in the %(name)s application"
+-msgstr "CÃ¡c mÃ´ models trong %(name)s"
+-
+-msgid "Add"
+-msgstr "ThÃªm vÃ o"
+-
+-msgid "You don't have permission to view or edit anything."
+-msgstr ""
++msgstr "TÃ³m táº¯t"
+ 
+ msgid "Recent actions"
+-msgstr ""
++msgstr "Hoáº¡t Äá»ng gáº§n ÄÃ¢y"
+ 
+ msgid "My actions"
+-msgstr ""
++msgstr "Hoáº¡t Äá»ng cá»§a tÃ´i"
+ 
+ msgid "None available"
+ msgstr "KhÃ´ng cÃ³ sáºµn"
+@@ -491,7 +504,7 @@ msgid "Unknown content"
+ msgstr "KhÃ´ng biáº¿t ná»i dung"
+ 
+ msgid ""
+-"Something's wrong with your database installation. Make sure the appropriate "
++"Somethingâs wrong with your database installation. Make sure the appropriate "
+ "database tables have been created, and make sure the database is readable by "
+ "the appropriate user."
+ msgstr ""
+@@ -510,6 +523,15 @@ msgstr ""
+ msgid "Forgotten your password or username?"
+ msgstr "Báº¡n quÃªn máº­t kháº©u hoáº·c tÃ i khoáº£n?"
+ 
++msgid "Toggle navigation"
++msgstr ""
++
++msgid "Start typing to filterâ¦"
++msgstr "Nháº­p Äá» lá»c..."
++
++msgid "Filter navigation items"
++msgstr ""
++
+ msgid "Date/time"
+ msgstr "NgÃ y/giá»"
+ 
+@@ -520,7 +542,7 @@ msgid "Action"
+ msgstr "HÃ nh Äá»ng"
+ 
+ msgid ""
+-"This object doesn't have a change history. It probably wasn't added via this "
++"This object doesnât have a change history. It probably wasnât added via this "
+ "admin site."
+ msgstr ""
+ "Äá»i tÆ°á»£ng nÃ y khÃ´ng cÃ³ má»t lá»ch sá»­ thay Äá»i. NÃ³ cÃ³ láº½ ÄÃ£ khÃ´ng ÄÆ°á»£c thÃªm vÃ o "
+@@ -533,7 +555,7 @@ msgid "Save"
+ msgstr "LÆ°u láº¡i"
+ 
+ msgid "Popup closingâ¦"
+-msgstr ""
++msgstr "Äang ÄÃ³ng cá»­a sá» popup ..."
+ 
+ msgid "Search"
+ msgstr "TÃ¬m kiáº¿m"
+@@ -557,14 +579,14 @@ msgid "Save and continue editing"
+ msgstr "LÆ°u vÃ  tiáº¿p tá»¥c chá»nh sá»­a"
+ 
+ msgid "Save and view"
+-msgstr ""
++msgstr "LÆ°u láº¡i vÃ  xem"
+ 
+ msgid "Close"
+-msgstr ""
++msgstr "ÄÃ³ng"
+ 
+ #, python-format
+ msgid "Change selected %(model)s"
+-msgstr ""
++msgstr "Thay Äá»i %(model)s ÄÃ£ chá»n"
+ 
+ #, python-format
+ msgid "Add another %(model)s"
+@@ -574,8 +596,8 @@ msgstr "ThÃªm %(model)s khÃ¡c"
+ msgid "Delete selected %(model)s"
+ msgstr "XÃ³a %(model)s ÄÃ£ chá»n"
+ 
+-msgid "Thanks for spending some quality time with the Web site today."
+-msgstr "Cáº£m Æ¡n báº¡n ÄÃ£ dÃ nh thá»i gian vá»i website nÃ y"
++msgid "Thanks for spending some quality time with the web site today."
++msgstr "Cáº£m Æ¡n báº¡n ÄÃ£ dÃ nh thá»i gian vá»i trang web."
+ 
+ msgid "Log in again"
+ msgstr "ÄÄng nháº­p láº¡i"
+@@ -587,7 +609,7 @@ msgid "Your password was changed."
+ msgstr "Máº­t kháº©u cá»§a báº¡n ÄÃ£ ÄÆ°á»£c thay Äá»i"
+ 
+ msgid ""
+-"Please enter your old password, for security's sake, and then enter your new "
++"Please enter your old password, for securityâs sake, and then enter your new "
+ "password twice so we can verify you typed it in correctly."
+ msgstr ""
+ "HÃ£y nháº­p láº¡i máº­t kháº©u cÅ© vÃ  sau ÄÃ³ nháº­p máº­t kháº©u má»i hai láº§n Äá» chÃºng tÃ´i cÃ³ "
+@@ -626,16 +648,18 @@ msgstr ""
+ "vui lÃ²ng yÃªu cáº§u Äáº·t láº¡i máº­t kháº©u má»i."
+ 
+ msgid ""
+-"We've emailed you instructions for setting your password, if an account "
++"Weâve emailed you instructions for setting your password, if an account "
+ "exists with the email you entered. You should receive them shortly."
+ msgstr ""
++"ChÃºng tÃ´i ÄÃ£ gá»­i cho báº¡n hÆ°á»ng dáº«n thiáº¿t láº­p máº­t kháº©u cá»§a báº¡n qua email, náº¿u "
++"tÃ i khoáº£n tá»n táº¡i vá»i email báº¡n ÄÃ£ nháº­p. Báº¡n sáº½ nháº­n ÄÆ°á»£c chÃºng sá»m."
+ 
+ msgid ""
+-"If you don't receive an email, please make sure you've entered the address "
++"If you donât receive an email, please make sure youâve entered the address "
+ "you registered with, and check your spam folder."
+ msgstr ""
+-"Náº¿u báº¡n khÃ´ng nháº­n ÄÆ°á»£c email, hÃ£y kiá»m tra láº¡i Äá»a chá» email mÃ  báº¡n dÃ¹ng Äá» "
+-"ÄÄng kÃ­ hoáº·c kiá»m tra trong thÆ° má»¥c spam/rÃ¡c"
++"Náº¿u báº¡n khÃ´ng nháº­n ÄÆ°á»£c email, hÃ£y Äáº£m báº£o ráº±ng báº¡n ÄÃ£ nháº­p Äá»a chá» mÃ  báº¡n "
++"ÄÃ£ ÄÄng kÃ½ vÃ  kiá»m tra thÆ° má»¥c spam cá»§a mÃ¬nh."
+ 
+ #, python-format
+ msgid ""
+@@ -648,7 +672,7 @@ msgstr ""
+ msgid "Please go to the following page and choose a new password:"
+ msgstr "HÃ£y vÃ o ÄÆ°á»ng link dÆ°á»i ÄÃ¢y vÃ  chá»n má»t máº­t kháº©u má»i"
+ 
+-msgid "Your username, in case you've forgotten:"
++msgid "Your username, in case youâve forgotten:"
+ msgstr "TÃªn ÄÄng nháº­p cá»§a báº¡n, trÆ°á»ng há»£p báº¡n quÃªn nÃ³:"
+ 
+ msgid "Thanks for using our site!"
+@@ -659,7 +683,7 @@ msgid "The %(site_name)s team"
+ msgstr "Äá»i cá»§a %(site_name)s"
+ 
+ msgid ""
+-"Forgotten your password? Enter your email address below, and we'll email "
++"Forgotten your password? Enter your email address below, and weâll email "
+ "instructions for setting a new one."
+ msgstr ""
+ "QuÃªn máº­t kháº©u? Nháº­p Äá»a chá» email vÃ o Ã´ dÆ°á»i ÄÃ¢y. ChÃºng tÃ´i sáº½ email cho báº¡n "
+@@ -684,7 +708,7 @@ msgstr "Chá»n %s Äá» thay Äá»i"
+ 
+ #, python-format
+ msgid "Select %s to view"
+-msgstr ""
++msgstr "Chá»n %s Äá» xem"
+ 
+ msgid "Date:"
+ msgstr "NgÃ y:"
+diff --git a/django/contrib/admin/locale/vi/LC_MESSAGES/djangojs.mo b/django/contrib/admin/locale/vi/LC_MESSAGES/djangojs.mo
+index 7588ed6ca7..c9d57cda5c 100644
+Binary files a/django/contrib/admin/locale/vi/LC_MESSAGES/djangojs.mo and b/django/contrib/admin/locale/vi/LC_MESSAGES/djangojs.mo differ
+diff --git a/django/contrib/admin/locale/vi/LC_MESSAGES/djangojs.po b/django/contrib/admin/locale/vi/LC_MESSAGES/djangojs.po
+index d2155ca4c9..a3faf74ed7 100644
+--- a/django/contrib/admin/locale/vi/LC_MESSAGES/djangojs.po
++++ b/django/contrib/admin/locale/vi/LC_MESSAGES/djangojs.po
+@@ -4,15 +4,16 @@
+ # Jannis Leidel <jannis@leidel.info>, 2011
+ # Tran <hongdiepkien@gmail.com>, 2011
+ # Tran Van <vantxm@yahoo.co.uk>, 2013
++# tinnguyen121221, 2021
+ # Vuong Nguyen <autalpha@gmail.com>, 2011
+ # xgenvn <xgenvn@gmail.com>, 2014
+ msgid ""
+ msgstr ""
+ "Project-Id-Version: django
+"
+ "Report-Msgid-Bugs-To: 
+"
+-"POT-Creation-Date: 2016-05-17 23:12+0200
+"
+-"PO-Revision-Date: 2017-09-23 18:54+0000
+"
+-"Last-Translator: Jannis Leidel <jannis@leidel.info>
+"
++"POT-Creation-Date: 2021-01-15 09:00+0100
+"
++"PO-Revision-Date: 2021-12-23 17:25+0000
+"
++"Last-Translator: tinnguyen121221
+"
+ "Language-Team: Vietnamese (http://www.transifex.com/django/django/language/"
+ "vi/)
+"
+ "MIME-Version: 1.0
+"
+@@ -84,21 +85,35 @@ msgstr ""
+ "chá»nh sá»­a chÆ°a ÄÆ°á»£c lÆ°u sáº½ bá» máº¥t."
+ 
+ msgid ""
+-"You have selected an action, but you haven't saved your changes to "
+-"individual fields yet. Please click OK to save. You'll need to re-run the "
++"You have selected an action, but you havenât saved your changes to "
++"individual fields yet. Please click OK to save. Youâll need to re-run the "
+ "action."
+ msgstr ""
+-"Báº¡n ÄÃ£ lá»±a chá»n má»t hÃ nh Äá»ng, nhÆ°ng báº¡n khÃ´ng lÆ°u thay Äá»i cá»§a báº¡n Äáº¿n cÃ¡c "
+-"lÄ©nh vá»±c cÃ¡ nhÃ¢n ÄÆ°á»£c nÃªu ra. Xin vui lÃ²ng click OK Äá» lÆ°u láº¡i. Báº¡n sáº½ cáº§n "
+-"pháº£i cháº¡y láº¡i cÃ¡c hÃ nh Äá»ng."
++"Báº¡n ÄÃ£ chá»n má»t hÃ nh Äá»ng, nhÆ°ng báº¡n chÆ°a lÆ°u cÃ¡c thay Äá»i trÃªn cÃ¡c trÆ°á»ng. "
++"Vui lÃ²ng báº¥m OK Äá» lÆ°u láº¡i. Báº¡n sáº½ cáº§n cháº¡y láº¡i hÃ nh dá»ng."
+ 
+ msgid ""
+-"You have selected an action, and you haven't made any changes on individual "
+-"fields. You're probably looking for the Go button rather than the Save "
++"You have selected an action, and you havenât made any changes on individual "
++"fields. Youâre probably looking for the Go button rather than the Save "
+ "button."
+ msgstr ""
+-"Báº¡n ÄÃ£ lá»±a chá»n má»t hÃ nh Äá»ng, vÃ  báº¡n ÄÃ£ khÃ´ng thá»±c hiá»n báº¥t ká»³ thay Äá»i nÃ o "
+-"trÃªn cÃ¡c trÆ°á»ng. CÃ³ láº½ báº¡n Äang tÃ¬m kiáº¿m nÃºt báº¥m Go thay vÃ¬ nÃºt báº¥m Save."
++"Báº¡n ÄÃ£ chá»n má»t hÃ nh Äá»ng vÃ  báº¡n ÄÃ£ khÃ´ng thá»±c hiá»n báº¥t ká»³ thay Äá»i nÃ o trÃªn "
++"cÃ¡c trÆ°á»ng. CÃ³ láº½ báº¡n nÃªn báº¥m nÃºt Äi Äáº¿n hÆ¡n lÃ  nÃºt LÆ°u láº¡i."
++
++msgid "Now"
++msgstr "BÃ¢y giá»"
++
++msgid "Midnight"
++msgstr "Ná»­a ÄÃªm"
++
++msgid "6 a.m."
++msgstr "6 giá» sÃ¡ng"
++
++msgid "Noon"
++msgstr "Buá»i trÆ°a"
++
++msgid "6 p.m."
++msgstr "6 giá» chiá»u"
+ 
+ #, javascript-format
+ msgid "Note: You are %s hour ahead of server time."
+@@ -113,27 +128,12 @@ msgid_plural "Note: You are %s hours behind server time."
+ msgstr[0] ""
+ "LÆ°u Ã½: Hiá»n táº¡i báº¡n Äang tháº¥y thá»i gian sau %s giá» so vá»i thá»i gian mÃ¡y chá»§."
+ 
+-msgid "Now"
+-msgstr "BÃ¢y giá»"
+-
+ msgid "Choose a Time"
+-msgstr ""
++msgstr "Chá»n Thá»i gian"
+ 
+ msgid "Choose a time"
+ msgstr "Chá»n giá»"
+ 
+-msgid "Midnight"
+-msgstr "Ná»­a ÄÃªm"
+-
+-msgid "6 a.m."
+-msgstr "6 giá» sÃ¡ng"
+-
+-msgid "Noon"
+-msgstr "Buá»i trÆ°a"
+-
+-msgid "6 p.m."
+-msgstr ""
+-
+ msgid "Cancel"
+ msgstr "Há»§y bá»"
+ 
+@@ -141,7 +141,7 @@ msgid "Today"
+ msgstr "HÃ´m nay"
+ 
+ msgid "Choose a Date"
+-msgstr ""
++msgstr "Chá»n NgÃ y"
+ 
+ msgid "Yesterday"
+ msgstr "HÃ´m qua"
+@@ -150,68 +150,116 @@ msgid "Tomorrow"
+ msgstr "NgÃ y mai"
+ 
+ msgid "January"
+-msgstr ""
++msgstr "ThÃ¡ng Má»t"
+ 
+ msgid "February"
+-msgstr ""
++msgstr "ThÃ¡ng Hai"
+ 
+ msgid "March"
+-msgstr ""
++msgstr "ThÃ¡ng Ba"
+ 
+ msgid "April"
+-msgstr ""
++msgstr "ThÃ¡ng TÆ°"
+ 
+ msgid "May"
+-msgstr ""
++msgstr "ThÃ¡ng NÄm"
+ 
+ msgid "June"
+-msgstr ""
++msgstr "ThÃ¡ng SÃ¡u"
+ 
+ msgid "July"
+-msgstr ""
++msgstr "ThÃ¡ng Báº£y"
+ 
+ msgid "August"
+-msgstr ""
++msgstr "ThÃ¡ng TÃ¡m"
+ 
+ msgid "September"
+-msgstr ""
++msgstr "ThÃ¡ng ChÃ­n"
+ 
+ msgid "October"
+-msgstr ""
++msgstr "ThÃ¡ng MÆ°á»i"
+ 
+ msgid "November"
+-msgstr ""
++msgstr "ThÃ¡ng MÆ°á»i Má»t"
+ 
+ msgid "December"
+-msgstr ""
++msgstr "ThÃ¡ng MÆ°á»i Hai"
++
++msgctxt "abbrev. month January"
++msgid "Jan"
++msgstr "ThÃ¡ng Má»t"
++
++msgctxt "abbrev. month February"
++msgid "Feb"
++msgstr "ThÃ¡ng Hai"
++
++msgctxt "abbrev. month March"
++msgid "Mar"
++msgstr "ThÃ¡ng Ba"
++
++msgctxt "abbrev. month April"
++msgid "Apr"
++msgstr "ThÃ¡ng TÆ°"
++
++msgctxt "abbrev. month May"
++msgid "May"
++msgstr "ThÃ¡ng NÄm"
++
++msgctxt "abbrev. month June"
++msgid "Jun"
++msgstr "ThÃ¡ng SÃ¡u"
++
++msgctxt "abbrev. month July"
++msgid "Jul"
++msgstr "ThÃ¡ng Báº£y"
++
++msgctxt "abbrev. month August"
++msgid "Aug"
++msgstr "ThÃ¡ng TÃ¡m"
++
++msgctxt "abbrev. month September"
++msgid "Sep"
++msgstr "ThÃ¡ng ChÃ­n"
++
++msgctxt "abbrev. month October"
++msgid "Oct"
++msgstr "ThÃ¡ng MÆ°á»i"
++
++msgctxt "abbrev. month November"
++msgid "Nov"
++msgstr "ThÃ¡ng MÆ°á»i Má»t"
++
++msgctxt "abbrev. month December"
++msgid "Dec"
++msgstr "ThÃ¡ng MÆ°á»i Hai"
+ 
+ msgctxt "one letter Sunday"
+ msgid "S"
+-msgstr ""
++msgstr "CN"
+ 
+ msgctxt "one letter Monday"
+ msgid "M"
+-msgstr ""
++msgstr "2"
+ 
+ msgctxt "one letter Tuesday"
+ msgid "T"
+-msgstr ""
++msgstr "3"
+ 
+ msgctxt "one letter Wednesday"
+ msgid "W"
+-msgstr ""
++msgstr "4"
+ 
+ msgctxt "one letter Thursday"
+ msgid "T"
+-msgstr ""
++msgstr "5"
+ 
+ msgctxt "one letter Friday"
+ msgid "F"
+-msgstr ""
++msgstr "6"
+ 
+ msgctxt "one letter Saturday"
+ msgid "S"
+-msgstr ""
++msgstr "7"
+ 
+ msgid "Show"
+ msgstr "Hiá»n ra"
+diff --git a/django/contrib/admindocs/locale/bg/LC_MESSAGES/django.mo b/django/contrib/admindocs/locale/bg/LC_MESSAGES/django.mo
+index 49fbe0aeed..0356778574 100644
+Binary files a/django/contrib/admindocs/locale/bg/LC_MESSAGES/django.mo and b/django/contrib/admindocs/locale/bg/LC_MESSAGES/django.mo differ
+diff --git a/django/contrib/admindocs/locale/bg/LC_MESSAGES/django.po b/django/contrib/admindocs/locale/bg/LC_MESSAGES/django.po
+index aa3b1b99e0..124d843720 100644
+--- a/django/contrib/admindocs/locale/bg/LC_MESSAGES/django.po
++++ b/django/contrib/admindocs/locale/bg/LC_MESSAGES/django.po
+@@ -1,18 +1,19 @@
+ # This file is distributed under the same license as the Django package.
+ #
+ # Translators:
++# arneatec <arneatec@gmail.com>, 2022
+ # Boris Chervenkov <office@sentido.bg>, 2012
+ # Jannis Leidel <jannis@leidel.info>, 2011
+ # Lyuboslav  Petrov <petrov.lyuboslav@gmail.com>, 2014
+-# Todor Lubenov <tgl.sysdev@gmail.com>, 2011,2015
++# Todor Lubenov <tlubenov@gmail.com>, 2011,2015
+ # Venelin Stoykov <vkstoykov@gmail.com>, 2016
+ msgid ""
+ msgstr ""
+ "Project-Id-Version: django
+"
+ "Report-Msgid-Bugs-To: 
+"
+-"POT-Creation-Date: 2017-01-19 16:49+0100
+"
+-"PO-Revision-Date: 2017-09-19 16:40+0000
+"
+-"Last-Translator: Jannis Leidel <jannis@leidel.info>
+"
++"POT-Creation-Date: 2021-01-15 09:00+0100
+"
++"PO-Revision-Date: 2022-01-14 10:04+0000
+"
++"Last-Translator: arneatec <arneatec@gmail.com>
+"
+ "Language-Team: Bulgarian (http://www.transifex.com/django/django/language/"
+ "bg/)
+"
+ "MIME-Version: 1.0
+"
+@@ -22,7 +23,7 @@ msgstr ""
+ "Plural-Forms: nplurals=2; plural=(n != 1);
+"
+ 
+ msgid "Administrative Documentation"
+-msgstr "ÐÐ´Ð¼Ð¸Ð½Ð¸ÑÑÑÐ°ÑÐ¸Ð²Ð½Ð° ÐÐ¾ÐºÑÐ¼ÐµÐ½ÑÐ°ÑÐ¸Ñ"
++msgstr "ÐÐ´Ð¼Ð¸Ð½Ð¸ÑÑÑÐ°ÑÐ¸Ð²Ð½Ð° Ð´Ð¾ÐºÑÐ¼ÐµÐ½ÑÐ°ÑÐ¸Ñ"
+ 
+ msgid "Home"
+ msgstr "ÐÐ°ÑÐ°Ð»Ð¾"
+@@ -57,10 +58,10 @@ msgstr ""
+ "Ðµ Ð³ÐµÐ½ÐµÑÐ¸ÑÐ°Ð»."
+ 
+ msgid "Tags"
+-msgstr "ÐÑÐ¸ÐºÐµÑÐ¸"
++msgstr "Ð¢Ð°Ð³Ð¾Ð²Ðµ"
+ 
+ msgid "List of all the template tags and their functions."
+-msgstr "Ð¡Ð¿Ð¸ÑÑÐº Ð½Ð° Ð²ÑÐ¸ÑÐºÐ¸ ÐµÑÐ¸ÐºÐµÑÐ¸ Ð½Ð° ÑÐ°Ð±Ð»Ð¾Ð½Ð° Ð¸ ÑÐµÑÐ½Ð¸ÑÐµ ÑÑÐ½ÐºÑÐ¸Ð¸."
++msgstr "Ð¡Ð¿Ð¸ÑÑÐº Ð½Ð° Ð²ÑÐ¸ÑÐºÐ¸ ÑÐ°Ð±Ð»Ð¾Ð½Ð½Ð¸ ÑÐ°Ð³Ð¾Ð²Ðµ Ð¸ ÑÐµÑÐ½Ð¸ÑÐµ ÑÑÐ½ÐºÑÐ¸Ð¸."
+ 
+ msgid "Filters"
+ msgstr "Ð¤Ð¸Ð»ÑÑÐ¸"
+@@ -69,7 +70,7 @@ msgid ""
+ "Filters are actions which can be applied to variables in a template to alter "
+ "the output."
+ msgstr ""
+-"Ð¤Ð¸Ð»ÑÑÐ¸ÑÐµ ÑÐ° Ð´ÐµÐ¹ÑÑÐ²Ð¸Ñ, ÐºÐ¾Ð¸ÑÐ¾ Ð¼Ð¾Ð³Ð°Ñ Ð´Ð° ÑÐµ Ð¸Ð·Ð¿Ð¾Ð»Ð·Ð²Ð°Ñ ÐºÑÐ¼ Ð¿ÑÐ¾Ð¼ÐµÐ½Ð»Ð¸Ð²Ð¸ Ð² Ð´Ð°Ð´ÐµÐ½ "
++"Ð¤Ð¸Ð»ÑÑÐ¸ÑÐµ ÑÐ° Ð´ÐµÐ¹ÑÑÐ²Ð¸Ñ, ÐºÐ¾Ð¸ÑÐ¾ Ð¼Ð¾Ð³Ð°Ñ Ð´Ð° ÑÐµ Ð¸Ð·Ð¿Ð¾Ð»Ð·Ð²Ð°Ñ Ð²ÑÑÑÑ Ð¿ÑÐ¾Ð¼ÐµÐ½Ð»Ð¸Ð²Ð¸ Ð² Ð´Ð°Ð´ÐµÐ½ "
+ "ÑÐ°Ð±Ð»Ð¾Ð½, Ð·Ð° Ð´Ð° Ð¿ÑÐ¾Ð¼ÐµÐ½ÑÑ Ð¸Ð·ÑÐ¾Ð´Ð°."
+ 
+ msgid "Models"
+@@ -81,20 +82,20 @@ msgid ""
+ "template variables"
+ msgstr ""
+ "ÐÐ¾Ð´ÐµÐ»Ð¸ÑÐµ ÑÐ° Ð¾Ð¿Ð¸ÑÐ°Ð½Ð¸Ñ Ð½Ð° Ð²ÑÐ¸ÑÐºÐ¸ Ð¾Ð±ÐµÐºÑÐ¸ Ð² ÑÐ¸ÑÑÐµÐ¼Ð°ÑÐ° Ð¸ ÑÐ²ÑÑÐ·Ð°Ð½Ð¸ÑÐµ Ñ ÑÑÑ Ð¿Ð¾Ð»ÐµÑÐ°. "
+-"ÐÑÐµÐºÐ¸ Ð¼Ð¾Ð´ÐµÐ» ÑÐ¸ Ð¸Ð¼Ð° ÑÐ¿Ð¸ÑÑÐº Ð½Ð° Ð¿Ð¾Ð»ÐµÑÐ°ÑÐ°, ÐºÐ¾Ð¸ÑÐ¾ Ð¼Ð¾Ð³Ð°Ñ Ð´Ð° Ð±ÑÐ´Ð°Ñ Ð´Ð¾ÑÑÑÐ¿Ð½Ð¸ ÐºÐ°ÐºÑÐ¾ "
++"ÐÑÐµÐºÐ¸ Ð¼Ð¾Ð´ÐµÐ» ÑÐ¸ Ð¸Ð¼Ð° ÑÐ¿Ð¸ÑÑÐº Ð½Ð° Ð¿Ð¾Ð»ÐµÑÐ°ÑÐ°, ÐºÐ¾Ð¸ÑÐ¾ Ð¼Ð¾Ð³Ð°Ñ Ð´Ð° Ð±ÑÐ´Ð°Ñ Ð´Ð¾ÑÑÑÐ¿ÐµÐ½Ð¸ ÐºÐ°ÐºÑÐ¾ "
+ "ÑÐ°Ð±Ð»Ð¾Ð½Ð½Ð¸ Ð¿ÑÐ¾Ð¼ÐµÐ½Ð»Ð¸Ð²Ð¸"
+ 
+ msgid "Views"
+-msgstr "ÐÑÐµÐ³Ð»ÐµÐ´Ð¸"
++msgstr "ÐÐ·Ð³Ð»ÐµÐ´Ð¸"
+ 
+ msgid ""
+ "Each page on the public site is generated by a view. The view defines which "
+ "template is used to generate the page and which objects are available to "
+ "that template."
+ msgstr ""
+-"ÐÑÑÐºÐ° ÑÑÑÐ°Ð½Ð¸ÑÐ° Ð½Ð° Ð¿ÑÐ±Ð»Ð¸ÑÐ½Ð¸Ñ ÑÐ°Ð¹Ñ ÑÐµ Ð³ÐµÐ½ÐµÑÐ¸ÑÐ° Ð¾Ñ ÐµÐ´Ð¸Ð½ Ð¸Ð·Ð³Ð»ÐµÐ´. ÐÐ·Ð³Ð»ÐµÐ´Ð° "
+-"Ð¾Ð¿ÑÐµÐ´ÐµÐ»Ñ ÐºÐ¾Ð¹ ÑÐ°Ð±Ð»Ð¾Ð½ ÑÐµ Ð¸Ð·Ð¿Ð¾Ð»Ð·Ð²Ð° Ð·Ð° Ð³ÐµÐ½ÐµÑÐ¸ÑÐ°Ð½Ðµ Ð½Ð° ÑÑÑÐ°Ð½Ð¸ÑÐ°ÑÐ°, Ð¸ ÐºÐ¾Ð¸ÑÐ¾ Ð¾Ð±ÐµÐºÑÐ¸ "
+-"ÑÐ° Ð½Ð° ÑÐ°Ð·Ð¿Ð¾Ð»Ð¾Ð¶ÐµÐ½Ð¸Ðµ Ð·Ð° ÑÐ¾Ð·Ð¸ ÑÐ°Ð±Ð»Ð¾Ð½."
++"ÐÑÑÐºÐ° ÑÑÑÐ°Ð½Ð¸ÑÐ° Ð½Ð° Ð¿ÑÐ±Ð»Ð¸ÑÐ½Ð¸Ñ ÑÐ°Ð¹Ñ ÑÐµ Ð³ÐµÐ½ÐµÑÐ¸ÑÐ° Ð¾Ñ Ð¸Ð·Ð³Ð»ÐµÐ´. ÐÐ·Ð³Ð»ÐµÐ´ÑÑ Ð¾Ð¿ÑÐµÐ´ÐµÐ»Ñ "
++"ÐºÐ¾Ð¹ ÑÐ°Ð±Ð»Ð¾Ð½ ÑÐµ Ð¸Ð·Ð¿Ð¾Ð»Ð·Ð²Ð° Ð·Ð° Ð³ÐµÐ½ÐµÑÐ¸ÑÐ°Ð½Ðµ Ð½Ð° ÑÑÑÐ°Ð½Ð¸ÑÐ°ÑÐ° Ð¸ ÐºÐ¾Ð¸ Ð¾Ð±ÐµÐºÑÐ¸ ÑÐ° Ð½Ð° "
++"ÑÐ°Ð·Ð¿Ð¾Ð»Ð¾Ð¶ÐµÐ½Ð¸Ðµ Ð·Ð° ÑÐ¾Ð·Ð¸ ÑÐ°Ð±Ð»Ð¾Ð½."
+ 
+ msgid "Tools for your browser to quickly access admin functionality."
+ msgstr ""
+@@ -106,17 +107,17 @@ msgstr "ÐÐ¾Ð»Ñ Ð¸Ð½ÑÑÐ°Ð»Ð¸ÑÐ°Ð¹ÑÐµ docutils"
+ 
+ #, python-format
+ msgid ""
+-"The admin documentation system requires Python's <a href="%(link)s"
++"The admin documentation system requires Pythonâs <a href="%(link)s"
+ "">docutils</a> library."
+ msgstr ""
+-"Ð¡Ð¸ÑÑÐµÐ¼Ð°ÑÐ° Ð·Ð° Ð°Ð´Ð¼Ð¸Ð½Ð¸ÑÑÑÐ°ÑÐ¾ÑÑÐºÐ° Ð´Ð¾ÐºÑÐ¼ÐµÐ½ÑÐ°ÑÐ¸Ñ Ð¸Ð·Ð¸ÑÐºÐ²Ð° Ð±Ð¸Ð±Ð»Ð¸Ð¾ÑÐµÐºÐ°ÑÐ° Ð·Ð° python <a "
++"Ð¡Ð¸ÑÑÐµÐ¼Ð°ÑÐ° Ð·Ð° Ð°Ð´Ð¼Ð¸Ð½Ð¸ÑÑÑÐ°ÑÐ¾ÑÑÐºÐ° Ð´Ð¾ÐºÑÐ¼ÐµÐ½ÑÐ°ÑÐ¸Ñ Ð¸Ð·Ð¸ÑÐºÐ²Ð° Ð±Ð¸Ð±Ð»Ð¸Ð¾ÑÐµÐºÐ°ÑÐ° Ð·Ð° Python <a "
+ "href="%(link)s">docutils</a>."
+ 
+ #, python-format
+ msgid ""
+ "Please ask your administrators to install <a href="%(link)s">docutils</a>."
+ msgstr ""
+-"ÐÐ¾Ð»Ñ, Ð¿Ð¾Ð¿Ð¸ÑÐ°Ð¹ÑÐµ Ð²Ð°ÑÐ¸ÑÐµ Ð°Ð´Ð¼Ð¸Ð½Ð¸ÑÑÑÐ°ÑÐ¾ÑÐ¸ Ð´Ð° Ð¸Ð½ÑÑÐ°Ð»Ð¸ÑÐ°ÑÐµ <a href="%(link)s"
++"ÐÐ¾Ð»Ñ, Ð¿Ð¾Ð¼Ð¾Ð»ÐµÑÐµ Ð²Ð°ÑÐ¸ÑÐµ Ð°Ð´Ð¼Ð¸Ð½Ð¸ÑÑÑÐ°ÑÐ¾ÑÐ¸ Ð´Ð° Ð¸Ð½ÑÑÐ°Ð»Ð¸ÑÐ°Ñ <a href="%(link)s"
+ "">docutils</a> ."
+ 
+ #, python-format
+@@ -136,7 +137,7 @@ msgid "Description"
+ msgstr "ÐÐ¿Ð¸ÑÐ°Ð½Ð¸Ðµ"
+ 
+ msgid "Methods with arguments"
+-msgstr "ÐÐµÑÐ¾Ð´Ð¸ Ð¸ Ð°ÑÐ³ÑÐ¼ÐµÐ½ÑÐ¸"
++msgstr "ÐÐµÑÐ¾Ð´Ð¸ Ñ Ð°ÑÐ³ÑÐ¼ÐµÐ½ÑÐ¸"
+ 
+ msgid "Method"
+ msgstr "ÐÐµÑÐ¾Ð´"
+@@ -145,32 +146,32 @@ msgid "Arguments"
+ msgstr "ÐÑÐ³ÑÐ¼ÐµÐ½ÑÐ¸"
+ 
+ msgid "Back to Model documentation"
+-msgstr " ÐÑÑÐ½Ð¸ ÑÐµ Ð² Ð´Ð¾ÐºÑÐ¼ÐµÐ½ÑÐ°ÑÐ¸ÑÑÐ° Ð½Ð° Ð¼Ð¾Ð´ÐµÐ»Ð°"
++msgstr " ÐÑÑÐ½Ð¸ ÑÐµ Ð² Ð´Ð¾ÐºÑÐ¼ÐµÐ½ÑÐ°ÑÐ¸ÑÑÐ° Ð·Ð° Ð¼Ð¾Ð´ÐµÐ»Ð¸"
+ 
+ msgid "Model documentation"
+-msgstr "ÐÐ¾Ð´ÐµÐ» Ð´Ð¾ÐºÑÐ¼ÐµÐ½ÑÐ°ÑÐ¸Ñ"
++msgstr "ÐÐ¾ÐºÑÐ¼ÐµÐ½ÑÐ°ÑÐ¸Ñ Ð·Ð° Ð¼Ð¾Ð´ÐµÐ»Ð¸"
+ 
+ msgid "Model groups"
+-msgstr "ÐÐ¾Ð´ÐµÐ» Ð³ÑÑÐ¿Ð¸"
++msgstr "ÐÑÑÐ¿Ð¸ Ð½Ð° Ð¼Ð¾Ð´ÐµÐ»Ð°"
+ 
+ msgid "Templates"
+ msgstr "Ð¨Ð°Ð±Ð»Ð¾Ð½Ð¸"
+ 
+ #, python-format
+ msgid "Template: %(name)s"
+-msgstr "Template: %(name)s"
++msgstr "Ð¨Ð°Ð±Ð»Ð¾Ð½: %(name)s"
+ 
+ #, python-format
+-msgid "Template: "%(name)s""
+-msgstr "Ð¨Ð°Ð±Ð»Ð¾Ð½: "%(name)s""
++msgid "Template: <q>%(name)s</q>"
++msgstr "Ð¨Ð°Ð±Ð»Ð¾Ð½: <q>%(name)s</q>"
+ 
+ #. Translators: Search is not a verb here, it qualifies path (a search path)
+ #, python-format
+-msgid "Search path for template "%(name)s":"
+-msgstr "ÐÑÑ Ð·Ð° ÑÑÑÑÐµÐ½Ðµ Ð½Ð° ÑÐ°Ð±Ð»Ð¾Ð½ "%(name)s""
++msgid "Search path for template <q>%(name)s</q>:"
++msgstr "ÐÑÑ Ð·Ð° ÑÑÑÑÐµÐ½Ðµ Ð½Ð° ÑÐ°Ð±Ð»Ð¾Ð½ <q>%(name)s</q>:"
+ 
+ msgid "(does not exist)"
+-msgstr "(ÐÐµ ÑÑÑÐµÑÑÐ²ÑÐ²Ð°)"
++msgstr "(Ð½Ðµ ÑÑÑÐµÑÑÐ²ÑÐ²Ð°)"
+ 
+ msgid "Back to Documentation"
+ msgstr "ÐÐ°Ð·Ð°Ð´ ÐºÑÐ¼ ÐÐ¾ÐºÑÐ¼ÐµÐ½ÑÐ°ÑÐ¸ÑÑÐ°"
+@@ -179,7 +180,7 @@ msgid "Template filters"
+ msgstr "Ð¨Ð°Ð±Ð»Ð¾Ð½Ð½Ð¸ ÑÐ¸Ð»ÑÑÐ¸"
+ 
+ msgid "Template filter documentation"
+-msgstr "ÐÐ¾ÐºÑÐ¼ÐµÐ½ÑÐ°ÑÐ¸Ñ Ð·Ð° Ð¨Ð°Ð±Ð»Ð¾Ð½Ð½Ð¸ ÑÐ¸Ð»ÑÑÐ¸"
++msgstr "ÐÐ¾ÐºÑÐ¼ÐµÐ½ÑÐ°ÑÐ¸Ñ Ð·Ð° ÑÐ°Ð±Ð»Ð¾Ð½Ð½Ð¸ ÑÐ¸Ð»ÑÑÐ¸"
+ 
+ msgid "Built-in filters"
+ msgstr "ÐÐ³ÑÐ°Ð´ÐµÐ½Ð¸ ÑÐ¸Ð»ÑÑÐ¸"
+@@ -189,25 +190,25 @@ msgid ""
+ "To use these filters, put <code>%(code)s</code> in your template before "
+ "using the filter."
+ msgstr ""
+-"ÐÐ° Ð´Ð° Ð¸Ð·Ð¿Ð¾Ð»Ð·Ð²Ð°ÑÐµ ÑÐµÐ·Ð¸ ÑÐ¸Ð»ÑÑÐ¸, ÑÐ»Ð¾Ð¶Ð¸ <code>%(code)s</code> Ð²ÑÐ² Ð²Ð°ÑÐ¸Ñ ÑÐ°Ð±Ð»Ð¾Ð½, "
+-"Ð¿ÑÐµÐ´Ð¸ Ð´Ð° Ð¸Ð·Ð¿Ð¾Ð»Ð·Ð²Ð°ÑÐµ ÑÐ¸Ð»ÑÑÑÐ°."
++"ÐÐ° Ð´Ð° Ð¸Ð·Ð¿Ð¾Ð»Ð·Ð²Ð°ÑÐµ ÑÐµÐ·Ð¸ ÑÐ¸Ð»ÑÑÐ¸, ÑÐ»Ð¾Ð¶ÐµÑÐµ <code>%(code)s</code> Ð²ÑÐ² Ð²Ð°ÑÐ¸Ñ "
++"ÑÐ°Ð±Ð»Ð¾Ð½, Ð¿ÑÐµÐ´Ð¸ Ð´Ð° Ð¸Ð·Ð¿Ð¾Ð»Ð·Ð²Ð°ÑÐµ ÑÐ¸Ð»ÑÑÑÐ°."
+ 
+ msgid "Template tags"
+-msgstr "Ð¨Ð°Ð±Ð»Ð¾Ð½ ÑÐ°Ð³Ð¾Ð²Ðµ"
++msgstr "Ð¨Ð°Ð±Ð»Ð¾Ð½Ð½Ð¸ ÑÐ°Ð³Ð¾Ð²Ðµ"
+ 
+ msgid "Template tag documentation"
+-msgstr "ÐÐ¾ÐºÑÐ¼ÐµÐ½ÑÐ°ÑÐ¸Ñ Ð·Ð° ÑÐ°Ð±Ð»Ð¾Ð½Ð½Ð¸ ÑÐ°Ð³Ð¾Ð²Ðµ"
++msgstr "ÐÐ¾ÐºÑÐ¼ÐµÐ½ÑÐ°ÑÐ¸Ñ Ð·Ð° Ð¨Ð°Ð±Ð»Ð¾Ð½Ð½Ð¸ ÑÐ°Ð³Ð¾Ð²Ðµ"
+ 
+ msgid "Built-in tags"
+-msgstr "ÐÐ³ÑÐ°Ð´ÐµÐ½Ð¸ Ð² ÑÐ°Ð³Ð¾Ð²Ðµ"
++msgstr "ÐÐ³ÑÐ°Ð´ÐµÐ½Ð¸ ÑÐ°Ð³Ð¾Ð²Ðµ"
+ 
+ #, python-format
+ msgid ""
+ "To use these tags, put <code>%(code)s</code> in your template before using "
+ "the tag."
+ msgstr ""
+-"ÐÐ° Ð´Ð° Ð¸Ð·Ð¿Ð¾Ð»Ð·Ð²Ð°ÑÐµ ÑÐµÐ·Ð¸ ÑÐ°Ð³Ð¾Ð²Ðµ, ÑÐ»Ð¾Ð¶Ð¸ <code>%(code)s</code> Ð²ÑÐ² Ð²Ð°ÑÐ¸Ñ ÑÐ°Ð±Ð»Ð¾Ð½, "
+-"Ð¿ÑÐµÐ´Ð¸ Ð´Ð° Ð¸Ð·Ð¿Ð¾Ð»Ð·Ð²Ð°ÑÐµ ÐµÑÐ¸ÐºÐµÑ."
++"ÐÐ° Ð´Ð° Ð¸Ð·Ð¿Ð¾Ð»Ð·Ð²Ð°ÑÐµ ÑÐµÐ·Ð¸ ÑÐ°Ð³Ð¾Ð²Ðµ, ÑÐ»Ð¾Ð¶ÐµÑÐµ <code>%(code)s</code> Ð²ÑÐ² Ð²Ð°ÑÐ¸Ñ "
++"ÑÐ°Ð±Ð»Ð¾Ð½, Ð¿ÑÐµÐ´Ð¸ Ð´Ð° Ð¸Ð·Ð¿Ð¾Ð»Ð·Ð²Ð°ÑÐµ ÑÐ°Ð³Ð°."
+ 
+ #, python-format
+ msgid "View: %(name)s"
+@@ -220,23 +221,23 @@ msgid "Templates:"
+ msgstr "Ð¨Ð°Ð±Ð»Ð¾Ð½Ð¸:"
+ 
+ msgid "Back to View documentation"
+-msgstr ""
++msgstr "ÐÐ±ÑÐ°ÑÐ½Ð¾ ÐºÑÐ¼ Ð´Ð¾ÐºÑÐ¼ÐµÐ½ÑÐ°ÑÐ¸ÑÑÐ° Ð·Ð° ÐÐ·Ð³Ð»ÐµÐ´"
+ 
+ msgid "View documentation"
+-msgstr "ÐÐ¾ÐºÑÐ¼ÐµÐ½ÑÐ°ÑÐ¸Ñ Ð·Ð° ÐÐ·Ð³Ð»ÐµÐ´Ð¸"
++msgstr "ÐÐ¾ÐºÑÐ¼ÐµÐ½ÑÐ°ÑÐ¸Ñ Ð·Ð° ÐÐ·Ð³Ð»ÐµÐ´"
+ 
+ msgid "Jump to namespace"
+-msgstr "ÐÐ°Ð¿ÑÐ°Ð²Ð¾ ÐºÑÐ¼ Ð¸Ð¼ÐµÐ½Ð½Ð¸ Ð¿ÑÐ¾ÑÑÑÐ°Ð½ÑÑÐ²Ð°"
++msgstr "ÐÑÐµÑÐºÐ¾ÑÐ¸ ÐºÑÐ¼ Ð¸Ð¼ÐµÐ½Ð½Ð¸ Ð¿ÑÐ¾ÑÑÑÐ°Ð½ÑÑÐ²Ð°"
+ 
+ msgid "Empty namespace"
+-msgstr "Empty Ð¸Ð¼ÐµÐ½Ð½Ð¸ Ð¿ÑÐ¾ÑÑÑÐ°Ð½ÑÑÐ²Ð°"
++msgstr "ÐÑÐ°Ð·Ð½Ð¸ Ð¸Ð¼ÐµÐ½Ð½Ð¸ Ð¿ÑÐ¾ÑÑÑÐ°Ð½ÑÑÐ²Ð°"
+ 
+ #, python-format
+ msgid "Views by namespace %(name)s"
+-msgstr ""
++msgstr "ÐÐ·Ð³Ð»ÐµÐ´Ð¸ Ð¿Ð¾ Ð¸Ð¼ÐµÐ½Ð½Ð¸ Ð¿ÑÐ¾ÑÑÑÐ°Ð½ÑÑÐ²Ð° %(name)s"
+ 
+ msgid "Views by empty namespace"
+-msgstr "ÐÑÐµÐ³Ð»ÐµÐ´Ð¸ Ð½Ð° Ð¿ÑÐ°Ð·Ð½Ð° Ð¸Ð¼ÐµÐ½Ð½Ð¸ Ð¿ÑÐ¾ÑÑÑÐ°Ð½ÑÑÐ²Ð°"
++msgstr "ÐÐ·Ð³Ð»ÐµÐ´Ð¸ Ð¿Ð¾ Ð¿ÑÐ°Ð·Ð½Ð¸ Ð¸Ð¼ÐµÐ½Ð½Ð¸ Ð¿ÑÐ¾ÑÑÑÐ°Ð½ÑÑÐ²Ð°"
+ 
+ #, python-format
+ msgid ""
+@@ -244,9 +245,12 @@ msgid ""
+ "    View function: <code>%(full_name)s</code>. Name: <code>%(url_name)s</"
+ "code>.
+"
+ msgstr ""
++"
+"
++"    ÐÐ·Ð³Ð»ÐµÐ´ ÑÑÐ½ÐºÑÐ¸Ñ: <code>%(full_name)s</code>. ÐÐ¼Ðµ: <code>%(url_name)s</"
++"code>.
+"
+ 
+ msgid "tag:"
+-msgstr "ÐµÑÐ¸ÐºÐµÑ:"
++msgstr "ÑÐ°Ð³:"
+ 
+ msgid "filter:"
+ msgstr "ÑÐ¸Ð»ÑÑÑ:"
+diff --git a/django/contrib/auth/locale/bg/LC_MESSAGES/django.mo b/django/contrib/auth/locale/bg/LC_MESSAGES/django.mo
+index 1418c1f080..1d682adb8a 100644
+Binary files a/django/contrib/auth/locale/bg/LC_MESSAGES/django.mo and b/django/contrib/auth/locale/bg/LC_MESSAGES/django.mo differ
+diff --git a/django/contrib/auth/locale/bg/LC_MESSAGES/django.po b/django/contrib/auth/locale/bg/LC_MESSAGES/django.po
+index 8277d9d1d4..63b556eed6 100644
+--- a/django/contrib/auth/locale/bg/LC_MESSAGES/django.po
++++ b/django/contrib/auth/locale/bg/LC_MESSAGES/django.po
+@@ -1,20 +1,21 @@
+ # This file is distributed under the same license as the Django package.
+ #
+ # Translators:
++# arneatec <arneatec@gmail.com>, 2022
+ # Boris Chervenkov <office@sentido.bg>, 2012
+ # Georgi Kostadinov <grgkostadinov@gmail.com>, 2012
+ # Jannis Leidel <jannis@leidel.info>, 2011
+ # Lyuboslav  Petrov <petrov.lyuboslav@gmail.com>, 2014
+-# Todor Lubenov <tgl.sysdev@gmail.com>, 2015
++# Todor Lubenov <tlubenov@gmail.com>, 2015
+ # Venelin Stoykov <vkstoykov@gmail.com>, 2015-2016
+ # vestimir <vestimir@gmail.com>, 2014
+ msgid ""
+ msgstr ""
+ "Project-Id-Version: django
+"
+ "Report-Msgid-Bugs-To: 
+"
+-"POT-Creation-Date: 2017-09-24 13:46+0200
+"
+-"PO-Revision-Date: 2017-09-24 14:24+0000
+"
+-"Last-Translator: Jannis Leidel <jannis@leidel.info>
+"
++"POT-Creation-Date: 2021-09-21 10:22+0200
+"
++"PO-Revision-Date: 2022-01-14 10:14+0000
+"
++"Last-Translator: arneatec <arneatec@gmail.com>
+"
+ "Language-Team: Bulgarian (http://www.transifex.com/django/django/language/"
+ "bg/)
+"
+ "MIME-Version: 1.0
+"
+@@ -53,12 +54,12 @@ msgid "last login"
+ msgstr "Ð¿Ð¾ÑÐ»ÐµÐ´Ð½Ð¾ Ð²Ð¿Ð¸ÑÐ²Ð°Ð½Ðµ"
+ 
+ msgid "No password set."
+-msgstr "ÐÐµ Ðµ Ð·Ð°Ð¿Ð°Ð·ÐµÐ½Ð° Ð¿Ð°ÑÐ¾Ð»Ð°."
++msgstr "ÐÐµ Ðµ Ð·Ð°Ð´Ð°Ð´ÐµÐ½Ð° Ð¿Ð°ÑÐ¾Ð»Ð°."
+ 
+ msgid "Invalid password format or unknown hashing algorithm."
+ msgstr "ÐÐµÐ²Ð°Ð»Ð¸Ð´ÐµÐ½ ÑÐ¾ÑÐ¼Ð°Ñ Ð·Ð° Ð¿Ð°ÑÐ¾Ð»Ð° Ð¸Ð»Ð¸ Ð½ÐµÐ¸Ð·Ð²ÐµÑÑÐµÐ½ Ð°Ð»Ð³Ð¾ÑÐ¸ÑÑÐ¼ Ð·Ð° ÑÐµÑÐ¸ÑÐ°Ð½Ðµ."
+ 
+-msgid "The two password fields didn't match."
++msgid "The two password fields didnât match."
+ msgstr "ÐÐ²ÐµÑÐµ Ð¿Ð¾Ð»ÐµÑÐ° Ð·Ð° Ð¿Ð°ÑÐ¾Ð»Ð°ÑÐ° Ð½Ðµ ÑÑÐ²Ð¿Ð°Ð´Ð°Ñ.  "
+ 
+ msgid "Password"
+@@ -71,9 +72,12 @@ msgid "Enter the same password as before, for verification."
+ msgstr "ÐÑÐ²ÐµÐ´ÐµÑÐµ ÑÑÑÐ°ÑÐ° Ð¿Ð°ÑÐ¾Ð»Ð° ÐºÐ°ÑÐ¾ Ð¿ÑÐµÐ´Ð¸, Ð·Ð° Ð´Ð° Ð¿Ð¾ÑÐ²ÑÑÐ´Ð¸ÑÐµ."
+ 
+ msgid ""
+-"Raw passwords are not stored, so there is no way to see this user's "
++"Raw passwords are not stored, so there is no way to see this userâs "
+ "password, but you can change the password using <a href="{}">this form</a>."
+ msgstr ""
++"ÐÐ°ÑÐ¾Ð»Ð¸ÑÐµ Ð½Ðµ ÑÐµ ÑÑÑÑÐ°Ð½ÑÐ²Ð°Ñ Ð² ÑÐ¸ÑÑ Ð²Ð¸Ð´, ÑÐ°ÐºÐ° ÑÐµ Ðµ Ð½ÐµÐ²ÑÐ·Ð¼Ð¾Ð¶Ð½Ð¾ Ð´Ð° Ð²Ð¸Ð´Ð¸ÑÐµ "
++"Ð¿Ð°ÑÐ¾Ð»Ð°ÑÐ° Ð½Ð° ÑÐ¾Ð·Ð¸ Ð¿Ð¾ÑÑÐµÐ±Ð¸ÑÐµÐ», Ð½Ð¾ Ð¼Ð¾Ð¶ÐµÑÐµ Ð´Ð° Ð¿ÑÐ¾Ð¼ÐµÐ½Ð¸ÑÐµ Ð¿Ð°ÑÐ¾Ð»Ð°ÑÐ° ÑÑÐµÐ· <a href="
++""{}">ÑÐ¾Ð·Ð¸ ÑÐ¾ÑÐ¼ÑÐ»ÑÑ</a>."
+ 
+ #, python-format
+ msgid ""
+@@ -81,13 +85,13 @@ msgid ""
+ "be case-sensitive."
+ msgstr ""
+ "ÐÐ¾Ð»Ñ, Ð²ÑÐ²ÐµÐ´ÐµÑÐµ Ð¿ÑÐ°Ð²Ð¸Ð»Ð½Ð¸ÑÐµ %(username)s Ð¸ Ð¿Ð°ÑÐ¾Ð»Ð°. ÐÐ¼Ð°Ð¹ÑÐµ Ð¿ÑÐµÐ´Ð²Ð¸Ð´, ÑÐµ Ð¸ Ð´Ð²ÐµÑÐµ "
+-"Ð¿Ð¾Ð»ÐµÑÐ° Ð¼Ð¾Ð³Ð°Ñ Ð´Ð° Ð±ÑÐ´Ð°Ñ Ð¼Ð°Ð»ÐºÐ¸ Ð¸Ð»Ð¸ Ð³Ð»Ð°Ð²Ð½Ð¸ Ð±ÑÐºÐ²Ð¸."
++"Ð¿Ð¾Ð»ÐµÑÐ° Ð¼Ð¾Ð³Ð°Ñ Ð´Ð° Ð±ÑÐ´Ð°Ñ Ñ Ð¼Ð°Ð»ÐºÐ¸ Ð¸Ð»Ð¸ Ð³Ð»Ð°Ð²Ð½Ð¸ Ð±ÑÐºÐ²Ð¸."
+ 
+ msgid "This account is inactive."
+ msgstr "Ð¢Ð¾Ð·Ð¸ Ð¿ÑÐ¾ÑÐ¸Ð» Ðµ Ð½ÐµÐ°ÐºÑÐ¸Ð²ÐµÐ½."
+ 
+ msgid "Email"
+-msgstr "Email"
++msgstr "ÐÐ¼ÐµÐ¹Ð»"
+ 
+ msgid "New password"
+ msgstr "ÐÐ¾Ð²Ð° Ð¿Ð°ÑÐ¾Ð»Ð°"
+@@ -111,25 +115,25 @@ msgid "iterations"
+ msgstr "Ð¿Ð¾Ð²ÑÐ¾ÑÐµÐ½Ð¸Ñ"
+ 
+ msgid "salt"
+-msgstr "'salt'"
++msgstr "salt"
+ 
+ msgid "hash"
+ msgstr "ÑÐµÑ"
+ 
+ msgid "variety"
+-msgstr ""
++msgstr "ÑÐ°Ð·Ð½Ð¾Ð¾Ð±ÑÐ°Ð·Ð¸Ðµ"
+ 
+ msgid "version"
+ msgstr "Ð²ÐµÑÑÐ¸Ñ"
+ 
+ msgid "memory cost"
+-msgstr ""
++msgstr "ÑÐ°Ð·ÑÐ¾Ð´ Ð¿Ð°Ð¼ÐµÑ"
+ 
+ msgid "time cost"
+-msgstr ""
++msgstr "ÑÐ°Ð·ÑÐ¾Ð´ Ð²ÑÐµÐ¼Ðµ"
+ 
+ msgid "parallelism"
+-msgstr ""
++msgstr "Ð¿Ð°ÑÐ°Ð»ÐµÐ»Ð¸Ð·ÑÐ¼"
+ 
+ msgid "work factor"
+ msgstr "ÑÐ°Ð±Ð¾ÑÐµÐ½ ÑÐ°ÐºÑÐ¾Ñ"
+@@ -137,6 +141,9 @@ msgstr "ÑÐ°Ð±Ð¾ÑÐµÐ½ ÑÐ°ÐºÑÐ¾Ñ"
+ msgid "checksum"
+ msgstr "ÑÐµÐºÑÑÐ¼Ð°"
+ 
++msgid "block size"
++msgstr "ÑÐ°Ð·Ð¼ÐµÑ Ð½Ð° Ð±Ð»Ð¾ÐºÐ°"
++
+ msgid "name"
+ msgstr "Ð¸Ð¼Ðµ"
+ 
+@@ -212,8 +219,8 @@ msgid ""
+ "Designates whether this user should be treated as active. Unselect this "
+ "instead of deleting accounts."
+ msgstr ""
+-"Ð£ÐºÐ°Ð·Ð²Ð° Ð´Ð°Ð»Ð¸ ÑÐ¾Ð·Ð¸ Ð¿Ð¾ÑÑÐµÐ±Ð¸ÑÐµÐ» ÑÑÑÐ±Ð²Ð° Ð´Ð° ÑÐµ ÑÑÐµÑÐ¸ÑÐ° ÐºÐ°ÑÐ¾ Ð°ÐºÑÐ¸Ð²ÐµÐ½. ÐÑÐµÐ¼Ð°ÑÐ½ÐµÑÐµ Ð½Ð° "
+-"Ð¸Ð·Ð±Ð¾ÑÐ° Ð½Ð° ÑÐ¾Ð²Ð°, Ð²Ð¼ÐµÑÑÐ¾ Ð´Ð° ÑÑÐ¸ÐµÑÐµ Ð¿ÑÐ¾ÑÐ¸Ð»Ð°."
++"Ð£ÐºÐ°Ð·Ð²Ð° Ð´Ð°Ð»Ð¸ ÑÐ¾Ð·Ð¸ Ð¿Ð¾ÑÑÐµÐ±Ð¸ÑÐµÐ» ÑÑÑÐ±Ð²Ð° Ð´Ð° ÑÐµ ÑÑÐµÑÐ¸ÑÐ° ÐºÐ°ÑÐ¾ Ð°ÐºÑÐ¸Ð²ÐµÐ½. ÐÑÐµÐ¼Ð°ÑÐ½ÐµÑÐµ "
++"ÑÐ°Ð·Ð¸ Ð¾ÑÐ¼ÐµÑÐºÐ°ÑÐ°, Ð²Ð¼ÐµÑÑÐ¾ Ð´Ð° Ð¸Ð·ÑÑÐ¸Ð²Ð°ÑÐµ Ð¿ÑÐ¾ÑÐ¸Ð»Ð¸."
+ 
+ msgid "date joined"
+ msgstr "Ð´Ð°ÑÐ° Ð½Ð° ÑÐµÐ³Ð¸ÑÑÑÐ¸ÑÐ°Ð½Ðµ"
+@@ -246,24 +253,24 @@ msgstr[1] "ÐÐ°ÑÐ°ÑÐ° Ð¿Ð°ÑÐ¾Ð»Ð° ÑÑÑÐ±Ð²Ð° Ð´Ð° ÑÑÐ´ÑÑÐ¶Ð° Ð¿Ð¾Ð½Ðµ %
+ msgid "The password is too similar to the %(verbose_name)s."
+ msgstr "ÐÐ°ÑÐ¾Ð»Ð°ÑÐ° Ðµ Ð¼Ð½Ð¾Ð³Ð¾ Ð¿Ð¾Ð´Ð¾Ð±Ð½Ð° Ð½Ð° %(verbose_name)s."
+ 
+-msgid "Your password can't be too similar to your other personal information."
++msgid "Your password canât be too similar to your other personal information."
+ msgstr "ÐÐ°ÑÐ°ÑÐ° Ð¿Ð°ÑÐ¾Ð»Ð° Ð½Ðµ Ð¼Ð¾Ð¶Ðµ Ð´Ð° Ð¿ÑÐ¸Ð»Ð¸ÑÐ° Ð½Ð° Ð¾ÑÑÐ°Ð½Ð°Ð»Ð°ÑÐ° ÐÐ¸ Ð»Ð¸ÑÐ½Ð° Ð¸Ð½ÑÐ¾ÑÐ¼Ð°ÑÐ¸Ñ."
+ 
+ msgid "This password is too common."
+ msgstr "Ð¢Ð°Ð·Ð¸ Ð¿Ð°ÑÐ¾Ð»Ð° Ðµ ÑÐµÑÑÐ¾ ÑÑÐµÑÐ°Ð½Ð°."
+ 
+-msgid "Your password can't be a commonly used password."
++msgid "Your password canât be a commonly used password."
+ msgstr "ÐÐ°ÑÐ°ÑÐ° Ð¿Ð°ÑÐ¾Ð»Ð° Ð½Ðµ Ð¼Ð¾Ð¶Ðµ Ð´Ð° Ð±ÑÐ´Ðµ ÑÐµÑÑÐ¾ ÑÑÐµÑÐ°Ð½Ð°."
+ 
+ msgid "This password is entirely numeric."
+ msgstr "Ð¢Ð°Ð·Ð¸ Ð¿Ð°ÑÐ¾Ð»Ð° Ðµ Ð¸Ð·ÑÑÐ»Ð¾ Ð¾Ñ ÑÐ¸ÑÑÐ¸."
+ 
+-msgid "Your password can't be entirely numeric."
++msgid "Your password canât be entirely numeric."
+ msgstr "ÐÐ°ÑÐ°ÑÐ° Ð¿Ð°ÑÐ¾Ð»Ð° Ð½Ðµ Ð¼Ð¾Ð¶Ðµ Ð´Ð° Ð±ÑÐ´Ðµ ÑÐ°Ð¼Ð¾ Ð¾Ñ ÑÐ¸ÑÑÐ¸."
+ 
+ #, python-format
+ msgid "Password reset on %(site_name)s"
+-msgstr "ÐÑÐ¾Ð¼ÐµÐ½ÐµÐ½Ð° Ð¿Ð°ÑÐ¾Ð»Ð° Ð½Ð° %(site_name)s"
++msgstr "ÐÑÐ¾Ð¼ÑÐ½Ð° Ð½Ð° Ð¿Ð°ÑÐ¾Ð»Ð° Ð·Ð° %(site_name)s"
+ 
+ msgid ""
+ "Enter a valid username. This value may contain only English letters, "
+@@ -286,7 +293,7 @@ msgid "Password reset"
+ msgstr "ÐÐ°Ð±ÑÐ°Ð²ÐµÐ½Ð° Ð¿Ð°ÑÐ¾Ð»Ð°"
+ 
+ msgid "Password reset sent"
+-msgstr "ÐÑÐ»Ð¸ÑÐ°Ð½Ðµ Ð½Ð° Ð¿Ð°ÑÐ¾Ð»Ð°ÑÐ° Ð¸Ð·Ð¿ÑÐ°ÑÐµÐ½Ð¾"
++msgstr "ÐÑÐ»Ð¸ÑÐ°Ð½Ðµ Ð½Ð° Ð¿Ð°ÑÐ¾Ð»Ð°ÑÐ° Ðµ Ð¸Ð·Ð¿ÑÐ°ÑÐµÐ½Ð¾"
+ 
+ msgid "Enter new password"
+ msgstr "ÐÑÐ²ÐµÐ´ÐµÑÐµ Ð½Ð¾Ð²Ð° Ð¿Ð°ÑÐ¾Ð»Ð°"
+diff --git a/django/contrib/auth/locale/cs/LC_MESSAGES/django.mo b/django/contrib/auth/locale/cs/LC_MESSAGES/django.mo
+index fcbece0840..71403aec13 100644
+Binary files a/django/contrib/auth/locale/cs/LC_MESSAGES/django.mo and b/django/contrib/auth/locale/cs/LC_MESSAGES/django.mo differ
+diff --git a/django/contrib/auth/locale/cs/LC_MESSAGES/django.po b/django/contrib/auth/locale/cs/LC_MESSAGES/django.po
+index ec7130da70..78b6fc49e2 100644
+--- a/django/contrib/auth/locale/cs/LC_MESSAGES/django.po
++++ b/django/contrib/auth/locale/cs/LC_MESSAGES/django.po
+@@ -5,13 +5,13 @@
+ # Jannis Leidel <jannis@leidel.info>, 2011
+ # TomÃ¡Å¡ Ehrlich <tomas.ehrlich@gmail.com>, 2015
+ # VlÃ¡Äa Macek <macek@sandbox.cz>, 2013-2014
+-# VlÃ¡Äa Macek <macek@sandbox.cz>, 2015-2017,2019,2021
++# VlÃ¡Äa Macek <macek@sandbox.cz>, 2015-2017,2019,2021-2022
+ msgid ""
+ msgstr ""
+ "Project-Id-Version: django
+"
+ "Report-Msgid-Bugs-To: 
+"
+-"POT-Creation-Date: 2019-09-08 17:27+0200
+"
+-"PO-Revision-Date: 2021-03-18 23:35+0000
+"
++"POT-Creation-Date: 2021-09-21 10:22+0200
+"
++"PO-Revision-Date: 2022-01-04 18:49+0000
+"
+ "Last-Translator: VlÃ¡Äa Macek <macek@sandbox.cz>
+"
+ "Language-Team: Czech (http://www.transifex.com/django/django/language/cs/)
+"
+ "MIME-Version: 1.0
+"
+@@ -137,6 +137,9 @@ msgstr "faktor prÃ¡ce"
+ msgid "checksum"
+ msgstr "kontrolnÃ­ souÄet"
+ 
++msgid "block size"
++msgstr "velikost bloku"
++
+ msgid "name"
+ msgstr "nÃ¡zev"
+ 
+diff --git a/django/contrib/auth/locale/vi/LC_MESSAGES/django.mo b/django/contrib/auth/locale/vi/LC_MESSAGES/django.mo
+index 3eb1a55970..eb319783c9 100644
+Binary files a/django/contrib/auth/locale/vi/LC_MESSAGES/django.mo and b/django/contrib/auth/locale/vi/LC_MESSAGES/django.mo differ
+diff --git a/django/contrib/auth/locale/vi/LC_MESSAGES/django.po b/django/contrib/auth/locale/vi/LC_MESSAGES/django.po
+index 4790c7e84b..a6b540a06e 100644
+--- a/django/contrib/auth/locale/vi/LC_MESSAGES/django.po
++++ b/django/contrib/auth/locale/vi/LC_MESSAGES/django.po
+@@ -5,14 +5,15 @@
+ # Anh Phan <vietnamesel10n@gmail.com>, 2013
+ # Tran <hongdiepkien@gmail.com>, 2011
+ # Tran Van <vantxm@yahoo.co.uk>, 2012
++# tinnguyen121221, 2021
+ # xgenvn <xgenvn@gmail.com>, 2014
+ msgid ""
+ msgstr ""
+ "Project-Id-Version: django
+"
+ "Report-Msgid-Bugs-To: 
+"
+-"POT-Creation-Date: 2017-09-24 13:46+0200
+"
+-"PO-Revision-Date: 2017-09-24 14:24+0000
+"
+-"Last-Translator: Jannis Leidel <jannis@leidel.info>
+"
++"POT-Creation-Date: 2021-09-21 10:22+0200
+"
++"PO-Revision-Date: 2021-12-23 17:49+0000
+"
++"Last-Translator: tinnguyen121221
+"
+ "Language-Team: Vietnamese (http://www.transifex.com/django/django/language/"
+ "vi/)
+"
+ "MIME-Version: 1.0
+"
+@@ -32,7 +33,7 @@ msgstr "Nhá»¯ng ngÃ y quan trá»ng"
+ 
+ #, python-format
+ msgid "%(name)s object with primary key %(key)r does not exist."
+-msgstr ""
++msgstr " Äá»i tÆ°á»£ng %(name)s  vá»i khÃ³a chÃ­nh %(key)r khÃ´ng tá»n táº¡i."
+ 
+ msgid "Password changed successfully."
+ msgstr "Máº­t kháº©u thay Äá»i thÃ nh cÃ´ng"
+@@ -56,8 +57,8 @@ msgstr "ChÆ°a Äáº·t máº­t kháº©u"
+ msgid "Invalid password format or unknown hashing algorithm."
+ msgstr "Äá»nh dáº¡ng cá»§a máº­t kháº©u khÃ´ng ÄÃºng hoáº·c thuáº­t toÃ¡n hash chÆ°a rÃµ rÃ ng."
+ 
+-msgid "The two password fields didn't match."
+-msgstr "Hai trÆ°á»ng máº­t kháº©u khÃ´ng giá»ng nhau"
++msgid "The two password fields didnât match."
++msgstr "Hai trÆ°á»ng máº­t kháº©u khÃ´ng giá»ng nhau."
+ 
+ msgid "Password"
+ msgstr "Máº­t kháº©u"
+@@ -66,12 +67,15 @@ msgid "Password confirmation"
+ msgstr "XÃ¡c nháº­n máº­t kháº©u"
+ 
+ msgid "Enter the same password as before, for verification."
+-msgstr ""
++msgstr "Nháº­p láº¡i máº­t kháº©u Äá» xÃ¡c nháº­n."
+ 
+ msgid ""
+-"Raw passwords are not stored, so there is no way to see this user's "
++"Raw passwords are not stored, so there is no way to see this userâs "
+ "password, but you can change the password using <a href="{}">this form</a>."
+ msgstr ""
++"Máº­t kháº©u khÃ´ng ÄÆ°á»£c lÆ°u trá»¯, vÃ¬ váº­y khÃ´ng cÃ³ cÃ¡ch nÃ o Äá» xem máº­t kháº©u cá»§a "
++"ngÆ°á»i dÃ¹ng, nhÆ°ng báº¡n cÃ³ thá» dÃ¹ng <a href="{}">biá»u máº«u</a> nÃ y Äá» thay "
++"Äá»i."
+ 
+ #, python-format
+ msgid ""
+@@ -115,19 +119,19 @@ msgid "hash"
+ msgstr "bÄm"
+ 
+ msgid "variety"
+-msgstr ""
++msgstr "variety"
+ 
+ msgid "version"
+-msgstr ""
++msgstr "version"
+ 
+ msgid "memory cost"
+-msgstr ""
++msgstr "memory cost"
+ 
+ msgid "time cost"
+-msgstr ""
++msgstr "time cost"
+ 
+ msgid "parallelism"
+-msgstr ""
++msgstr "parallelism"
+ 
+ msgid "work factor"
+ msgstr "yáº¿u tá» cÃ´ng viá»c"
+@@ -135,11 +139,14 @@ msgstr "yáº¿u tá» cÃ´ng viá»c"
+ msgid "checksum"
+ msgstr "kiá»m tra"
+ 
++msgid "block size"
++msgstr "block size"
++
+ msgid "name"
+ msgstr "TÃªn"
+ 
+ msgid "content type"
+-msgstr ""
++msgstr "kiá»u ná»i dung"
+ 
+ msgid "codename"
+ msgstr "tÃªn mÃ£"
+@@ -170,6 +177,8 @@ msgid ""
+ "The groups this user belongs to. A user will get all permissions granted to "
+ "each of their groups."
+ msgstr ""
++"CÃ¡c nhÃ³m ngÆ°á»i dÃ¹ng nÃ y thuá»c vá». NgÆ°á»i dÃ¹ng sáº½ nháº­n ÄÆ°á»£c táº¥t cáº£ cÃ¡c quyá»n "
++"ÄÆ°á»£c cáº¥p cho má»i nhÃ³m."
+ 
+ msgid "user permissions"
+ msgstr "quyá»n cá»§a ngÆ°á»i sá»­ dá»¥ng"
+@@ -181,7 +190,7 @@ msgid "username"
+ msgstr "TÃªn ÄÄng nháº­p"
+ 
+ msgid "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."
+-msgstr ""
++msgstr "YÃªu cáº§u. 150 kÃ½ tá»± hoáº·c Ã­t hÆ¡n. Chá» lÃ  chá»¯ cÃ¡i, chá»¯ sá» vÃ  @/./+/-/_."
+ 
+ msgid "A user with that username already exists."
+ msgstr "TÃªn ÄÄng nháº­p ÄÃ£ ÄÆ°á»£c sá»­ dá»¥ng"
+@@ -227,31 +236,31 @@ msgid ""
+ msgid_plural ""
+ "This password is too short. It must contain at least %(min_length)d "
+ "characters."
+-msgstr[0] ""
++msgstr[0] "Máº­t kháº©u quÃ¡ ngáº¯n. NÃ³ pháº£i chá»©a Ã­t nháº¥t %(min_length)d kÃ½ tá»±."
+ 
+ #, python-format
+ msgid "Your password must contain at least %(min_length)d character."
+ msgid_plural "Your password must contain at least %(min_length)d characters."
+-msgstr[0] ""
++msgstr[0] "Máº­t kháº©u cá»§a báº¡n pháº£i chá»©a Ã­t nháº¥t %(min_length)d kÃ½ tá»±."
+ 
+ #, python-format
+ msgid "The password is too similar to the %(verbose_name)s."
+-msgstr ""
++msgstr "Máº­t kháº©u quÃ¡ giá»ng vá»i %(verbose_name)s."
+ 
+-msgid "Your password can't be too similar to your other personal information."
+-msgstr ""
++msgid "Your password canât be too similar to your other personal information."
++msgstr "Máº­t kháº©u cá»§a báº¡n khÃ´ng ÄÆ°á»£c quÃ¡ giá»ng vá»i thÃ´ng tin cÃ¡ nhÃ¢n khÃ¡c."
+ 
+ msgid "This password is too common."
+-msgstr ""
++msgstr "Máº­t kháº©u nÃ y quÃ¡ phá» biáº¿n."
+ 
+-msgid "Your password can't be a commonly used password."
+-msgstr ""
++msgid "Your password canât be a commonly used password."
++msgstr "Máº­t kháº©u cá»§a báº¡n khÃ´ng ÄÆ°á»£c lÃ  máº­t kháº©u ÄÆ°á»£c dÃ¹ng phá» biáº¿n."
+ 
+ msgid "This password is entirely numeric."
+-msgstr ""
++msgstr "Máº­t kháº©u nÃ y hoÃ n toÃ n lÃ  sá»."
+ 
+-msgid "Your password can't be entirely numeric."
+-msgstr ""
++msgid "Your password canât be entirely numeric."
++msgstr "Máº­t kháº©u cá»§a báº¡n khÃ´ng ÄÆ°á»£c hoÃ n toÃ n báº±ng sá»."
+ 
+ #, python-format
+ msgid "Password reset on %(site_name)s"
+@@ -261,11 +270,15 @@ msgid ""
+ "Enter a valid username. This value may contain only English letters, "
+ "numbers, and @/./+/-/_ characters."
+ msgstr ""
++"Äiá»n tÃªn ÄÄng nháº­p há»£p lá». GiÃ¡ trá» nÃ y chá» cÃ³ thá» chá»©a cÃ¡c chá»¯ cÃ¡i tiáº¿ng "
++"Anh, sá», vÃ  cÃ¡c kÃ½ tá»± @/./+/-/_"
+ 
+ msgid ""
+ "Enter a valid username. This value may contain only letters, numbers, and "
+ "@/./+/-/_ characters."
+ msgstr ""
++"Äiá»n tÃªn ÄÄng nháº­p há»£p lá». GiÃ¡ trá» nÃ y chá» cÃ³ thá» chá»©a cÃ¡c chá»¯ cÃ¡i, sá», vÃ  "
++"cÃ¡c kÃ½ tá»± @/./+/-/_"
+ 
+ msgid "Logged out"
+ msgstr "ÄÃ£ thoÃ¡t"
+@@ -274,7 +287,7 @@ msgid "Password reset"
+ msgstr "Äáº·t láº¡i máº­t kháº©u"
+ 
+ msgid "Password reset sent"
+-msgstr ""
++msgstr "ÄÃ£ gá»­i hÆ°á»ng dáº«n Äáº·t láº¡i máº­t kháº©u"
+ 
+ msgid "Enter new password"
+ msgstr "Nháº­p máº­t kháº©u má»i"
+diff --git a/django/contrib/contenttypes/locale/bg/LC_MESSAGES/django.mo b/django/contrib/contenttypes/locale/bg/LC_MESSAGES/django.mo
+index a861e2f65b..20e9b668ea 100644
+Binary files a/django/contrib/contenttypes/locale/bg/LC_MESSAGES/django.mo and b/django/contrib/contenttypes/locale/bg/LC_MESSAGES/django.mo differ
+diff --git a/django/contrib/contenttypes/locale/bg/LC_MESSAGES/django.po b/django/contrib/contenttypes/locale/bg/LC_MESSAGES/django.po
+index ac56556672..9169509aaa 100644
+--- a/django/contrib/contenttypes/locale/bg/LC_MESSAGES/django.po
++++ b/django/contrib/contenttypes/locale/bg/LC_MESSAGES/django.po
+@@ -1,6 +1,7 @@
+ # This file is distributed under the same license as the Django package.
+ #
+ # Translators:
++# arneatec <arneatec@gmail.com>, 2022
+ # Boris Chervenkov <office@sentido.bg>, 2012
+ # Georgi Kostadinov <grgkostadinov@gmail.com>, 2012
+ # Jannis Leidel <jannis@leidel.info>, 2011
+@@ -9,9 +10,9 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: django
+"
+ "Report-Msgid-Bugs-To: 
+"
+-"POT-Creation-Date: 2015-01-17 11:07+0100
+"
+-"PO-Revision-Date: 2017-09-19 16:40+0000
+"
+-"Last-Translator: Jannis Leidel <jannis@leidel.info>
+"
++"POT-Creation-Date: 2019-09-08 17:27+0200
+"
++"PO-Revision-Date: 2022-01-13 18:20+0000
+"
++"Last-Translator: arneatec <arneatec@gmail.com>
+"
+ "Language-Team: Bulgarian (http://www.transifex.com/django/django/language/"
+ "bg/)
+"
+ "MIME-Version: 1.0
+"
+@@ -37,9 +38,9 @@ msgid "Content type %(ct_id)s object has no associated model"
+ msgstr "ÐÐ±ÐµÐºÑ Ñ ÑÐ¸Ð¿ Ð½Ð° ÑÑÐ´ÑÑÐ¶Ð°Ð½Ð¸ÐµÑÐ¾ %(ct_id)s Ð½ÑÐ¼Ð° Ð°ÑÐ¾ÑÐ¸Ð¸ÑÐ°Ð½ Ð¼Ð¾Ð´ÐµÐ»."
+ 
+ #, python-format
+-msgid "Content type %(ct_id)s object %(obj_id)s doesn't exist"
++msgid "Content type %(ct_id)s object %(obj_id)s doesnât exist"
+ msgstr "ÐÐ±ÐµÐºÑ %(obj_id)s Ñ ÑÐ¸Ð¿ Ð½Ð° ÑÑÐ´ÑÑÐ¶Ð°Ð½Ð¸ÐµÑÐ¾ %(ct_id)s Ð½Ðµ ÑÑÑÐµÑÑÐ²ÑÐ²Ð°."
+ 
+ #, python-format
+-msgid "%(ct_name)s objects don't have a get_absolute_url() method"
++msgid "%(ct_name)s objects donât have a get_absolute_url() method"
+ msgstr "%(ct_name)s Ð¾Ð±ÐµÐºÑÐ¸ Ð½ÑÐ¼Ð°Ñ Ð¼ÐµÑÐ¾Ð´Ð° get_absolute_url()"
+diff --git a/django/contrib/flatpages/locale/bg/LC_MESSAGES/django.mo b/django/contrib/flatpages/locale/bg/LC_MESSAGES/django.mo
+index 456d4caed2..e7633dd88a 100644
+Binary files a/django/contrib/flatpages/locale/bg/LC_MESSAGES/django.mo and b/django/contrib/flatpages/locale/bg/LC_MESSAGES/django.mo differ
+diff --git a/django/contrib/flatpages/locale/bg/LC_MESSAGES/django.po b/django/contrib/flatpages/locale/bg/LC_MESSAGES/django.po
+index 0b00b8e442..f7e3535011 100644
+--- a/django/contrib/flatpages/locale/bg/LC_MESSAGES/django.po
++++ b/django/contrib/flatpages/locale/bg/LC_MESSAGES/django.po
+@@ -1,6 +1,7 @@
+ # This file is distributed under the same license as the Django package.
+ #
+ # Translators:
++# arneatec <arneatec@gmail.com>, 2022
+ # Jannis Leidel <jannis@leidel.info>, 2011
+ # Venelin Stoykov <vkstoykov@gmail.com>, 2016
+ # vestimir <vestimir@gmail.com>, 2014
+@@ -8,9 +9,9 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: django
+"
+ "Report-Msgid-Bugs-To: 
+"
+-"POT-Creation-Date: 2015-10-09 17:42+0200
+"
+-"PO-Revision-Date: 2017-09-19 16:40+0000
+"
+-"Last-Translator: Venelin Stoykov <vkstoykov@gmail.com>
+"
++"POT-Creation-Date: 2019-09-08 17:27+0200
+"
++"PO-Revision-Date: 2022-01-14 11:31+0000
+"
++"Last-Translator: arneatec <arneatec@gmail.com>
+"
+ "Language-Team: Bulgarian (http://www.transifex.com/django/django/language/"
+ "bg/)
+"
+ "MIME-Version: 1.0
+"
+@@ -29,27 +30,31 @@ msgid "URL"
+ msgstr "URL"
+ 
+ msgid ""
+-"Example: '/about/contact/'. Make sure to have leading and trailing slashes."
++"Example: â/about/contact/â. Make sure to have leading and trailing slashes."
+ msgstr ""
+-"ÐÑÐ¸Ð¼ÐµÑ: '/about/contact/'.  ÐÐ°ÑÐ°Ð»Ð½Ð°ÑÐ° Ð¸ ÐºÑÐ°Ð¹Ð½Ð°ÑÐ° Ð½Ð°ÐºÐ»Ð¾Ð½ÐµÐ½Ð° ÑÐµÑÑÐ¸ÑÐºÐ° ÑÐ° "
+-"Ð·Ð°Ð´ÑÐ»Ð¶Ð¸ÑÐµÐ»Ð½Ð¸.  "
++"ÐÑÐ¸Ð¼ÐµÑ: "/about/contact/".  ÐÐ°ÑÐ°Ð»Ð½Ð°ÑÐ° Ð¸ ÐºÑÐ°Ð¹Ð½Ð°ÑÐ° Ð½Ð°ÐºÐ»Ð¾Ð½ÐµÐ½Ð° ÑÐµÑÑÐ¸ÑÐºÐ° ÑÐ° "
++"Ð·Ð°Ð´ÑÐ»Ð¶Ð¸ÑÐµÐ»Ð½Ð¸."
+ 
+ msgid ""
+ "This value must contain only letters, numbers, dots, underscores, dashes, "
+ "slashes or tildes."
+ msgstr ""
+ "Ð¢Ð°Ð·Ð¸ ÑÑÐ¾Ð¹Ð½Ð¾ÑÑ ÑÑÑÐ±Ð²Ð° Ð´Ð° ÑÑÐ´ÑÑÐ¶Ð° ÑÐ°Ð¼Ð¾ Ð±ÑÐºÐ²Ð¸, ÑÐ¸ÑÑÐ¸, ÑÐ¾ÑÐºÐ¸, Ð´Ð¾Ð»Ð½Ð¸ ÑÐ¸ÑÐµÑÐ°, "
+-"Ð½Ð°ÐºÐ»Ð¾Ð½ÐµÐ½Ð¸ ÑÐµÑÑÐ¸ Ð¸Ð»Ð¸ tildes."
++"ÑÐ¸ÑÐµÑÐ°, Ð½Ð°ÐºÐ»Ð¾Ð½ÐµÐ½Ð¸ ÑÐµÑÑÐ¸ Ð¸Ð»Ð¸ ÑÐ¸Ð»Ð´Ð¸."
++
++msgid "Example: â/about/contactâ. Make sure to have a leading slash."
++msgstr ""
++"ÐÑÐ¸Ð¼ÐµÑ: "/about/contact/". ÐÐ°ÑÐ°Ð»Ð½Ð°ÑÐ° Ð½Ð°ÐºÐ»Ð¾Ð½ÐµÐ½Ð° ÑÐµÑÑÐ¸ÑÐºÐ° Ðµ Ð·Ð°Ð´ÑÐ»Ð¶Ð¸ÑÐµÐ»Ð½Ð°. "
+ 
+ msgid "URL is missing a leading slash."
+-msgstr "URL Ð»Ð¸Ð¿ÑÐ²Ð° Ð²Ð¾Ð´ÐµÑÐ° ÑÐµÑÑÐ°."
++msgstr "Ð URL Ð»Ð¸Ð¿ÑÐ²Ð° Ð½Ð°ÑÐ°Ð»Ð½Ð° Ð½Ð°ÐºÐ»Ð¾Ð½ÐµÐ½Ð° ÑÐµÑÑÐ°."
+ 
+ msgid "URL is missing a trailing slash."
+-msgstr "URL Ð»Ð¸Ð¿ÑÐ²Ð° Ð½Ð°ÐºÐ»Ð¾Ð½ÐµÐ½Ð° ÑÐµÑÑÐ°."
++msgstr "Ð URL Ð»Ð¸Ð¿ÑÐ²Ð° Ð·Ð°Ð²ÑÑÑÐ²Ð°ÑÐ° Ð½Ð°ÐºÐ»Ð¾Ð½ÐµÐ½Ð° ÑÐµÑÑÐ°."
+ 
+ #, python-format
+ msgid "Flatpage with url %(url)s already exists for site %(site)s"
+-msgstr "Flatpage Ñ url %(url)s Ð²ÐµÑÐµ ÑÑÑÐµÑÑÐ²ÑÐ²Ð° Ð·Ð° site %(site)s"
++msgstr "Flatpage Ñ url %(url)s Ð²ÐµÑÐµ ÑÑÑÐµÑÑÐ²ÑÐ²Ð° Ð·Ð° ÑÐ°Ð¹Ñ %(site)s"
+ 
+ msgid "title"
+ msgstr "Ð·Ð°Ð³Ð»Ð°Ð²Ð¸Ðµ"
+@@ -64,11 +69,11 @@ msgid "template name"
+ msgstr "Ð¸Ð¼Ðµ Ð½Ð° ÑÐ°Ð±Ð»Ð¾Ð½"
+ 
+ msgid ""
+-"Example: 'flatpages/contact_page.html'. If this isn't provided, the system "
+-"will use 'flatpages/default.html'."
++"Example: âflatpages/contact_page.htmlâ. If this isnât provided, the system "
++"will use âflatpages/default.htmlâ."
+ msgstr ""
+-"ÐÑÐ¸Ð¼ÐµÑ: 'flatpages/contact_page.html'.  ÐÐºÐ¾ ÑÐ¾Ð²Ð° Ð½Ðµ Ðµ ÑÐºÐ°Ð·Ð°Ð½Ð¾, ÑÐ¸ÑÑÐµÐ¼Ð°ÑÐ° ÑÐµ "
+-"Ð¸Ð·Ð¿Ð¾Ð»Ð·Ð²Ð° 'flatpages/default.html'.  "
++"ÐÑÐ¸Ð¼ÐµÑ: "flatpages/contact_page.html".  ÐÐºÐ¾ ÑÐ¾Ð²Ð° Ð½Ðµ Ðµ ÑÐºÐ°Ð·Ð°Ð½Ð¾, ÑÐ¸ÑÑÐµÐ¼Ð°ÑÐ° "
++"ÑÐµ Ð¸Ð·Ð¿Ð¾Ð»Ð·Ð²Ð° "flatpages/default.html".  "
+ 
+ msgid "registration required"
+ msgstr "Ð¸Ð·Ð¸ÑÐºÐ²Ð° ÑÐµ ÑÐµÐ³Ð¸ÑÑÑÐ°ÑÐ¸Ñ"
+diff --git a/django/contrib/humanize/locale/bg/LC_MESSAGES/django.mo b/django/contrib/humanize/locale/bg/LC_MESSAGES/django.mo
+index fb3f047b64..85cdff8ffe 100644
+Binary files a/django/contrib/humanize/locale/bg/LC_MESSAGES/django.mo and b/django/contrib/humanize/locale/bg/LC_MESSAGES/django.mo differ
+diff --git a/django/contrib/humanize/locale/bg/LC_MESSAGES/django.po b/django/contrib/humanize/locale/bg/LC_MESSAGES/django.po
+index 994549d74c..a4f6ad6605 100644
+--- a/django/contrib/humanize/locale/bg/LC_MESSAGES/django.po
++++ b/django/contrib/humanize/locale/bg/LC_MESSAGES/django.po
+@@ -1,17 +1,18 @@
+ # This file is distributed under the same license as the Django package.
+ #
+ # Translators:
++# arneatec <arneatec@gmail.com>, 2022
+ # Georgi Kostadinov <grgkostadinov@gmail.com>, 2012
+ # Jannis Leidel <jannis@leidel.info>, 2011
+-# Todor Lubenov <tgl.sysdev@gmail.com>, 2011,2015
++# Todor Lubenov <tlubenov@gmail.com>, 2011,2015
+ # Venelin Stoykov <vkstoykov@gmail.com>, 2015
+ msgid ""
+ msgstr ""
+ "Project-Id-Version: django
+"
+ "Report-Msgid-Bugs-To: 
+"
+-"POT-Creation-Date: 2015-01-17 11:07+0100
+"
+-"PO-Revision-Date: 2017-09-19 16:40+0000
+"
+-"Last-Translator: Venelin Stoykov <vkstoykov@gmail.com>
+"
++"POT-Creation-Date: 2021-04-07 14:40+0200
+"
++"PO-Revision-Date: 2022-01-14 11:48+0000
+"
++"Last-Translator: arneatec <arneatec@gmail.com>
+"
+ "Language-Team: Bulgarian (http://www.transifex.com/django/django/language/"
+ "bg/)
+"
+ "MIME-Version: 1.0
+"
+@@ -21,25 +22,62 @@ msgstr ""
+ "Plural-Forms: nplurals=2; plural=(n != 1);
+"
+ 
+ msgid "Humanize"
+-msgstr "ÐÐ±Ð»Ð°Ð³Ð¾ÑÐ¾Ð´ÑÐ²Ð°Ð¼"
+-
+-msgid "th"
+-msgstr "Ð¸"
+-
+-msgid "st"
+-msgstr "Ð²Ð¸"
+-
+-msgid "nd"
+-msgstr "ÑÐ¸"
+-
+-msgid "rd"
+-msgstr "ÑÐ¸"
+-
+-#, python-format
+-msgid "%(value).1f million"
+-msgid_plural "%(value).1f million"
+-msgstr[0] "%(value).1f Ð¼Ð¸Ð»Ð¸Ð¾Ð½"
+-msgstr[1] "%(value).1f Ð¼Ð¸Ð»Ð¸Ð¾Ð½Ð°"
++msgstr "ÐÑÐ¾Ð²ÐµÑÐ°Ð²Ð°Ð½Ðµ"
++
++#. Translators: Ordinal format for 11 (11th), 12 (12th), and 13 (13th).
++msgctxt "ordinal 11, 12, 13"
++msgid "{}th"
++msgstr "{}ÑÐ¸"
++
++#. Translators: Ordinal format when value ends with 0, e.g. 80th.
++msgctxt "ordinal 0"
++msgid "{}th"
++msgstr "{}ÐµÐ½"
++
++#. Translators: Ordinal format when value ends with 1, e.g. 81st, except 11.
++msgctxt "ordinal 1"
++msgid "{}st"
++msgstr "{}Ð²Ð¸"
++
++#. Translators: Ordinal format when value ends with 2, e.g. 82nd, except 12.
++msgctxt "ordinal 2"
++msgid "{}nd"
++msgstr "{}ÑÐ¸"
++
++#. Translators: Ordinal format when value ends with 3, e.g. 83th, except 13.
++msgctxt "ordinal 3"
++msgid "{}rd"
++msgstr "{}ÑÐ¸"
++
++#. Translators: Ordinal format when value ends with 4, e.g. 84th.
++msgctxt "ordinal 4"
++msgid "{}th"
++msgstr "{}ÑÐ¸"
++
++#. Translators: Ordinal format when value ends with 5, e.g. 85th.
++msgctxt "ordinal 5"
++msgid "{}th"
++msgstr "{}ÑÐ¸"
++
++#. Translators: Ordinal format when value ends with 6, e.g. 86th.
++msgctxt "ordinal 6"
++msgid "{}th"
++msgstr "{}ÑÐ¸"
++
++#. Translators: Ordinal format when value ends with 7, e.g. 87th.
++msgctxt "ordinal 7"
++msgid "{}th"
++msgstr "{}Ð¼Ð¸"
++
++#. Translators: Ordinal format when value ends with 8, e.g. 88th.
++msgctxt "ordinal 8"
++msgid "{}th"
++msgstr "{}Ð¼Ð¸"
++
++#. Translators: Ordinal format when value ends with 9, e.g. 89th.
++msgctxt "ordinal 9"
++msgid "{}th"
++msgstr "{}ÑÐ¸"
+ 
+ #, python-format
+ msgid "%(value)s million"
+@@ -47,120 +85,60 @@ msgid_plural "%(value)s million"
+ msgstr[0] "%(value)s Ð¼Ð¸Ð»Ð¸Ð¾Ð½"
+ msgstr[1] "%(value)s Ð¼Ð¸Ð»Ð¸Ð¾Ð½Ð°"
+ 
+-#, python-format
+-msgid "%(value).1f billion"
+-msgid_plural "%(value).1f billion"
+-msgstr[0] "%(value).1f Ð¼Ð¸Ð»Ð¸Ð°ÑÐ´"
+-msgstr[1] "%(value).1f Ð¼Ð¸Ð»Ð¸Ð°ÑÐ´Ð°"
+-
+ #, python-format
+ msgid "%(value)s billion"
+ msgid_plural "%(value)s billion"
+ msgstr[0] "%(value)s Ð¼Ð¸Ð»Ð¸Ð°ÑÐ´"
+ msgstr[1] "%(value)s Ð¼Ð¸Ð»Ð¸Ð°ÑÐ´Ð°"
+ 
+-#, python-format
+-msgid "%(value).1f trillion"
+-msgid_plural "%(value).1f trillion"
+-msgstr[0] "%(value).1f ÑÑÐ¸Ð»Ð¸Ð¾Ð½"
+-msgstr[1] "%(value).1f ÑÑÐ¸Ð»Ð¸Ð¾Ð½Ð°"
+-
+ #, python-format
+ msgid "%(value)s trillion"
+ msgid_plural "%(value)s trillion"
+ msgstr[0] "%(value)s ÑÑÐ¸Ð»Ð¸Ð¾Ð½"
+ msgstr[1] "%(value)s ÑÑÐ¸Ð»Ð¸Ð¾Ð½Ð°"
+ 
+-#, python-format
+-msgid "%(value).1f quadrillion"
+-msgid_plural "%(value).1f quadrillion"
+-msgstr[0] "%(value).1f ÐºÐ²Ð°Ð´ÑÐ¸Ð»Ð¸Ð¾Ð½"
+-msgstr[1] "%(value).1f ÐºÐ²Ð°Ð´ÑÐ¸Ð»Ð¸Ð¾Ð½Ð°"
+-
+ #, python-format
+ msgid "%(value)s quadrillion"
+ msgid_plural "%(value)s quadrillion"
+ msgstr[0] "%(value)s ÐºÐ²Ð°Ð´ÑÐ¸Ð»Ð¸Ð¾Ð½"
+ msgstr[1] "%(value)s ÐºÐ²Ð°Ð´ÑÐ¸Ð»Ð¸Ð¾Ð½Ð°"
+ 
+-#, python-format
+-msgid "%(value).1f quintillion"
+-msgid_plural "%(value).1f quintillion"
+-msgstr[0] "%(value).1f ÐºÐ²Ð¸Ð½ÑÐ¸Ð»Ð¸Ð¾Ð½"
+-msgstr[1] "%(value).1f ÐºÐ²Ð¸Ð½ÑÐ¸Ð»Ð¸Ð¾Ð½Ð°"
+-
+ #, python-format
+ msgid "%(value)s quintillion"
+ msgid_plural "%(value)s quintillion"
+ msgstr[0] "%(value)s ÐºÐ²Ð¸Ð½ÑÐ¸Ð»Ð¸Ð¾Ð½"
+ msgstr[1] "%(value)s ÐºÐ²Ð¸Ð½ÑÐ¸Ð»Ð¸Ð¾Ð½Ð°"
+ 
+-#, python-format
+-msgid "%(value).1f sextillion"
+-msgid_plural "%(value).1f sextillion"
+-msgstr[0] "%(value).1f ÑÐµÐºÑÑÐ¸Ð»Ð¸Ð¾Ð½"
+-msgstr[1] "%(value).1f ÑÐµÐºÑÑÐ¸Ð»Ð¸Ð¾Ð½Ð°"
+-
+ #, python-format
+ msgid "%(value)s sextillion"
+ msgid_plural "%(value)s sextillion"
+ msgstr[0] "%(value)s ÑÐµÐºÑÑÐ¸Ð»Ð¸Ð¾Ð½"
+ msgstr[1] "%(value)s ÑÐµÐºÑÑÐ¸Ð»Ð¸Ð¾Ð½Ð°"
+ 
+-#, python-format
+-msgid "%(value).1f septillion"
+-msgid_plural "%(value).1f septillion"
+-msgstr[0] "%(value).1f ÑÐµÐ¿ÑÐ¸Ð»Ð¸Ð¾Ð½"
+-msgstr[1] "%(value).1f ÑÐµÐ¿ÑÐ¸Ð»Ð¸Ð¾Ð½Ð°"
+-
+ #, python-format
+ msgid "%(value)s septillion"
+ msgid_plural "%(value)s septillion"
+ msgstr[0] "%(value)s ÑÐµÐ¿ÑÐ¸Ð»Ð¸Ð¾Ð½"
+ msgstr[1] "%(value)s ÑÐµÐ¿ÑÐ¸Ð»Ð¸Ð¾Ð½Ð°"
+ 
+-#, python-format
+-msgid "%(value).1f octillion"
+-msgid_plural "%(value).1f octillion"
+-msgstr[0] "%(value).1f Ð¾ÐºÑÐ¸Ð»Ð¸Ð¾Ð½"
+-msgstr[1] "%(value).1f Ð¾ÐºÑÐ¸Ð»Ð¸Ð¾Ð½Ð°"
+-
+ #, python-format
+ msgid "%(value)s octillion"
+ msgid_plural "%(value)s octillion"
+ msgstr[0] "%(value)s Ð¾ÐºÑÐ¸Ð»Ð¸Ð¾Ð½"
+ msgstr[1] "%(value)s Ð¾ÐºÑÐ¸Ð»Ð¸Ð¾Ð½Ð°"
+ 
+-#, python-format
+-msgid "%(value).1f nonillion"
+-msgid_plural "%(value).1f nonillion"
+-msgstr[0] "%(value).1f Ð½Ð¾Ð½Ð¸Ð»Ð¸Ð¾Ð½"
+-msgstr[1] "%(value).1f Ð½Ð¾Ð½Ð¸Ð»Ð¸Ð¾Ð½Ð°"
+-
+ #, python-format
+ msgid "%(value)s nonillion"
+ msgid_plural "%(value)s nonillion"
+ msgstr[0] "%(value)s Ð½Ð¾Ð½Ð¸Ð»Ð¸Ð¾Ð½"
+ msgstr[1] "%(value)s Ð½Ð¾Ð½Ð¸Ð»Ð¸Ð¾Ð½Ð°"
+ 
+-#, python-format
+-msgid "%(value).1f decillion"
+-msgid_plural "%(value).1f decillion"
+-msgstr[0] "%(value).1f Ð´ÐµÑÐ¸Ð»Ð¸Ð¾Ð½"
+-msgstr[1] "%(value).1f Ð´ÐµÑÐ¸Ð»Ð¸Ð¾Ð½Ð°"
+-
+ #, python-format
+ msgid "%(value)s decillion"
+ msgid_plural "%(value)s decillion"
+ msgstr[0] "%(value)s Ð´ÐµÑÐ¸Ð»Ð¸Ð¾Ð½"
+ msgstr[1] "%(value)s Ð´ÐµÑÐ¸Ð»Ð¸Ð¾Ð½Ð°"
+ 
+-#, python-format
+-msgid "%(value).1f googol"
+-msgid_plural "%(value).1f googol"
+-msgstr[0] "%(value).1f Ð³ÑÐ³Ð¾Ð»"
+-msgstr[1] "%(value).1f Ð³ÑÐ³Ð¾Ð»Ð°"
+-
+ #, python-format
+ msgid "%(value)s googol"
+ msgid_plural "%(value)s googol"
+@@ -198,68 +176,157 @@ msgid "today"
+ msgstr "Ð´Ð½ÐµÑ"
+ 
+ msgid "tomorrow"
+-msgstr "Ð£ÑÑÐµ"
++msgstr "ÑÑÑÐµ"
+ 
+ msgid "yesterday"
+ msgstr "Ð²ÑÐµÑÐ°"
+ 
++#. Translators: delta will contain a string like '2 months' or '1 month, 2
++#. weeks'
+ #, python-format
+-msgctxt "naturaltime"
+ msgid "%(delta)s ago"
+ msgstr "Ð¿ÑÐµÐ´Ð¸ %(delta)s"
+ 
+-msgid "now"
+-msgstr "ÑÐµÐ³Ð°"
+-
+-#. Translators: please keep a non-breaking space (U+00A0)
+-#. between count and time unit.
++#. Translators: please keep a non-breaking space (U+00A0) between count
++#. and time unit.
+ #, python-format
+-msgid "a second ago"
+-msgid_plural "%(count)sÂ seconds ago"
+-msgstr[0] "Ð¿ÑÐµÐ´Ð¸ ÑÐµÐºÑÐ½Ð´Ð°"
+-msgstr[1] "Ð¿ÑÐµÐ´Ð¸ %(count)s ÑÐµÐºÑÐ½Ð´Ð¸"
++msgid "an hour ago"
++msgid_plural "%(count)sÂ hours ago"
++msgstr[0] "Ð¿ÑÐµÐ´Ð¸ ÐµÐ´Ð¸Ð½ ÑÐ°Ñ"
++msgstr[1] "Ð¿ÑÐµÐ´Ð¸ %(count)sÂ ÑÐ°ÑÐ°"
+ 
+-#. Translators: please keep a non-breaking space (U+00A0)
+-#. between count and time unit.
++#. Translators: please keep a non-breaking space (U+00A0) between count
++#. and time unit.
+ #, python-format
+ msgid "a minute ago"
+ msgid_plural "%(count)sÂ minutes ago"
+ msgstr[0] "Ð¿ÑÐµÐ´Ð¸ Ð¼Ð¸Ð½ÑÑÐ°"
+-msgstr[1] "Ð¿ÑÐµÐ´Ð¸ %(count)s Ð¼Ð¸Ð½ÑÑÐ¸"
++msgstr[1] "Ð¿ÑÐµÐ´Ð¸ %(count)sÂ Ð¼Ð¸Ð½ÑÑÐ¸"
+ 
+-#. Translators: please keep a non-breaking space (U+00A0)
+-#. between count and time unit.
++#. Translators: please keep a non-breaking space (U+00A0) between count
++#. and time unit.
+ #, python-format
+-msgid "an hour ago"
+-msgid_plural "%(count)sÂ hours ago"
+-msgstr[0] "Ð¿ÑÐµÐ´Ð¸ ÐµÐ´Ð¸Ð½ ÑÐ°Ñ"
+-msgstr[1] "Ð¿ÑÐµÐ´Ð¸ %(count)s ÑÐ°ÑÐ°"
++msgid "a second ago"
++msgid_plural "%(count)sÂ seconds ago"
++msgstr[0] "Ð¿ÑÐµÐ´Ð¸ ÑÐµÐºÑÐ½Ð´Ð°"
++msgstr[1] "Ð¿ÑÐµÐ´Ð¸ %(count)sÂ ÑÐµÐºÑÐ½Ð´Ð¸"
+ 
+-#, python-format
+-msgctxt "naturaltime"
+-msgid "%(delta)s from now"
+-msgstr "%(delta)s Ð¾Ñ ÑÐµÐ³Ð°"
++msgid "now"
++msgstr "ÑÐµÐ³Ð°"
+ 
+-#. Translators: please keep a non-breaking space (U+00A0)
+-#. between count and time unit.
++#. Translators: please keep a non-breaking space (U+00A0) between count
++#. and time unit.
+ #, python-format
+ msgid "a second from now"
+ msgid_plural "%(count)sÂ seconds from now"
+ msgstr[0] "ÑÐ»ÐµÐ´ ÑÐµÐºÑÐ½Ð´Ð°"
+-msgstr[1] "%(count)s ÑÐµÐºÑÐ½Ð´Ð¸ Ð¾Ñ ÑÐµÐ³Ð°"
++msgstr[1] "ÑÐ»ÐµÐ´ %(count)sÂ ÑÐµÐºÑÐ½Ð´Ð¸"
+ 
+-#. Translators: please keep a non-breaking space (U+00A0)
+-#. between count and time unit.
++#. Translators: please keep a non-breaking space (U+00A0) between count
++#. and time unit.
+ #, python-format
+ msgid "a minute from now"
+ msgid_plural "%(count)sÂ minutes from now"
+ msgstr[0] "ÑÐ»ÐµÐ´ Ð¼Ð¸Ð½ÑÑÐ°"
+-msgstr[1] "%(count)s Ð¼Ð¸Ð½ÑÑÐ¸ Ð¾Ñ ÑÐµÐ³Ð°"
++msgstr[1] "ÑÐ»ÐµÐ´ %(count)sÂ Ð¼Ð¸Ð½ÑÑÐ¸"
+ 
+-#. Translators: please keep a non-breaking space (U+00A0)
+-#. between count and time unit.
++#. Translators: please keep a non-breaking space (U+00A0) between count
++#. and time unit.
+ #, python-format
+ msgid "an hour from now"
+ msgid_plural "%(count)sÂ hours from now"
+ msgstr[0] "ÑÐ»ÐµÐ´ ÐµÐ´Ð¸Ð½ ÑÐ°Ñ"
+-msgstr[1] "%(count)s ÑÐ°ÑÐ° Ð¾Ñ ÑÐµÐ³Ð°"
++msgstr[1] "ÑÐ»ÐµÐ´ %(count)sÂ ÑÐ°ÑÐ°"
++
++#. Translators: delta will contain a string like '2 months' or '1 month, 2
++#. weeks'
++#, python-format
++msgid "%(delta)s from now"
++msgstr "ÑÐ»ÐµÐ´ %(delta)s"
++
++#. Translators: 'naturaltime-past' strings will be included in '%(delta)s ago'
++#, python-format
++msgctxt "naturaltime-past"
++msgid "%(num)d year"
++msgid_plural "%(num)d years"
++msgstr[0] "%(num)d Ð³Ð¾Ð´Ð¸Ð½Ð°"
++msgstr[1] "%(num)d Ð³Ð¾Ð´Ð¸Ð½Ð¸"
++
++#, python-format
++msgctxt "naturaltime-past"
++msgid "%(num)d month"
++msgid_plural "%(num)d months"
++msgstr[0] "%(num)d Ð¼ÐµÑÐµÑ"
++msgstr[1] "%(num)d Ð¼ÐµÑÐµÑÐ°"
++
++#, python-format
++msgctxt "naturaltime-past"
++msgid "%(num)d week"
++msgid_plural "%(num)d weeks"
++msgstr[0] "%(num)d ÑÐµÐ´Ð¼Ð¸ÑÐ°"
++msgstr[1] "%(num)d ÑÐµÐ´Ð¼Ð¸ÑÐ¸"
++
++#, python-format
++msgctxt "naturaltime-past"
++msgid "%(num)d day"
++msgid_plural "%(num)d days"
++msgstr[0] "%(num)d Ð´ÐµÐ½"
++msgstr[1] "%(num)d Ð´Ð½Ð¸"
++
++#, python-format
++msgctxt "naturaltime-past"
++msgid "%(num)d hour"
++msgid_plural "%(num)d hours"
++msgstr[0] "%(num)d ÑÐ°Ñ"
++msgstr[1] "%(num)d ÑÐ°ÑÐ°"
++
++#, python-format
++msgctxt "naturaltime-past"
++msgid "%(num)d minute"
++msgid_plural "%(num)d minutes"
++msgstr[0] "%(num)d Ð¼Ð¸Ð½ÑÑÐ°"
++msgstr[1] "%(num)d Ð¼Ð¸Ð½ÑÑÐ¸"
++
++#. Translators: 'naturaltime-future' strings will be included in '%(delta)s
++#. from now'
++#, python-format
++msgctxt "naturaltime-future"
++msgid "%(num)d year"
++msgid_plural "%(num)d years"
++msgstr[0] "%(num)d Ð³Ð¾Ð´Ð¸Ð½Ð°"
++msgstr[1] "%(num)d Ð³Ð¾Ð´Ð¸Ð½Ð¸"
++
++#, python-format
++msgctxt "naturaltime-future"
++msgid "%(num)d month"
++msgid_plural "%(num)d months"
++msgstr[0] "%(num)d Ð¼ÐµÑÐµÑ"
++msgstr[1] "%(num)d Ð¼ÐµÑÐµÑÐ°"
++
++#, python-format
++msgctxt "naturaltime-future"
++msgid "%(num)d week"
++msgid_plural "%(num)d weeks"
++msgstr[0] "%(num)d ÑÐµÐ´Ð¼Ð¸ÑÐ°"
++msgstr[1] "%(num)d ÑÐµÐ´Ð¼Ð¸ÑÐ¸"
++
++#, python-format
++msgctxt "naturaltime-future"
++msgid "%(num)d day"
++msgid_plural "%(num)d days"
++msgstr[0] "%(num)d Ð´ÐµÐ½"
++msgstr[1] "%(num)d Ð´Ð½Ð¸"
++
++#, python-format
++msgctxt "naturaltime-future"
++msgid "%(num)d hour"
++msgid_plural "%(num)d hours"
++msgstr[0] "%(num)d ÑÐ°Ñ"
++msgstr[1] "%(num)d ÑÐ°ÑÐ°"
++
++#, python-format
++msgctxt "naturaltime-future"
++msgid "%(num)d minute"
++msgid_plural "%(num)d minutes"
++msgstr[0] "%(num)d Ð¼Ð¸Ð½ÑÑÐ°"
++msgstr[1] "%(num)d Ð¼Ð¸Ð½ÑÑÐ¸"
+diff --git a/django/contrib/postgres/locale/bg/LC_MESSAGES/django.mo b/django/contrib/postgres/locale/bg/LC_MESSAGES/django.mo
+index f4aceb9b0e..57979ba3ad 100644
+Binary files a/django/contrib/postgres/locale/bg/LC_MESSAGES/django.mo and b/django/contrib/postgres/locale/bg/LC_MESSAGES/django.mo differ
+diff --git a/django/contrib/postgres/locale/bg/LC_MESSAGES/django.po b/django/contrib/postgres/locale/bg/LC_MESSAGES/django.po
+index 4ee210ec8d..c4a0dbf4f0 100644
+--- a/django/contrib/postgres/locale/bg/LC_MESSAGES/django.po
++++ b/django/contrib/postgres/locale/bg/LC_MESSAGES/django.po
+@@ -1,15 +1,16 @@
+ # This file is distributed under the same license as the Django package.
+ #
+ # Translators:
+-# Todor Lubenov <tgl.sysdev@gmail.com>, 2015
++# arneatec <arneatec@gmail.com>, 2022
++# Todor Lubenov <tlubenov@gmail.com>, 2015
+ # Venelin Stoykov <vkstoykov@gmail.com>, 2015
+ msgid ""
+ msgstr ""
+ "Project-Id-Version: django
+"
+ "Report-Msgid-Bugs-To: 
+"
+ "POT-Creation-Date: 2020-05-11 20:56+0200
+"
+-"PO-Revision-Date: 2020-05-12 20:01+0000
+"
+-"Last-Translator: Transifex Bot <>
+"
++"PO-Revision-Date: 2022-01-14 11:54+0000
+"
++"Last-Translator: arneatec <arneatec@gmail.com>
+"
+ "Language-Team: Bulgarian (http://www.transifex.com/django/django/language/"
+ "bg/)
+"
+ "MIME-Version: 1.0
+"
+@@ -23,23 +24,23 @@ msgstr "PostgreSQL ÑÐ°Ð·ÑÐ¸ÑÐµÐ½Ð¸Ñ"
+ 
+ #, python-format
+ msgid "Item %(nth)s in the array did not validate:"
+-msgstr ""
++msgstr "ÐÐ»ÐµÐ¼ÐµÐ½Ñ %(nth)s Ð² Ð¼Ð°ÑÐ¸Ð²Ð° Ð½Ðµ ÑÐµ Ð²Ð°Ð»Ð¸Ð´Ð¸ÑÐ°:"
+ 
+ msgid "Nested arrays must have the same length."
+-msgstr "ÐÐ»Ð¾Ð¶ÐµÐ½Ð¸ÑÐµ Ð¼Ð°ÑÐ¸Ð²Ð¸, ÑÑÑÐ±Ð²Ð° Ð´Ð° Ð¸Ð¼Ð°Ñ ÑÑÑÐ°ÑÐ° Ð´ÑÐ»Ð¶Ð¸Ð½Ð°."
++msgstr "ÐÐ»Ð¾Ð¶ÐµÐ½Ð¸ÑÐµ Ð¼Ð°ÑÐ¸Ð²Ð¸ ÑÑÑÐ±Ð²Ð° Ð´Ð° Ð¸Ð¼Ð°Ñ ÐµÐ´Ð½Ð°ÐºÐ²Ð° Ð´ÑÐ»Ð¶Ð¸Ð½Ð°."
+ 
+ msgid "Map of strings to strings/nulls"
+-msgstr ""
++msgstr "ÐÐ°Ð¿ Ð¾Ñ ÑÑÑÐ¸Ð½Ð³Ð¾Ð²Ðµ ÐºÑÐ¼ ÑÑÑÐ¸Ð½Ð³Ð¾Ð²Ðµ/null-Ð¾Ð²Ðµ"
+ 
+ #, python-format
+ msgid "The value of â%(key)sâ is not a string or null."
+-msgstr ""
++msgstr "Ð¡ÑÐ¾Ð¹Ð½Ð¾ÑÑÑÐ° Ð½Ð° â%(key)sâ Ð½Ðµ Ðµ ÑÑÑÐ¸Ð½Ð³ Ð¸Ð»Ð¸ null."
+ 
+ msgid "Could not load JSON data."
+-msgstr "ÐÐµ Ð¼Ð¾Ð¶Ð° Ð´Ð° Ð·Ð°ÑÐµÐ´Ð¸ JSON Ð´Ð°Ð½Ð½Ð¸ ."
++msgstr "ÐÐµ Ð¼Ð¾Ð¶Ð° Ð´Ð° Ð·Ð°ÑÐµÐ´Ð¸ JSON Ð´Ð°Ð½Ð½Ð¸."
+ 
+ msgid "Input must be a JSON dictionary."
+-msgstr ""
++msgstr "ÐÑÐ¾Ð´Ð½Ð¸ÑÐµ Ð´Ð°Ð½Ð½Ð¸ ÑÑÑÐ±Ð²Ð° Ð´Ð° ÑÐ° JSON ÑÐµÑÐ½Ð¸Ðº."
+ 
+ msgid "Enter two valid values."
+ msgstr "ÐÑÐ²ÐµÐ´ÐµÑÐµ Ð´Ð²Ðµ Ð²Ð°Ð»Ð¸Ð´Ð½Ð¸ ÑÑÐ¾Ð¹Ð½Ð¾ÑÑÐ¸."
+@@ -48,7 +49,7 @@ msgid "The start of the range must not exceed the end of the range."
+ msgstr "ÐÐ°ÑÐ°Ð»Ð¾ÑÐ¾ Ð½Ð° Ð¾Ð±ÑÐ²Ð°ÑÐ° Ð½Ðµ ÑÑÑÐ±Ð²Ð° Ð´Ð° Ð¿ÑÐµÐ²Ð¸ÑÐ°Ð²Ð° ÐºÑÐ°Ñ Ð¼Ñ."
+ 
+ msgid "Enter two whole numbers."
+-msgstr "ÐÑÐ²ÐµÐ´ÐµÑÐµ Ð´Ð²Ðµ ÑÐµÐ»Ð¸ ÑÐ¸ÑÐ»Ð°"
++msgstr "ÐÑÐ²ÐµÐ´ÐµÑÐµ Ð´Ð²Ðµ ÑÐµÐ»Ð¸ ÑÐ¸ÑÐ»Ð°."
+ 
+ msgid "Enter two numbers."
+ msgstr "ÐÑÐ²ÐµÐ´ÐµÑÐµ Ð´Ð²Ðµ ÑÐ¸ÑÐ»Ð°."
+@@ -106,4 +107,4 @@ msgid ""
+ "Ensure that this range is completely greater than or equal to "
+ "%(limit_value)s."
+ msgstr ""
+-"Ð£Ð²ÐµÑÐµÑÐµ ÑÐµ ÑÐµ Ð¸Ð½ÑÐµÑÐ²Ð°Ð»Ð° Ðµ Ð¸Ð·ÑÑÐ»Ð¾ Ð¿Ð¾-Ð³Ð¾Ð»ÑÐ¼ Ð¾Ñ Ð¸Ð»Ð¸ ÑÐ°Ð²ÐµÐ½ Ð½Ð° %(limit_value)s."
++"Ð£Ð²ÐµÑÐµÑÐµ ÑÐµ, ÑÐµ Ð¸Ð½ÑÐµÑÐ²Ð°Ð»ÑÑ Ðµ Ð¸Ð·ÑÑÐ»Ð¾ Ð¿Ð¾-Ð³Ð¾Ð»ÑÐ¼ Ð¾Ñ Ð¸Ð»Ð¸ ÑÐ°Ð²ÐµÐ½ Ð½Ð° %(limit_value)s."
+diff --git a/django/contrib/redirects/locale/bg/LC_MESSAGES/django.mo b/django/contrib/redirects/locale/bg/LC_MESSAGES/django.mo
+index d3e35e4dc5..f47e60460f 100644
+Binary files a/django/contrib/redirects/locale/bg/LC_MESSAGES/django.mo and b/django/contrib/redirects/locale/bg/LC_MESSAGES/django.mo differ
+diff --git a/django/contrib/redirects/locale/bg/LC_MESSAGES/django.po b/django/contrib/redirects/locale/bg/LC_MESSAGES/django.po
+index 12ffedd058..0fc628b06c 100644
+--- a/django/contrib/redirects/locale/bg/LC_MESSAGES/django.po
++++ b/django/contrib/redirects/locale/bg/LC_MESSAGES/django.po
+@@ -1,6 +1,7 @@
+ # This file is distributed under the same license as the Django package.
+ #
+ # Translators:
++# arneatec <arneatec@gmail.com>, 2022
+ # Jannis Leidel <jannis@leidel.info>, 2011
+ # Venelin Stoykov <vkstoykov@gmail.com>, 2015
+ # vestimir <vestimir@gmail.com>, 2014
+@@ -8,9 +9,9 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: django
+"
+ "Report-Msgid-Bugs-To: 
+"
+-"POT-Creation-Date: 2015-10-09 17:42+0200
+"
+-"PO-Revision-Date: 2017-09-19 16:40+0000
+"
+-"Last-Translator: Venelin Stoykov <vkstoykov@gmail.com>
+"
++"POT-Creation-Date: 2021-01-15 09:00+0100
+"
++"PO-Revision-Date: 2022-01-14 11:55+0000
+"
++"Last-Translator: arneatec <arneatec@gmail.com>
+"
+ "Language-Team: Bulgarian (http://www.transifex.com/django/django/language/"
+ "bg/)
+"
+ "MIME-Version: 1.0
+"
+@@ -29,21 +30,21 @@ msgid "redirect from"
+ msgstr "Ð¿ÑÐµÐ¿ÑÐ°ÑÐºÐ° Ð¾Ñ"
+ 
+ msgid ""
+-"This should be an absolute path, excluding the domain name. Example: '/"
+-"events/search/'."
++"This should be an absolute path, excluding the domain name. Example: â/"
++"events/search/â."
+ msgstr ""
+-"Ð¢Ð¾Ð²Ð° ÑÑÑÐ±Ð²Ð° Ð´Ð° Ð±ÑÐ´Ðµ Ð°Ð±ÑÐ¾Ð»ÑÑÐµÐ½ Ð¿ÑÑ, Ð±ÐµÐ· Ð¸Ð¼ÐµÑÐ¾ Ð½Ð° Ð´Ð¾Ð¼ÐµÐ¹Ð½Ð°.  ÐÑÐ¸Ð¼ÐµÑ: '/events/"
+-"search/'."
++"Ð¢Ð¾Ð²Ð° ÑÑÑÐ±Ð²Ð° Ð´Ð° Ð±ÑÐ´Ðµ Ð°Ð±ÑÐ¾Ð»ÑÑÐµÐ½ Ð¿ÑÑ, Ð±ÐµÐ· Ð¸Ð¼ÐµÑÐ¾ Ð½Ð° Ð´Ð¾Ð¼ÐµÐ¹Ð½Ð°.  ÐÑÐ¸Ð¼ÐµÑ: "/events/"
++"search/"."
+ 
+ msgid "redirect to"
+ msgstr "Ð¿ÑÐµÐ¿ÑÐ°ÑÐºÐ° ÐºÑÐ¼"
+ 
+ msgid ""
+-"This can be either an absolute path (as above) or a full URL starting with "
+-"'http://'."
++"This can be either an absolute path (as above) or a full URL starting with a "
++"scheme such as âhttps://â."
+ msgstr ""
+-"Ð¢Ð¾Ð²Ð° Ð¼Ð¾Ð¶Ðµ Ð´Ð° Ð±ÑÐ´Ðµ Ð¸Ð»Ð¸ Ð°Ð±ÑÐ¾Ð»ÑÑÐµÐ½ Ð¿ÑÑ (ÐºÐ°ÑÐ¾ Ð³Ð¾ÑÐ½Ð¾ÑÐ¾) Ð¸Ð»Ð¸ Ð¿ÑÐ»ÐµÐ½ URL, Ð·Ð°Ð¿Ð¾ÑÐ²Ð°Ñ Ñ "
+-"'http://'."
++"Ð¢Ð¾Ð²Ð° Ð¼Ð¾Ð¶Ðµ Ð´Ð° Ð±ÑÐ´Ðµ Ð¸Ð»Ð¸ Ð°Ð±ÑÐ¾Ð»ÑÑÐµÐ½ Ð¿ÑÑ (ÐºÐ°ÑÐ¾ Ð³Ð¾ÑÐ½Ð¾ÑÐ¾) Ð¸Ð»Ð¸ Ð¿ÑÐ»ÐµÐ½ URL, Ð·Ð°Ð¿Ð¾ÑÐ²Ð°Ñ "
++"ÑÑÑ ÑÑÐµÐ¼Ð°, Ð½Ð°Ð¿ÑÐ¸Ð¼ÐµÑ "https://"."
+ 
+ msgid "redirect"
+ msgstr "Ð¿ÑÐµÐ¿ÑÐ°ÑÐºÐ°"
+diff --git a/django/contrib/sessions/locale/bg/LC_MESSAGES/django.mo b/django/contrib/sessions/locale/bg/LC_MESSAGES/django.mo
+index 574320d8f5..68e4b05f05 100644
+Binary files a/django/contrib/sessions/locale/bg/LC_MESSAGES/django.mo and b/django/contrib/sessions/locale/bg/LC_MESSAGES/django.mo differ
+diff --git a/django/contrib/sessions/locale/bg/LC_MESSAGES/django.po b/django/contrib/sessions/locale/bg/LC_MESSAGES/django.po
+index d4187bc51e..aeab9b8b35 100644
+--- a/django/contrib/sessions/locale/bg/LC_MESSAGES/django.po
++++ b/django/contrib/sessions/locale/bg/LC_MESSAGES/django.po
+@@ -1,6 +1,7 @@
+ # This file is distributed under the same license as the Django package.
+ #
+ # Translators:
++# arneatec <arneatec@gmail.com>, 2022
+ # Jannis Leidel <jannis@leidel.info>, 2011
+ # vestimir <vestimir@gmail.com>, 2014
+ msgid ""
+@@ -8,8 +9,8 @@ msgstr ""
+ "Project-Id-Version: django
+"
+ "Report-Msgid-Bugs-To: 
+"
+ "POT-Creation-Date: 2015-01-17 11:07+0100
+"
+-"PO-Revision-Date: 2017-09-19 16:40+0000
+"
+-"Last-Translator: Jannis Leidel <jannis@leidel.info>
+"
++"PO-Revision-Date: 2022-01-14 11:56+0000
+"
++"Last-Translator: arneatec <arneatec@gmail.com>
+"
+ "Language-Team: Bulgarian (http://www.transifex.com/django/django/language/"
+ "bg/)
+"
+ "MIME-Version: 1.0
+"
+@@ -28,7 +29,7 @@ msgid "session data"
+ msgstr "Ð´Ð°Ð½Ð½Ð¸ Ð¾Ñ ÑÐµÑÐ¸ÑÑÐ°"
+ 
+ msgid "expire date"
+-msgstr "Ð´Ð°ÑÐ° Ð½Ð° Ð²Ð°Ð»Ð¸Ð´Ð½Ð¾ÑÑ"
++msgstr "Ð´Ð°ÑÐ° Ð½Ð° Ð¸Ð·ÑÐ¸ÑÐ°Ð½Ðµ Ð½Ð° Ð²Ð°Ð»Ð¸Ð´Ð½Ð¾ÑÑ"
+ 
+ msgid "session"
+ msgstr "ÑÐµÑÐ¸Ñ"
+diff --git a/docs/releases/4.0.2.txt b/docs/releases/4.0.2.txt
+index af0f728c54..c60dc68224 100644
+--- a/docs/releases/4.0.2.txt
++++ b/docs/releases/4.0.2.txt
+@@ -5,7 +5,8 @@ Django 4.0.2 release notes
+ *February 1, 2022*
+ 
+ Django 4.0.2 fixes two security issues with severity "medium" and several bugs
+-in 4.0.1.
++in 4.0.1. Also, the latest string translations from Transifex are incorporated,
++with a special mention for Bulgarian (fully translated).
+ 
+ Bugfixes
+ ========
++ git -c core.fileMode=false diff beb7ddbcee03270e833b2f74927ccfc8027aa693
+diff --git a/django/db/models/aggregates.py b/django/db/models/aggregates.py
+index 8c4eae7906..f0dfcee52d 100644
+--- a/django/db/models/aggregates.py
++++ b/django/db/models/aggregates.py
+@@ -65,7 +65,9 @@ class Aggregate(Func):
+         if hasattr(default, 'resolve_expression'):
+             default = default.resolve_expression(query, allow_joins, reuse, summarize)
+         c.default = None  # Reset the default argument before wrapping.
+-        return Coalesce(c, default, output_field=c._output_field_or_none)
++        coalesce = Coalesce(c, default, output_field=c._output_field_or_none)
++        coalesce.is_summary = getattr(c, 'is_summary', False)
++        return coalesce
+ 
+     @property
+     def default_alias(self):
++ source /opt/miniconda3/bin/activate
+++ _CONDA_ROOT=/opt/miniconda3
+++ . /opt/miniconda3/etc/profile.d/conda.sh
++++ export CONDA_EXE=/opt/miniconda3/bin/conda
++++ CONDA_EXE=/opt/miniconda3/bin/conda
++++ export _CE_M=
++++ _CE_M=
++++ export _CE_CONDA=
++++ _CE_CONDA=
++++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ '[' -z x ']'
+++ conda activate
+++ local cmd=activate
+++ case "$cmd" in
+++ __conda_activate activate
+++ '[' -n '' ']'
+++ local ask_conda
++++ PS1='(testbed) '
++++ __conda_exe shell.posix activate
++++ /opt/miniconda3/bin/conda shell.posix activate
+++ ask_conda='PS1='''(base) '''
+export PATH='''/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'''
+export CONDA_PREFIX='''/opt/miniconda3'''
+export CONDA_SHLVL='''3'''
+export CONDA_DEFAULT_ENV='''base'''
+export CONDA_PROMPT_MODIFIER='''(base) '''
+export CONDA_PREFIX_2='''/opt/miniconda3/envs/testbed'''
+export CONDA_EXE='''/opt/miniconda3/bin/conda'''
+export _CE_M=''''''
+export _CE_CONDA=''''''
+export CONDA_PYTHON_EXE='''/opt/miniconda3/bin/python''''
+++ eval 'PS1='''(base) '''
+export PATH='''/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'''
+export CONDA_PREFIX='''/opt/miniconda3'''
+export CONDA_SHLVL='''3'''
+export CONDA_DEFAULT_ENV='''base'''
+export CONDA_PROMPT_MODIFIER='''(base) '''
+export CONDA_PREFIX_2='''/opt/miniconda3/envs/testbed'''
+export CONDA_EXE='''/opt/miniconda3/bin/conda'''
+export _CE_M=''''''
+export _CE_CONDA=''''''
+export CONDA_PYTHON_EXE='''/opt/miniconda3/bin/python''''
++++ PS1='(base) '
++++ export PATH=/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ PATH=/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ export CONDA_PREFIX=/opt/miniconda3
++++ CONDA_PREFIX=/opt/miniconda3
++++ export CONDA_SHLVL=3
++++ CONDA_SHLVL=3
++++ export CONDA_DEFAULT_ENV=base
++++ CONDA_DEFAULT_ENV=base
++++ export 'CONDA_PROMPT_MODIFIER=(base) '
++++ CONDA_PROMPT_MODIFIER='(base) '
++++ export CONDA_PREFIX_2=/opt/miniconda3/envs/testbed
++++ CONDA_PREFIX_2=/opt/miniconda3/envs/testbed
++++ export CONDA_EXE=/opt/miniconda3/bin/conda
++++ CONDA_EXE=/opt/miniconda3/bin/conda
++++ export _CE_M=
++++ _CE_M=
++++ export _CE_CONDA=
++++ _CE_CONDA=
++++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
+++ __conda_hashr
+++ '[' -n '' ']'
+++ '[' -n '' ']'
+++ hash -r
++ conda activate testbed
++ local cmd=activate
++ case "$cmd" in
++ __conda_activate activate testbed
++ '[' -n '' ']'
++ local ask_conda
+++ PS1='(base) '
+++ __conda_exe shell.posix activate testbed
+++ /opt/miniconda3/bin/conda shell.posix activate testbed
++ ask_conda='PS1='''(testbed) '''
+export PATH='''/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'''
+export CONDA_PREFIX='''/opt/miniconda3/envs/testbed'''
+export CONDA_SHLVL='''4'''
+export CONDA_DEFAULT_ENV='''testbed'''
+export CONDA_PROMPT_MODIFIER='''(testbed) '''
+export CONDA_PREFIX_3='''/opt/miniconda3'''
+export CONDA_EXE='''/opt/miniconda3/bin/conda'''
+export _CE_M=''''''
+export _CE_CONDA=''''''
+export CONDA_PYTHON_EXE='''/opt/miniconda3/bin/python''''
++ eval 'PS1='''(testbed) '''
+export PATH='''/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'''
+export CONDA_PREFIX='''/opt/miniconda3/envs/testbed'''
+export CONDA_SHLVL='''4'''
+export CONDA_DEFAULT_ENV='''testbed'''
+export CONDA_PROMPT_MODIFIER='''(testbed) '''
+export CONDA_PREFIX_3='''/opt/miniconda3'''
+export CONDA_EXE='''/opt/miniconda3/bin/conda'''
+export _CE_M=''''''
+export _CE_CONDA=''''''
+export CONDA_PYTHON_EXE='''/opt/miniconda3/bin/python''''
+++ PS1='(testbed) '
+++ export PATH=/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+++ PATH=/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+++ export CONDA_PREFIX=/opt/miniconda3/envs/testbed
+++ CONDA_PREFIX=/opt/miniconda3/envs/testbed
+++ export CONDA_SHLVL=4
+++ CONDA_SHLVL=4
+++ export CONDA_DEFAULT_ENV=testbed
+++ CONDA_DEFAULT_ENV=testbed
+++ export 'CONDA_PROMPT_MODIFIER=(testbed) '
+++ CONDA_PROMPT_MODIFIER='(testbed) '
+++ export CONDA_PREFIX_3=/opt/miniconda3
+++ CONDA_PREFIX_3=/opt/miniconda3
+++ export CONDA_EXE=/opt/miniconda3/bin/conda
+++ CONDA_EXE=/opt/miniconda3/bin/conda
+++ export _CE_M=
+++ _CE_M=
+++ export _CE_CONDA=
+++ _CE_CONDA=
+++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
+++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++ __conda_hashr
++ '[' -n '' ']'
++ '[' -n '' ']'
++ hash -r
++ python -m pip install -e .
+Obtaining file:///testbed
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Checking if build backend supports build_editable: started
+  Checking if build backend supports build_editable: finished with status 'done'
+  Getting requirements to build editable: started
+  Getting requirements to build editable: finished with status 'done'
+  Preparing editable metadata (pyproject.toml): started
+  Preparing editable metadata (pyproject.toml): finished with status 'done'
+Requirement already satisfied: asgiref>=3.4.1 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Django==4.1.dev20220129180115) (3.8.1)
+Requirement already satisfied: sqlparse>=0.2.2 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Django==4.1.dev20220129180115) (0.5.1)
+Requirement already satisfied: typing-extensions>=4 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from asgiref>=3.4.1->Django==4.1.dev20220129180115) (4.12.2)
+Building wheels for collected packages: Django
+  Building editable for Django (pyproject.toml): started
+  Building editable for Django (pyproject.toml): finished with status 'done'
+  Created wheel for Django: filename=django-4.1.dev20220129180115-0.editable-py3-none-any.whl size=26984 sha256=4fad9fa7ed794c424acbb5eeeb8fe53c64ce3c7da7a7ebc0d8852ef2fd7d9095
+  Stored in directory: /tmp/pip-ephem-wheel-cache-_jlfmw45/wheels/7d/66/67/70d1ee2124ccf21d601c352e25cdca10f611f7c8b3f9ffb9e4
+Successfully built Django
+Installing collected packages: Django
+  Attempting uninstall: Django
+    Found existing installation: Django 4.1.dev20220129180115
+    Uninstalling Django-4.1.dev20220129180115:
+      Successfully uninstalled Django-4.1.dev20220129180115
+Successfully installed Django-4.1.dev20220129180115
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
++ git checkout beb7ddbcee03270e833b2f74927ccfc8027aa693 tests/aggregation/tests.py
+Updated 0 paths from 56e88fea70
++ git apply -v -
+Checking patch tests/aggregation/tests.py...
+Applied patch tests/aggregation/tests.py cleanly.
++ : '>>>>> Start Test Output'
++ ./tests/runtests.py --verbosity 2 --settings=test_sqlite --parallel 1 aggregation.tests
+Creating test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...
+Testing against Django installed in '/testbed/django'
+Importing application aggregation
+Found 96 test(s).
+Skipping setup of unused database(s): other.
+Operations to perform:
+  Synchronize unmigrated apps: aggregation, auth, contenttypes, messages, sessions, staticfiles
+  Apply all migrations: admin, sites
+Synchronizing apps without migrations:
+  Creating tables...
+    Creating table django_content_type
+    Creating table auth_permission
+    Creating table auth_group
+    Creating table auth_user
+    Creating table django_session
+    Creating table aggregation_author
+    Creating table aggregation_publisher
+    Creating table aggregation_book
+    Creating table aggregation_store
+    Running deferred SQL...
+Running migrations:
+  Applying admin.0001_initial... OK
+  Applying admin.0002_logentry_remove_auto_add... OK
+  Applying admin.0003_logentry_add_action_flag_choices... OK
+  Applying sites.0001_initial... OK
+  Applying sites.0002_alter_domain_unique... OK
+System check identified no issues (0 silenced).
+test_add_implementation (aggregation.tests.AggregateTestCase) ... ok
+test_aggregate_alias (aggregation.tests.AggregateTestCase) ... ok
+test_aggregate_annotation (aggregation.tests.AggregateTestCase) ... ok
+test_aggregate_in_order_by (aggregation.tests.AggregateTestCase) ... ok
+test_aggregate_join_transform (aggregation.tests.AggregateTestCase) ... ok
+test_aggregate_multi_join (aggregation.tests.AggregateTestCase) ... ok
+test_aggregate_over_aggregate (aggregation.tests.AggregateTestCase) ... ok
+test_aggregate_over_complex_annotation (aggregation.tests.AggregateTestCase) ... ok
+test_aggregate_transform (aggregation.tests.AggregateTestCase) ... ok
+test_aggregation_default_after_annotation (aggregation.tests.AggregateTestCase) ... ok
+test_aggregation_default_compound_expression (aggregation.tests.AggregateTestCase) ... ok
+test_aggregation_default_expression (aggregation.tests.AggregateTestCase) ... ok
+test_aggregation_default_group_by (aggregation.tests.AggregateTestCase) ... ok
+test_aggregation_default_integer (aggregation.tests.AggregateTestCase) ... ok
+test_aggregation_default_not_in_aggregate (aggregation.tests.AggregateTestCase) ... ok
+test_aggregation_default_passed_another_aggregate (aggregation.tests.AggregateTestCase) ... ok
+test_aggregation_default_unset (aggregation.tests.AggregateTestCase) ... ok
+test_aggregation_default_unsupported_by_count (aggregation.tests.AggregateTestCase) ... ok
+test_aggregation_default_using_date_from_database (aggregation.tests.AggregateTestCase) ... ok
+test_aggregation_default_using_date_from_python (aggregation.tests.AggregateTestCase) ... ok
+test_aggregation_default_using_datetime_from_database (aggregation.tests.AggregateTestCase) ... ok
+test_aggregation_default_using_datetime_from_python (aggregation.tests.AggregateTestCase) ... ok
+test_aggregation_default_using_decimal_from_database (aggregation.tests.AggregateTestCase) ... ok
+test_aggregation_default_using_decimal_from_python (aggregation.tests.AggregateTestCase) ... ok
+test_aggregation_default_using_duration_from_database (aggregation.tests.AggregateTestCase) ... ok
+test_aggregation_default_using_duration_from_python (aggregation.tests.AggregateTestCase) ... ok
+test_aggregation_default_using_time_from_database (aggregation.tests.AggregateTestCase) ... ok
+test_aggregation_default_using_time_from_python (aggregation.tests.AggregateTestCase) ... ok
+test_aggregation_default_zero (aggregation.tests.AggregateTestCase) ... ok
+test_aggregation_exists_annotation (aggregation.tests.AggregateTestCase) ... ok
+test_aggregation_expressions (aggregation.tests.AggregateTestCase) ... ok
+test_aggregation_nested_subquery_outerref (aggregation.tests.AggregateTestCase) ... ok
+test_aggregation_order_by_not_selected_annotation_values (aggregation.tests.AggregateTestCase) ... ok
+test_aggregation_random_ordering (aggregation.tests.AggregateTestCase)
+Random() is not included in the GROUP BY when used for ordering. ... ok
+test_aggregation_subquery_annotation (aggregation.tests.AggregateTestCase)
+Subquery annotations are excluded from the GROUP BY if they are ... ok
+test_aggregation_subquery_annotation_exists (aggregation.tests.AggregateTestCase) ... ok
+test_aggregation_subquery_annotation_multivalued (aggregation.tests.AggregateTestCase)
+Subquery annotations must be included in the GROUP BY if they use ... ok
+test_aggregation_subquery_annotation_related_field (aggregation.tests.AggregateTestCase) ... ok
+test_aggregation_subquery_annotation_values (aggregation.tests.AggregateTestCase)
+Subquery annotations and external aliases are excluded from the GROUP ... ok
+test_aggregation_subquery_annotation_values_collision (aggregation.tests.AggregateTestCase) ... ok
+test_annotate_basic (aggregation.tests.AggregateTestCase) ... ok
+test_annotate_defer (aggregation.tests.AggregateTestCase) ... ok
+test_annotate_defer_select_related (aggregation.tests.AggregateTestCase) ... ok
+test_annotate_m2m (aggregation.tests.AggregateTestCase) ... ok
+test_annotate_ordering (aggregation.tests.AggregateTestCase) ... ok
+test_annotate_over_annotate (aggregation.tests.AggregateTestCase) ... ok
+test_annotate_values (aggregation.tests.AggregateTestCase) ... ok
+test_annotate_values_aggregate (aggregation.tests.AggregateTestCase) ... ok
+test_annotate_values_list (aggregation.tests.AggregateTestCase) ... ok
+test_annotated_aggregate_over_annotated_aggregate (aggregation.tests.AggregateTestCase) ... ok
+test_annotation (aggregation.tests.AggregateTestCase) ... ok
+test_annotation_expressions (aggregation.tests.AggregateTestCase) ... ok
+test_arguments_must_be_expressions (aggregation.tests.AggregateTestCase) ... ok
+test_avg_decimal_field (aggregation.tests.AggregateTestCase) ... ok
+test_avg_duration_field (aggregation.tests.AggregateTestCase) ... ok
+test_backwards_m2m_annotate (aggregation.tests.AggregateTestCase) ... ok
+test_coalesced_empty_result_set (aggregation.tests.AggregateTestCase) ... ok
+test_combine_different_types (aggregation.tests.AggregateTestCase) ... ok
+test_complex_aggregations_require_kwarg (aggregation.tests.AggregateTestCase) ... ok
+test_complex_values_aggregation (aggregation.tests.AggregateTestCase) ... ok
+test_count (aggregation.tests.AggregateTestCase) ... ok
+test_count_distinct_expression (aggregation.tests.AggregateTestCase) ... ok
+test_count_star (aggregation.tests.AggregateTestCase) ... ok
+test_dates_with_aggregation (aggregation.tests.AggregateTestCase)
+.dates() returns a distinct set of dates when applied to a ... ok
+test_decimal_max_digits_has_no_effect (aggregation.tests.AggregateTestCase) ... ok
+test_distinct_on_aggregate (aggregation.tests.AggregateTestCase) ... ok
+test_empty_aggregate (aggregation.tests.AggregateTestCase) ... ok
+test_empty_result_optimization (aggregation.tests.AggregateTestCase) ... ok
+test_even_more_aggregate (aggregation.tests.AggregateTestCase) ... ok
+test_exists_extra_where_with_aggregate (aggregation.tests.AggregateTestCase) ... ok
+test_exists_none_with_aggregate (aggregation.tests.AggregateTestCase) ... ok
+test_expression_on_aggregation (aggregation.tests.AggregateTestCase) ... ok
+test_filter_aggregate (aggregation.tests.AggregateTestCase) ... ok
+test_filter_in_subquery_or_aggregation (aggregation.tests.AggregateTestCase)
+Filtering against an aggregate requires the usage of the HAVING clause. ... ok
+test_filtering (aggregation.tests.AggregateTestCase) ... ok
+test_fkey_aggregate (aggregation.tests.AggregateTestCase) ... ok
+test_group_by_exists_annotation (aggregation.tests.AggregateTestCase)
+Exists annotations are included in the GROUP BY if they are ... ok
+test_group_by_subquery_annotation (aggregation.tests.AggregateTestCase)
+Subquery annotations are included in the GROUP BY if they are ... ok
+test_grouped_annotation_in_group_by (aggregation.tests.AggregateTestCase)
+An annotation included in values() before an aggregate should be ... ok
+test_more_aggregation (aggregation.tests.AggregateTestCase) ... ok
+test_multi_arg_aggregate (aggregation.tests.AggregateTestCase) ... ok
+test_multiple_aggregates (aggregation.tests.AggregateTestCase) ... ok
+test_non_grouped_annotation_not_in_group_by (aggregation.tests.AggregateTestCase)
+An annotation not included in values() before an aggregate should be ... ok
+test_nonaggregate_aggregation_throws (aggregation.tests.AggregateTestCase) ... ok
+test_nonfield_annotation (aggregation.tests.AggregateTestCase) ... ok
+test_order_of_precedence (aggregation.tests.AggregateTestCase) ... ok
+test_related_aggregate (aggregation.tests.AggregateTestCase) ... ok
+test_reverse_fkey_annotate (aggregation.tests.AggregateTestCase) ... ok
+test_single_aggregate (aggregation.tests.AggregateTestCase) ... ok
+test_sum_distinct_aggregate (aggregation.tests.AggregateTestCase)
+Sum on a distinct() QuerySet should aggregate only the distinct items. ... ok
+test_sum_duration_field (aggregation.tests.AggregateTestCase) ... ok
+test_ticket11881 (aggregation.tests.AggregateTestCase)
+Subqueries do not needlessly contain ORDER BY, SELECT FOR UPDATE or ... ok
+test_ticket12886 (aggregation.tests.AggregateTestCase)
+Aggregation over sliced queryset works correctly. ... ok
+test_ticket17424 (aggregation.tests.AggregateTestCase)
+Doing exclude() on a foreign model after annotate() doesn't crash. ... ok
+test_values_aggregation (aggregation.tests.AggregateTestCase) ... ok
+test_values_annotation_with_expression (aggregation.tests.AggregateTestCase) ... ok
+
+----------------------------------------------------------------------
+Ran 96 tests in 0.191s
+
+OK
+Destroying test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...
++ : '>>>>> End Test Output'
++ git checkout beb7ddbcee03270e833b2f74927ccfc8027aa693 tests/aggregation/tests.py
+Updated 1 path from 56e88fea70

@@ -1,0 +1,54 @@
+diff --git a/astropy/utils/introspection.py b/astropy/utils/introspection.py
+index 3e784f9fc3..8ee3f21007 100644
+--- a/astropy/utils/introspection.py
++++ b/astropy/utils/introspection.py
+@@ -6,7 +6,6 @@
+ import inspect
+ import types
+ import importlib
+-from distutils.version import LooseVersion
+ 
+ 
+ __all__ = ['resolve_name', 'minversion', 'find_current_module',
+@@ -139,10 +138,39 @@ def minversion(module, version, inclusive=True, version_path='__version__'):
+     else:
+         have_version = resolve_name(module.__name__, version_path)
+ 
++    # Try to use the most robust version comparison available
++    # 1. packaging.version.Version (most robust, handles dev versions correctly)
++    # 2. pkg_resources.parse_version (if available)
++    # 3. distutils.version.LooseVersion (fallback, but with error handling)
++    
++    try:
++        from packaging.version import Version as parse_version
++    except ImportError:
++        try:
++            from pkg_resources import parse_version
++        except ImportError:
++            from distutils.version import LooseVersion
++            
++            # LooseVersion has a bug with mixed int/str comparisons
++            # Try to handle this gracefully
++            try:
++                if inclusive:
++                    return LooseVersion(have_version) >= LooseVersion(version)
++                else:
++                    return LooseVersion(have_version) > LooseVersion(version)
++            except TypeError:
++                # Fall back to string comparison if LooseVersion fails
++                # This is not ideal but better than crashing
++                if inclusive:
++                    return str(have_version) >= str(version)
++                else:
++                    return str(have_version) > str(version)
++
++    # Use the robust version parser
+     if inclusive:
+-        return LooseVersion(have_version) >= LooseVersion(version)
++        return parse_version(have_version) >= parse_version(version)
+     else:
+-        return LooseVersion(have_version) > LooseVersion(version)
++        return parse_version(have_version) > parse_version(version)
+ 
+ 
+ def find_current_module(depth=1, finddiff=False):

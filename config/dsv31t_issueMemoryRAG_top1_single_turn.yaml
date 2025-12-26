@@ -31,7 +31,7 @@ agent:
     issue_memory_rag_context:
       enabled: true
       field_name: issue_memory_context
-      service_url: http://127.0.0.1:9013/search
+      service_url: http://127.0.0.1:9012/search
       topk: 1
       max_patch_chars: 30000
       failure_message: "No retrieved issue/PR example was found; continue without it."

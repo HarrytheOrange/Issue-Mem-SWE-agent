@@ -1,0 +1,99 @@
+diff --git a/sympy/functions/elementary/hyperbolic.py b/sympy/functions/elementary/hyperbolic.py
+index 860989f7c1..5cf7594264 100644
+--- a/sympy/functions/elementary/hyperbolic.py
++++ b/sympy/functions/elementary/hyperbolic.py
+@@ -7,6 +7,7 @@
+ from sympy.functions.elementary.exponential import exp, log, match_real_imag
+ from sympy.functions.elementary.miscellaneous import sqrt
+ from sympy.functions.elementary.integers import floor
++from sympy.polys.polyerrors import PolynomialError
+ 
+ from sympy.core.logic import fuzzy_or, fuzzy_and
+ 
+@@ -248,7 +249,14 @@ def _eval_is_real(self):
+         # if `im` is of the form n*pi
+         # else, check if it is a number
+         re, im = arg.as_real_imag()
+-        return (im%pi).is_zero
++        if im.is_zero is True:
++            return True
++        try:
++            return (im%pi).is_zero
++        except PolynomialError:
++            # If polynomial operations fail (e.g., due to Piecewise expressions),
++            # we cannot determine if this is real, so return None
++            return None
+ 
+     def _eval_is_extended_real(self):
+         if self.args[0].is_extended_real:
+@@ -437,7 +445,14 @@ def _eval_is_real(self):
+         # the imaginary part can be an expression like n*pi
+         # if not, check if the imaginary part is a number
+         re, im = arg.as_real_imag()
+-        return (im%pi).is_zero
++        if im.is_zero is True:
++            return True
++        try:
++            return (im%pi).is_zero
++        except PolynomialError:
++            # If polynomial operations fail (e.g., due to Piecewise expressions),
++            # we cannot determine if this is real, so return None
++            return None
+ 
+     def _eval_is_positive(self):
+         # cosh(x+I*y) = cos(y)*cosh(x) + I*sin(y)*sinh(x)
+@@ -448,7 +463,12 @@ def _eval_is_positive(self):
+         z = self.args[0]
+ 
+         x, y = z.as_real_imag()
+-        ymod = y % (2*pi)
++        try:
++            ymod = y % (2*pi)
++        except PolynomialError:
++            # If polynomial operations fail (e.g., due to Piecewise expressions),
++            # we cannot determine if this is positive, so return None
++            return None
+ 
+         yzero = ymod.is_zero
+         # shortcut if ymod is zero
+@@ -475,7 +495,12 @@ def _eval_is_nonnegative(self):
+         z = self.args[0]
+ 
+         x, y = z.as_real_imag()
+-        ymod = y % (2*pi)
++        try:
++            ymod = y % (2*pi)
++        except PolynomialError:
++            # If polynomial operations fail (e.g., due to Piecewise expressions),
++            # we cannot determine if this is nonnegative, so return None
++            return None
+ 
+         yzero = ymod.is_zero
+         # shortcut if ymod is zero
+@@ -658,12 +683,23 @@ def _eval_is_real(self):
+         re, im = arg.as_real_imag()
+ 
+         # if denom = 0, tanh(arg) = zoo
+-        if re == 0 and im % pi == pi/2:
+-            return None
++        if re == 0 and im.is_zero is not True:
++            try:
++                if im % pi == pi/2:
++                    return None
++            except PolynomialError:
++                pass
+ 
+         # check if im is of the form n*pi/2 to make sin(2*im) = 0
+         # if not, im could be a number, return False in that case
+-        return (im % (pi/2)).is_zero
++        if im.is_zero is True:
++            return True
++        try:
++            return (im % (pi/2)).is_zero
++        except PolynomialError:
++            # If polynomial operations fail (e.g., due to Piecewise expressions),
++            # we cannot determine if this is real, so return None
++            return None
+ 
+     def _eval_is_extended_real(self):
+         if self.args[0].is_extended_real:

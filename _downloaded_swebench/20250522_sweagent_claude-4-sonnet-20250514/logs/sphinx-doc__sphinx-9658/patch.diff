@@ -1,0 +1,38 @@
+diff --git a/sphinx/util/typing.py b/sphinx/util/typing.py
+index 87707d48f..64aa88bb0 100644
+--- a/sphinx/util/typing.py
++++ b/sphinx/util/typing.py
+@@ -191,11 +191,15 @@ def _restify_py37(cls: Optional[Type]) -> str:
+         return text
+     elif isinstance(cls, typing._SpecialForm):
+         return ':py:obj:`~%s.%s`' % (cls.__module__, cls._name)
+-    elif hasattr(cls, '__qualname__'):
++    elif hasattr(cls, '__qualname__') and cls.__qualname__:
+         if cls.__module__ == 'typing':
+             return ':py:class:`~%s.%s`' % (cls.__module__, cls.__qualname__)
+         else:
+             return ':py:class:`%s.%s`' % (cls.__module__, cls.__qualname__)
++    elif (hasattr(cls, '__qualname__') and not cls.__qualname__ and 
++          hasattr(cls, '__sphinx_mock__') and hasattr(cls, '__display_name__')):
++        # Handle mock objects with empty __qualname__
++        return ':py:class:`%s`' % cls.__display_name__
+     elif isinstance(cls, ForwardRef):
+         return ':py:class:`%s`' % cls.__forward_arg__
+     else:
+@@ -273,11 +277,15 @@ def _restify_py36(cls: Optional[Type]) -> str:
+                 return ':py:obj:`~typing.Union`\\ [%s]' % param_str
+         else:
+             return ':py:obj:`Union`'
+-    elif hasattr(cls, '__qualname__'):
++    elif hasattr(cls, '__qualname__') and cls.__qualname__:
+         if cls.__module__ == 'typing':
+             return ':py:class:`~%s.%s`' % (cls.__module__, cls.__qualname__)
+         else:
+             return ':py:class:`%s.%s`' % (cls.__module__, cls.__qualname__)
++    elif (hasattr(cls, '__qualname__') and not cls.__qualname__ and 
++          hasattr(cls, '__sphinx_mock__') and hasattr(cls, '__display_name__')):
++        # Handle mock objects with empty __qualname__
++        return ':py:class:`%s`' % cls.__display_name__
+     elif hasattr(cls, '_name'):
+         # SpecialForm
+         if cls.__module__ == 'typing':

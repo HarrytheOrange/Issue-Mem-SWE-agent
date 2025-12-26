@@ -1,0 +1,23 @@
+diff --git a/django/contrib/messages/storage/base.py b/django/contrib/messages/storage/base.py
+index 01422066a6..23752bdfeb 100644
+--- a/django/contrib/messages/storage/base.py
++++ b/django/contrib/messages/storage/base.py
+@@ -1,6 +1,9 @@
+ from django.conf import settings
+ from django.contrib.messages import constants, utils
+ 
++# LEVEL_TAGS is kept for backward compatibility but is no longer used internally.
++# The level_tag property now calls utils.get_level_tags() directly to ensure
++# it reflects the current MESSAGE_TAGS setting.
+ LEVEL_TAGS = utils.get_level_tags()
+ 
+ 
+@@ -38,7 +41,7 @@ class Message:
+ 
+     @property
+     def level_tag(self):
+-        return LEVEL_TAGS.get(self.level, '')
++        return utils.get_level_tags().get(self.level, '')
+ 
+ 
+ class BaseStorage:

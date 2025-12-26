@@ -1,0 +1,44 @@
+diff --git a/django/test/testcases.py b/django/test/testcases.py
+index 92f566b7b0..32b85d5194 100644
+--- a/django/test/testcases.py
++++ b/django/test/testcases.py
+@@ -1400,6 +1400,15 @@ class QuietWSGIRequestHandler(WSGIRequestHandler):
+     def log_message(*args):
+         pass
+ 
++    def handle(self):
++        """Handle a request, ensuring database connections are closed afterwards."""
++        try:
++            super().handle()
++        finally:
++            # Close database connections to prevent "database is being accessed
++            # by other users" errors during test teardown.
++            connections.close_all()
++
+ 
+ class FSFilesHandler(WSGIHandler):
+     """
+@@ -1473,10 +1482,22 @@ class _MediaFilesHandler(FSFilesHandler):
+         return settings.MEDIA_URL
+ 
+ 
++class _LiveServerTestThreadedWSGIServer(ThreadedWSGIServer):
++    """
++    A ThreadedWSGIServer subclass that properly closes database connections
++    in worker threads to avoid "database is being accessed by other users"
++    errors during test teardown.
++    """
++    # Don't make request-handling threads daemon threads. This ensures that
++    # the server waits for all threads to complete before shutting down,
++    # giving them a chance to close their database connections.
++    daemon_threads = False
++
++
+ class LiveServerThread(threading.Thread):
+     """Thread for running a live http server while the tests are running."""
+ 
+-    server_class = ThreadedWSGIServer
++    server_class = _LiveServerTestThreadedWSGIServer
+ 
+     def __init__(self, host, static_handler, connections_override=None, port=0):
+         self.host = host

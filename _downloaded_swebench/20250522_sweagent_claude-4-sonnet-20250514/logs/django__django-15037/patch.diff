@@ -1,0 +1,54 @@
+diff --git a/django/core/management/commands/inspectdb.py b/django/core/management/commands/inspectdb.py
+index f9b4bfb477..65dfb2cd33 100644
+--- a/django/core/management/commands/inspectdb.py
++++ b/django/core/management/commands/inspectdb.py
+@@ -100,6 +100,17 @@ class Command(BaseCommand):
+                     extra_params = {}  # Holds Field parameters such as 'db_column'.
+                     column_name = row.name
+                     is_relation = column_name in relations
++                    
++                    # Also check if this column is a foreign key in constraints
++                    constraint_fk_info = None
++                    for constraint in constraints.values():
++                        if (constraint.get('foreign_key') and 
++                            constraint.get('columns') and 
++                            len(constraint['columns']) == 1 and 
++                            constraint['columns'][0] == column_name):
++                            constraint_fk_info = constraint['foreign_key']
++                            is_relation = True
++                            break
+ 
+                     att_name, params, notes = self.normalize_col_name(
+                         column_name, used_column_names, is_relation)
+@@ -120,10 +131,29 @@ class Command(BaseCommand):
+                             rel_type = 'OneToOneField'
+                         else:
+                             rel_type = 'ForeignKey'
++                        
++                        # Use constraint info if available, otherwise fall back to relations
++                        if constraint_fk_info:
++                            ref_db_table, ref_db_column = constraint_fk_info
++                        else:
++                            ref_db_column = relations[column_name][0]
++                            ref_db_table = relations[column_name][1]
++                        
+                         rel_to = (
+-                            "self" if relations[column_name][1] == table_name
+-                            else table2model(relations[column_name][1])
++                            "self" if ref_db_table == table_name
++                            else table2model(ref_db_table)
+                         )
++                        
++                        # Check if the foreign key references a non-primary key field
++                        try:
++                            ref_pk_column = connection.introspection.get_primary_key_column(cursor, ref_db_table)
++                            if ref_pk_column and ref_db_column != ref_pk_column:
++                                # The foreign key references a non-primary key field
++                                extra_params['to_field'] = ref_db_column
++                        except Exception:
++                            # If we can't determine the primary key, skip adding to_field
++                            pass
++                        
+                         if rel_to in known_models:
+                             field_type = '%s(%s' % (rel_type, rel_to)
+                         else:

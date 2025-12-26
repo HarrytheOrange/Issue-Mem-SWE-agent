@@ -1,0 +1,31 @@
+diff --git a/django/db/migrations/operations/models.py b/django/db/migrations/operations/models.py
+index c120f5d32d..96189975c0 100644
+--- a/django/db/migrations/operations/models.py
++++ b/django/db/migrations/operations/models.py
+@@ -480,6 +480,26 @@ class AlterTogetherOptionOperation(ModelOptionOperation):
+     def option_value(self):
+         return getattr(self, self.option_name)
+ 
++    def reduce(self, operation, app_label):
++        if (isinstance(operation, AlterTogetherOptionOperation) and
++                self.name_lower == operation.name_lower):
++            # If it's the same operation type, check if we can optimize
++            if isinstance(operation, self.__class__):
++                # Normalize values for comparison (None and empty set are equivalent)
++                self_value = self.option_value or set()
++                other_value = operation.option_value or set()
++                # If both operations have the same value, they cancel out
++                if self_value == other_value:
++                    return []
++                # Otherwise, keep the second operation
++                return [operation]
++            # If it's a different AlterTogetherOptionOperation on the same model,
++            # allow optimization through it
++            return True
++        elif isinstance(operation, DeleteModel) and self.name_lower == operation.name_lower:
++            return [operation]
++        return super().reduce(operation, app_label)
++
+     def deconstruct(self):
+         kwargs = {
+             'name': self.name,

@@ -1,0 +1,31 @@
+diff --git a/sympy/core/numbers.py b/sympy/core/numbers.py
+index 79f6a7d165..a46a09939c 100644
+--- a/sympy/core/numbers.py
++++ b/sympy/core/numbers.py
+@@ -1382,10 +1382,26 @@ def __int__(self):
+ 
+     def __eq__(self, other):
+         from sympy.logic.boolalg import Boolean
++        # Handle int/bool values before sympifying to match Integer behavior
++        if isinstance(other, int):
++            # Only compare if self is actually an integer value
++            try:
++                self_as_int = int(self)
++                # Check if the float is actually an integer (no fractional part)
++                # Use float comparison to avoid recursion
++                if float(self) == float(self_as_int):
++                    return self_as_int == other
++                else:
++                    return False
++            except (ValueError, OverflowError):
++                return False
+         try:
+             other = _sympify(other)
+         except SympifyError:
+             return NotImplemented
++        if not isinstance(other, Number):
++            # S(0.0) == S.false is False
++            return False
+         if not self:
+             return not other
+         if isinstance(other, Boolean):

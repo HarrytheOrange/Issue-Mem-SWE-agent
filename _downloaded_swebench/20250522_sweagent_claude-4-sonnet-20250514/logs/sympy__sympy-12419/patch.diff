@@ -1,0 +1,64 @@
+diff --git a/sympy/concrete/summations.py b/sympy/concrete/summations.py
+index 372487664c..80d5afcff0 100644
+--- a/sympy/concrete/summations.py
++++ b/sympy/concrete/summations.py
+@@ -867,6 +867,34 @@ def eval_sum(f, limits):
+                 newargs.append((newexpr, arg.cond))
+             return f.func(*newargs)
+ 
++    # Special case for Piecewise expressions where the condition matches the summation bounds
++    if isinstance(f, Piecewise):
++        # Check if we have a simple case like Piecewise((expr, (a <= i) & (i <= b)), (0, True))
++        # where we're summing from a to b
++        if len(f.args) == 2 and f.args[1].expr == 0 and f.args[1].cond == True:
++            expr, cond = f.args[0]
++            # Check if the condition is of the form (a <= i) & (i <= b)
++            from sympy.logic.boolalg import And
++            if isinstance(cond, And) and len(cond.args) == 2:
++                from sympy.core.relational import LessThan
++                left_cond, right_cond = cond.args
++                # Check for (a <= i) & (i <= b) pattern
++                # This can appear as either:
++                # LessThan(a, i) & LessThan(i, b)  or  GreaterThan(i, a) & LessThan(i, b)
++                from sympy.core.relational import GreaterThan
++                
++                # Check if we have the pattern (a <= i) & (i <= b)
++                left_matches = ((isinstance(left_cond, LessThan) and 
++                                left_cond.lhs == a and left_cond.rhs == i) or
++                               (isinstance(left_cond, GreaterThan) and 
++                                left_cond.lhs == i and left_cond.rhs == a))
++                right_matches = (isinstance(right_cond, LessThan) and
++                                right_cond.lhs == i and right_cond.rhs == b)
++                
++                if left_matches and right_matches:
++                    # The condition matches the summation bounds, so we can simplify
++                    return eval_sum(expr, limits)
++
+     if f.has(KroneckerDelta) and _has_simple_delta(f, limits[0]):
+         return deltasummation(f, limits)
+ 
+diff --git a/sympy/matrices/expressions/matexpr.py b/sympy/matrices/expressions/matexpr.py
+index b4d759836e..d5c107844c 100644
+--- a/sympy/matrices/expressions/matexpr.py
++++ b/sympy/matrices/expressions/matexpr.py
+@@ -476,10 +476,16 @@ def conjugate(self):
+         return self
+ 
+     def _entry(self, i, j):
+-        if i == j:
+-            return S.One
+-        else:
+-            return S.Zero
++        from sympy.functions.special.tensor_functions import KroneckerDelta
++        from sympy.core.relational import Eq
++        # For concrete indices, use the simple comparison
++        if i.is_number and j.is_number:
++            if i == j:
++                return S.One
++            else:
++                return S.Zero
++        # For symbolic indices, use KroneckerDelta which handles summation better
++        return KroneckerDelta(i, j)
+ 
+     def _eval_determinant(self):
+         return S.One

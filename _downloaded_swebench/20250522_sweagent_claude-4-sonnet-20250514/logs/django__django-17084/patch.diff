@@ -1,0 +1,102 @@
+diff --git a/django/db/models/sql/query.py b/django/db/models/sql/query.py
+index 13a6809dd8..c53d092444 100644
+--- a/django/db/models/sql/query.py
++++ b/django/db/models/sql/query.py
+@@ -436,6 +436,14 @@ class Query(BaseExpression):
+             )
+             or having
+         )
++        # Check if any of the aggregates reference window functions
++        has_window_function_refs = any(
++            any(
++                getattr(self.annotations.get(ref), "contains_over_clause", False)
++                for ref in aggregate.get_refs()
++            )
++            for aggregate in aggregates.values()
++        )
+         # Decide if we need to use a subquery.
+         #
+         # Existing aggregations would cause incorrect results as
+@@ -454,6 +462,7 @@ class Query(BaseExpression):
+             or qualify
+             or self.distinct
+             or self.combinator
++            or has_window_function_refs
+         ):
+             from django.db.models.sql.subqueries import AggregateQuery
+ 
+diff --git a/tests/expressions_window/tests.py b/tests/expressions_window/tests.py
+index 3a02a36707..551a43ee92 100644
+--- a/tests/expressions_window/tests.py
++++ b/tests/expressions_window/tests.py
+@@ -1577,6 +1577,70 @@ class WindowFunctionTests(TestCase):
+         with self.assertRaisesMessage(NotImplementedError, msg):
+             list(qs.exclude(window=1, department="Accounting"))
+ 
++    def test_aggregate_over_window_function(self):
++        """
++        Test that aggregating over window functions works correctly by using
++        a subquery. This addresses the issue where window functions inside
++        aggregate functions would cause SQL errors.
++        """
++        # Test basic aggregation over window function
++        qs = Employee.objects.annotate(
++            cumulative_salary=Window(Sum("salary"), order_by=F("hire_date").asc())
++        )
++        result = qs.aggregate(
++            total_salary=Sum("salary"),
++            total_cumulative=Sum("cumulative_salary")
++        )
++        self.assertIsInstance(result["total_salary"], int)
++        self.assertIsInstance(result["total_cumulative"], int)
++        self.assertGreater(result["total_cumulative"], result["total_salary"])
++
++        # Test with Coalesce (from the original issue report)
++        from django.db.models.functions import Coalesce
++        qs = Employee.objects.annotate(
++            cumulative_salary=Coalesce(
++                Window(Sum("salary"), order_by=F("hire_date").asc()), 
++                0, 
++                output_field=IntegerField()
++            )
++        )
++        result = qs.aggregate(
++            total_salary=Sum("salary"),
++            total_cumulative=Sum("cumulative_salary")
++        )
++        self.assertIsInstance(result["total_salary"], int)
++        self.assertIsInstance(result["total_cumulative"], int)
++
++        # Test multiple aggregates over the same window function
++        qs = Employee.objects.annotate(
++            cumulative_salary=Window(Sum("salary"), order_by=F("hire_date").asc())
++        )
++        result = qs.aggregate(
++            total_cumulative=Sum("cumulative_salary"),
++            avg_cumulative=Avg("cumulative_salary"),
++            max_cumulative=Max("cumulative_salary"),
++            min_cumulative=Min("cumulative_salary")
++        )
++        self.assertIsInstance(result["total_cumulative"], int)
++        self.assertIsInstance(result["avg_cumulative"], (Decimal, float))
++        self.assertIsInstance(result["max_cumulative"], int)
++        self.assertIsInstance(result["min_cumulative"], int)
++
++        # Test with partitioned window function
++        qs = Employee.objects.annotate(
++            dept_cumulative=Window(
++                Sum("salary"), 
++                partition_by="department", 
++                order_by=F("hire_date").asc()
++            )
++        )
++        result = qs.aggregate(
++            total_salary=Sum("salary"),
++            total_dept_cumulative=Sum("dept_cumulative")
++        )
++        self.assertIsInstance(result["total_salary"], int)
++        self.assertIsInstance(result["total_dept_cumulative"], int)
++
+ 
+ class WindowUnsupportedTests(TestCase):
+     def test_unsupported_backend(self):

@@ -1,0 +1,57 @@
+diff --git a/xarray/core/common.py b/xarray/core/common.py
+index 3c328f42..a37326f0 100644
+--- a/xarray/core/common.py
++++ b/xarray/core/common.py
+@@ -2023,7 +2023,8 @@ def get_chunksizes(
+ 
+     chunks: dict[Any, tuple[int, ...]] = {}
+     for v in variables:
+-        if hasattr(v.data, "chunks"):
++        # Check for dask chunks first (these take priority)
++        if hasattr(v._data, "chunks"):
+             for dim, c in v.chunksizes.items():
+                 if dim in chunks and c != chunks[dim]:
+                     raise ValueError(
+@@ -2031,6 +2032,18 @@ def get_chunksizes(
+                         "This can be fixed by calling unify_chunks()."
+                     )
+                 chunks[dim] = c
++        # Fall back to zarr chunks in encoding (without loading data)
++        elif "preferred_chunks" in v.encoding:
++            preferred_chunks = v.encoding["preferred_chunks"]
++            for dim in v.dims:
++                if dim in preferred_chunks:
++                    c = (preferred_chunks[dim],)
++                    if dim in chunks and c != chunks[dim]:
++                        raise ValueError(
++                            f"Object has inconsistent chunks along dimension {dim}. "
++                            "This can be fixed by calling unify_chunks()."
++                        )
++                    chunks[dim] = c
+     return Frozen(chunks)
+ 
+ 
+diff --git a/xarray/core/variable.py b/xarray/core/variable.py
+index 2d115ff0..a4b73cff 100644
+--- a/xarray/core/variable.py
++++ b/xarray/core/variable.py
+@@ -1014,10 +1014,17 @@ class Variable(AbstractArray, NdimSizeLenMixin, VariableArithmetic):
+         Variable.chunks
+         xarray.unify_chunks
+         """
++        # Check for dask chunks first
+         if hasattr(self._data, "chunks"):
+             return Frozen({dim: c for dim, c in zip(self.dims, self.data.chunks)})
+-        else:
+-            return {}
++        
++        # Check for zarr chunks in encoding (without loading data)
++        if "preferred_chunks" in self.encoding:
++            preferred_chunks = self.encoding["preferred_chunks"]
++            # Only return chunks for dimensions that exist in this variable
++            return Frozen({dim: (preferred_chunks[dim],) for dim in self.dims if dim in preferred_chunks})
++        
++        return {}
+ 
+     _array_counter = itertools.count()
+ 

@@ -1,0 +1,80 @@
+diff --git a/seaborn/_core/scales.py b/seaborn/_core/scales.py
+index 55874bf2..f80305b4 100644
+--- a/seaborn/_core/scales.py
++++ b/seaborn/_core/scales.py
+@@ -379,6 +379,35 @@ class ContinuousBase(Scale):
+             locs = axis.major.locator()
+             locs = locs[(vmin <= locs) & (locs <= vmax)]
+             labels = axis.major.formatter.format_ticks(locs)
++            
++            # Handle ScalarFormatter offset for large numbers
++            formatter = axis.major.formatter
++            if hasattr(formatter, 'get_offset') and formatter.get_offset():
++                offset = formatter.get_offset()
++                try:
++                    # Parse the offset (could be in scientific notation like '1e6')
++                    offset_value = float(offset)
++                    # Reconstruct the full values by multiplying labels by offset
++                    corrected_labels = []
++                    for label in labels:
++                        try:
++                            # Handle unicode minus sign (U+2212) used by matplotlib
++                            label_clean = label.replace('−', '-')
++                            # Convert label to float and multiply by offset
++                            full_value = float(label_clean) * offset_value
++                            # Format the full value appropriately
++                            if full_value == int(full_value):
++                                corrected_labels.append(str(int(full_value)))
++                            else:
++                                corrected_labels.append(str(full_value))
++                        except (ValueError, TypeError):
++                            # If we can't parse the label, keep it as is
++                            corrected_labels.append(label)
++                    labels = corrected_labels
++                except (ValueError, TypeError):
++                    # If we can't parse the offset, keep original labels
++                    pass
++            
+             new._legend = list(locs), list(labels)
+ 
+         return new
+diff --git a/seaborn/utils.py b/seaborn/utils.py
+index 2407853c..914ad9ba 100644
+--- a/seaborn/utils.py
++++ b/seaborn/utils.py
+@@ -705,7 +705,34 @@ def locator_to_legend_entries(locator, limits, dtype):
+     # once pinned matplotlib>=3.1.0 with:
+     # formatted_levels = formatter.format_ticks(raw_levels)
+     formatter.set_locs(raw_levels)
+-    formatted_levels = [formatter(x) for x in raw_levels]
++    formatted_levels = formatter.format_ticks(raw_levels)
++    
++    # Handle ScalarFormatter offset for large numbers
++    if hasattr(formatter, 'get_offset') and formatter.get_offset():
++        offset = formatter.get_offset()
++        try:
++            # Parse the offset (could be in scientific notation like '1e6')
++            offset_value = float(offset)
++            # Reconstruct the full values by multiplying labels by offset
++            corrected_labels = []
++            for label in formatted_levels:
++                try:
++                    # Handle unicode minus sign (U+2212) used by matplotlib
++                    label_clean = label.replace('−', '-')
++                    # Convert label to float and multiply by offset
++                    full_value = float(label_clean) * offset_value
++                    # Format the full value appropriately
++                    if full_value == int(full_value):
++                        corrected_labels.append(str(int(full_value)))
++                    else:
++                        corrected_labels.append(str(full_value))
++                except (ValueError, TypeError):
++                    # If we can't parse the label, keep it as is
++                    corrected_labels.append(label)
++            formatted_levels = corrected_labels
++        except (ValueError, TypeError):
++            # If we can't parse the offset, keep original labels
++            pass
+ 
+     return raw_levels, formatted_levels
+ 

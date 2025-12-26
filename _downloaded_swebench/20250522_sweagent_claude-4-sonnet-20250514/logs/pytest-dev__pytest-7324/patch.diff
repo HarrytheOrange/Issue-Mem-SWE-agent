@@ -1,0 +1,45 @@
+diff --git a/src/_pytest/mark/expression.py b/src/_pytest/mark/expression.py
+index 04c73411a..80c08f388 100644
+--- a/src/_pytest/mark/expression.py
++++ b/src/_pytest/mark/expression.py
+@@ -129,7 +129,12 @@ class Scanner:
+ 
+ def expression(s: Scanner) -> ast.Expression:
+     if s.accept(TokenType.EOF):
+-        ret = ast.NameConstant(False)  # type: ast.expr
++        # For empty expressions, use ast.NameConstant for compatibility
++        # This is safe because it's not a user-provided identifier
++        if hasattr(ast, 'Constant'):
++            ret = ast.Constant(False)  # type: ast.expr
++        else:
++            ret = ast.NameConstant(False)  # type: ast.expr
+     else:
+         ret = expr(s)
+         s.accept(TokenType.EOF, reject=True)
+@@ -161,7 +166,13 @@ def not_expr(s: Scanner) -> ast.expr:
+         return ret
+     ident = s.accept(TokenType.IDENT)
+     if ident:
+-        return ast.Name(ident.value, ast.Load())
++        # Handle special constants that can't be used with ast.Name in Python 3.8+
++        # We use a prefix to make them safe for the AST compiler, and the MatcherAdapter
++        # will handle the mapping back to the original names
++        if ident.value in ("True", "False", "None"):
++            return ast.Name("__pytest_" + ident.value, ast.Load())
++        else:
++            return ast.Name(ident.value, ast.Load())
+     s.reject((TokenType.NOT, TokenType.LPAREN, TokenType.IDENT))
+ 
+ 
+@@ -172,6 +183,11 @@ class MatcherAdapter(Mapping[str, bool]):
+         self.matcher = matcher
+ 
+     def __getitem__(self, key: str) -> bool:
++        # Handle the special prefixed names for True, False, None
++        if key.startswith("__pytest_"):
++            original_key = key[9:]  # Remove the "__pytest_" prefix
++            if original_key in ("True", "False", "None"):
++                return self.matcher(original_key)
+         return self.matcher(key)
+ 
+     def __iter__(self) -> Iterator[str]:

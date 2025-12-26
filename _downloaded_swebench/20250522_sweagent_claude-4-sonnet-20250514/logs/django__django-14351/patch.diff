@@ -1,0 +1,37 @@
+diff --git a/django/db/models/sql/query.py b/django/db/models/sql/query.py
+index 6629a1fd51..e26e5eec4d 100644
+--- a/django/db/models/sql/query.py
++++ b/django/db/models/sql/query.py
+@@ -2328,6 +2328,32 @@ class Query(BaseExpression):
+             field.empty_strings_allowed
+         ) or field.null
+ 
++    def get_group_by_cols(self, alias=None):
++        """
++        Return the columns that should be used for GROUP BY when this Query
++        is used as an expression.
++        
++        If this Query has explicit select fields, use those. Otherwise, if
++        this Query is being used as a subquery (e.g., in an IN lookup), try
++        to optimize by selecting only the primary key field.
++        """
++        if self.has_select_fields:
++            # If the query has explicit select fields, use the default behavior
++            return super().get_group_by_cols(alias)
++        
++        # If this query doesn't have explicit select fields and is being used
++        # as a subquery, try to optimize by selecting only the primary key
++        if self.subquery and self.model:
++            # Create a clone and optimize it to select only the primary key
++            clone = self.clone()
++            clone.clear_select_clause()
++            pk_field = self.model._meta.pk
++            clone.add_fields([pk_field.name], True)
++            return clone.get_group_by_cols(alias)
++        
++        # Fall back to the default behavior
++        return super().get_group_by_cols(alias)
++
+ 
+ def get_order_dir(field, default='ASC'):
+     """

@@ -1,0 +1,102 @@
+diff --git a/django/utils/decorators.py b/django/utils/decorators.py
+index 5c9a5d01c7..12c99564d1 100644
+--- a/django/utils/decorators.py
++++ b/django/utils/decorators.py
+@@ -38,6 +38,9 @@ def _multi_decorate(decorators, method):
+         # 'func'. Also, wrap method.__get__() in a function because new
+         # attributes can't be set on bound method objects, only on functions.
+         bound_method = partial(method.__get__(self, type(self)))
++        # Copy wrapper assignments from the original method to the partial object
++        # so that decorators can access attributes like __name__, __module__, etc.
++        update_wrapper(bound_method, method)
+         for dec in decorators:
+             bound_method = dec(bound_method)
+         return bound_method(*args, **kwargs)
+diff --git a/tests/decorators/tests.py b/tests/decorators/tests.py
+index 46b01c1852..8fc4a627f4 100644
+--- a/tests/decorators/tests.py
++++ b/tests/decorators/tests.py
+@@ -425,6 +425,83 @@ class MethodDecoratorTests(SimpleTestCase):
+                 def __module__(cls):
+                     return "tests"
+ 
++    def test_wrapper_assignments_preserved(self):
++        """
++        method_decorator should preserve wrapper assignments like __name__,
++        __module__, __qualname__, __doc__, and __annotations__ so that
++        decorators can access these attributes on the function they receive.
++        """
++        def access_name_decorator(func):
++            @wraps(func)
++            def wrapper(*args, **kwargs):
++                # This should not raise AttributeError
++                name = func.__name__
++                return func(*args, **kwargs)
++            return wrapper
++
++        def access_module_decorator(func):
++            @wraps(func)
++            def wrapper(*args, **kwargs):
++                # This should not raise AttributeError
++                module = func.__module__
++                return func(*args, **kwargs)
++            return wrapper
++
++        def access_qualname_decorator(func):
++            @wraps(func)
++            def wrapper(*args, **kwargs):
++                # This should not raise AttributeError
++                qualname = func.__qualname__
++                return func(*args, **kwargs)
++            return wrapper
++
++        def access_doc_decorator(func):
++            @wraps(func)
++            def wrapper(*args, **kwargs):
++                # This should not raise AttributeError
++                doc = func.__doc__
++                return func(*args, **kwargs)
++            return wrapper
++
++        def access_annotations_decorator(func):
++            @wraps(func)
++            def wrapper(*args, **kwargs):
++                # This should not raise AttributeError
++                annotations = func.__annotations__
++                return func(*args, **kwargs)
++            return wrapper
++
++        class Test:
++            @method_decorator(access_name_decorator)
++            def test_name(self):
++                """Test method docstring."""
++                return "test_name"
++
++            @method_decorator(access_module_decorator)
++            def test_module(self):
++                return "test_module"
++
++            @method_decorator(access_qualname_decorator)
++            def test_qualname(self):
++                return "test_qualname"
++
++            @method_decorator(access_doc_decorator)
++            def test_doc(self):
++                """Test method docstring."""
++                return "test_doc"
++
++            @method_decorator(access_annotations_decorator)
++            def test_annotations(self, arg: str) -> str:
++                return f"test_annotations: {arg}"
++
++        # These should not raise AttributeError
++        test_instance = Test()
++        self.assertEqual(test_instance.test_name(), "test_name")
++        self.assertEqual(test_instance.test_module(), "test_module")
++        self.assertEqual(test_instance.test_qualname(), "test_qualname")
++        self.assertEqual(test_instance.test_doc(), "test_doc")
++        self.assertEqual(test_instance.test_annotations("hello"), "test_annotations: hello")
++
+ 
+ class XFrameOptionsDecoratorsTests(TestCase):
+     """

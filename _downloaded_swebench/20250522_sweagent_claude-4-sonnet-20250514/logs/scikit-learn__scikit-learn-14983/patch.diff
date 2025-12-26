@@ -1,0 +1,36 @@
+diff --git a/sklearn/model_selection/_split.py b/sklearn/model_selection/_split.py
+index c49a3ce6a..340dbf570 100644
+--- a/sklearn/model_selection/_split.py
++++ b/sklearn/model_selection/_split.py
+@@ -1163,6 +1163,31 @@ class _RepeatedSplits(metaclass=ABCMeta):
+                      **self.cvargs)
+         return cv.get_n_splits(X, y, groups) * self.n_repeats
+ 
++    def __repr__(self):
++        # Get the class name
++        class_name = self.__class__.__name__
++        
++        # Get the constructor signature to determine parameter order
++        init = getattr(self.__class__.__init__, 'deprecated_original', 
++                       self.__class__.__init__)
++        init_signature = signature(init)
++        
++        # Get parameter names in order (excluding 'self')
++        param_names = [p.name for p in init_signature.parameters.values()
++                       if p.name != 'self' and p.kind != p.VAR_KEYWORD]
++        
++        # Build the parameters dict in the correct order
++        params = {}
++        for param_name in param_names:
++            if param_name in self.cvargs:
++                # Parameter is stored in cvargs (like n_splits)
++                params[param_name] = self.cvargs[param_name]
++            else:
++                # Parameter is stored directly as an attribute
++                params[param_name] = getattr(self, param_name, None)
++        
++        return '%s(%s)' % (class_name, _pprint(params, offset=len(class_name)))
++
+ 
+ class RepeatedKFold(_RepeatedSplits):
+     """Repeated K-Fold cross validator.

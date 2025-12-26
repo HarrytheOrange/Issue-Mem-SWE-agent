@@ -1,0 +1,17 @@
+diff --git a/requests/adapters.py b/requests/adapters.py
+index fe22ff45..631bbeba 100644
+--- a/requests/adapters.py
++++ b/requests/adapters.py
+@@ -191,8 +191,11 @@ class HTTPAdapter(BaseAdapter):
+             )
+         else:
+             proxy_headers = self.proxy_headers(proxy)
++            # Strip authentication from proxy URL to avoid conflicts with proxy_headers
++            # This prevents duplicate authentication handling between requests and urllib3
++            proxy_url = urldefragauth(proxy)
+             manager = self.proxy_manager[proxy] = proxy_from_url(
+-                proxy,
++                proxy_url,
+                 proxy_headers=proxy_headers,
+                 num_pools=self._pool_connections,
+                 maxsize=self._pool_maxsize,

@@ -1,0 +1,42 @@
+diff --git a/astropy/wcs/wcsapi/wrappers/sliced_wcs.py b/astropy/wcs/wcsapi/wrappers/sliced_wcs.py
+index d7605b078c..02e1962ed3 100644
+--- a/astropy/wcs/wcsapi/wrappers/sliced_wcs.py
++++ b/astropy/wcs/wcsapi/wrappers/sliced_wcs.py
+@@ -251,7 +251,25 @@ class SlicedLowLevelWCS(BaseWCSWrapper):
+                 iworld_curr += 1
+                 world_arrays_new.append(world_arrays[iworld_curr])
+             else:
+-                world_arrays_new.append(1.)
++                # For dropped world dimensions, we need to calculate the correct
++                # world coordinate value based on the slice indices
++                # We'll use a representative pixel coordinate to get the world value
++                representative_pixel = []
++                for ipix in range(self._wcs.pixel_n_dim):
++                    if isinstance(self._slices_pixel[ipix], numbers.Integral):
++                        representative_pixel.append(self._slices_pixel[ipix])
++                    else:
++                        # Use the center pixel for non-sliced dimensions as a representative value
++                        # This is more stable for coordinate transformations
++                        if self._wcs.pixel_shape is not None:
++                            center = (self._wcs.pixel_shape[ipix] - 1) / 2
++                        else:
++                            center = 0
++                        representative_pixel.append(center)
++                
++                # Get world coordinates for this representative pixel
++                representative_world = self._wcs.pixel_to_world_values(*representative_pixel)
++                world_arrays_new.append(representative_world[iworld])
+ 
+         world_arrays_new = np.broadcast_arrays(*world_arrays_new)
+         pixel_arrays = list(self._wcs.world_to_pixel_values(*world_arrays_new))
+diff --git a/pyproject.toml b/pyproject.toml
+index 7a3b85fc92..83f08ed124 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -1,5 +1,5 @@
+ [build-system]
+-requires = ["setuptools",
++requires = ["setuptools==68.0.0",
+             "setuptools_scm>=6.2",
+             "wheel",
+             "cython==0.29.30",

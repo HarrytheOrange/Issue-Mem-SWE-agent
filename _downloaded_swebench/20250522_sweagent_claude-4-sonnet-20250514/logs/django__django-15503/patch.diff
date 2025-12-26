@@ -1,0 +1,127 @@
+diff --git a/django/db/models/fields/json.py b/django/db/models/fields/json.py
+index fdca700c9d..2e93e0c9e0 100644
+--- a/django/db/models/fields/json.py
++++ b/django/db/models/fields/json.py
+@@ -139,6 +139,18 @@ def compile_json_path(key_transforms, include_root=True):
+     return "".join(path)
+ 
+ 
++def compile_json_path_for_has_key(key_transforms, include_root=True):
++    """
++    Compile a JSON path for has_key lookups, treating all keys as object keys.
++    This is different from compile_json_path which treats numeric strings as array indices.
++    """
++    path = ["$"] if include_root else []
++    for key_transform in key_transforms:
++        path.append(".")
++        path.append(json.dumps(key_transform))
++    return "".join(path)
++
++
+ class DataContains(PostgresOperatorLookup):
+     lookup_name = "contains"
+     postgres_operator = "@>"
+@@ -178,6 +190,8 @@ class HasKeyLookup(PostgresOperatorLookup):
+             lhs, lhs_params, lhs_key_transforms = self.lhs.preprocess_lhs(
+                 compiler, connection
+             )
++            # Use the original compile_json_path for the path to the object,
++            # as it may contain array indices
+             lhs_json_path = compile_json_path(lhs_key_transforms)
+         else:
+             lhs, lhs_params = self.process_lhs(compiler, connection)
+@@ -191,15 +205,21 @@ class HasKeyLookup(PostgresOperatorLookup):
+         for key in rhs:
+             if isinstance(key, KeyTransform):
+                 *_, rhs_key_transforms = key.preprocess_lhs(compiler, connection)
++                # For KeyTransform, we need to split the path:
++                # - All but the last element use normal path compilation (may include array indices)
++                # - The last element is always an object key for has_key lookups
++                if len(rhs_key_transforms) > 1:
++                    path_to_object = compile_json_path(rhs_key_transforms[:-1], include_root=False)
++                    final_key = compile_json_path_for_has_key([rhs_key_transforms[-1]], include_root=False)
++                    rhs_path = path_to_object + final_key
++                else:
++                    # Single key, treat as object key
++                    rhs_path = compile_json_path_for_has_key(rhs_key_transforms, include_root=False)
+             else:
+-                rhs_key_transforms = [key]
+-            rhs_params.append(
+-                "%s%s"
+-                % (
+-                    lhs_json_path,
+-                    compile_json_path(rhs_key_transforms, include_root=False),
+-                )
+-            )
++                # Simple string key, always treat as object key
++                rhs_path = compile_json_path_for_has_key([key], include_root=False)
++            
++            rhs_params.append("%s%s" % (lhs_json_path, rhs_path))
+         # Add condition for each key.
+         if self.logical_operator:
+             sql = "(%s)" % self.logical_operator.join([sql] * len(rhs_params))
+@@ -387,25 +407,50 @@ class KeyTransformTextLookupMixin:
+ class KeyTransformIsNull(lookups.IsNull):
+     # key__isnull=False is the same as has_key='key'
+     def as_oracle(self, compiler, connection):
+-        sql, params = HasKey(
+-            self.lhs.lhs,
+-            self.lhs.key_name,
+-        ).as_oracle(compiler, connection)
+-        if not self.rhs:
+-            return sql, params
+-        # Column doesn't have a key or IS NULL.
+-        lhs, lhs_params, _ = self.lhs.preprocess_lhs(compiler, connection)
+-        return "(NOT %s OR %s IS NULL)" % (sql, lhs), tuple(params) + tuple(lhs_params)
++        # For numeric keys, use the original path compilation to handle array indices correctly
++        try:
++            int(self.lhs.key_name)
++            # Numeric key - might be an array index, use original compile_json_path
++            lhs, lhs_params, lhs_key_transforms = self.lhs.preprocess_lhs(compiler, connection)
++            json_path = compile_json_path(lhs_key_transforms)
++            if not self.rhs:
++                sql = "JSON_EXISTS(%s, '%s')" % (lhs, json_path)
++                return sql, tuple(lhs_params)
++            else:
++                sql = "(NOT JSON_EXISTS(%s, '%s') OR %s IS NULL)" % (lhs, json_path, lhs)
++                return sql, tuple(lhs_params) * 2
++        except ValueError:
++            # Non-numeric key - use HasKey which treats it as an object key
++            sql, params = HasKey(
++                self.lhs.lhs,
++                self.lhs.key_name,
++            ).as_oracle(compiler, connection)
++            if not self.rhs:
++                return sql, params
++            # Column doesn't have a key or IS NULL.
++            lhs, lhs_params, _ = self.lhs.preprocess_lhs(compiler, connection)
++            return "(NOT %s OR %s IS NULL)" % (sql, lhs), tuple(params) + tuple(lhs_params)
+ 
+     def as_sqlite(self, compiler, connection):
+         template = "JSON_TYPE(%s, %%s) IS NULL"
+         if not self.rhs:
+             template = "JSON_TYPE(%s, %%s) IS NOT NULL"
+-        return HasKey(self.lhs.lhs, self.lhs.key_name).as_sql(
+-            compiler,
+-            connection,
+-            template=template,
+-        )
++        
++        # For numeric keys, use the original path compilation to handle array indices correctly
++        try:
++            int(self.lhs.key_name)
++            # Numeric key - might be an array index, use original compile_json_path
++            lhs, lhs_params, lhs_key_transforms = self.lhs.preprocess_lhs(compiler, connection)
++            json_path = compile_json_path(lhs_key_transforms)
++            sql = template % lhs
++            return sql, tuple(lhs_params) + (json_path,)
++        except ValueError:
++            # Non-numeric key - use HasKey which treats it as an object key
++            return HasKey(self.lhs.lhs, self.lhs.key_name).as_sql(
++                compiler,
++                connection,
++                template=template,
++            )
+ 
+ 
+ class KeyTransformIn(lookups.In):

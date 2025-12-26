@@ -1,0 +1,693 @@
+diff --git a/debug_explicit.py b/debug_explicit.py
+new file mode 100644
+index 000000000..cbda45763
+--- /dev/null
++++ b/debug_explicit.py
+@@ -0,0 +1,40 @@
++#!/usr/bin/env python3
++"""
++Debug script for explicit __init__.py collection
++"""
++import os
++import subprocess
++import tempfile
++
++def debug_explicit_collection():
++    with tempfile.TemporaryDirectory() as tmpdir:
++        print(f"Working in: {tmpdir}")
++        
++        # Create a test package
++        pkg_dir = os.path.join(tmpdir, "testpkg")
++        os.makedirs(pkg_dir)
++        
++        # Create an __init__.py file with a test
++        init_file = os.path.join(pkg_dir, "__init__.py")
++        with open(init_file, "w") as f:
++            f.write("def test_init():\n    assert True\n")
++        
++        print(f"Created {init_file}")
++        print(f"Contents: {open(init_file).read()}")
++        
++        # Run pytest on the specific __init__.py file
++        result = subprocess.run(
++            ["python", "-m", "pytest", "-v", "-s", "testpkg/__init__.py"],
++            capture_output=True,
++            text=True,
++            cwd=tmpdir
++        )
++        
++        print("STDOUT:")
++        print(result.stdout)
++        print("\nSTDERR:")
++        print(result.stderr)
++        print(f"\nReturn code: {result.returncode}")
++
++if __name__ == "__main__":
++    debug_explicit_collection()
+\ No newline at end of file
+diff --git a/debug_explicit_init.py b/debug_explicit_init.py
+new file mode 100644
+index 000000000..26f9df867
+--- /dev/null
++++ b/debug_explicit_init.py
+@@ -0,0 +1,40 @@
++#!/usr/bin/env python3
++"""
++Debug script for explicit __init__.py collection
++"""
++import os
++import subprocess
++import tempfile
++
++def debug_explicit_init():
++    with tempfile.TemporaryDirectory() as tmpdir:
++        print(f"Working in: {tmpdir}")
++        
++        # Create a test package
++        pkg_dir = os.path.join(tmpdir, "test_package")
++        os.makedirs(pkg_dir)
++        
++        # Create an __init__.py file with a test
++        init_file = os.path.join(pkg_dir, "__init__.py")
++        with open(init_file, "w") as f:
++            f.write("def test_package_init():\n    assert True\n")
++        
++        print(f"Created {init_file}")
++        print(f"Contents: {open(init_file).read()}")
++        
++        # Run pytest on the specific __init__.py file
++        result = subprocess.run(
++            ["python", "-m", "pytest", "-v", "-s", "test_package/__init__.py"],
++            capture_output=True,
++            text=True,
++            cwd=tmpdir
++        )
++        
++        print("STDOUT:")
++        print(result.stdout)
++        print("\nSTDERR:")
++        print(result.stderr)
++        print(f"\nReturn code: {result.returncode}")
++
++if __name__ == "__main__":
++    debug_explicit_init()
+\ No newline at end of file
+diff --git a/debug_nontest.py b/debug_nontest.py
+new file mode 100644
+index 000000000..25a2e8163
+--- /dev/null
++++ b/debug_nontest.py
+@@ -0,0 +1,43 @@
++#!/usr/bin/env python3
++"""
++Debug script for nontest collection issue
++"""
++import os
++import subprocess
++import tempfile
++
++def debug_nontest_collection():
++    with tempfile.TemporaryDirectory() as tmpdir:
++        print(f"Working in: {tmpdir}")
++        
++        # Create a regular test file
++        test_file = os.path.join(tmpdir, "test_regular.py")
++        with open(test_file, "w") as f:
++            f.write("def test_regular():\n    assert True\n")
++        
++        # Create a non-test package that should be ignored
++        nontest_dir = os.path.join(tmpdir, "nontest")
++        os.makedirs(nontest_dir)
++        nontest_init = os.path.join(nontest_dir, "__init__.py")
++        with open(nontest_init, "w") as f:
++            f.write("print('This should not be collected')\nassert False  # This should not be collected\n")
++        
++        print(f"Created {nontest_init}")
++        print(f"Contents: {open(nontest_init).read()}")
++        
++        # Run pytest
++        result = subprocess.run(
++            ["python", "-m", "pytest", "-v", "-s"],
++            capture_output=True,
++            text=True,
++            cwd=tmpdir
++        )
++        
++        print("STDOUT:")
++        print(result.stdout)
++        print("\nSTDERR:")
++        print(result.stderr)
++        print(f"\nReturn code: {result.returncode}")
++
++if __name__ == "__main__":
++    debug_nontest_collection()
+\ No newline at end of file
+diff --git a/debug_test3.py b/debug_test3.py
+new file mode 100644
+index 000000000..eb4aa488d
+--- /dev/null
++++ b/debug_test3.py
+@@ -0,0 +1,47 @@
++#!/usr/bin/env python3
++"""
++Debug script for test 3 (package collection)
++"""
++import os
++import subprocess
++import tempfile
++
++def debug_test3():
++    with tempfile.TemporaryDirectory() as tmpdir:
++        print(f"Working in: {tmpdir}")
++        
++        # Create a test package
++        pkg_dir = os.path.join(tmpdir, "test_package")
++        os.makedirs(pkg_dir)
++        
++        # Create an __init__.py file with a test
++        init_file = os.path.join(pkg_dir, "__init__.py")
++        with open(init_file, "w") as f:
++            f.write("def test_package_init():\n    assert True\n")
++        
++        # Create a test module in the package
++        test_file = os.path.join(pkg_dir, "test_module.py")
++        with open(test_file, "w") as f:
++            f.write("def test_module():\n    assert True\n")
++        
++        print(f"Created {init_file}")
++        print(f"Contents: {open(init_file).read()}")
++        print(f"Created {test_file}")
++        print(f"Contents: {open(test_file).read()}")
++        
++        # Run pytest on the package directory
++        result = subprocess.run(
++            ["python", "-m", "pytest", "-v", "-s", "test_package/"],
++            capture_output=True,
++            text=True,
++            cwd=tmpdir
++        )
++        
++        print("STDOUT:")
++        print(result.stdout)
++        print("\nSTDERR:")
++        print(result.stderr)
++        print(f"\nReturn code: {result.returncode}")
++
++if __name__ == "__main__":
++    debug_test3()
+\ No newline at end of file
+diff --git a/reproduce_issue.py b/reproduce_issue.py
+new file mode 100644
+index 000000000..666904858
+--- /dev/null
++++ b/reproduce_issue.py
+@@ -0,0 +1,60 @@
++#!/usr/bin/env python3
++"""
++Script to reproduce the pytest 5.2.3 regression issue where it tries to collect random __init__.py files
++"""
++import os
++import subprocess
++import tempfile
++import shutil
++
++def reproduce_issue():
++    # Create a temporary directory
++    with tempfile.TemporaryDirectory() as tmpdir:
++        print(f"Working in temporary directory: {tmpdir}")
++        
++        # Create the problematic structure
++        foobar_dir = os.path.join(tmpdir, "foobar")
++        os.makedirs(foobar_dir)
++        
++        # Create an __init__.py file that will fail when imported
++        init_file = os.path.join(foobar_dir, "__init__.py")
++        with open(init_file, "w") as f:
++            f.write("assert False\n")
++        
++        # Create a simple test file
++        test_file = os.path.join(tmpdir, "test_foo.py")
++        with open(test_file, "w") as f:
++            f.write("def test_foo():\n    assert True\n")
++        
++        # Change to the temporary directory
++        original_cwd = os.getcwd()
++        os.chdir(tmpdir)
++        
++        try:
++            # Run pytest and capture output
++            result = subprocess.run(
++                ["python", "-m", "pytest", "-v"],
++                capture_output=True,
++                text=True,
++                cwd=tmpdir
++            )
++            
++            print("STDOUT:")
++            print(result.stdout)
++            print("\nSTDERR:")
++            print(result.stderr)
++            print(f"\nReturn code: {result.returncode}")
++            
++            # Check if the issue is present
++            if "ERROR collecting foobar/__init__.py" in result.stdout or "AssertionError" in result.stdout:
++                print("\n❌ ISSUE REPRODUCED: pytest is trying to collect foobar/__init__.py")
++                return True
++            else:
++                print("\n✅ No issue found - pytest is not collecting foobar/__init__.py")
++                return False
++                
++        finally:
++            os.chdir(original_cwd)
++
++if __name__ == "__main__":
++    reproduce_issue()
+\ No newline at end of file
+diff --git a/src/_pytest/main.py b/src/_pytest/main.py
+index 3c205027d..d2839da12 100644
+--- a/src/_pytest/main.py
++++ b/src/_pytest/main.py
+@@ -529,14 +529,34 @@ class Session(nodes.FSCollector):
+             ):
+                 dirpath = path.dirpath()
+                 if dirpath not in seen_dirs:
+-                    # Collect packages first.
++                    # Collect packages first, but only if the directory looks like a test package
++                    # or if the current file would actually be collected
+                     seen_dirs.add(dirpath)
+-                    pkginit = dirpath.join("__init__.py")
+-                    if pkginit.exists():
+-                        for x in self._collectfile(pkginit):
+-                            yield x
+-                            if isinstance(x, Package):
+-                                self._pkg_roots[dirpath] = x
++                    
++                    # Check if we should try to collect the package
++                    should_collect_package = False
++                    
++                    # Always collect packages if the current file would be collected
++                    if path.ext == ".py":
++                        from _pytest.python import path_matches_patterns
++                        python_files = self.config.getini("python_files")
++                        if path_matches_patterns(path, python_files):
++                            should_collect_package = True
++                    
++                    # Also collect packages if the directory name suggests it's a test package
++                    if not should_collect_package:
++                        dirname = dirpath.basename
++                        if (dirname.startswith("test") and 
++                            (len(dirname) == 4 or dirname[4] in "_-")):
++                            should_collect_package = True
++                    
++                    if should_collect_package:
++                        pkginit = dirpath.join("__init__.py")
++                        if pkginit.exists():
++                            for x in self._collectfile(pkginit):
++                                yield x
++                                if isinstance(x, Package):
++                                    self._pkg_roots[dirpath] = x
+                 if dirpath in self._pkg_roots:
+                     # Do not collect packages here.
+                     continue
+diff --git a/src/_pytest/python.py b/src/_pytest/python.py
+index 306e5f217..3fce7cf2b 100644
+--- a/src/_pytest/python.py
++++ b/src/_pytest/python.py
+@@ -177,9 +177,28 @@ def pytest_collect_file(path, parent):
+     ext = path.ext
+     if ext == ".py":
+         if not parent.session.isinitpath(path):
+-            if not path_matches_patterns(
+-                path, parent.config.getini("python_files") + ["__init__.py"]
+-            ):
++            patterns = parent.config.getini("python_files")
++            
++            # For __init__.py files, only add the pattern if certain conditions are met
++            if path.basename == "__init__.py":
++                from _pytest.python import Package
++                # Add __init__.py pattern only if:
++                # 1. The parent is already a Package (being collected as part of package), OR
++                # 2. The file is in a directory that looks like a test package
++                if isinstance(parent, Package):
++                    patterns = patterns + ["__init__.py"]
++                else:
++                    # Check if the directory name suggests it's a test package
++                    dirname = path.dirpath().basename
++                    is_test_dir = (dirname.startswith("test") and 
++                                   (len(dirname) == 4 or dirname[4] in "_-"))
++                    if is_test_dir:
++                        patterns = patterns + ["__init__.py"]
++            else:
++                # For non-__init__.py files, always add the __init__.py pattern for compatibility
++                patterns = patterns + ["__init__.py"]
++            
++            if not path_matches_patterns(path, patterns):
+                 return
+         ihook = parent.session.gethookproxy(path)
+         return ihook.pytest_pycollect_makemodule(path=path, parent=parent)
+@@ -643,7 +662,7 @@ class Package(Module):
+         this_path = self.fspath.dirpath()
+         init_module = this_path.join("__init__.py")
+         if init_module.check(file=1) and path_matches_patterns(
+-            init_module, self.config.getini("python_files")
++            init_module, self.config.getini("python_files") + ["__init__.py"]
+         ):
+             yield Module(init_module, self)
+         pkg_prefixes = set()
+diff --git a/test_edge_cases.py b/test_edge_cases.py
+new file mode 100644
+index 000000000..915296468
+--- /dev/null
++++ b/test_edge_cases.py
+@@ -0,0 +1,128 @@
++#!/usr/bin/env python3
++"""
++Test edge cases for the __init__.py collection fix
++"""
++import os
++import subprocess
++import tempfile
++
++def test_edge_case_1():
++    """Test that directories with 'test' in the middle are not collected"""
++    print("Edge case 1: Directory with 'test' in the middle")
++    
++    with tempfile.TemporaryDirectory() as tmpdir:
++        # Create a directory with 'test' in the middle
++        dir_name = "mytest_package"
++        pkg_dir = os.path.join(tmpdir, dir_name)
++        os.makedirs(pkg_dir)
++        
++        # Create an __init__.py file that should NOT be collected
++        init_file = os.path.join(pkg_dir, "__init__.py")
++        with open(init_file, "w") as f:
++            f.write("assert False  # This should not be collected\n")
++        
++        # Create a regular test file
++        test_file = os.path.join(tmpdir, "test_regular.py")
++        with open(test_file, "w") as f:
++            f.write("def test_regular():\n    assert True\n")
++        
++        # Run pytest
++        result = subprocess.run(
++            ["python", "-m", "pytest", "-v"],
++            capture_output=True,
++            text=True,
++            cwd=tmpdir
++        )
++        
++        if "ERROR collecting" in result.stdout or "assert False" in result.stdout:
++            print("❌ FAILED: pytest collected the __init__.py file")
++            return False
++        else:
++            print("✅ PASSED: pytest did not collect the __init__.py file")
++            return True
++
++def test_edge_case_2():
++    """Test that 'test' directory works"""
++    print("\nEdge case 2: Directory named exactly 'test'")
++    
++    with tempfile.TemporaryDirectory() as tmpdir:
++        # Create a directory named exactly 'test'
++        pkg_dir = os.path.join(tmpdir, "test")
++        os.makedirs(pkg_dir)
++        
++        # Create an __init__.py file with a test
++        init_file = os.path.join(pkg_dir, "__init__.py")
++        with open(init_file, "w") as f:
++            f.write("def test_in_test_dir():\n    assert True\n")
++        
++        # Run pytest
++        result = subprocess.run(
++            ["python", "-m", "pytest", "-v"],
++            capture_output=True,
++            text=True,
++            cwd=tmpdir
++        )
++        
++        if "test_in_test_dir PASSED" in result.stdout and result.returncode == 0:
++            print("✅ PASSED: 'test' directory works")
++            return True
++        else:
++            print("❌ FAILED: 'test' directory doesn't work")
++            print("STDOUT:", result.stdout)
++            return False
++
++def test_edge_case_3():
++    """Test that 'test-package' directory works"""
++    print("\nEdge case 3: Directory named 'test-package'")
++    
++    with tempfile.TemporaryDirectory() as tmpdir:
++        # Create a directory named 'test-package'
++        pkg_dir = os.path.join(tmpdir, "test-package")
++        os.makedirs(pkg_dir)
++        
++        # Create an __init__.py file with a test
++        init_file = os.path.join(pkg_dir, "__init__.py")
++        with open(init_file, "w") as f:
++            f.write("def test_in_test_dash_package():\n    assert True\n")
++        
++        # Run pytest
++        result = subprocess.run(
++            ["python", "-m", "pytest", "-v"],
++            capture_output=True,
++            text=True,
++            cwd=tmpdir
++        )
++        
++        if "test_in_test_dash_package PASSED" in result.stdout and result.returncode == 0:
++            print("✅ PASSED: 'test-package' directory works")
++            return True
++        else:
++            print("❌ FAILED: 'test-package' directory doesn't work")
++            print("STDOUT:", result.stdout)
++            return False
++
++def main():
++    print("Testing edge cases for __init__.py collection fix...")
++    
++    tests = [
++        test_edge_case_1,
++        test_edge_case_2,
++        test_edge_case_3,
++    ]
++    
++    results = []
++    for test in tests:
++        results.append(test())
++    
++    print(f"\n{'='*60}")
++    print(f"Edge Case Results: {sum(results)}/{len(results)} passed")
++    
++    if all(results):
++        print("🎉 All edge case tests passed!")
++        return True
++    else:
++        print("❌ Some edge case tests failed.")
++        return False
++
++if __name__ == "__main__":
++    main()
+\ No newline at end of file
+diff --git a/test_fix.py b/test_fix.py
+new file mode 100644
+index 000000000..efb5220fc
+--- /dev/null
++++ b/test_fix.py
+@@ -0,0 +1,195 @@
++#!/usr/bin/env python3
++"""
++Test script to verify that our fix works correctly and doesn't break legitimate use cases
++"""
++import os
++import subprocess
++import tempfile
++import shutil
++
++def test_case_1_regression_fix():
++    """Test that the regression is fixed - random __init__.py files are not collected"""
++    print("Test 1: Regression fix - random __init__.py files should not be collected")
++    
++    with tempfile.TemporaryDirectory() as tmpdir:
++        # Create the problematic structure
++        foobar_dir = os.path.join(tmpdir, "foobar")
++        os.makedirs(foobar_dir)
++        
++        # Create an __init__.py file that will fail when imported
++        init_file = os.path.join(foobar_dir, "__init__.py")
++        with open(init_file, "w") as f:
++            f.write("assert False\n")
++        
++        # Create a simple test file
++        test_file = os.path.join(tmpdir, "test_foo.py")
++        with open(test_file, "w") as f:
++            f.write("def test_foo():\n    assert True\n")
++        
++        # Run pytest
++        result = subprocess.run(
++            ["python", "-m", "pytest", "-v"],
++            capture_output=True,
++            text=True,
++            cwd=tmpdir
++        )
++        
++        if "ERROR collecting foobar/__init__.py" in result.stdout or "AssertionError" in result.stdout:
++            print("❌ FAILED: pytest is still collecting foobar/__init__.py")
++            return False
++        else:
++            print("✅ PASSED: pytest is not collecting foobar/__init__.py")
++            return True
++
++def test_case_2_explicit_init_collection():
++    """Test that __init__.py files can still be collected when explicitly requested"""
++    print("\nTest 2: Explicit __init__.py collection should still work")
++    
++    with tempfile.TemporaryDirectory() as tmpdir:
++        # Create a test package
++        pkg_dir = os.path.join(tmpdir, "testpkg")
++        os.makedirs(pkg_dir)
++        
++        # Create an __init__.py file with a test
++        init_file = os.path.join(pkg_dir, "__init__.py")
++        with open(init_file, "w") as f:
++            f.write("def test_init():\n    assert True\n")
++        
++        # Run pytest on the specific __init__.py file
++        result = subprocess.run(
++            ["python", "-m", "pytest", "-v", "testpkg/__init__.py"],
++            capture_output=True,
++            text=True,
++            cwd=tmpdir
++        )
++        
++        if "test_init PASSED" in result.stdout and result.returncode == 0:
++            print("✅ PASSED: explicit __init__.py collection works")
++            return True
++        else:
++            print("❌ FAILED: explicit __init__.py collection doesn't work")
++            print("STDOUT:", result.stdout)
++            print("STDERR:", result.stderr)
++            return False
++
++def test_case_3_package_collection():
++    """Test that __init__.py files in test packages are still collected"""
++    print("\nTest 3: Package collection should still work")
++    
++    with tempfile.TemporaryDirectory() as tmpdir:
++        # Create a test package
++        pkg_dir = os.path.join(tmpdir, "test_package")
++        os.makedirs(pkg_dir)
++        
++        # Create an __init__.py file with a test
++        init_file = os.path.join(pkg_dir, "__init__.py")
++        with open(init_file, "w") as f:
++            f.write("def test_package_init():\n    assert True\n")
++        
++        # Create a test module in the package
++        test_file = os.path.join(pkg_dir, "test_module.py")
++        with open(test_file, "w") as f:
++            f.write("def test_module():\n    assert True\n")
++        
++        # Run pytest on the package directory
++        result = subprocess.run(
++            ["python", "-m", "pytest", "-v", "test_package/"],
++            capture_output=True,
++            text=True,
++            cwd=tmpdir
++        )
++        
++        if ("test_package_init PASSED" in result.stdout and 
++            "test_module PASSED" in result.stdout and 
++            result.returncode == 0):
++            print("✅ PASSED: package collection works")
++            return True
++        else:
++            print("❌ FAILED: package collection doesn't work")
++            print("STDOUT:", result.stdout)
++            print("STDERR:", result.stderr)
++            return False
++
++def test_case_4_nested_packages():
++    """Test that nested packages work correctly"""
++    print("\nTest 4: Nested packages should work correctly")
++    
++    with tempfile.TemporaryDirectory() as tmpdir:
++        # Create nested test packages
++        pkg1_dir = os.path.join(tmpdir, "test_pkg1")
++        pkg2_dir = os.path.join(pkg1_dir, "test_pkg2")
++        os.makedirs(pkg2_dir)
++        
++        # Create __init__.py files
++        init1_file = os.path.join(pkg1_dir, "__init__.py")
++        with open(init1_file, "w") as f:
++            f.write("def test_pkg1():\n    assert True\n")
++        
++        init2_file = os.path.join(pkg2_dir, "__init__.py")
++        with open(init2_file, "w") as f:
++            f.write("def test_pkg2():\n    assert True\n")
++        
++        # Create a regular test file
++        test_file = os.path.join(tmpdir, "test_regular.py")
++        with open(test_file, "w") as f:
++            f.write("def test_regular():\n    assert True\n")
++        
++        # Create a non-test package that should be ignored
++        nontest_dir = os.path.join(tmpdir, "nontest")
++        os.makedirs(nontest_dir)
++        nontest_init = os.path.join(nontest_dir, "__init__.py")
++        with open(nontest_init, "w") as f:
++            f.write("assert False  # This should not be collected\n")
++        
++        # Run pytest
++        result = subprocess.run(
++            ["python", "-m", "pytest", "-v"],
++            capture_output=True,
++            text=True,
++            cwd=tmpdir
++        )
++        
++        success = (
++            "test_pkg1 PASSED" in result.stdout and
++            "test_pkg2 PASSED" in result.stdout and
++            "test_regular PASSED" in result.stdout and
++            "ERROR collecting nontest/__init__.py" not in result.stdout and
++            "assert False" not in result.stdout and
++            result.returncode == 0
++        )
++        
++        if success:
++            print("✅ PASSED: nested packages work correctly")
++            return True
++        else:
++            print("❌ FAILED: nested packages don't work correctly")
++            print("STDOUT:", result.stdout)
++            print("STDERR:", result.stderr)
++            return False
++
++def main():
++    print("Testing pytest fix for __init__.py collection regression...")
++    
++    tests = [
++        test_case_1_regression_fix,
++        test_case_2_explicit_init_collection,
++        test_case_3_package_collection,
++        test_case_4_nested_packages,
++    ]
++    
++    results = []
++    for test in tests:
++        results.append(test())
++    
++    print(f"\n{'='*60}")
++    print(f"Test Results: {sum(results)}/{len(results)} passed")
++    
++    if all(results):
++        print("🎉 All tests passed! The fix works correctly.")
++        return True
++    else:
++        print("❌ Some tests failed. The fix needs more work.")
++        return False
++
++if __name__ == "__main__":
++    main()
+\ No newline at end of file

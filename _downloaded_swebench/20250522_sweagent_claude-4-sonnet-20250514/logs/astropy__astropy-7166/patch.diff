@@ -1,0 +1,77 @@
+diff --git a/astropy/utils/misc.py b/astropy/utils/misc.py
+index de3fb01d18..cceaeb957f 100644
+--- a/astropy/utils/misc.py
++++ b/astropy/utils/misc.py
+@@ -528,7 +528,7 @@ class InheritDocstrings(type):
+                 not key.startswith('_'))
+ 
+         for key, val in dct.items():
+-            if (inspect.isfunction(val) and
++            if ((inspect.isfunction(val) or isinstance(val, property)) and
+                 is_public_member(key) and
+                 val.__doc__ is None):
+                 for base in cls.__mro__[1:]:
+diff --git a/astropy/utils/tests/test_misc.py b/astropy/utils/tests/test_misc.py
+index 4f632e8d15..7069501a89 100644
+--- a/astropy/utils/tests/test_misc.py
++++ b/astropy/utils/tests/test_misc.py
+@@ -89,6 +89,59 @@ def test_inherit_docstrings():
+         assert Subclass.__call__.__doc__ == "FOO"
+ 
+ 
++def test_inherit_docstrings_properties():
++    """Test that InheritDocstrings works for properties."""
++    
++    class Base(metaclass=misc.InheritDocstrings):
++        @property
++        def prop(self):
++            """Base property docstring."""
++            return 1
++    
++    class Derived(Base):
++        @property
++        def prop(self):
++            # Should inherit docstring
++            return 2
++    
++    # Test that property docstring inheritance works
++    assert Base.prop.__doc__ == "Base property docstring."
++    assert Derived.prop.__doc__ == "Base property docstring."
++    
++    # Test that properties with existing docstrings are not overridden
++    class DerivedWithDoc(Base):
++        @property
++        def prop(self):
++            """Derived property docstring."""
++            return 3
++    
++    assert DerivedWithDoc.prop.__doc__ == "Derived property docstring."
++    
++    # Test mixed inheritance of methods and properties
++    class MixedBase(metaclass=misc.InheritDocstrings):
++        def method(self):
++            """Base method docstring."""
++            pass
++        
++        @property
++        def prop(self):
++            """Base property docstring."""
++            return 1
++    
++    class MixedDerived(MixedBase):
++        def method(self):
++            # Should inherit method docstring
++            pass
++        
++        @property
++        def prop(self):
++            # Should inherit property docstring
++            return 2
++    
++    assert MixedDerived.method.__doc__ == "Base method docstring."
++    assert MixedDerived.prop.__doc__ == "Base property docstring."
++
++
+ def test_set_locale():
+     # First, test if the required locales are available
+     current = locale.setlocale(locale.LC_ALL)

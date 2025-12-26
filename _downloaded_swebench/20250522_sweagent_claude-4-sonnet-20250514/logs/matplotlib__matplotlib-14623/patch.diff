@@ -1,0 +1,39 @@
+diff --git a/lib/matplotlib/ticker.py b/lib/matplotlib/ticker.py
+index 209a3f92ce..02b0326ef1 100644
+--- a/lib/matplotlib/ticker.py
++++ b/lib/matplotlib/ticker.py
+@@ -2379,8 +2379,14 @@ class LogLocator(Locator):
+         if not np.isfinite(vmin) or not np.isfinite(vmax):
+             return 1, 10  # initial range, no data plotted yet
+ 
+-        if vmin > vmax:
++        # Preserve the original order if both values are positive to allow
++        # for axis inversion (e.g., set_ylim(high, low) for log scale)
++        original_order_preserved = False
++        if vmin > 0 and vmax > 0:
++            original_order_preserved = True
++        elif vmin > vmax:
+             vmin, vmax = vmax, vmin
++            
+         if vmax <= 0:
+             cbook._warn_external(
+                 "Data has no positive values, and therefore cannot be "
+@@ -2393,8 +2399,16 @@ class LogLocator(Locator):
+         if vmin <= 0:
+             vmin = minpos
+         if vmin == vmax:
+-            vmin = _decade_less(vmin, self._base)
+-            vmax = _decade_greater(vmax, self._base)
++            if original_order_preserved:
++                # If we preserved order and they're equal, we need to expand
++                # but maintain the intended direction
++                vmin_expanded = _decade_less(vmin, self._base)
++                vmax_expanded = _decade_greater(vmax, self._base)
++                # Return in the same order as input
++                return vmin_expanded, vmax_expanded
++            else:
++                vmin = _decade_less(vmin, self._base)
++                vmax = _decade_greater(vmax, self._base)
+         return vmin, vmax
+ 
+ 

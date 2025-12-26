@@ -1,0 +1,16 @@
+diff --git a/django/db/models/base.py b/django/db/models/base.py
+index 844c01e95e..bfb1136003 100644
+--- a/django/db/models/base.py
++++ b/django/db/models/base.py
+@@ -806,7 +806,10 @@ class Model(metaclass=ModelBase):
+             # Make sure the link fields are synced between parent and self.
+             if (field and getattr(self, parent._meta.pk.attname) is None and
+                     getattr(self, field.attname) is not None):
+-                setattr(self, parent._meta.pk.attname, getattr(self, field.attname))
++                # If the parent's primary key is None, the user probably wants to
++                # create a new object, so we should set the parent link field to
++                # None as well instead of syncing from it.
++                setattr(self, field.attname, None)
+             parent_inserted = self._save_parents(cls=parent, using=using, update_fields=update_fields)
+             updated = self._save_table(
+                 cls=parent, using=using, update_fields=update_fields,

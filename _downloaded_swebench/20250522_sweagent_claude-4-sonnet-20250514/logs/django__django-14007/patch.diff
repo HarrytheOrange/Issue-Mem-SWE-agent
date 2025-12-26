@@ -1,0 +1,50 @@
+diff --git a/django/db/models/sql/compiler.py b/django/db/models/sql/compiler.py
+index f02199d97c..6d7769ecd1 100644
+--- a/django/db/models/sql/compiler.py
++++ b/django/db/models/sql/compiler.py
+@@ -1412,13 +1412,39 @@ class SQLInsertCompiler(SQLCompiler):
+             if not self.returning_fields:
+                 return []
+             if self.connection.features.can_return_rows_from_bulk_insert and len(self.query.objs) > 1:
+-                return self.connection.ops.fetch_returned_insert_rows(cursor)
+-            if self.connection.features.can_return_columns_from_insert:
++                rows = self.connection.ops.fetch_returned_insert_rows(cursor)
++            elif self.connection.features.can_return_columns_from_insert:
+                 assert len(self.query.objs) == 1
+-                return [self.connection.ops.fetch_returned_insert_columns(cursor, self.returning_params)]
+-            return [(self.connection.ops.last_insert_id(
+-                cursor, self.query.get_meta().db_table, self.query.get_meta().pk.column
+-            ),)]
++                rows = [self.connection.ops.fetch_returned_insert_columns(cursor, self.returning_params)]
++            else:
++                rows = [(self.connection.ops.last_insert_id(
++                    cursor, self.query.get_meta().db_table, self.query.get_meta().pk.column
++                ),)]
++            
++            # Apply field converters to the returned values
++            if rows and self.returning_fields:
++                # Get converters for each returning field
++                field_converters = []
++                for i, field in enumerate(self.returning_fields):
++                    field_converters_list = field.get_db_converters(self.connection)
++                    if field_converters_list:
++                        field_converters.append((i, field_converters_list, field))
++                
++                # Apply converters to each row
++                if field_converters:
++                    converted_rows = []
++                    for row in rows:
++                        row = list(row)
++                        for pos, convs, field in field_converters:
++                            if pos < len(row):
++                                value = row[pos]
++                                for converter in convs:
++                                    value = converter(value, field, self.connection)
++                                row[pos] = value
++                        converted_rows.append(tuple(row))
++                    rows = converted_rows
++            
++            return rows
+ 
+ 
+ class SQLDeleteCompiler(SQLCompiler):

@@ -1,0 +1,44 @@
+diff --git a/xarray/core/computation.py b/xarray/core/computation.py
+index 7676d8e5..589f29c2 100644
+--- a/xarray/core/computation.py
++++ b/xarray/core/computation.py
+@@ -1829,7 +1829,38 @@ def where(cond, x, y, keep_attrs=None):
+     if keep_attrs is True:
+         # keep the attributes of x, the second parameter, by default to
+         # be consistent with the `where` method of `DataArray` and `Dataset`
+-        keep_attrs = lambda attrs, context: attrs[1]
++        if hasattr(x, 'attrs'):
++            # x has attributes, so we want to preserve them
++            # We need to find x's attributes in the attrs list passed to merge_attrs
++            # The attrs list contains attributes from all Variable/DataArray arguments
++            # in the order they appear: [cond.attrs, x.attrs, y.attrs] (if all have attrs)
++            # But if some are scalars, they won't appear in the list
++            
++            # Create a mapping from the original arguments to their position in attrs list
++            args_with_attrs = []
++            if hasattr(cond, 'attrs'):
++                args_with_attrs.append(cond)
++            if hasattr(x, 'attrs'):
++                args_with_attrs.append(x)
++            if hasattr(y, 'attrs'):
++                args_with_attrs.append(y)
++            
++            # Find x's position using identity comparison (not equality)
++            x_index = None
++            for i, arg in enumerate(args_with_attrs):
++                if arg is x:
++                    x_index = i
++                    break
++            
++            if x_index is not None:
++                # Capture x_index by value to avoid closure issues
++                keep_attrs = lambda attrs, context, idx=x_index: attrs[idx] if idx < len(attrs) else {}
++            else:
++                # This shouldn't happen since we checked hasattr(x, 'attrs') above
++                keep_attrs = lambda attrs, context: {}
++        else:
++            # x doesn't have attributes (it's a scalar), so return empty dict
++            keep_attrs = lambda attrs, context: {}
+ 
+     # alignment for three arguments is complicated, so don't support it yet
+     return apply_ufunc(

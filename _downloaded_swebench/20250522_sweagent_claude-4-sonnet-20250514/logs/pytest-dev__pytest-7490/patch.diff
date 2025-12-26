@@ -1,0 +1,46 @@
+diff --git a/src/_pytest/skipping.py b/src/_pytest/skipping.py
+index 335e10996..185bb4f5c 100644
+--- a/src/_pytest/skipping.py
++++ b/src/_pytest/skipping.py
+@@ -262,6 +262,10 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]):
+     outcome = yield
+     rep = outcome.get_result()
+     xfailed = item._store.get(xfailed_key, None)
++    # Re-evaluate xfail marks after test call to catch dynamically added markers
++    if call.when == "call" and not item.config.option.runxfail:
++        xfailed = evaluate_xfail_marks(item)
++        item._store[xfailed_key] = xfailed
+     # unittest special case, see setting of unexpectedsuccess_key
+     if unexpectedsuccess_key in item._store and rep.when == "call":
+         reason = item._store[unexpectedsuccess_key]
+diff --git a/testing/test_skipping.py b/testing/test_skipping.py
+index 8fceb37aa..5c7695c0c 100644
+--- a/testing/test_skipping.py
++++ b/testing/test_skipping.py
+@@ -544,6 +544,26 @@ class TestXFail:
+         result.stdout.fnmatch_lines(["*1 failed*" if strict else "*1 xpassed*"])
+         assert result.ret == (1 if strict else 0)
+ 
++    def test_dynamic_xfail_during_test_call(self, testdir):
++        """Test that dynamically adding xfail marker during test call works correctly.
++        
++        This reproduces the issue from pytest 6 where dynamically added xfail markers
++        in test functions were not being honored.
++        """
++        testdir.makepyfile(
++            """
++            import pytest
++
++            def test_xfail_test(request):
++                mark = pytest.mark.xfail(reason="xfail")
++                request.node.add_marker(mark)
++                assert 0
++            """
++        )
++        result = testdir.runpytest("-rsx")
++        result.assert_outcomes(xfailed=1)
++        result.stdout.fnmatch_lines(["*XFAIL*test_xfail_test*", "*xfail*"])
++
+ 
+ class TestXFailwithSetupTeardown:
+     def test_failing_setup_issue9(self, testdir):

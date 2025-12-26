@@ -1,0 +1,27 @@
+diff --git a/requests/adapters.py b/requests/adapters.py
+index fe22ff45..5019478a 100644
+--- a/requests/adapters.py
++++ b/requests/adapters.py
+@@ -303,7 +303,11 @@ class HTTPAdapter(BaseAdapter):
+ 
+         if proxy:
+             proxy = prepend_scheme_if_needed(proxy, 'http')
+-            proxy_url = parse_url(proxy)
++            try:
++                proxy_url = parse_url(proxy)
++            except LocationValueError:
++                raise InvalidProxyURL("Please check proxy URL. It is malformed"
++                                      " and could be missing the host.")
+             if not proxy_url.host:
+                 raise InvalidProxyURL("Please check proxy URL. It is malformed"
+                                       " and could be missing the host.")
+@@ -524,6 +528,9 @@ class HTTPAdapter(BaseAdapter):
+         except _ProxyError as e:
+             raise ProxyError(e)
+ 
++        except LocationValueError as e:
++            raise InvalidURL('URL has an invalid label.', request=request)
++
+         except (_SSLError, _HTTPError) as e:
+             if isinstance(e, _SSLError):
+                 # This branch is for urllib3 versions earlier than v1.22

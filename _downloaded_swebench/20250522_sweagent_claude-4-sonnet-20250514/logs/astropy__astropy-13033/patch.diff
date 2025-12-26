@@ -1,0 +1,38 @@
+diff --git a/astropy/timeseries/core.py b/astropy/timeseries/core.py
+index c279f35f87..0877ad3f55 100644
+--- a/astropy/timeseries/core.py
++++ b/astropy/timeseries/core.py
+@@ -76,9 +76,30 @@ class BaseTimeSeries(QTable):
+ 
+             elif self.colnames[:len(required_columns)] != required_columns:
+ 
+-                raise ValueError("{} object is invalid - expected '{}' "
+-                                 "as the first column{} but found '{}'"
+-                                 .format(self.__class__.__name__, required_columns[0], plural, self.colnames[0]))
++                # Check if we have fewer columns than required
++                if len(self.colnames) < len(required_columns):
++                    # Find which required columns are actually missing
++                    missing_columns = [col for col in required_columns if col not in self.colnames]
++                    if len(missing_columns) == 1:
++                        raise ValueError("{} object is invalid - missing required column '{}'"
++                                         .format(self.__class__.__name__, missing_columns[0]))
++                    else:
++                        raise ValueError("{} object is invalid - missing required columns {}"
++                                         .format(self.__class__.__name__, missing_columns))
++                
++                # Check if the first column is wrong
++                elif self.colnames[0] != required_columns[0]:
++                    raise ValueError("{} object is invalid - expected '{}' "
++                                     "as the first column but found '{}'"
++                                     .format(self.__class__.__name__, required_columns[0], self.colnames[0]))
++                
++                # Check if any of the required columns are in wrong positions
++                else:
++                    for i, (actual, expected) in enumerate(zip(self.colnames[:len(required_columns)], required_columns)):
++                        if actual != expected:
++                            raise ValueError("{} object is invalid - expected '{}' "
++                                             "as column {} but found '{}'"
++                                             .format(self.__class__.__name__, expected, i, actual))
+ 
+             if (self._required_columns_relax
+                     and self._required_columns == self.colnames[:len(self._required_columns)]):

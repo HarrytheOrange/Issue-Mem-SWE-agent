@@ -1,0 +1,48 @@
+diff --git a/django/db/backends/base/operations.py b/django/db/backends/base/operations.py
+index 2e283a3193..ea60aa052d 100644
+--- a/django/db/backends/base/operations.py
++++ b/django/db/backends/base/operations.py
+@@ -580,7 +580,13 @@ class BaseDatabaseOperations:
+ 
+     def convert_durationfield_value(self, value, expression, connection):
+         if value is not None:
+-            return datetime.timedelta(0, 0, value)
++            if isinstance(value, str):
++                # Handle string representations of timedeltas from duration expressions
++                from django.utils.dateparse import parse_duration
++                return parse_duration(value)
++            else:
++                # Handle numeric values (microseconds) from regular duration fields
++                return datetime.timedelta(0, 0, value)
+ 
+     def check_expression_support(self, expression):
+         """
+diff --git a/tests/expressions/tests.py b/tests/expressions/tests.py
+index 459a87797d..0a23cd4d33 100644
+--- a/tests/expressions/tests.py
++++ b/tests/expressions/tests.py
+@@ -1648,6 +1648,24 @@ class FTimeDeltaTests(TestCase):
+         e0 = Experiment.objects.get(name='e0')
+         self.assertEqual(e0.start, expected_start)
+ 
++    def test_duration_expressions(self):
++        """Test that duration expressions work with timedelta addition."""
++        delta = datetime.timedelta(days=1)
++        result = list(Experiment.objects.annotate(duration=F('estimated_time') + delta))
++        for r in result:
++            # The duration should be estimated_time + 1 day
++            expected = r.estimated_time + delta
++            self.assertEqual(r.duration, expected)
++
++    def test_duration_expressions_subtraction(self):
++        """Test that duration expressions work with timedelta subtraction."""
++        delta = datetime.timedelta(hours=1)
++        result = list(Experiment.objects.annotate(duration=F('estimated_time') - delta))
++        for r in result:
++            # The duration should be estimated_time - 1 hour
++            expected = r.estimated_time - delta
++            self.assertEqual(r.duration, expected)
++
+ 
+ class ValueTests(TestCase):
+     def test_update_TimeField_using_Value(self):

@@ -1,0 +1,15 @@
+diff --git a/xarray/core/weighted.py b/xarray/core/weighted.py
+index 996d2e4c..c29e4f04 100644
+--- a/xarray/core/weighted.py
++++ b/xarray/core/weighted.py
+@@ -106,6 +106,10 @@ class Weighted:
+                 "Missing values can be replaced by `weights.fillna(0)`."
+             )
+ 
++        # Convert boolean weights to integer to avoid issues with dot product
++        if weights.dtype == bool:
++            weights = weights.astype(int)
++
+         self.obj = obj
+         self.weights = weights
+ 

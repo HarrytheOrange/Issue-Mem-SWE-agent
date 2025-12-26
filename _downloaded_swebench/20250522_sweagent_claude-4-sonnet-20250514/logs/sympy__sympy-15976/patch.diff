@@ -1,0 +1,52 @@
+diff --git a/sympy/printing/mathml.py b/sympy/printing/mathml.py
+index 3f8b8d49e0..eae6cb06f4 100644
+--- a/sympy/printing/mathml.py
++++ b/sympy/printing/mathml.py
+@@ -31,6 +31,7 @@ class MathMLPrinterBase(Printer):
+         "mul_symbol": None,
+         "root_notation": True,
+         "symbol_names": {},
++        "split_symbols_with_digits": True,
+     }
+ 
+     def __init__(self, settings=None):
+@@ -359,7 +360,18 @@ def translate(s):
+             else:
+                 return s
+ 
+-        name, supers, subs = split_super_sub(sym.name)
++        # Check if we should treat trailing digits as subscripts
++        if self._settings.get('split_symbols_with_digits', True):
++            name, supers, subs = split_super_sub(sym.name)
++        else:
++            # Don't split symbols with trailing digits - treat them as simple identifiers
++            if '_' in sym.name or '^' in sym.name or '__' in sym.name:
++                # Still process explicit subscripts/superscripts
++                name, supers, subs = split_super_sub(sym.name)
++            else:
++                # Treat as simple symbol
++                name, supers, subs = sym.name, [], []
++        
+         name = translate(name)
+         supers = [translate(sup) for sup in supers]
+         subs = [translate(sub) for sub in subs]
+@@ -772,7 +784,18 @@ def translate(s):
+             else:
+                 return s
+ 
+-        name, supers, subs = split_super_sub(sym.name)
++        # Check if we should treat trailing digits as subscripts
++        if self._settings.get('split_symbols_with_digits', True):
++            name, supers, subs = split_super_sub(sym.name)
++        else:
++            # Don't split symbols with trailing digits - treat them as simple identifiers
++            if '_' in sym.name or '^' in sym.name or '__' in sym.name:
++                # Still process explicit subscripts/superscripts
++                name, supers, subs = split_super_sub(sym.name)
++            else:
++                # Treat as simple symbol
++                name, supers, subs = sym.name, [], []
++        
+         name = translate(name)
+         supers = [translate(sup) for sup in supers]
+         subs = [translate(sub) for sub in subs]

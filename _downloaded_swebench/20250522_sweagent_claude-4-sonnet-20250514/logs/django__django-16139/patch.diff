@@ -1,0 +1,373 @@
+diff --git a/django/contrib/auth/forms.py b/django/contrib/auth/forms.py
+index b3cfc6723c..f6c4b7fc2f 100644
+--- a/django/contrib/auth/forms.py
++++ b/django/contrib/auth/forms.py
+@@ -163,7 +163,7 @@ class UserChangeForm(forms.ModelForm):
+         super().__init__(*args, **kwargs)
+         password = self.fields.get("password")
+         if password:
+-            password.help_text = password.help_text.format("../password/")
++            password.help_text = password.help_text.format(f"../../{self.instance.pk}/password/")
+         user_permissions = self.fields.get("user_permissions")
+         if user_permissions:
+             user_permissions.queryset = user_permissions.queryset.select_related(
+diff --git a/reproduce_issue.py b/reproduce_issue.py
+new file mode 100644
+index 0000000000..47f9a0cb60
+--- /dev/null
++++ b/reproduce_issue.py
+@@ -0,0 +1,107 @@
++#!/usr/bin/env python
++"""
++Script to reproduce the issue with UserChangeForm password link when accessed via to_field.
++"""
++
++import os
++import sys
++import django
++from django.conf import settings
++
++# Add the testbed to the Python path
++sys.path.insert(0, '/testbed')
++
++# Configure Django settings
++if not settings.configured:
++    settings.configure(
++        DEBUG=True,
++        DATABASES={
++            'default': {
++                'ENGINE': 'django.db.backends.sqlite3',
++                'NAME': ':memory:',
++            }
++        },
++        INSTALLED_APPS=[
++            'django.contrib.auth',
++            'django.contrib.contenttypes',
++            'django.contrib.admin',
++            'django.contrib.sessions',
++            'django.contrib.messages',
++        ],
++        TEMPLATES=[
++            {
++                'BACKEND': 'django.template.backends.django.DjangoTemplates',
++                'DIRS': [],
++                'APP_DIRS': True,
++                'OPTIONS': {
++                    'context_processors': [
++                        'django.template.context_processors.debug',
++                        'django.template.context_processors.request',
++                        'django.contrib.auth.context_processors.auth',
++                        'django.contrib.messages.context_processors.messages',
++                    ],
++                },
++            },
++        ],
++        MIDDLEWARE=[
++            'django.contrib.sessions.middleware.SessionMiddleware',
++            'django.contrib.auth.middleware.AuthenticationMiddleware',
++            'django.contrib.messages.middleware.MessageMiddleware',
++        ],
++        SECRET_KEY='test-secret-key',
++        USE_TZ=True,
++    )
++
++django.setup()
++
++from django.contrib.auth.forms import UserChangeForm
++from django.contrib.auth.models import User
++
++def test_password_link_generation():
++    """Test the password link generation in UserChangeForm"""
++    
++    # Create a test user
++    user = User.objects.create_user(username='testuser', email='test@example.com')
++    
++    print("Testing UserChangeForm password link generation...")
++    print(f"User PK: {user.pk}")
++    
++    # Test the current implementation
++    form = UserChangeForm(instance=user)
++    password_field = form.fields.get('password')
++    
++    if password_field:
++        print(f"Current password help text: {password_field.help_text}")
++        
++        # The issue: when accessed via to_field, the URL structure is different
++        # Current implementation assumes: /admin/auth/user/{pk}/change/
++        # But with to_field it could be: /admin/auth/user/{uuid}/change/?_to_field=uuid
++        # The relative path "../password/" becomes incorrect
++        
++        # Simulate the problematic scenario
++        print("\nSimulating access via to_field:")
++        print("URL: /admin/auth/user/some-uuid-value/change/?_to_field=uuid")
++        print("Current relative link '../password/' would resolve to:")
++        print("  /admin/auth/user/password/ (WRONG - 404)")
++        print("Should resolve to:")
++        print(f"  /admin/auth/user/{user.pk}/password/ (CORRECT)")
++        
++        return True
++    else:
++        print("ERROR: Password field not found!")
++        return False
++
++if __name__ == '__main__':
++    # Run Django migrations to set up the database
++    from django.core.management import execute_from_command_line
++    execute_from_command_line(['manage.py', 'migrate', '--run-syncdb'])
++    
++    # Test the issue
++    success = test_password_link_generation()
++    
++    if success:
++        print("\n✓ Successfully reproduced the issue scenario")
++        print("The current implementation uses a hardcoded relative path that breaks with to_field")
++    else:
++        print("\n✗ Failed to reproduce the issue")
++        sys.exit(1)
+\ No newline at end of file
+diff --git a/test_edge_case.py b/test_edge_case.py
+new file mode 100644
+index 0000000000..fbf116144d
+--- /dev/null
++++ b/test_edge_case.py
+@@ -0,0 +1,93 @@
++#!/usr/bin/env python
++"""
++Test edge case where UserChangeForm is instantiated without an instance.
++"""
++
++import os
++import sys
++import django
++from django.conf import settings
++
++# Add the testbed to the Python path
++sys.path.insert(0, '/testbed')
++
++# Configure Django settings
++if not settings.configured:
++    settings.configure(
++        DEBUG=True,
++        DATABASES={
++            'default': {
++                'ENGINE': 'django.db.backends.sqlite3',
++                'NAME': ':memory:',
++            }
++        },
++        INSTALLED_APPS=[
++            'django.contrib.auth',
++            'django.contrib.contenttypes',
++            'django.contrib.admin',
++            'django.contrib.sessions',
++            'django.contrib.messages',
++        ],
++        TEMPLATES=[
++            {
++                'BACKEND': 'django.template.backends.django.DjangoTemplates',
++                'DIRS': [],
++                'APP_DIRS': True,
++                'OPTIONS': {
++                    'context_processors': [
++                        'django.template.context_processors.debug',
++                        'django.template.context_processors.request',
++                        'django.contrib.auth.context_processors.auth',
++                        'django.contrib.messages.context_processors.messages',
++                    ],
++                },
++            },
++        ],
++        MIDDLEWARE=[
++            'django.contrib.sessions.middleware.SessionMiddleware',
++            'django.contrib.auth.middleware.AuthenticationMiddleware',
++            'django.contrib.messages.middleware.MessageMiddleware',
++        ],
++        SECRET_KEY='test-secret-key',
++        USE_TZ=True,
++    )
++
++django.setup()
++
++from django.contrib.auth.forms import UserChangeForm
++from django.contrib.auth.models import User
++
++def test_form_without_instance():
++    """Test UserChangeForm without an instance"""
++    
++    print("Testing UserChangeForm without instance...")
++    
++    try:
++        # This should trigger the edge case
++        form = UserChangeForm()
++        password_field = form.fields.get('password')
++        
++        if password_field:
++            print(f"Password help text: {password_field.help_text}")
++            print("✓ Form created successfully without instance")
++            return True
++        else:
++            print("✗ Password field not found")
++            return False
++            
++    except Exception as e:
++        print(f"✗ Exception occurred: {e}")
++        return False
++
++if __name__ == '__main__':
++    # Run Django migrations to set up the database
++    from django.core.management import execute_from_command_line
++    execute_from_command_line(['manage.py', 'migrate', '--run-syncdb'])
++    
++    success = test_form_without_instance()
++    
++    if not success:
++        print("Edge case failed - need to handle forms without instance")
++        sys.exit(1)
++    else:
++        print("Edge case passed!")
+\ No newline at end of file
+diff --git a/test_fix.py b/test_fix.py
+new file mode 100644
+index 0000000000..da1ad94ca7
+--- /dev/null
++++ b/test_fix.py
+@@ -0,0 +1,139 @@
++#!/usr/bin/env python
++"""
++Script to test the fix for UserChangeForm password link when accessed via to_field.
++"""
++
++import os
++import sys
++import django
++from django.conf import settings
++
++# Add the testbed to the Python path
++sys.path.insert(0, '/testbed')
++
++# Configure Django settings
++if not settings.configured:
++    settings.configure(
++        DEBUG=True,
++        DATABASES={
++            'default': {
++                'ENGINE': 'django.db.backends.sqlite3',
++                'NAME': ':memory:',
++            }
++        },
++        INSTALLED_APPS=[
++            'django.contrib.auth',
++            'django.contrib.contenttypes',
++            'django.contrib.admin',
++            'django.contrib.sessions',
++            'django.contrib.messages',
++        ],
++        TEMPLATES=[
++            {
++                'BACKEND': 'django.template.backends.django.DjangoTemplates',
++                'DIRS': [],
++                'APP_DIRS': True,
++                'OPTIONS': {
++                    'context_processors': [
++                        'django.template.context_processors.debug',
++                        'django.template.context_processors.request',
++                        'django.contrib.auth.context_processors.auth',
++                        'django.contrib.messages.context_processors.messages',
++                    ],
++                },
++            },
++        ],
++        MIDDLEWARE=[
++            'django.contrib.sessions.middleware.SessionMiddleware',
++            'django.contrib.auth.middleware.AuthenticationMiddleware',
++            'django.contrib.messages.middleware.MessageMiddleware',
++        ],
++        SECRET_KEY='test-secret-key',
++        USE_TZ=True,
++    )
++
++django.setup()
++
++from django.contrib.auth.forms import UserChangeForm
++from django.contrib.auth.models import User
++
++def test_password_link_fix():
++    """Test that the password link generation fix works correctly"""
++    
++    # Create a test user
++    user = User.objects.create_user(username='testuser', email='test@example.com')
++    
++    print("Testing UserChangeForm password link generation fix...")
++    print(f"User PK: {user.pk}")
++    
++    # Test the fixed implementation
++    form = UserChangeForm(instance=user)
++    password_field = form.fields.get('password')
++    
++    if password_field:
++        print(f"Fixed password help text: {password_field.help_text}")
++        
++        # Verify the fix works for both scenarios
++        print("\nTesting scenarios:")
++        
++        print("1. Normal access via PK:")
++        print("   URL: /admin/auth/user/1/change/")
++        print(f"   Link: ../../{user.pk}/password/ resolves to /admin/auth/user/{user.pk}/password/ ✓")
++        
++        print("2. Access via to_field:")
++        print("   URL: /admin/auth/user/some-uuid-value/change/?_to_field=uuid")
++        print(f"   Link: ../../{user.pk}/password/ resolves to /admin/auth/user/{user.pk}/password/ ✓")
++        
++        # Verify the link contains the correct PK
++        expected_link = f"../../{user.pk}/password/"
++        if expected_link in password_field.help_text:
++            print(f"\n✓ SUCCESS: Password link correctly uses PK {user.pk}")
++            return True
++        else:
++            print(f"\n✗ FAILURE: Password link does not contain expected PK {user.pk}")
++            return False
++    else:
++        print("ERROR: Password field not found!")
++        return False
++
++def test_edge_cases():
++    """Test edge cases for the fix"""
++    print("\nTesting edge cases...")
++    
++    # Test with a user that has a different PK
++    user2 = User.objects.create_user(username='testuser2', email='test2@example.com')
++    form2 = UserChangeForm(instance=user2)
++    password_field2 = form2.fields.get('password')
++    
++    if password_field2:
++        expected_link2 = f"../../{user2.pk}/password/"
++        if expected_link2 in password_field2.help_text:
++            print(f"✓ Edge case 1: Different PK {user2.pk} works correctly")
++        else:
++            print(f"✗ Edge case 1: Different PK {user2.pk} failed")
++            return False
++    
++    # Test form without instance (should not crash)
++    try:
++        form_no_instance = UserChangeForm()
++        print("✓ Edge case 2: Form without instance doesn't crash")
++    except Exception as e:
++        print(f"✗ Edge case 2: Form without instance crashed: {e}")
++        return False
++    
++    return True
++
++if __name__ == '__main__':
++    # Run Django migrations to set up the database
++    from django.core.management import execute_from_command_line
++    execute_from_command_line(['manage.py', 'migrate', '--run-syncdb'])
++    
++    # Test the fix
++    success1 = test_password_link_fix()
++    success2 = test_edge_cases()
++    
++    if success1 and success2:
++        print("\n🎉 All tests passed! The fix works correctly.")
++    else:
++        print("\n❌ Some tests failed!")
++        sys.exit(1)
+\ No newline at end of file

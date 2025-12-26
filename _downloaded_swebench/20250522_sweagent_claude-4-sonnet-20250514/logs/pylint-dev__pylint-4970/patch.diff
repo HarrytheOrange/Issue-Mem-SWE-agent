@@ -1,0 +1,22 @@
+diff --git a/tests/checkers/unittest_similar.py b/tests/checkers/unittest_similar.py
+index 4ddf2029a..e0f40130b 100644
+--- a/tests/checkers/unittest_similar.py
++++ b/tests/checkers/unittest_similar.py
+@@ -502,3 +502,17 @@ def test_get_map_data() -> None:
+         # There doesn't seem to be a faster way of doing this, yet.
+         lines = (linespec.text for linespec in lineset_obj.stripped_lines)
+         assert tuple(expected_lines) == tuple(lines)
++
++
++def test_min_similarity_lines_zero_disables_check() -> None:
++    """Test that setting min-similarity-lines to 0 disables duplicate code checking"""
++    output = StringIO()
++    with redirect_stdout(output), pytest.raises(SystemExit) as ex:
++        similar.Run(["--duplicates", "0", SIMILAR1, SIMILAR2])
++    assert ex.value.code == 0
++    assert (
++        output.getvalue().strip()
++        == """
++TOTAL lines=62 duplicates=0 percent=0.00
++""".strip()
++    )

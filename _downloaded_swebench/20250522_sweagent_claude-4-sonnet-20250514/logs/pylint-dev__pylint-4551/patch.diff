@@ -1,0 +1,113 @@
+diff --git a/pylint/pyreverse/diagrams.py b/pylint/pyreverse/diagrams.py
+index bf9f67af6..8684edc52 100644
+--- a/pylint/pyreverse/diagrams.py
++++ b/pylint/pyreverse/diagrams.py
+@@ -119,6 +119,10 @@ class ClassDiagram(Figure, FilterMixIn):
+         """return class names if needed in diagram"""
+         names = []
+         for node in nodes:
++            # Skip uninferable nodes
++            if node is astroid.Uninferable:
++                continue
++                
+             if isinstance(node, astroid.Instance):
+                 node = node._proxied
+             if (
+@@ -129,6 +133,20 @@ class ClassDiagram(Figure, FilterMixIn):
+                 if node.name not in names:
+                     node_name = node.name
+                     names.append(node_name)
++            # Handle simple type annotation nodes (like str, int, etc.)
++            elif isinstance(node, astroid.Name) and hasattr(node, "name"):
++                if node.name not in names:
++                    names.append(node.name)
++            # Handle complex type annotation nodes (like List[str], Optional[str], etc.)
++            # Only apply as_string() to nodes that are likely to be type annotations
++            elif isinstance(node, (astroid.Subscript, astroid.Attribute)):
++                try:
++                    type_str = node.as_string()
++                    if type_str not in names:
++                        names.append(type_str)
++                except Exception:
++                    # If as_string() fails, skip this node
++                    pass
+         return names
+ 
+     def nodes(self):
+diff --git a/pylint/pyreverse/inspector.py b/pylint/pyreverse/inspector.py
+index 8fa122022..85ecde72e 100644
+--- a/pylint/pyreverse/inspector.py
++++ b/pylint/pyreverse/inspector.py
+@@ -231,11 +231,72 @@ class Linker(IdGeneratorMixIn, utils.LocalsVisitor):
+         """
+         try:
+             values = set(node.infer())
++            
++            # Check if this is an assignment in __init__ method and if there's a type hint
++            type_hint_node = Linker._get_type_hint_for_assignattr(node, parent)
++            if type_hint_node:
++                # If we have a type hint, prefer it over inferred types
++                # This handles cases like `a: str = None` where we want to show `str` not `NoneType`
++                values = {type_hint_node}
++            
+             current = set(parent.instance_attrs_type[node.attrname])
+             parent.instance_attrs_type[node.attrname] = list(current | values)
+         except astroid.InferenceError:
+             pass
+ 
++    @staticmethod
++    def _get_type_hint_for_assignattr(node, parent):
++        """Get type hint for an assignment attribute if available.
++        
++        This method checks if the assignment is in an __init__ method and if
++        the assigned value comes from a parameter with a type annotation.
++        
++        Args:
++            node: astroid.AssignAttr node representing the assignment
++            parent: astroid.ClassDef node representing the class
++            
++        Returns:
++            astroid node representing the type hint, or None if no hint found
++        """
++        # Check if this assignment is in an __init__ method
++        assign_node = node.parent
++        if not isinstance(assign_node, astroid.Assign):
++            return None
++            
++        # Get the function containing this assignment
++        func_node = assign_node.frame()
++        if not isinstance(func_node, astroid.FunctionDef) or func_node.name != '__init__':
++            return None
++            
++        # Check if the assigned value is a simple name (parameter)
++        if not isinstance(assign_node.value, astroid.Name):
++            return None
++            
++        param_name = assign_node.value.name
++        
++        # Look for the parameter in the function arguments
++        args = func_node.args
++        if not args.args:
++            return None
++            
++        # Find the parameter index
++        param_index = None
++        for i, arg in enumerate(args.args):
++            if arg.name == param_name:
++                param_index = i
++                break
++                
++        if param_index is None:
++            return None
++            
++        # Check if there's an annotation for this parameter
++        if (args.annotations and 
++            param_index < len(args.annotations) and 
++            args.annotations[param_index] is not None):
++            return args.annotations[param_index]
++            
++        return None
++
+     def visit_import(self, node):
+         """visit an astroid.Import node
+ 

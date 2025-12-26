@@ -1,0 +1,30 @@
+diff --git a/sympy/polys/factortools.py b/sympy/polys/factortools.py
+index c6a5f9f063..958e07e7e0 100644
+--- a/sympy/polys/factortools.py
++++ b/sympy/polys/factortools.py
+@@ -1266,7 +1266,24 @@ def dmp_factor_list(f, u, K0):
+     if K0.is_FiniteField:  # pragma: no cover
+         coeff, factors = dmp_gf_factor(f, u, K0)
+     elif K0.is_Algebraic:
+-        coeff, factors = dmp_ext_factor(f, u, K0)
++        # First try to factor over the base field
++        try:
++            # Convert polynomial back to base field
++            f_base = dmp_convert(f, u, K0, K0.dom)
++            base_coeff, base_factors = dmp_factor_list(f_base, u, K0.dom)
++            if len(base_factors) > 1:
++                # Convert base field factors to the extension field
++                coeff = K0.convert(base_coeff, K0.dom)
++                factors = []
++                for base_factor, mult in base_factors:
++                    ext_factor = dmp_convert(base_factor, u, K0.dom, K0)
++                    factors.append((ext_factor, mult))
++            else:
++                # Use extension algorithm
++                coeff, factors = dmp_ext_factor(f, u, K0)
++        except:
++            # If base field factorization fails, use extension algorithm
++            coeff, factors = dmp_ext_factor(f, u, K0)
+     else:
+         if not K0.is_Exact:
+             K0_inexact, K0 = K0, K0.get_exact()

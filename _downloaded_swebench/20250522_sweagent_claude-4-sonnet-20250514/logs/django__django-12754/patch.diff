@@ -1,0 +1,61 @@
+diff --git a/django/db/migrations/autodetector.py b/django/db/migrations/autodetector.py
+index 30616c0172..c26899221d 100644
+--- a/django/db/migrations/autodetector.py
++++ b/django/db/migrations/autodetector.py
+@@ -571,6 +571,17 @@ class MigrationAutodetector:
+                     None,
+                     True
+                 ))
++            # Check if any fields in this model are being removed from a base model
++            # If so, we need to depend on the removal of those fields
++            for field_name, field in model_state.fields.items():
++                if field_name not in related_fields:  # Skip related fields as they're handled separately
++                    for base in model_state.bases:
++                        if isinstance(base, str) and "." in base:
++                            base_app_label, base_name = base.split(".", 1)
++                            # Check if this field is being removed from the base model
++                            if (base_app_label, base_name.lower(), field_name) in (self.old_field_keys - self.new_field_keys):
++                                # Add dependency on the field removal
++                                dependencies.append((base_app_label, base_name.lower(), field_name, False))
+             # Generate creation operation
+             self.add_operation(
+                 app_label,
+diff --git a/tests/migrations/test_autodetector.py b/tests/migrations/test_autodetector.py
+index daff57fc2c..1661bf7ff4 100644
+--- a/tests/migrations/test_autodetector.py
++++ b/tests/migrations/test_autodetector.py
+@@ -2454,3 +2454,34 @@ class AutodetectorTests(TestCase):
+         self.assertNumberMigrations(changes, 'app', 1)
+         self.assertOperationTypes(changes, 'app', 0, ['DeleteModel'])
+         self.assertOperationAttributes(changes, 'app', 0, 0, name='Dog')
++
++    def test_mti_inheritance_field_move_to_subclass(self):
++        """
++        Test that moving a field from a parent model to a child model
++        generates migrations in the correct order (RemoveField before CreateModel).
++        """
++        # Parent model with field
++        Readable = ModelState('app', 'Readable', [
++            ("id", models.AutoField(primary_key=True)),
++            ("title", models.CharField(max_length=200)),
++        ])
++        # Parent model without field
++        ReadableWithoutTitle = ModelState('app', 'Readable', [
++            ("id", models.AutoField(primary_key=True)),
++        ])
++        # Child model with the field
++        Book = ModelState('app', 'Book', [
++            ("readable_ptr", models.OneToOneField(
++                "app.Readable",
++                on_delete=models.CASCADE,
++                parent_link=True,
++                primary_key=True,
++            )),
++            ("title", models.CharField(max_length=200)),
++        ], bases=('app.readable',))
++        
++        changes = self.get_changes([Readable], [ReadableWithoutTitle, Book])
++        self.assertNumberMigrations(changes, 'app', 1)
++        self.assertOperationTypes(changes, 'app', 0, ['RemoveField', 'CreateModel'])
++        self.assertOperationAttributes(changes, 'app', 0, 0, model_name='readable', name='title')
++        self.assertOperationAttributes(changes, 'app', 0, 1, name='Book')

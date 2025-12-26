@@ -1,0 +1,146 @@
+diff --git a/sympy/core/basic.py b/sympy/core/basic.py
+index db4e971848..1fcb67d29f 100644
+--- a/sympy/core/basic.py
++++ b/sympy/core/basic.py
+@@ -313,7 +313,7 @@ def __eq__(self, other):
+             try:
+                 other = _sympify(other)
+             except SympifyError:
+-                return False    # sympy != other
++                return NotImplemented    # sympy != other
+ 
+             if type(self) != type(other):
+                 return False
+@@ -329,7 +329,10 @@ def __ne__(self, other):
+ 
+            but faster
+         """
+-        return not self.__eq__(other)
++        result = self.__eq__(other)
++        if result is NotImplemented:
++            return NotImplemented
++        return not result
+ 
+     def dummy_eq(self, other, symbol=None):
+         """
+diff --git a/sympy/core/function.py b/sympy/core/function.py
+index 75dd9ec150..d4c4d4e674 100644
+--- a/sympy/core/function.py
++++ b/sympy/core/function.py
+@@ -1596,7 +1596,7 @@ def __call__(self, *args):
+ 
+     def __eq__(self, other):
+         if not isinstance(other, Lambda):
+-            return False
++            return NotImplemented
+         if self.nargs != other.nargs:
+             return False
+ 
+@@ -1606,7 +1606,10 @@ def __eq__(self, other):
+         return selfexpr == otherexpr
+ 
+     def __ne__(self, other):
+-        return not(self == other)
++        result = self.__eq__(other)
++        if result is NotImplemented:
++            return NotImplemented
++        return not result
+ 
+     def __hash__(self):
+         return super(Lambda, self).__hash__()
+@@ -1756,11 +1759,14 @@ def _has(self, pattern):
+ 
+     def __eq__(self, other):
+         if not isinstance(other, Subs):
+-            return False
++            return NotImplemented
+         return self._expr == other._expr
+ 
+     def __ne__(self, other):
+-        return not(self == other)
++        result = self.__eq__(other)
++        if result is NotImplemented:
++            return NotImplemented
++        return not result
+ 
+     def __hash__(self):
+         return super(Subs, self).__hash__()
+diff --git a/sympy/core/numbers.py b/sympy/core/numbers.py
+index 864d055087..96b09685d3 100644
+--- a/sympy/core/numbers.py
++++ b/sympy/core/numbers.py
+@@ -1258,7 +1258,7 @@ def __eq__(self, other):
+         try:
+             other = _sympify(other)
+         except SympifyError:
+-            return False    # sympy != other  -->  not ==
++            return NotImplemented    # sympy != other  -->  not ==
+         if isinstance(other, NumberSymbol):
+             if other.is_irrational:
+                 return False
+@@ -1276,7 +1276,10 @@ def __eq__(self, other):
+         return False    # Float != non-Number
+ 
+     def __ne__(self, other):
+-        return not self.__eq__(other)
++        result = self.__eq__(other)
++        if result is NotImplemented:
++            return NotImplemented
++        return not result
+ 
+     def __gt__(self, other):
+         try:
+@@ -1719,7 +1722,7 @@ def __eq__(self, other):
+         try:
+             other = _sympify(other)
+         except SympifyError:
+-            return False    # sympy != other  -->  not ==
++            return NotImplemented    # sympy != other  -->  not ==
+         if isinstance(other, NumberSymbol):
+             if other.is_irrational:
+                 return False
+@@ -1734,7 +1737,10 @@ def __eq__(self, other):
+         return False
+ 
+     def __ne__(self, other):
+-        return not self.__eq__(other)
++        result = self.__eq__(other)
++        if result is NotImplemented:
++            return NotImplemented
++        return not result
+ 
+     def __gt__(self, other):
+         try:
+@@ -2112,7 +2118,10 @@ def __eq__(self, other):
+         return Rational.__eq__(self, other)
+ 
+     def __ne__(self, other):
+-        return not self.__eq__(other)
++        result = self.__eq__(other)
++        if result is NotImplemented:
++            return NotImplemented
++        return not result
+ 
+     def __gt__(self, other):
+         try:
+@@ -3339,7 +3348,7 @@ def __eq__(self, other):
+         try:
+             other = _sympify(other)
+         except SympifyError:
+-            return False    # sympy != other  -->  not ==
++            return NotImplemented    # sympy != other  -->  not ==
+         if self is other:
+             return True
+         if isinstance(other, Number) and self.is_irrational:
+@@ -3348,7 +3357,10 @@ def __eq__(self, other):
+         return False    # NumberSymbol != non-(Number|self)
+ 
+     def __ne__(self, other):
+-        return not self.__eq__(other)
++        result = self.__eq__(other)
++        if result is NotImplemented:
++            return NotImplemented
++        return not result
+ 
+     def __lt__(self, other):
+         try:

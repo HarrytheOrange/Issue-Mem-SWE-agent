@@ -1,0 +1,1606 @@
+diff --git a/django/core/servers/basehttp.py b/django/core/servers/basehttp.py
+index fef5532e58..0b344cc995 100644
+--- a/django/core/servers/basehttp.py
++++ b/django/core/servers/basehttp.py
+@@ -143,6 +143,35 @@ class ServerHandler(simple_server.ServerHandler):
+         if self.headers.get("Connection") == "close":
+             self.request_handler.close_connection = True
+ 
++    def finish_response(self):
++        """
++        Send any iterable data, then close self and the iterable.
++        
++        For HEAD requests, skip sending the response body to comply with RFC 2616.
++        """
++        if self.environ.get('REQUEST_METHOD') == 'HEAD':
++            # For HEAD requests, don't send the response body
++            try:
++                # Still need to iterate through the result to ensure any cleanup
++                # code in the response iterator is executed, but don't write the data
++                for data in self.result:
++                    pass  # Consume the iterator but don't send data
++                self.finish_content()
++            except:
++                # Call close() on the iterable returned by the WSGI application
++                # in case of an exception.
++                if hasattr(self.result, 'close'):
++                    self.result.close()
++                raise
++            else:
++                # We only call close() when no exception is raised, because it
++                # will set status, result, headers, and environ fields to None.
++                # See bpo-29183 for more details.
++                self.close()
++        else:
++            # For non-HEAD requests, use the default behavior
++            super().finish_response()
++
+     def close(self):
+         self.get_stdin().read()
+         super().close()
+diff --git a/final_verification.py b/final_verification.py
+new file mode 100644
+index 0000000000..a2b23c2b2c
+--- /dev/null
++++ b/final_verification.py
+@@ -0,0 +1,298 @@
++#!/usr/bin/env python
++"""
++Final verification that the HEAD request fix works correctly.
++This test reproduces the exact scenario described in the PR.
++"""
++import os
++import sys
++import tempfile
++import subprocess
++import time
++
++# Add Django to the path
++sys.path.insert(0, '/testbed')
++
++def create_django_project():
++    """Create a Django project exactly as described in the PR."""
++    project_dir = tempfile.mkdtemp()
++    
++    # Create manage.py
++    manage_py = """#!/usr/bin/env python
++import os
++import sys
++
++if __name__ == '__main__':
++    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'django_test.settings')
++    try:
++        from django.core.management import execute_from_command_line
++    except ImportError as exc:
++        raise ImportError(
++            "Couldn't import Django. Are you sure it's installed and "
++            "available on your PYTHONPATH environment variable? Did you "
++            "forget to activate a virtual environment?"
++        ) from exc
++    execute_from_command_line(sys.argv)
++"""
++    
++    # Create django_test directory
++    django_test_dir = os.path.join(project_dir, 'django_test')
++    os.makedirs(django_test_dir)
++    
++    # Create django_test/__init__.py
++    init_py = ""
++    
++    # Create django_test/settings.py
++    settings_py = """
++import os
++from pathlib import Path
++
++BASE_DIR = Path(__file__).resolve().parent.parent
++
++SECRET_KEY = 'test-secret-key'
++DEBUG = True
++ALLOWED_HOSTS = ['*']
++
++INSTALLED_APPS = [
++    'django.contrib.admin',
++    'django.contrib.auth',
++    'django.contrib.contenttypes',
++    'django.contrib.sessions',
++    'django.contrib.messages',
++    'django.contrib.staticfiles',
++]
++
++MIDDLEWARE = [
++    'django.middleware.security.SecurityMiddleware',
++    'django.contrib.sessions.middleware.SessionMiddleware',
++    'django.middleware.common.CommonMiddleware',
++    'django.middleware.csrf.CsrfViewMiddleware',
++    'django.contrib.auth.middleware.AuthenticationMiddleware',
++    'django.contrib.messages.middleware.MessageMiddleware',
++    'django.middleware.clickjacking.XFrameOptionsMiddleware',
++]
++
++ROOT_URLCONF = 'django_test.urls'
++
++TEMPLATES = [
++    {
++        'BACKEND': 'django.template.backends.django.DjangoTemplates',
++        'DIRS': [],
++        'APP_DIRS': True,
++        'OPTIONS': {
++            'context_processors': [
++                'django.template.context_processors.debug',
++                'django.template.context_processors.request',
++                'django.contrib.auth.context_processors.auth',
++                'django.contrib.messages.context_processors.messages',
++            ],
++        },
++    },
++]
++
++WSGI_APPLICATION = 'django_test.wsgi.application'
++
++DATABASES = {
++    'default': {
++        'ENGINE': 'django.db.backends.sqlite3',
++        'NAME': ':memory:',
++    }
++}
++
++LANGUAGE_CODE = 'en-us'
++TIME_ZONE = 'UTC'
++USE_I18N = True
++USE_TZ = True
++
++STATIC_URL = '/static/'
++DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
++"""
++    
++    # Create django_test/urls.py
++    urls_py = """
++from django.contrib import admin
++from django.urls import path
++from django.http import HttpResponse
++
++def welcome_view(request):
++    return HttpResponse('''<!DOCTYPE html>
++<html lang="en"><head>
++ <meta http-equiv="content-type" content="text/html; charset=utf-8">
++ <meta name="robots" content="NONE,NOARCHIVE"><title>Welcome to Django</title>
++</head>
++<body>
++<h1>Welcome to Django</h1>
++<p>Congratulations on your first Django-powered page.</p>
++</body>
++</html>''', content_type='text/html')
++
++urlpatterns = [
++    path('admin/', admin.site.urls),
++    path('', welcome_view, name='welcome'),
++]
++"""
++    
++    # Create django_test/wsgi.py
++    wsgi_py = """
++import os
++from django.core.wsgi import get_wsgi_application
++
++os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'django_test.settings')
++application = get_wsgi_application()
++"""
++    
++    # Write all files
++    with open(os.path.join(project_dir, 'manage.py'), 'w') as f:
++        f.write(manage_py)
++    os.chmod(os.path.join(project_dir, 'manage.py'), 0o755)
++    
++    with open(os.path.join(django_test_dir, '__init__.py'), 'w') as f:
++        f.write(init_py)
++    
++    with open(os.path.join(django_test_dir, 'settings.py'), 'w') as f:
++        f.write(settings_py)
++    
++    with open(os.path.join(django_test_dir, 'urls.py'), 'w') as f:
++        f.write(urls_py)
++    
++    with open(os.path.join(django_test_dir, 'wsgi.py'), 'w') as f:
++        f.write(wsgi_py)
++    
++    return project_dir
++
++def test_pr_scenario():
++    """Test the exact scenario described in the PR."""
++    print("=== Final Verification Test ===")
++    print("Reproducing the exact scenario from the PR description...")
++    
++    project_dir = create_django_project()
++    print(f"Created Django project in: {project_dir}")
++    
++    # Start the server in background
++    env = os.environ.copy()
++    env['PYTHONPATH'] = '/testbed'
++    
++    server_process = subprocess.Popen(
++        [sys.executable, 'manage.py', 'runserver', '127.0.0.1:8000'],
++        cwd=project_dir,
++        env=env,
++        stdout=subprocess.PIPE,
++        stderr=subprocess.PIPE
++    )
++    
++    try:
++        # Wait for server to start
++        print("Starting Django runserver...")
++        time.sleep(4)
++        
++        # Make HEAD request using curl exactly as in the PR
++        print("Making HEAD request: curl -iX HEAD http://127.0.0.1:8000/")
++        result = subprocess.run(
++            ['curl', '-iX', 'HEAD', 'http://127.0.0.1:8000/'],
++            capture_output=True,
++            text=True,
++            timeout=15
++        )
++        
++        print("\n=== Response ===")
++        print(result.stdout)
++        
++        if result.stderr:
++            print("=== Curl stderr ===")
++            print(result.stderr)
++        
++        # Parse the response
++        lines = result.stdout.split('\n')
++        headers_ended = False
++        body_lines = []
++        status_line = ""
++        headers = []
++        
++        for line in lines:
++            if not status_line and line.startswith('HTTP/'):
++                status_line = line
++            elif not headers_ended:
++                if line.strip() == '':  # Empty line marks end of headers
++                    headers_ended = True
++                else:
++                    headers.append(line)
++            else:
++                if line.strip():  # Non-empty line in body
++                    body_lines.append(line)
++        
++        print("\n=== Analysis ===")
++        print(f"Status line: {status_line}")
++        print(f"Number of headers: {len(headers)}")
++        print(f"Body lines found: {len(body_lines)}")
++        
++        # Check expected headers
++        expected_headers = ['Date:', 'Server:', 'Content-Type:', 'X-Frame-Options:']
++        found_headers = []
++        for header in headers:
++            for expected in expected_headers:
++                if header.startswith(expected):
++                    found_headers.append(expected.rstrip(':'))
++        
++        print(f"Expected headers found: {found_headers}")
++        
++        # Verify the fix
++        success = True
++        
++        if not status_line.startswith('HTTP/1.'):
++            print("❌ ERROR: Invalid HTTP status line")
++            success = False
++        elif '200 OK' not in status_line:
++            print("❌ ERROR: Expected 200 OK status")
++            success = False
++        
++        if 'Server:' not in ' '.join(headers):
++            print("❌ ERROR: Missing Server header")
++            success = False
++        elif 'WSGIServer' not in ' '.join(headers):
++            print("❌ ERROR: Expected WSGIServer in headers")
++            success = False
++        
++        if 'Content-Type:' not in ' '.join(headers):
++            print("❌ ERROR: Missing Content-Type header")
++            success = False
++        
++        if 'X-Frame-Options:' not in ' '.join(headers):
++            print("❌ ERROR: Missing X-Frame-Options header")
++            success = False
++        
++        if body_lines:
++            print("❌ ERROR: HEAD request returned response body!")
++            print("Body content found:")
++            for line in body_lines[:5]:
++                print(f"  {repr(line)}")
++            success = False
++        else:
++            print("✅ SUCCESS: HEAD request returned no body (RFC 2616 compliant)")
++        
++        return success
++        
++    except subprocess.TimeoutExpired:
++        print("❌ ERROR: Request timed out")
++        return False
++    except Exception as e:
++        print(f"❌ ERROR: {e}")
++        return False
++    finally:
++        # Clean up server process
++        print("\nCleaning up server...")
++        server_process.terminate()
++        try:
++            server_process.wait(timeout=5)
++        except subprocess.TimeoutExpired:
++            server_process.kill()
++
++if __name__ == '__main__':
++    success = test_pr_scenario()
++    
++    print("\n" + "="*50)
++    if success:
++        print("🎉 SUCCESS: The issue has been fixed!")
++        print("HEAD requests from Django runserver are now RFC 2616 compliant.")
++        sys.exit(0)
++    else:
++        print("❌ FAILURE: The issue is not fixed.")
++        sys.exit(1)
+\ No newline at end of file
+diff --git a/reproduce_issue.py b/reproduce_issue.py
+new file mode 100644
+index 0000000000..d9a101041c
+--- /dev/null
++++ b/reproduce_issue.py
+@@ -0,0 +1,100 @@
++#!/usr/bin/env python
++"""
++Script to reproduce the HEAD request issue with Django runserver.
++"""
++import os
++import sys
++import subprocess
++import time
++import threading
++import requests
++
++# Add Django to the path
++sys.path.insert(0, '/testbed')
++
++# Set up Django
++os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'test_settings')
++
++import django
++from django.conf import settings
++from django.core.management import execute_from_command_line
++from django.http import HttpResponse
++from django.urls import path
++
++# Configure Django settings
++if not settings.configured:
++    settings.configure(
++        DEBUG=True,
++        SECRET_KEY='test-secret-key',
++        ROOT_URLCONF='reproduce_issue',
++        ALLOWED_HOSTS=['*'],
++        USE_TZ=True,
++    )
++
++django.setup()
++
++def test_view(request):
++    """Simple test view that returns HTML content."""
++    return HttpResponse("""<!DOCTYPE html>
++<html lang="en"><head>
++ <meta http-equiv="content-type" content="text/html; charset=utf-8">
++ <meta name="robots" content="NONE,NOARCHIVE"><title>Welcome to Django</title>
++</head>
++<body>
++<h1>Welcome to Django</h1>
++<p>This is a test page.</p>
++</body>
++</html>""", content_type='text/html')
++
++# URL patterns
++urlpatterns = [
++    path('', test_view, name='test'),
++]
++
++def run_server():
++    """Run the Django development server."""
++    execute_from_command_line(['manage.py', 'runserver', '127.0.0.1:8000'])
++
++def test_head_request():
++    """Test HEAD request to the server."""
++    time.sleep(2)  # Give server time to start
++    
++    try:
++        # Make a HEAD request
++        response = requests.head('http://127.0.0.1:8000/', timeout=5)
++        
++        print("HEAD Request Response:")
++        print(f"Status Code: {response.status_code}")
++        print("Headers:")
++        for header, value in response.headers.items():
++            print(f"  {header}: {value}")
++        
++        print(f"\nResponse Content Length: {len(response.content)}")
++        print(f"Response Text: {repr(response.text)}")
++        
++        if response.content:
++            print("\n❌ ERROR: HEAD request returned response body!")
++            print(f"Body content: {response.content[:200]}...")
++            return False
++        else:
++            print("\n✅ SUCCESS: HEAD request returned no body (as expected)")
++            return True
++            
++    except Exception as e:
++        print(f"Error making request: {e}")
++        return False
++
++if __name__ == '__main__':
++    # Start server in a separate thread
++    server_thread = threading.Thread(target=run_server, daemon=True)
++    server_thread.start()
++    
++    # Test HEAD request
++    success = test_head_request()
++    
++    if not success:
++        print("\nThe issue is reproduced: HEAD requests return response bodies.")
++        sys.exit(1)
++    else:
++        print("\nNo issue found: HEAD requests work correctly.")
++        sys.exit(0)
+\ No newline at end of file
+diff --git a/test_edge_cases.py b/test_edge_cases.py
+new file mode 100644
+index 0000000000..7cc6297465
+--- /dev/null
++++ b/test_edge_cases.py
+@@ -0,0 +1,211 @@
++#!/usr/bin/env python
++"""
++Test edge cases for the HEAD request fix.
++"""
++import os
++import sys
++import tempfile
++import subprocess
++import time
++
++# Add Django to the path
++sys.path.insert(0, '/testbed')
++
++def create_test_project():
++    """Create a minimal Django project."""
++    project_dir = tempfile.mkdtemp()
++    
++    # Create manage.py
++    manage_py = f"""#!/usr/bin/env python
++import os
++import sys
++
++if __name__ == '__main__':
++    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings')
++    try:
++        from django.core.management import execute_from_command_line
++    except ImportError as exc:
++        raise ImportError(
++            "Couldn't import Django. Are you sure it's installed and "
++            "available on your PYTHONPATH environment variable? Did you "
++            "forget to activate a virtual environment?"
++        ) from exc
++    execute_from_command_line(sys.argv)
++"""
++    
++    # Create settings.py
++    settings_py = f"""
++import os
++from pathlib import Path
++
++BASE_DIR = Path(__file__).resolve().parent
++
++SECRET_KEY = 'test-secret-key'
++DEBUG = True
++ALLOWED_HOSTS = ['*']
++
++INSTALLED_APPS = [
++    'django.contrib.contenttypes',
++    'django.contrib.auth',
++]
++
++MIDDLEWARE = [
++    'django.middleware.security.SecurityMiddleware',
++    'django.middleware.common.CommonMiddleware',
++]
++
++ROOT_URLCONF = 'urls'
++
++DATABASES = {{
++    'default': {{
++        'ENGINE': 'django.db.backends.sqlite3',
++        'NAME': ':memory:',
++    }}
++}}
++
++USE_TZ = True
++"""
++    
++    # Create urls.py with different response types
++    urls_py = """
++from django.http import HttpResponse, StreamingHttpResponse, JsonResponse
++from django.urls import path
++
++def test_view(request):
++    return HttpResponse('''<!DOCTYPE html>
++<html lang="en"><head>
++ <meta http-equiv="content-type" content="text/html; charset=utf-8">
++ <meta name="robots" content="NONE,NOARCHIVE"><title>Welcome to Django</title>
++</head>
++<body>
++<h1>Welcome to Django</h1>
++<p>This is a test page with some content.</p>
++</body>
++</html>''', content_type='text/html')
++
++def streaming_view(request):
++    def generate():
++        yield "First chunk\\n"
++        yield "Second chunk\\n"
++        yield "Third chunk\\n"
++    return StreamingHttpResponse(generate(), content_type='text/plain')
++
++def json_view(request):
++    return JsonResponse({'message': 'Hello, world!', 'data': [1, 2, 3, 4, 5]})
++
++def empty_view(request):
++    return HttpResponse('', content_type='text/plain')
++
++urlpatterns = [
++    path('', test_view, name='test'),
++    path('streaming/', streaming_view, name='streaming'),
++    path('json/', json_view, name='json'),
++    path('empty/', empty_view, name='empty'),
++]
++"""
++    
++    # Write files
++    with open(os.path.join(project_dir, 'manage.py'), 'w') as f:
++        f.write(manage_py)
++    os.chmod(os.path.join(project_dir, 'manage.py'), 0o755)
++    
++    with open(os.path.join(project_dir, 'settings.py'), 'w') as f:
++        f.write(settings_py)
++    
++    with open(os.path.join(project_dir, 'urls.py'), 'w') as f:
++        f.write(urls_py)
++    
++    return project_dir
++
++def test_head_requests():
++    """Test HEAD requests for different response types."""
++    project_dir = create_test_project()
++    
++    print(f"Created test project in: {project_dir}")
++    
++    # Start the server in background
++    env = os.environ.copy()
++    env['PYTHONPATH'] = '/testbed'
++    
++    server_process = subprocess.Popen(
++        [sys.executable, 'manage.py', 'runserver', '127.0.0.1:8003', '--noreload'],
++        cwd=project_dir,
++        env=env,
++        stdout=subprocess.PIPE,
++        stderr=subprocess.PIPE
++    )
++    
++    try:
++        # Wait for server to start
++        print("Waiting for server to start...")
++        time.sleep(3)
++        
++        # Test different endpoints
++        endpoints = [
++            ('/', 'HTML response'),
++            ('/streaming/', 'Streaming response'),
++            ('/json/', 'JSON response'),
++            ('/empty/', 'Empty response'),
++        ]
++        
++        all_passed = True
++        
++        for endpoint, description in endpoints:
++            print(f"\nTesting {description} at {endpoint}")
++            
++            # Make HEAD request using curl
++            result = subprocess.run(
++                ['curl', '-i', '-X', 'HEAD', f'http://127.0.0.1:8003{endpoint}', '--max-time', '10'],
++                capture_output=True,
++                text=True,
++                timeout=15
++            )
++            
++            print(f"Response for {description}:")
++            print(result.stdout[:200] + "..." if len(result.stdout) > 200 else result.stdout)
++            
++            # Check if there's a body in the response
++            lines = result.stdout.split('\n')
++            headers_ended = False
++            body_lines = []
++            
++            for line in lines:
++                if headers_ended:
++                    if line.strip():  # Non-empty line in body
++                        body_lines.append(line)
++                elif line.strip() == '':  # Empty line marks end of headers
++                    headers_ended = True
++            
++            if body_lines:
++                print(f"❌ ERROR: HEAD request for {description} returned response body!")
++                print(f"Body lines: {len(body_lines)}")
++                all_passed = False
++            else:
++                print(f"✅ SUCCESS: HEAD request for {description} returned no body")
++        
++        return all_passed
++            
++    except subprocess.TimeoutExpired:
++        print("Request timed out")
++        return False
++    except Exception as e:
++        print(f"Error: {e}")
++        return False
++    finally:
++        # Clean up server process
++        print("Cleaning up server...")
++        server_process.terminate()
++        try:
++            server_process.wait(timeout=5)
++        except subprocess.TimeoutExpired:
++            server_process.kill()
++
++if __name__ == '__main__':
++    success = test_head_requests()
++    
++    if not success:
++        print("\nSome edge case tests failed.")
++        sys.exit(1)
++    else:
++        print("\nAll edge case tests passed!")
++        sys.exit(0)
+\ No newline at end of file
+diff --git a/test_get_still_works.py b/test_get_still_works.py
+new file mode 100644
+index 0000000000..13e50a6f7d
+--- /dev/null
++++ b/test_get_still_works.py
+@@ -0,0 +1,189 @@
++#!/usr/bin/env python
++"""
++Test script to verify GET requests still work after the HEAD fix.
++"""
++import os
++import sys
++import tempfile
++import subprocess
++import time
++
++# Add Django to the path
++sys.path.insert(0, '/testbed')
++
++def create_test_project():
++    """Create a minimal Django project."""
++    project_dir = tempfile.mkdtemp()
++    
++    # Create manage.py
++    manage_py = f"""#!/usr/bin/env python
++import os
++import sys
++
++if __name__ == '__main__':
++    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings')
++    try:
++        from django.core.management import execute_from_command_line
++    except ImportError as exc:
++        raise ImportError(
++            "Couldn't import Django. Are you sure it's installed and "
++            "available on your PYTHONPATH environment variable? Did you "
++            "forget to activate a virtual environment?"
++        ) from exc
++    execute_from_command_line(sys.argv)
++"""
++    
++    # Create settings.py
++    settings_py = f"""
++import os
++from pathlib import Path
++
++BASE_DIR = Path(__file__).resolve().parent
++
++SECRET_KEY = 'test-secret-key'
++DEBUG = True
++ALLOWED_HOSTS = ['*']
++
++INSTALLED_APPS = [
++    'django.contrib.contenttypes',
++    'django.contrib.auth',
++]
++
++MIDDLEWARE = [
++    'django.middleware.security.SecurityMiddleware',
++    'django.middleware.common.CommonMiddleware',
++]
++
++ROOT_URLCONF = 'urls'
++
++DATABASES = {{
++    'default': {{
++        'ENGINE': 'django.db.backends.sqlite3',
++        'NAME': ':memory:',
++    }}
++}}
++
++USE_TZ = True
++"""
++    
++    # Create urls.py
++    urls_py = """
++from django.http import HttpResponse
++from django.urls import path
++
++def test_view(request):
++    return HttpResponse('''<!DOCTYPE html>
++<html lang="en"><head>
++ <meta http-equiv="content-type" content="text/html; charset=utf-8">
++ <meta name="robots" content="NONE,NOARCHIVE"><title>Welcome to Django</title>
++</head>
++<body>
++<h1>Welcome to Django</h1>
++<p>This is a test page with some content.</p>
++</body>
++</html>''', content_type='text/html')
++
++urlpatterns = [
++    path('', test_view, name='test'),
++]
++"""
++    
++    # Write files
++    with open(os.path.join(project_dir, 'manage.py'), 'w') as f:
++        f.write(manage_py)
++    os.chmod(os.path.join(project_dir, 'manage.py'), 0o755)
++    
++    with open(os.path.join(project_dir, 'settings.py'), 'w') as f:
++        f.write(settings_py)
++    
++    with open(os.path.join(project_dir, 'urls.py'), 'w') as f:
++        f.write(urls_py)
++    
++    return project_dir
++
++def test_get_request():
++    """Test GET request using curl."""
++    project_dir = create_test_project()
++    
++    print(f"Created test project in: {project_dir}")
++    
++    # Start the server in background
++    env = os.environ.copy()
++    env['PYTHONPATH'] = '/testbed'
++    
++    server_process = subprocess.Popen(
++        [sys.executable, 'manage.py', 'runserver', '127.0.0.1:8002', '--noreload'],
++        cwd=project_dir,
++        env=env,
++        stdout=subprocess.PIPE,
++        stderr=subprocess.PIPE
++    )
++    
++    try:
++        # Wait for server to start
++        print("Waiting for server to start...")
++        time.sleep(3)
++        
++        # Make GET request using curl
++        print("Making GET request...")
++        result = subprocess.run(
++            ['curl', '-i', 'http://127.0.0.1:8002/', '--max-time', '10'],
++            capture_output=True,
++            text=True,
++            timeout=15
++        )
++        
++        print("GET Request Response:")
++        print(result.stdout)
++        
++        if result.stderr:
++            print("Curl stderr:")
++            print(result.stderr)
++        
++        # Check if there's a body in the response
++        lines = result.stdout.split('\n')
++        headers_ended = False
++        body_lines = []
++        
++        for line in lines:
++            if headers_ended:
++                if line.strip():  # Non-empty line in body
++                    body_lines.append(line)
++            elif line.strip() == '':  # Empty line marks end of headers
++                headers_ended = True
++        
++        if body_lines:
++            print(f"\n✅ SUCCESS: GET request returned response body as expected!")
++            print(f"Body lines: {len(body_lines)}")
++            print("First few body lines:")
++            for line in body_lines[:3]:
++                print(f"  {repr(line)}")
++            return True
++        else:
++            print("\n❌ ERROR: GET request returned no body!")
++            return False
++            
++    except subprocess.TimeoutExpired:
++        print("Request timed out")
++        return False
++    except Exception as e:
++        print(f"Error: {e}")
++        return False
++    finally:
++        # Clean up server process
++        print("Cleaning up server...")
++        server_process.terminate()
++        try:
++            server_process.wait(timeout=5)
++        except subprocess.TimeoutExpired:
++            server_process.kill()
++
++if __name__ == '__main__':
++    success = test_get_request()
++    
++    if not success:
++        print("\nERROR: GET requests are broken!")
++        sys.exit(1)
++    else:
++        print("\nSUCCESS: GET requests work correctly!")
++        sys.exit(0)
+\ No newline at end of file
+diff --git a/test_head_fix.py b/test_head_fix.py
+new file mode 100644
+index 0000000000..14b18a1bcc
+--- /dev/null
++++ b/test_head_fix.py
+@@ -0,0 +1,189 @@
++#!/usr/bin/env python
++"""
++Test script to verify the HEAD request fix.
++"""
++import os
++import sys
++import tempfile
++import subprocess
++import time
++
++# Add Django to the path
++sys.path.insert(0, '/testbed')
++
++def create_test_project():
++    """Create a minimal Django project."""
++    project_dir = tempfile.mkdtemp()
++    
++    # Create manage.py
++    manage_py = f"""#!/usr/bin/env python
++import os
++import sys
++
++if __name__ == '__main__':
++    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings')
++    try:
++        from django.core.management import execute_from_command_line
++    except ImportError as exc:
++        raise ImportError(
++            "Couldn't import Django. Are you sure it's installed and "
++            "available on your PYTHONPATH environment variable? Did you "
++            "forget to activate a virtual environment?"
++        ) from exc
++    execute_from_command_line(sys.argv)
++"""
++    
++    # Create settings.py
++    settings_py = f"""
++import os
++from pathlib import Path
++
++BASE_DIR = Path(__file__).resolve().parent
++
++SECRET_KEY = 'test-secret-key'
++DEBUG = True
++ALLOWED_HOSTS = ['*']
++
++INSTALLED_APPS = [
++    'django.contrib.contenttypes',
++    'django.contrib.auth',
++]
++
++MIDDLEWARE = [
++    'django.middleware.security.SecurityMiddleware',
++    'django.middleware.common.CommonMiddleware',
++]
++
++ROOT_URLCONF = 'urls'
++
++DATABASES = {{
++    'default': {{
++        'ENGINE': 'django.db.backends.sqlite3',
++        'NAME': ':memory:',
++    }}
++}}
++
++USE_TZ = True
++"""
++    
++    # Create urls.py
++    urls_py = """
++from django.http import HttpResponse
++from django.urls import path
++
++def test_view(request):
++    return HttpResponse('''<!DOCTYPE html>
++<html lang="en"><head>
++ <meta http-equiv="content-type" content="text/html; charset=utf-8">
++ <meta name="robots" content="NONE,NOARCHIVE"><title>Welcome to Django</title>
++</head>
++<body>
++<h1>Welcome to Django</h1>
++<p>This is a test page with some content that should not appear in HEAD responses.</p>
++</body>
++</html>''', content_type='text/html')
++
++urlpatterns = [
++    path('', test_view, name='test'),
++]
++"""
++    
++    # Write files
++    with open(os.path.join(project_dir, 'manage.py'), 'w') as f:
++        f.write(manage_py)
++    os.chmod(os.path.join(project_dir, 'manage.py'), 0o755)
++    
++    with open(os.path.join(project_dir, 'settings.py'), 'w') as f:
++        f.write(settings_py)
++    
++    with open(os.path.join(project_dir, 'urls.py'), 'w') as f:
++        f.write(urls_py)
++    
++    return project_dir
++
++def test_head_request():
++    """Test HEAD request using curl."""
++    project_dir = create_test_project()
++    
++    print(f"Created test project in: {project_dir}")
++    
++    # Start the server in background
++    env = os.environ.copy()
++    env['PYTHONPATH'] = '/testbed'
++    
++    server_process = subprocess.Popen(
++        [sys.executable, 'manage.py', 'runserver', '127.0.0.1:8001', '--noreload'],
++        cwd=project_dir,
++        env=env,
++        stdout=subprocess.PIPE,
++        stderr=subprocess.PIPE
++    )
++    
++    try:
++        # Wait for server to start
++        print("Waiting for server to start...")
++        time.sleep(3)
++        
++        # Make HEAD request using curl
++        print("Making HEAD request...")
++        result = subprocess.run(
++            ['curl', '-i', '-X', 'HEAD', 'http://127.0.0.1:8001/', '--max-time', '10'],
++            capture_output=True,
++            text=True,
++            timeout=15
++        )
++        
++        print("HEAD Request Response:")
++        print(result.stdout)
++        
++        if result.stderr:
++            print("Curl stderr:")
++            print(result.stderr)
++        
++        # Check if there's a body in the response
++        lines = result.stdout.split('\n')
++        headers_ended = False
++        body_lines = []
++        
++        for line in lines:
++            if headers_ended:
++                if line.strip():  # Non-empty line in body
++                    body_lines.append(line)
++            elif line.strip() == '':  # Empty line marks end of headers
++                headers_ended = True
++        
++        if body_lines:
++            print(f"\n❌ ERROR: HEAD request returned response body!")
++            print(f"Body lines: {len(body_lines)}")
++            print("First few body lines:")
++            for line in body_lines[:5]:
++                print(f"  {repr(line)}")
++            return False
++        else:
++            print("\n✅ SUCCESS: HEAD request returned no body (as expected)")
++            return True
++            
++    except subprocess.TimeoutExpired:
++        print("Request timed out")
++        return False
++    except Exception as e:
++        print(f"Error: {e}")
++        return False
++    finally:
++        # Clean up server process
++        print("Cleaning up server...")
++        server_process.terminate()
++        try:
++            server_process.wait(timeout=5)
++        except subprocess.TimeoutExpired:
++            server_process.kill()
++
++if __name__ == '__main__':
++    success = test_head_request()
++    
++    if not success:
++        print("\nThe issue is still present: HEAD requests return response bodies.")
++        sys.exit(1)
++    else:
++        print("\nSUCCESS: HEAD requests work correctly now!")
++        sys.exit(0)
+\ No newline at end of file
+diff --git a/test_head_simple.py b/test_head_simple.py
+new file mode 100644
+index 0000000000..bc32f73d3a
+--- /dev/null
++++ b/test_head_simple.py
+@@ -0,0 +1,183 @@
++#!/usr/bin/env python
++"""
++Simple script to test HEAD request behavior using curl.
++"""
++import os
++import sys
++import subprocess
++import tempfile
++import time
++
++# Add Django to the path
++sys.path.insert(0, '/testbed')
++
++# Create a minimal Django project for testing
++def create_test_project():
++    """Create a minimal Django project."""
++    project_dir = tempfile.mkdtemp()
++    
++    # Create manage.py
++    manage_py = f"""#!/usr/bin/env python
++import os
++import sys
++
++if __name__ == '__main__':
++    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings')
++    try:
++        from django.core.management import execute_from_command_line
++    except ImportError as exc:
++        raise ImportError(
++            "Couldn't import Django. Are you sure it's installed and "
++            "available on your PYTHONPATH environment variable? Did you "
++            "forget to activate a virtual environment?"
++        ) from exc
++    execute_from_command_line(sys.argv)
++"""
++    
++    # Create settings.py
++    settings_py = f"""
++import os
++from pathlib import Path
++
++BASE_DIR = Path(__file__).resolve().parent
++
++SECRET_KEY = 'test-secret-key'
++DEBUG = True
++ALLOWED_HOSTS = ['*']
++
++INSTALLED_APPS = [
++    'django.contrib.contenttypes',
++    'django.contrib.auth',
++]
++
++MIDDLEWARE = [
++    'django.middleware.security.SecurityMiddleware',
++    'django.middleware.common.CommonMiddleware',
++]
++
++ROOT_URLCONF = 'urls'
++
++DATABASES = {{
++    'default': {{
++        'ENGINE': 'django.db.backends.sqlite3',
++        'NAME': ':memory:',
++    }}
++}}
++
++USE_TZ = True
++"""
++    
++    # Create urls.py
++    urls_py = """
++from django.http import HttpResponse
++from django.urls import path
++
++def test_view(request):
++    return HttpResponse('''<!DOCTYPE html>
++<html lang="en"><head>
++ <meta http-equiv="content-type" content="text/html; charset=utf-8">
++ <meta name="robots" content="NONE,NOARCHIVE"><title>Welcome to Django</title>
++</head>
++<body>
++<h1>Welcome to Django</h1>
++<p>This is a test page.</p>
++</body>
++</html>''', content_type='text/html')
++
++urlpatterns = [
++    path('', test_view, name='test'),
++]
++"""
++    
++    # Write files
++    with open(os.path.join(project_dir, 'manage.py'), 'w') as f:
++        f.write(manage_py)
++    os.chmod(os.path.join(project_dir, 'manage.py'), 0o755)
++    
++    with open(os.path.join(project_dir, 'settings.py'), 'w') as f:
++        f.write(settings_py)
++    
++    with open(os.path.join(project_dir, 'urls.py'), 'w') as f:
++        f.write(urls_py)
++    
++    return project_dir
++
++def test_head_request():
++    """Test HEAD request using curl."""
++    project_dir = create_test_project()
++    
++    print(f"Created test project in: {project_dir}")
++    
++    # Start the server in background
++    env = os.environ.copy()
++    env['PYTHONPATH'] = '/testbed'
++    
++    server_process = subprocess.Popen(
++        [sys.executable, 'manage.py', 'runserver', '127.0.0.1:8000', '--noreload'],
++        cwd=project_dir,
++        env=env,
++        stdout=subprocess.PIPE,
++        stderr=subprocess.PIPE
++    )
++    
++    try:
++        # Wait for server to start
++        time.sleep(3)
++        
++        # Make HEAD request using curl
++        result = subprocess.run(
++            ['curl', '-i', '-X', 'HEAD', 'http://127.0.0.1:8000/'],
++            capture_output=True,
++            text=True,
++            timeout=10
++        )
++        
++        print("HEAD Request Response:")
++        print(result.stdout)
++        
++        # Check if there's a body in the response
++        lines = result.stdout.split('\n')
++        headers_ended = False
++        body_lines = []
++        
++        for line in lines:
++            if headers_ended:
++                if line.strip():  # Non-empty line in body
++                    body_lines.append(line)
++            elif line.strip() == '':  # Empty line marks end of headers
++                headers_ended = True
++        
++        if body_lines:
++            print(f"\n❌ ERROR: HEAD request returned response body!")
++            print(f"Body lines: {len(body_lines)}")
++            print("First few body lines:")
++            for line in body_lines[:5]:
++                print(f"  {repr(line)}")
++            return False
++        else:
++            print("\n✅ SUCCESS: HEAD request returned no body (as expected)")
++            return True
++            
++    except subprocess.TimeoutExpired:
++        print("Request timed out")
++        return False
++    except Exception as e:
++        print(f"Error: {e}")
++        return False
++    finally:
++        # Clean up server process
++        server_process.terminate()
++        try:
++            server_process.wait(timeout=5)
++        except subprocess.TimeoutExpired:
++            server_process.kill()
++
++if __name__ == '__main__':
++    success = test_head_request()
++    
++    if not success:
++        print("\nThe issue is reproduced: HEAD requests return response bodies.")
++        sys.exit(1)
++    else:
++        print("\nNo issue found: HEAD requests work correctly.")
++        sys.exit(0)
+\ No newline at end of file
+diff --git a/test_other_methods.py b/test_other_methods.py
+new file mode 100644
+index 0000000000..aa0edb89e0
+--- /dev/null
++++ b/test_other_methods.py
+@@ -0,0 +1,227 @@
++#!/usr/bin/env python
++"""
++Test that other HTTP methods still work correctly after the HEAD fix.
++"""
++import os
++import sys
++import tempfile
++import subprocess
++import time
++
++# Add Django to the path
++sys.path.insert(0, '/testbed')
++
++def create_test_project():
++    """Create a minimal Django project."""
++    project_dir = tempfile.mkdtemp()
++    
++    # Create manage.py
++    manage_py = f"""#!/usr/bin/env python
++import os
++import sys
++
++if __name__ == '__main__':
++    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings')
++    try:
++        from django.core.management import execute_from_command_line
++    except ImportError as exc:
++        raise ImportError(
++            "Couldn't import Django. Are you sure it's installed and "
++            "available on your PYTHONPATH environment variable? Did you "
++            "forget to activate a virtual environment?"
++        ) from exc
++    execute_from_command_line(sys.argv)
++"""
++    
++    # Create settings.py
++    settings_py = f"""
++import os
++from pathlib import Path
++
++BASE_DIR = Path(__file__).resolve().parent
++
++SECRET_KEY = 'test-secret-key'
++DEBUG = True
++ALLOWED_HOSTS = ['*']
++
++INSTALLED_APPS = [
++    'django.contrib.contenttypes',
++    'django.contrib.auth',
++]
++
++MIDDLEWARE = [
++    'django.middleware.security.SecurityMiddleware',
++    'django.middleware.common.CommonMiddleware',
++]
++
++ROOT_URLCONF = 'urls'
++
++DATABASES = {{
++    'default': {{
++        'ENGINE': 'django.db.backends.sqlite3',
++        'NAME': ':memory:',
++    }}
++}}
++
++USE_TZ = True
++"""
++    
++    # Create urls.py
++    urls_py = """
++from django.http import HttpResponse, JsonResponse
++from django.urls import path
++from django.views.decorators.csrf import csrf_exempt
++import json
++
++def test_view(request):
++    return HttpResponse('''<!DOCTYPE html>
++<html lang="en"><head>
++ <meta http-equiv="content-type" content="text/html; charset=utf-8">
++ <meta name="robots" content="NONE,NOARCHIVE"><title>Welcome to Django</title>
++</head>
++<body>
++<h1>Welcome to Django</h1>
++<p>This is a test page.</p>
++</body>
++</html>''', content_type='text/html')
++
++@csrf_exempt
++def post_view(request):
++    if request.method == 'POST':
++        return JsonResponse({'method': 'POST', 'received': 'data'})
++    return JsonResponse({'error': 'Only POST allowed'}, status=405)
++
++@csrf_exempt
++def put_view(request):
++    if request.method == 'PUT':
++        return JsonResponse({'method': 'PUT', 'received': 'data'})
++    return JsonResponse({'error': 'Only PUT allowed'}, status=405)
++
++def options_view(request):
++    response = HttpResponse('')
++    response['Allow'] = 'GET, HEAD, POST, PUT, OPTIONS'
++    return response
++
++urlpatterns = [
++    path('', test_view, name='test'),
++    path('post/', post_view, name='post'),
++    path('put/', put_view, name='put'),
++    path('options/', options_view, name='options'),
++]
++"""
++    
++    # Write files
++    with open(os.path.join(project_dir, 'manage.py'), 'w') as f:
++        f.write(manage_py)
++    os.chmod(os.path.join(project_dir, 'manage.py'), 0o755)
++    
++    with open(os.path.join(project_dir, 'settings.py'), 'w') as f:
++        f.write(settings_py)
++    
++    with open(os.path.join(project_dir, 'urls.py'), 'w') as f:
++        f.write(urls_py)
++    
++    return project_dir
++
++def test_http_methods():
++    """Test different HTTP methods."""
++    project_dir = create_test_project()
++    
++    print(f"Created test project in: {project_dir}")
++    
++    # Start the server in background
++    env = os.environ.copy()
++    env['PYTHONPATH'] = '/testbed'
++    
++    server_process = subprocess.Popen(
++        [sys.executable, 'manage.py', 'runserver', '127.0.0.1:8004', '--noreload'],
++        cwd=project_dir,
++        env=env,
++        stdout=subprocess.PIPE,
++        stderr=subprocess.PIPE
++    )
++    
++    try:
++        # Wait for server to start
++        print("Waiting for server to start...")
++        time.sleep(3)
++        
++        # Test different HTTP methods
++        tests = [
++            ('GET', '/', 'GET request should have body', True),
++            ('POST', '/post/', 'POST request should have body', True),
++            ('PUT', '/put/', 'PUT request should have body', True),
++            ('OPTIONS', '/options/', 'OPTIONS request may have empty body', False),
++        ]
++        
++        all_passed = True
++        
++        for method, endpoint, description, should_have_body in tests:
++            print(f"\nTesting {method} request to {endpoint}")
++            
++            # Make request using curl
++            if method == 'POST':
++                curl_cmd = ['curl', '-i', '-X', 'POST', '-d', 'test=data', f'http://127.0.0.1:8004{endpoint}', '--max-time', '10']
++            elif method == 'PUT':
++                curl_cmd = ['curl', '-i', '-X', 'PUT', '-d', 'test=data', f'http://127.0.0.1:8004{endpoint}', '--max-time', '10']
++            else:
++                curl_cmd = ['curl', '-i', '-X', method, f'http://127.0.0.1:8004{endpoint}', '--max-time', '10']
++            
++            result = subprocess.run(
++                curl_cmd,
++                capture_output=True,
++                text=True,
++                timeout=15
++            )
++            
++            print(f"Response for {method} request:")
++            print(result.stdout[:300] + "..." if len(result.stdout) > 300 else result.stdout)
++            
++            # Check if there's a body in the response
++            lines = result.stdout.split('\n')
++            headers_ended = False
++            body_lines = []
++            
++            for line in lines:
++                if headers_ended:
++                    if line.strip():  # Non-empty line in body
++                        body_lines.append(line)
++                elif line.strip() == '':  # Empty line marks end of headers
++                    headers_ended = True
++            
++            if should_have_body:
++                if not body_lines:
++                    print(f"❌ ERROR: {method} request returned no body!")
++                    all_passed = False
++                else:
++                    print(f"✅ SUCCESS: {method} request returned body as expected")
++            else:
++                # For OPTIONS and other methods that may have empty bodies
++                print(f"✅ SUCCESS: {method} request completed (body optional)")
++        
++        return all_passed
++            
++    except subprocess.TimeoutExpired:
++        print("Request timed out")
++        return False
++    except Exception as e:
++        print(f"Error: {e}")
++        return False
++    finally:
++        # Clean up server process
++        print("Cleaning up server...")
++        server_process.terminate()
++        try:
++            server_process.wait(timeout=5)
++        except subprocess.TimeoutExpired:
++            server_process.kill()
++
++if __name__ == '__main__':
++    success = test_http_methods()
++    
++    if not success:
++        print("\nSome HTTP method tests failed.")
++        sys.exit(1)
++    else:
++        print("\nAll HTTP method tests passed!")
++        sys.exit(0)
+\ No newline at end of file
+diff --git a/tests/servers/test_basehttp.py b/tests/servers/test_basehttp.py
+index a837505feb..ea77e36c54 100644
+--- a/tests/servers/test_basehttp.py
++++ b/tests/servers/test_basehttp.py
+@@ -106,6 +106,115 @@ class WSGIRequestHandlerTestCase(SimpleTestCase):
+ 
+         self.assertEqual(body, b"HTTP_SOME_HEADER:good")
+ 
++    def test_head_request_no_body(self):
++        """HEAD requests should not return response body."""
++        
++        def test_app(environ, start_response):
++            """A WSGI app that returns a response with body content."""
++            start_response("200 OK", [("Content-Type", "text/html")])
++            yield b"<!DOCTYPE html><html><head><title>Test</title></head>"
++            yield b"<body><h1>Test Page</h1><p>This is test content.</p></body></html>"
++
++        # Test HEAD request
++        rfile = BytesIO()
++        rfile.write(b"HEAD / HTTP/1.0\r\n")
++        rfile.write(b"Host: testserver\r\n")
++        rfile.write(b"\r\n")
++        rfile.seek(0)
++
++        # WSGIRequestHandler closes the output file; we need to make this a
++        # no-op so we can still read its contents.
++        class UnclosableBytesIO(BytesIO):
++            def close(self):
++                pass
++
++        wfile = UnclosableBytesIO()
++
++        def makefile(mode, *a, **kw):
++            if mode == "rb":
++                return rfile
++            elif mode == "wb":
++                return wfile
++
++        request = Stub(makefile=makefile)
++        server = Stub(base_environ={}, get_app=lambda: test_app)
++
++        # Prevent logging from appearing in test output.
++        with self.assertLogs("django.server", "INFO"):
++            # instantiating a handler runs the request as side effect
++            WSGIRequestHandler(request, "192.168.0.2", server)
++
++        wfile.seek(0)
++        response_data = wfile.read()
++        
++        # Split headers and body
++        response_str = response_data.decode('utf-8', errors='ignore')
++        parts = response_str.split('\r\n\r\n', 1)
++        headers = parts[0]
++        body = parts[1] if len(parts) > 1 else ""
++        
++        # Verify we have headers
++        self.assertIn("HTTP/1.1 200 OK", headers)
++        self.assertIn("Content-Type: text/html", headers)
++        
++        # Verify no body content for HEAD request
++        self.assertEqual(body.strip(), "", "HEAD request should not return response body")
++
++    def test_get_request_has_body(self):
++        """GET requests should return response body (control test)."""
++        
++        def test_app(environ, start_response):
++            """A WSGI app that returns a response with body content."""
++            start_response("200 OK", [("Content-Type", "text/html")])
++            yield b"<!DOCTYPE html><html><head><title>Test</title></head>"
++            yield b"<body><h1>Test Page</h1><p>This is test content.</p></body></html>"
++
++        # Test GET request
++        rfile = BytesIO()
++        rfile.write(b"GET / HTTP/1.0\r\n")
++        rfile.write(b"Host: testserver\r\n")
++        rfile.write(b"\r\n")
++        rfile.seek(0)
++
++        # WSGIRequestHandler closes the output file; we need to make this a
++        # no-op so we can still read its contents.
++        class UnclosableBytesIO(BytesIO):
++            def close(self):
++                pass
++
++        wfile = UnclosableBytesIO()
++
++        def makefile(mode, *a, **kw):
++            if mode == "rb":
++                return rfile
++            elif mode == "wb":
++                return wfile
++
++        request = Stub(makefile=makefile)
++        server = Stub(base_environ={}, get_app=lambda: test_app)
++
++        # Prevent logging from appearing in test output.
++        with self.assertLogs("django.server", "INFO"):
++            # instantiating a handler runs the request as side effect
++            WSGIRequestHandler(request, "192.168.0.2", server)
++
++        wfile.seek(0)
++        response_data = wfile.read()
++        
++        # Split headers and body
++        response_str = response_data.decode('utf-8', errors='ignore')
++        parts = response_str.split('\r\n\r\n', 1)
++        headers = parts[0]
++        body = parts[1] if len(parts) > 1 else ""
++        
++        # Verify we have headers
++        self.assertIn("HTTP/1.1 200 OK", headers)
++        self.assertIn("Content-Type: text/html", headers)
++        
++        # Verify body content for GET request
++        self.assertIn("<!DOCTYPE html>", body, "GET request should return response body")
++        self.assertIn("Test Page", body, "GET request should return response body")
++
+ 
+ class WSGIServerTestCase(SimpleTestCase):
+     request_factory = RequestFactory()
