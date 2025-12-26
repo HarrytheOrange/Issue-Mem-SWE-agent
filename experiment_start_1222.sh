@@ -1,14 +1,16 @@
 # !/usr/bin/env bash
 
-sweagent run-batch --config config/KimiK2e_agenticMemSearch_1220_13w.yaml --agent.model.per_instance_cost_limit 10.00 --instances.type swe_bench --instances.subset verified --instances.split test --num_workers 20 --instances.slice :100 --instances.shuffle=False
+sweagent run-batch --config config/KimiK2_Instruct0711_agenticMemSearch_1220_13w.yaml --agent.model.per_instance_cost_limit 10.00 --instances.type swe_bench --instances.subset verified --instances.split test --num_workers 20 --instances.slice :100 --instances.shuffle=False
 
-sweagent run-batch --config config/Qwen3Coder30B_origin.yaml --agent.model.per_instance_cost_limit 1.00 --instances.type swe_bench --instances.subset verified --instances.split test --num_workers 20 --instances.slice :100 --instances.shuffle=False
+sweagent run-batch --config config/Qwen3Coder30B_origin.yaml --agent.model.per_instance_cost_limit 1.00 --instances.type swe_bench --instances.subset verified --instances.split test --num_workers 20 --instances.slice :500 --instances.shuffle=False
 
 sweagent run-batch --config config/dsv31t_agenticMemSearch_1224_31w.yaml --agent.model.per_instance_cost_limit 1.00 --instances.type swe_bench --instances.subset verified --instances.split test --num_workers 20 --instances.slice :100 --instances.shuffle=False
 
 sweagent run-batch --config config/Qwen3Coder30B_agentic_rag_top3.yaml --agent.model.per_instance_cost_limit 1.00 --instances.type swe_bench --instances.subset verified --instances.split test --num_workers 20 --instances.slice :100 --instances.shuffle=False
 
 sweagent run-batch --config config/Qwen3Coder30B_agenticMemSearch_1220_13w.yaml --agent.model.per_instance_cost_limit 1.00 --instances.type swe_bench --instances.subset verified --instances.split test --num_workers 20 --instances.slice :500 --instances.shuffle=False
+
+
 
 
 sleep 300

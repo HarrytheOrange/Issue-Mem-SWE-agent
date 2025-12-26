@@ -13,6 +13,8 @@ data/**
 *.jsonl
 *.safetensors
 
+api_test*.py
+
 # -------- automatically generated files --------
 
 # Byte-compiled / optimized / DLL files
