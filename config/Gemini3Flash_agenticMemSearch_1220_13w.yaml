@@ -2,7 +2,6 @@
 # This template is heavily inspired by anthropic's computer use demo, but you can use
 # it with any LM.
 agent:
-  max_requeries: 10
   templates:
     system_template: |-
       You are a helpful assistant that can interact with a computer to solve tasks.
@@ -89,14 +88,12 @@ agent:
   #   - type: cache_control
   #     last_n_messages: 2
   model:
-    name: "Claude-Sonnet-4-20250514-v1.0"
-    api_base: http://claude0openai.a.pinggy.link/v1
-    # api_base: http://lqzutncbuw.a.pinggy.link/v1
-    api_key: msk-b8ee4eb9e40467c5c8bc699ea5840af20bae17debd763315986153a2c48cbb70
-    # api_key: msk-502fd0d7261fb6a3342588bac15090cf23751d831372c7751b218cda14b8bcfe
+    name: gemini-3-flash-preview
+    api_base: https://generativelanguage.googleapis.com/v1beta/openai/
     temperature: 1.0
     top_p: null
-    completion_kwargs:
-      custom_llm_provider: openai
-    custom_input_cost_per_1k_tokens: 0.003
-    custom_output_cost_per_1k_tokens: 0.015
+    max_input_tokens: 1048576
+    max_output_tokens: 65536
+    litellm_model_registry: config/deepseek_registry.json
+    custom_input_cost_per_1k_tokens: 0.0000005
+    custom_output_cost_per_1k_tokens: 0.000003

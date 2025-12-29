@@ -11,7 +11,6 @@ from typing import Any, Dict, Optional, Tuple
 
 BASE_URL = "http://172.30.182.85:9030/get_experience"
 
-DEEPSEEK_API_KEY = "1a6d8e05-0978-496b-87c1-fd4fb3885e7c"
 DEEPSEEK_MODEL = "deepseek-v3-1-terminus"
 DEEPSEEK_BASE_URL = "https://ark.cn-beijing.volces.com/api/v1"
 
